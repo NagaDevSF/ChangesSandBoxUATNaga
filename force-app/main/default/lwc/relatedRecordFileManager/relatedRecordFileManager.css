@@ -1,0 +1,75 @@
+.file-link {
+    text-decoration: none;
+    color: #0176d3;
+}
+
+.file-link:hover {
+    text-decoration: underline;
+}
+
+.delete-icon:hover {
+    color: #c23934;
+}
+
+.slds-checkbox_button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.slds-checkbox_button__label {
+    border: 1px solid #d8dde6;
+    border-radius: 0.25rem;
+    padding: 0.5rem 1rem;
+    background-color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.slds-checkbox_button__label:hover {
+    background-color: #f3f3f3;
+    border-color: #0176d3;
+}
+
+input[type="checkbox"]:checked + .slds-checkbox_button__label {
+    background-color: #0176d3;
+    color: #ffffff;
+    border-color: #0176d3;
+}
+
+input[type="checkbox"] {
+    display: none;
+}
+
+/* Responsive table wrapper with horizontal scroll */
+.table-responsive-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+    margin-top: 0.75rem;
+}
+
+/* Ensure table has minimum width to trigger scroll on narrow viewports */
+.table-responsive-wrapper .slds-table {
+    min-width: 900px; /* 7 columns: ~130px each average */
+}
+
+/* Improve scrollbar visibility for better UX */
+.table-responsive-wrapper::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-responsive-wrapper::-webkit-scrollbar-track {
+    background: #f3f3f3;
+    border-radius: 4px;
+}
+
+.table-responsive-wrapper::-webkit-scrollbar-thumb {
+    background-color: #c9c9c9;
+    border-radius: 4px;
+}
+
+.table-responsive-wrapper::-webkit-scrollbar-thumb:hover {
+    background-color: #a0a0a0;
+}

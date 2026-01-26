@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>Format_Company_Name</name>
+        <label>Format Company Name</label>
+        <locationX>176</locationX>
+        <locationY>350</locationY>
+        <assignmentItems>
+            <assignToReference>$Record.Company</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>fxProperCaseCompany</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Format_First_Name</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Format_First_Name</name>
+        <label>Format First Name</label>
+        <locationX>176</locationX>
+        <locationY>458</locationY>
+        <assignmentItems>
+            <assignToReference>$Record.FirstName</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>fxProperCaseFirstName</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Format_Last_Name</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Format_Last_Name</name>
+        <label>Format Last Name</label>
+        <locationX>176</locationX>
+        <locationY>566</locationY>
+        <assignmentItems>
+            <assignToReference>$Record.LastName</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>fxProperCaseLastName</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Format_Middle_Name</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Format_Middle_Name</name>
+        <label>Format Middle Name</label>
+        <locationX>176</locationX>
+        <locationY>674</locationY>
+        <assignmentItems>
+            <assignToReference>$Record.MiddleName</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>fxProperCaseMiddleName</elementReference>
+            </value>
+        </assignmentItems>
+    </assignments>
+    <decisions>
+        <name>Check_if_Names_Need_Formatting</name>
+        <label>Check if Names Need Formatting</label>
+        <locationX>380</locationX>
+        <locationY>242</locationY>
+        <defaultConnectorLabel>No Formatting Needed</defaultConnectorLabel>
+        <rules>
+            <name>Names_Need_Formatting</name>
+            <conditionLogic>or</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.LastName</leftValueReference>
+                <operator>IsChanged</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.FirstName</leftValueReference>
+                <operator>IsChanged</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.MiddleName</leftValueReference>
+                <operator>IsChanged</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Company</leftValueReference>
+                <operator>IsChanged</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Format_Company_Name</targetReference>
+            </connector>
+            <label>Names Need Formatting</label>
+        </rules>
+    </decisions>
+    <description>Automatically formats Last Name, First Name, Middle Name, and Company fields to proper case (camel case) when Lead records are created or updated. Example: &quot;NaGA&quot; becomes &quot;Naga&quot;</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>fxProperCaseCompany</name>
+        <dataType>String</dataType>
+        <expression>IF(
+  ISBLANK({!$Record.Company}),
+  {!$Record.Company},
+  UPPER(LEFT({!$Record.Company}, 1)) &amp; LOWER(MID({!$Record.Company}, 2, LEN({!$Record.Company})-1))
+)</expression>
+    </formulas>
+    <formulas>
+        <name>fxProperCaseFirstName</name>
+        <dataType>String</dataType>
+        <expression>IF(
+  ISBLANK({!$Record.FirstName}),
+  {!$Record.FirstName},
+  UPPER(LEFT({!$Record.FirstName}, 1)) &amp; LOWER(MID({!$Record.FirstName}, 2, LEN({!$Record.FirstName})-1))
+)</expression>
+    </formulas>
+    <formulas>
+        <name>fxProperCaseLastName</name>
+        <dataType>String</dataType>
+        <expression>IF(
+  ISBLANK({!$Record.LastName}),
+  {!$Record.LastName},
+  UPPER(LEFT({!$Record.LastName}, 1)) &amp; LOWER(MID({!$Record.LastName}, 2, LEN({!$Record.LastName})-1))
+)</expression>
+    </formulas>
+    <formulas>
+        <name>fxProperCaseMiddleName</name>
+        <dataType>String</dataType>
+        <expression>IF(
+  ISBLANK({!$Record.MiddleName}),
+  {!$Record.MiddleName},
+  UPPER(LEFT({!$Record.MiddleName}, 1)) &amp; LOWER(MID({!$Record.MiddleName}, 2, LEN({!$Record.MiddleName})-1))
+)</expression>
+    </formulas>
+    <interviewLabel>Name Formatting {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Name Formatting</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>254</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Format_Company_Name</targetReference>
+        </connector>
+        <object>Lead</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Draft</status>
+</Flow>

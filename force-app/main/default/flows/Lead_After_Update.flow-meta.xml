@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Check</name>
+        <label>Check</label>
+        <locationX>182</locationX>
+        <locationY>323</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Rotation_Not_Available</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Rotation_List__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Not available</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_Task</targetReference>
+            </connector>
+            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+            <label>Rotation Not Available</label>
+        </rules>
+    </decisions>
+    <description>Updated Lead</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>ConnectedSubject</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.LastName} &amp; &quot; Connected, please proceed with the formalities&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>Description</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.Phone} &amp; &quot; Next follow up Required&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>DNCsubject</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.LastName} &amp; &quot; Do not call&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>FollowupdateEnd</name>
+        <dataType>DateTime</dataType>
+        <expression>{!$Record.Next_Follow_up_Date__c} + (15 / 1440)</expression>
+    </formulas>
+    <formulas>
+        <name>NeedCallBack</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.LastName} &amp; &quot; needs call back&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>NextFollowUpDate</name>
+        <dataType>Date</dataType>
+        <expression>Now() +1</expression>
+    </formulas>
+    <formulas>
+        <name>Nextfollowupdaterequired</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.LastName} &amp; &quot; Call back required&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>NotAvailableSubject</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.LastName} &amp; &quot; Not available&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>NotInterestedSubject</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.LastName} &amp; &quot; Not Interested&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>Now</name>
+        <dataType>Date</dataType>
+        <expression>now()</expression>
+    </formulas>
+    <formulas>
+        <name>RemindBefore5min</name>
+        <dataType>DateTime</dataType>
+        <expression>{!$Record.Next_Follow_up_Date__c} - (5 / 1440)</expression>
+    </formulas>
+    <interviewLabel>Lead After Update {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Lead After Update</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordCreates>
+        <name>Create_Task</name>
+        <label>Create Task</label>
+        <locationX>50</locationX>
+        <locationY>431</locationY>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference>$Record.OwnerId</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Priority</field>
+            <value>
+                <stringValue>Normal</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>Completed</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Subject</field>
+            <value>
+                <elementReference>NotAvailableSubject</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>TaskSubtype</field>
+            <value>
+                <stringValue>Call</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>WhoId</field>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <object>Task</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
+    <start>
+        <locationX>56</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Check</targetReference>
+        </connector>
+        <object>Lead</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Obsolete</status>
+    <variables>
+        <name>NotesTitle</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>true</isOutput>
+        <value>
+            <stringValue>&apos;Created From Quick notes&apos;</stringValue>
+        </value>
+    </variables>
+</Flow>

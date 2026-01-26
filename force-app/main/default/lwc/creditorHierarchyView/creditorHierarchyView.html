@@ -1,0 +1,400 @@
+<template>
+    <div class="creditor-hierarchy-container">
+        
+        <!-- Header Section -->
+        <div class="slds-card slds-m-bottom_medium">
+            <div class="slds-card__header slds-grid">
+                <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                    <div class="slds-media__figure">
+                        <lightning-icon icon-name="standard:hierarchy" size="medium"></lightning-icon>
+                    </div>
+                    <div class="slds-media__body">
+                        <h2 class="slds-card__header-title">
+                            <span class="slds-text-heading_medium">Creditor Hierarchy</span>
+                        </h2>
+                        <p class="slds-text-body_small slds-text-color_weak">
+                            Auto-refreshes every 15 seconds
+                            <template if:true={lastRefresh}>
+                                • Last updated: {lastRefresh}
+                            </template>
+                            <template if:true={isRefreshing}>
+                                <lightning-icon icon-name="utility:refresh" size="xx-small" class="refresh-icon"></lightning-icon>
+                            </template>
+                        </p>
+                    </div>
+                </header>
+                <div class="slds-no-flex">
+                    <div class="slds-button-group" role="group">
+                        <lightning-button
+                            label="Refresh"
+                            icon-name="utility:refresh"
+                            onclick={handleRefresh}
+                            disabled={isLoading}
+                        ></lightning-button>
+                        <lightning-button
+                            label="Expand All"
+                            icon-name="utility:expand_all"
+                            onclick={expandAll}
+                            disabled={isLoading}
+                        ></lightning-button>
+                        <lightning-button
+                            label="Collapse All"
+                            icon-name="utility:collapse_all"
+                            onclick={collapseAll}
+                            disabled={isLoading}
+                        ></lightning-button>
+                        <lightning-button
+                            label="Export"
+                            icon-name="utility:download"
+                            onclick={handleExport}
+                            disabled={isLoading}
+                        ></lightning-button>
+                        <lightning-button
+                            label="Print"
+                            icon-name="utility:print"
+                            onclick={handlePrint}
+                            disabled={isLoading}
+                        ></lightning-button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Statistics -->
+        <template if:true={summary}>
+            <div class="slds-grid slds-gutters slds-m-bottom_medium">
+                <div class="slds-col slds-size_1-of-4">
+                    <div class="slds-card summary-card">
+                        <div class="slds-card__body slds-card__body_inner">
+                            <div class="slds-text-align_center">
+                                <div class="slds-text-heading_large summary-number">{summary.totalAccounts}</div>
+                                <div class="slds-text-body_small slds-text-color_weak">Creditor Accounts</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-4">
+                    <div class="slds-card summary-card">
+                        <div class="slds-card__body slds-card__body_inner">
+                            <div class="slds-text-align_center">
+                                <div class="slds-text-heading_large summary-number">{summary.totalCreditorOpportunities}</div>
+                                <div class="slds-text-body_small slds-text-color_weak">Creditor Opportunities</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-4">
+                    <div class="slds-card summary-card">
+                        <div class="slds-card__body slds-card__body_inner">
+                            <div class="slds-text-align_center">
+                                <div class="slds-text-heading_large summary-number">{summary.totalNegotiations}</div>
+                                <div class="slds-text-body_small slds-text-color_weak">Total Negotiations</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-4">
+                    <div class="slds-card summary-card">
+                        <div class="slds-card__body slds-card__body_inner">
+                            <div class="slds-text-align_center">
+                                <div class="slds-text-heading_large summary-number settled">{summary.settledNegotiations}</div>
+                                <div class="slds-text-body_small slds-text-color_weak">Settled</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- Search Bar -->
+        <div class="slds-m-bottom_medium">
+            <lightning-input
+                type="search"
+                label="Search Creditors, Opportunities, or Negotiations"
+                placeholder="Search by name, status, phone, etc..."
+                value={searchTerm}
+                onchange={handleSearch}
+                class="search-bar"
+            ></lightning-input>
+        </div>
+
+        <!-- Loading State -->
+        <template if:true={isLoading}>
+            <div class="slds-text-align_center slds-p-vertical_large">
+                <lightning-spinner alternative-text="Loading creditor hierarchy..." size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Error State -->
+        <template if:true={error}>
+            <div class="slds-card slds-theme_error">
+                <div class="slds-card__body slds-card__body_inner">
+                    <div class="slds-text-align_center">
+                        <lightning-icon icon-name="utility:error" size="large" variant="inverse"></lightning-icon>
+                        <h3 class="slds-text-heading_medium slds-m-top_small">Error Loading Data</h3>
+                        <p class="slds-m-top_small">{error}</p>
+                        <lightning-button
+                            label="Try Again"
+                            variant="brand"
+                            onclick={handleRefresh}
+                            class="slds-m-top_medium"
+                        ></lightning-button>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- Empty State -->
+        <template if:true={showEmptyState}>
+            <div class="slds-card">
+                <div class="slds-card__body slds-card__body_inner">
+                    <div class="slds-text-align_center slds-p-vertical_large">
+                        <lightning-icon icon-name="standard:account" size="large"></lightning-icon>
+                        <h3 class="slds-text-heading_medium slds-m-top_small">No Creditor Accounts Found</h3>
+                        <p class="slds-m-top_small slds-text-color_weak">
+                            There are no creditor accounts with associated creditor opportunities in the system.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- No Search Results -->
+        <template if:true={showNoResults}>
+            <div class="slds-card">
+                <div class="slds-card__body slds-card__body_inner">
+                    <div class="slds-text-align_center slds-p-vertical_large">
+                        <lightning-icon icon-name="utility:search" size="large"></lightning-icon>
+                        <h3 class="slds-text-heading_medium slds-m-top_small">No Results Found</h3>
+                        <p class="slds-m-top_small slds-text-color_weak">
+                            No creditors, opportunities, or negotiations match your search criteria.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- Hierarchy Data -->
+        <template if:true={hasData}>
+            <div class="hierarchy-container">
+                
+                <!-- Account Level -->
+                <template for:each={filteredAccounts} for:item="account">
+                    <div key={account.id} class="slds-card account-card slds-m-bottom_medium">
+                        
+                        <!-- Account Header -->
+                        <div class="slds-card__header">
+                            <div class="slds-grid slds-grid_align-spread">
+                                <div class="slds-media slds-media_center hierarchy-item" 
+                                     data-account-id={account.id} 
+                                     onclick={toggleAccount}>
+                                    <div class="slds-media__figure">
+                                        <lightning-icon 
+                                            icon-name={getAccountIcon} 
+                                            data-account-id={account.id}
+                                            size="small" 
+                                            class="expand-icon">
+                                        </lightning-icon>
+                                    </div>
+                                    <div class="slds-media__figure slds-m-left_x-small">
+                                        <lightning-icon icon-name="standard:account" size="medium"></lightning-icon>
+                                    </div>
+                                    <div class="slds-media__body">
+                                        <h3 class="slds-text-heading_small">
+                                            <a data-record-id={account.id} 
+                                               data-record-type="Account" 
+                                               onclick={navigateToRecord}
+                                               class="record-link">
+                                                {account.name}
+                                            </a>
+                                        </h3>
+                                        <div class="slds-grid slds-gutters_small account-details">
+                                            <template if:true={account.accountNumber}>
+                                                <div class="slds-col">
+                                                    <span class="detail-label">Account #:</span> {account.accountNumber}
+                                                </div>
+                                            </template>
+                                            <template if:true={account.primaryCreditorPhone}>
+                                                <div class="slds-col">
+                                                    <span class="detail-label">Phone:</span> {account.primaryCreditorPhone}
+                                                </div>
+                                            </template>
+                                            <template if:true={account.ein}>
+                                                <div class="slds-col">
+                                                    <span class="detail-label">EIN:</span> {account.ein}
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slds-no-flex">
+                                    <span class="slds-badge slds-badge_lightest">
+                                        {account.creditorOpportunityCount} Creditor Opportunities
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Account Body (Creditor Opportunities) -->
+                        <template if:true={isAccountExpanded}>
+                            <div class="slds-card__body slds-card__body_inner" data-account-id={account.id}>
+                                
+                                <template for:each={account.creditorOpportunities} for:item="creditorOpportunity">
+                                    <div key={creditorOpportunity.id} class="creditor-list-item slds-m-bottom_medium">
+                                        
+                                        <!-- Creditor Opportunity Header -->
+                                        <div class="slds-grid slds-grid_align-spread creditor-list-header"
+                                             data-creditor-list-id={creditorOpportunity.id}
+                                             onclick={toggleCreditorList}>
+                                            <div class="slds-media slds-media_center hierarchy-item">
+                                                <div class="slds-media__figure">
+                                                    <lightning-icon 
+                                                        icon-name={getCreditorListIcon} 
+                                                        data-creditor-list-id={creditorOpportunity.id}
+                                                        size="small" 
+                                                        class="expand-icon">
+                                                    </lightning-icon>
+                                                </div>
+                                                <div class="slds-media__figure slds-m-left_x-small">
+                                                    <lightning-icon icon-name="standard:opportunity" size="small"></lightning-icon>
+                                                </div>
+                                                <div class="slds-media__body">
+                                                    <h4 class="slds-text-heading_x-small">
+                                                        <a data-record-id={creditorOpportunity.id} 
+                                                           data-record-type="CreditorOpportunity__c" 
+                                                           onclick={navigateToRecord}
+                                                           class="record-link">
+                                                            {creditorOpportunity.name}
+                                                        </a>
+                                                    </h4>
+                                                    <div class="slds-grid slds-gutters_small creditor-list-details">
+                                                        <template if:true={creditorOpportunity.amount}>
+                                                            <div class="slds-col">
+                                                                <span class="detail-label">Amount:</span> 
+                                                                <lightning-formatted-number 
+                                                                    value={creditorOpportunity.amount} 
+                                                                    format-style="currency" 
+                                                                    currency-code="USD">
+                                                                </lightning-formatted-number>
+                                                            </div>
+                                                        </template>
+                                                        <template if:true={creditorOpportunity.weeklyPayment}>
+                                                            <div class="slds-col">
+                                                                <span class="detail-label">Weekly Payment:</span> 
+                                                                <lightning-formatted-number 
+                                                                    value={creditorOpportunity.weeklyPayment} 
+                                                                    format-style="currency" 
+                                                                    currency-code="USD">
+                                                                </lightning-formatted-number>
+                                                            </div>
+                                                        </template>
+                                                        <template if:true={creditorOpportunity.frequency}>
+                                                            <div class="slds-col">
+                                                                <span class="detail-label">Frequency:</span> {creditorOpportunity.frequency}
+                                                            </div>
+                                                        </template>
+                                                        <template if:true={creditorOpportunity.opportunityNumber}>
+                                                            <div class="slds-col">
+                                                                <span class="detail-label">Number:</span> {creditorOpportunity.opportunityNumber}
+                                                            </div>
+                                                        </template>
+                                                        <template if:true={creditorOpportunity.readyForLegal}>
+                                                            <div class="slds-col">
+                                                                <span class="detail-label">Ready for Legal:</span> 
+                                                                <lightning-icon icon-name="utility:check" size="xx-small" class="slds-text-color_success"></lightning-icon>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="slds-no-flex">
+                                                <span class="slds-badge slds-badge_lightest">
+                                                    {creditorOpportunity.negotiationsCount} Negotiations
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Negotiations -->
+                                        <template if:true={isCreditorListExpanded} data-creditor-list-id={creditorOpportunity.id}>
+                                            <div class="negotiations-container slds-m-left_large slds-m-top_small">
+                                                
+                                                <template if:true={creditorOpportunity.negotiations}>
+                                                    <template for:each={creditorOpportunity.negotiations} for:item="negotiation">
+                                                        <div key={negotiation.id} class="negotiation-item slds-box slds-box_x-small slds-m-bottom_x-small">
+                                                            <div class="slds-grid slds-grid_align-spread">
+                                                                <div class="slds-media slds-media_center">
+                                                                    <div class="slds-media__figure">
+                                                                        <lightning-icon icon-name="standard:contract" size="x-small"></lightning-icon>
+                                                                    </div>
+                                                                    <div class="slds-media__body">
+                                                                        <h5 class="slds-text-body_regular">
+                                                                            <a data-record-id={negotiation.id} 
+                                                                               data-record-type="Negotiation__c" 
+                                                                               onclick={navigateToRecord}
+                                                                               class="record-link">
+                                                                                {negotiation.name}
+                                                                            </a>
+                                                                        </h5>
+                                                                        <div class="slds-grid slds-gutters_small negotiation-details">
+                                                                            <template if:true={negotiation.settlementOfferAmount}>
+                                                                                <div class="slds-col">
+                                                                                    <span class="detail-label">Settlement Offer:</span> 
+                                                                                    <lightning-formatted-number 
+                                                                                        value={negotiation.settlementOfferAmount} 
+                                                                                        format-style="currency" 
+                                                                                        currency-code="USD">
+                                                                                    </lightning-formatted-number>
+                                                                                </div>
+                                                                            </template>
+                                                                            <template if:true={negotiation.finalAgreedAmount}>
+                                                                                <div class="slds-col">
+                                                                                    <span class="detail-label">Final Amount:</span> 
+                                                                                    <lightning-formatted-number 
+                                                                                        value={negotiation.finalAgreedAmount} 
+                                                                                        format-style="currency" 
+                                                                                        currency-code="USD">
+                                                                                    </lightning-formatted-number>
+                                                                                </div>
+                                                                            </template>
+                                                                            <template if:true={negotiation.paymentDueDate}>
+                                                                                <div class="slds-col">
+                                                                                    <span class="detail-label">Due Date:</span> 
+                                                                                    {negotiation.paymentDueDate}
+                                                                                </div>
+                                                                            </template>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="slds-no-flex">
+                                                                    <span class={negotiation.statusColor} data-status-color={negotiation.statusColor}>
+                                                                        {negotiation.negotiationStatus}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                </template>
+                                                
+                                                <template if:false={creditorOpportunity.negotiations}>
+                                                    <div class="slds-text-align_center slds-p-vertical_small">
+                                                        <span class="slds-text-color_weak">No negotiations found</span>
+                                                    </div>
+                                                </template>
+                                                
+                                            </div>
+                                        </template>
+                                        
+                                    </div>
+                                </template>
+                                
+                            </div>
+                        </template>
+                        
+                    </div>
+                </template>
+                
+            </div>
+        </template>
+
+    </div>
+</template>

@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Plan Editor - Functional User Story</title>
+    <style>
+        :root {
+            --primary: #0176d3;
+            --primary-dark: #014486;
+            --success: #2e844a;
+            --warning: #dd7a01;
+            --error: #c23934;
+            --info: #16325c;
+            --gray-100: #f3f3f3;
+            --gray-200: #e5e5e5;
+            --gray-600: #514f4d;
+            --gray-800: #2b2826;
+            --cleared-bg: #c6f6d5;
+            --nsf-bg: #fed7d7;
+            --cancelled-bg: #fefcbf;
+            --scheduled-bg: #bee3f8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Salesforce Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.7;
+            color: var(--gray-800);
+            background: var(--gray-100);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #2e844a 0%, #45c65a 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        header p { font-size: 1.2rem; opacity: 0.9; }
+
+        .badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 15px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 35px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+
+        .section h2 {
+            color: var(--primary-dark);
+            border-left: 4px solid var(--primary);
+            padding-left: 15px;
+            margin-bottom: 25px;
+            font-size: 1.5rem;
+        }
+
+        .section h3 {
+            color: var(--gray-600);
+            margin: 25px 0 15px 0;
+            font-size: 1.2rem;
+        }
+
+        .user-story-box {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+
+        .user-story-box h3 {
+            color: var(--primary-dark);
+            margin-top: 0;
+            font-size: 1.3rem;
+        }
+
+        .user-story-box p {
+            font-size: 1.1rem;
+            margin: 10px 0;
+        }
+
+        .user-story-box strong {
+            color: var(--primary);
+        }
+
+        .acceptance-criteria {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .acceptance-criteria h4 {
+            color: var(--success);
+            margin-bottom: 15px;
+        }
+
+        .acceptance-criteria ul {
+            list-style: none;
+        }
+
+        .acceptance-criteria li {
+            padding: 8px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .acceptance-criteria li::before {
+            content: "\\2713";
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .feature-card {
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            padding: 25px;
+            margin: 20px 0;
+            transition: box-shadow 0.2s;
+        }
+
+        .feature-card:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .feature-card h4 {
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .icon-blue { background: #dbeafe; }
+        .icon-green { background: #dcfce7; }
+        .icon-yellow { background: #fef3c7; }
+        .icon-purple { background: #f3e8ff; }
+        .icon-orange { background: #ffedd5; }
+        .icon-red { background: #fee2e2; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        th, td {
+            border: 1px solid var(--gray-200);
+            padding: 14px;
+            text-align: left;
+        }
+
+        th {
+            background: var(--gray-100);
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-scheduled { background: var(--scheduled-bg); color: #1e40af; }
+        .status-cleared { background: var(--cleared-bg); color: #166534; }
+        .status-nsf { background: var(--nsf-bg); color: #991b1b; }
+        .status-cancelled { background: var(--cancelled-bg); color: #92400e; }
+
+        .workflow-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .workflow-step:last-child { border-bottom: none; }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .step-content h4 {
+            color: var(--gray-800);
+            margin-bottom: 8px;
+        }
+
+        .button-demo {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin: 5px;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-danger { background: var(--error); color: white; }
+        .btn-neutral { background: var(--gray-200); color: var(--gray-800); }
+
+        .persona-box {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .persona-icon {
+            font-size: 3rem;
+        }
+
+        .toc {
+            background: #f8fafc;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .toc h3 { margin-bottom: 15px; }
+
+        .toc ul {
+            list-style: none;
+            columns: 2;
+        }
+
+        .toc li { margin: 10px 0; }
+
+        .toc a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .toc a:hover { text-decoration: underline; }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray-600);
+        }
+
+        .highlight-box {
+            background: #fef3c7;
+            border-left: 4px solid var(--warning);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Payment Plan Editor</h1>
+        <p>Functional User Story &amp; Requirements</p>
+        <span class="badge">Epic: Payment Schedule Management</span>
+    </header>
+
+    <div class="container">
+        <!-- Table of Contents -->
+        <div class="toc">
+            <h3>Contents</h3>
+            <ul>
+                <li><a href="#epic">1. Epic Overview</a></li>
+                <li><a href="#personas">2. User Personas</a></li>
+                <li><a href="#stories">3. User Stories</a></li>
+                <li><a href="#features">4. Feature Details</a></li>
+                <li><a href="#workflows">5. Key Workflows</a></li>
+                <li><a href="#statuses">6. Payment Statuses</a></li>
+                <li><a href="#buttons">7. Action Buttons</a></li>
+                <li><a href="#business-rules">8. Business Rules</a></li>
+            </ul>
+        </div>
+
+        <!-- Section 1: Epic Overview -->
+        <section class="section" id="epic">
+            <h2>1. Epic Overview</h2>
+
+            <div class="user-story-box">
+                <h3>Epic: Payment Schedule Management</h3>
+                <p><strong>As a</strong> Debt Settlement Operations Team Member,</p>
+                <p><strong>I want</strong> a comprehensive tool to create, view, edit, and manage payment schedules for enrolled clients,</p>
+                <p><strong>So that</strong> I can efficiently track payment progress, make adjustments when needed, and maintain accurate financial records throughout the client's program.</p>
+            </div>
+
+            <h3>Business Context</h3>
+            <p>The Payment Plan Editor is a critical component of the debt settlement workflow. When a client enrolls in a debt settlement program, a payment schedule is created based on their financial situation. This schedule determines:</p>
+            <ul style="margin: 15px 0; padding-left: 30px;">
+                <li>Weekly payment amounts (draft amounts)</li>
+                <li>Fee breakdown (banking fees, program fees, setup fees)</li>
+                <li>Savings accumulation over time (escrow balance)</li>
+                <li>Payment dates and status tracking</li>
+            </ul>
+
+            <h3>Key Business Objectives</h3>
+            <table>
+                <tr>
+                    <th>Objective</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>Accuracy</td>
+                    <td>Ensure payment schedules are calculated correctly based on program parameters</td>
+                </tr>
+                <tr>
+                    <td>Flexibility</td>
+                    <td>Allow adjustments to schedules as client circumstances change</td>
+                </tr>
+                <tr>
+                    <td>Auditability</td>
+                    <td>Maintain version history of all changes for compliance</td>
+                </tr>
+                <tr>
+                    <td>Efficiency</td>
+                    <td>Provide intuitive tools for quick edits and bulk operations</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Section 2: User Personas -->
+        <section class="section" id="personas">
+            <h2>2. User Personas</h2>
+
+            <div class="persona-box">
+                <div class="persona-icon">&#128100;</div>
+                <div>
+                    <h4>Operations Specialist</h4>
+                    <p>Primary user who manages day-to-day payment schedules. Needs to quickly view payment status, make adjustments for NSF situations, and ensure schedules align with client agreements.</p>
+                </div>
+            </div>
+
+            <div class="persona-box">
+                <div class="persona-icon">&#128101;</div>
+                <div>
+                    <h4>Client Services Representative</h4>
+                    <p>Reviews payment schedules with clients, explains fee breakdowns, and coordinates changes requested by clients (payment amount changes, date adjustments).</p>
+                </div>
+            </div>
+
+            <div class="persona-box">
+                <div class="persona-icon">&#128188;</div>
+                <div>
+                    <h4>Finance Manager</h4>
+                    <p>Oversees payment operations, reviews suspended plans, approves major schedule changes, and monitors overall program performance.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: User Stories -->
+        <section class="section" id="stories">
+            <h2>3. User Stories</h2>
+
+            <!-- Story 1 -->
+            <div class="user-story-box">
+                <h3>US-001: View Payment Schedule</h3>
+                <p><strong>As a</strong> Operations Specialist,</p>
+                <p><strong>I want</strong> to view the complete payment schedule for a client,</p>
+                <p><strong>So that</strong> I can understand their payment history and upcoming drafts.</p>
+            </div>
+            <div class="acceptance-criteria">
+                <h4>Acceptance Criteria</h4>
+                <ul>
+                    <li>Schedule displays in a table format with all payment details</li>
+                    <li>Each row shows: Date, Draft Amount, Fees (Setup, Program, Banking), Savings Balance, Status</li>
+                    <li>Rows are color-coded by status (Scheduled=Blue, Cleared=Green, NSF=Red, Cancelled=Yellow)</li>
+                    <li>Pagination available for schedules with more than 50 payments</li>
+                    <li>Aggregate totals displayed at the bottom of the table</li>
+                </ul>
+            </div>
+
+            <!-- Story 2 -->
+            <div class="user-story-box">
+                <h3>US-002: Switch Between Plan Versions</h3>
+                <p><strong>As a</strong> Operations Specialist,</p>
+                <p><strong>I want</strong> to switch between different versions of a payment plan,</p>
+                <p><strong>So that</strong> I can compare changes and review history.</p>
+            </div>
+            <div class="acceptance-criteria">
+                <h4>Acceptance Criteria</h4>
+                <ul>
+                    <li>Version dropdown shows all Active and Draft plans</li>
+                    <li>Each version displays version number and status (v1 Active, v2 Draft)</li>
+                    <li>Selecting a version loads its schedule data</li>
+                    <li>Active version is auto-selected on initial load</li>
+                    <li>Modified rows (compared to previous version) are marked with a star indicator</li>
+                </ul>
+            </div>
+
+            <!-- Story 3 -->
+            <div class="user-story-box">
+                <h3>US-003: Edit Payment Schedule (Manual Mode)</h3>
+                <p><strong>As a</strong> Operations Specialist,</p>
+                <p><strong>I want</strong> to manually edit individual payments in the schedule,</p>
+                <p><strong>So that</strong> I can make specific adjustments without recalculating the entire plan.</p>
+            </div>
+            <div class="acceptance-criteria">
+                <h4>Acceptance Criteria</h4>
+                <ul>
+                    <li>Clicking "Manual" button creates a new Draft version and enables edit mode</li>
+                    <li>Only rows with "Scheduled" status are editable</li>
+                    <li>Editable fields: Date, Draft Amount, Setup Fee, Program Fee, Banking Fee</li>
+                    <li>Savings Balance recalculates in real-time as fees are edited</li>
+                    <li>Changes can be saved or cancelled</li>
+                    <li>Pending tab shows unsaved changes</li>
+                </ul>
+            </div>
+
+            <!-- Story 4 -->
+            <div class="user-story-box">
+                <h3>US-004: Recalculate Payment Plan</h3>
+                <p><strong>As a</strong> Operations Specialist,</p>
+                <p><strong>I want</strong> to recalculate the payment schedule from the Opportunity data,</p>
+                <p><strong>So that</strong> changes to the enrollment (debt amount, payment amount) are reflected.</p>
+            </div>
+            <div class="acceptance-criteria">
+                <h4>Acceptance Criteria</h4>
+                <ul>
+                    <li>Clicking "Recalculate" creates a new Draft version with recalculated values</li>
+                    <li>Non-scheduled items (Cleared, NSF, Cancelled) are preserved from previous version</li>
+                    <li>Program fee cap is reduced by already-collected program fees</li>
+                    <li>New scheduled items continue from where non-scheduled items end</li>
+                    <li>Running savings balance continues from last non-scheduled row</li>
+                </ul>
+            </div>
+
+            <!-- Story 5 -->
+            <div class="user-story-box">
+                <h3>US-005: Suspend Payment Plan</h3>
+                <p><strong>As a</strong> Finance Manager,</p>
+                <p><strong>I want</strong> to suspend all future payments for a client,</p>
+                <p><strong>So that</strong> no more drafts are processed while issues are resolved.</p>
+            </div>
+            <div class="acceptance-criteria">
+                <h4>Acceptance Criteria</h4>
+                <ul>
+                    <li>Clicking "Suspend" creates a new Draft version</li>
+                    <li>All "Scheduled" items are changed to "Cancelled"</li>
+                    <li>Previously cleared/NSF items remain unchanged</li>
+                    <li>Plan must be activated to take effect</li>
+                </ul>
+            </div>
+
+            <!-- Story 6 -->
+            <div class="user-story-box">
+                <h3>US-006: Activate Payment Plan</h3>
+                <p><strong>As a</strong> Operations Specialist,</p>
+                <p><strong>I want</strong> to activate a Draft payment plan,</p>
+                <p><strong>So that</strong> the changes become the official schedule.</p>
+            </div>
+            <div class="acceptance-criteria">
+                <h4>Acceptance Criteria</h4>
+                <ul>
+                    <li>Only Draft plans can be activated</li>
+                    <li>Activating archives the previous Active version</li>
+                    <li>The activated plan becomes the new Active version</li>
+                    <li>Confetti animation celebrates successful activation</li>
+                    <li>Version dropdown updates to show new status</li>
+                </ul>
+            </div>
+
+            <!-- Story 7 -->
+            <div class="user-story-box">
+                <h3>US-007: Add/Delete Payment Rows</h3>
+                <p><strong>As a</strong> Operations Specialist,</p>
+                <p><strong>I want</strong> to add or remove payments from the schedule,</p>
+                <p><strong>So that</strong> I can extend or shorten the program as needed.</p>
+            </div>
+            <div class="acceptance-criteria">
+                <h4>Acceptance Criteria</h4>
+                <ul>
+                    <li>"+ Add Draft Payment" button adds a new row at the end</li>
+                    <li>New row inherits default values (banking fee from CMDT, scheduled status)</li>
+                    <li>Delete button available on each row in edit mode</li>
+                    <li>Only Scheduled rows can be deleted</li>
+                    <li>Confirmation required for delete operations</li>
+                </ul>
+            </div>
+
+            <!-- Story 8 -->
+            <div class="user-story-box">
+                <h3>US-008: Fill Handle (Bulk Copy)</h3>
+                <p><strong>As a</strong> Operations Specialist,</p>
+                <p><strong>I want</strong> to quickly copy a value to multiple cells,</p>
+                <p><strong>So that</strong> I can efficiently update many payments at once.</p>
+            </div>
+            <div class="acceptance-criteria">
+                <h4>Acceptance Criteria</h4>
+                <ul>
+                    <li>Clicking a cell selects it with a blue border</li>
+                    <li>A small fill handle appears at the bottom-right corner</li>
+                    <li>Dragging the handle up or down selects target cells</li>
+                    <li>Releasing the mouse copies the source value to all target cells</li>
+                    <li>Toast message confirms number of cells filled</li>
+                </ul>
+            </div>
+
+            <!-- Story 9 -->
+            <div class="user-story-box">
+                <h3>US-009: View Wired Payments</h3>
+                <p><strong>As a</strong> Operations Specialist,</p>
+                <p><strong>I want</strong> to see wired payments associated with schedule items,</p>
+                <p><strong>So that</strong> I can track additional payments received.</p>
+            </div>
+            <div class="acceptance-criteria">
+                <h4>Acceptance Criteria</h4>
+                <ul>
+                    <li>Wire button appears on each row</li>
+                    <li>Hovering shows popover with linked wired payments</li>
+                    <li>Popover displays: Date, Amount, Description for each wire</li>
+                    <li>Clicking wire button opens modal to add new wired payment</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 4: Feature Details -->
+        <section class="section" id="features">
+            <h2>4. Feature Details</h2>
+
+            <div class="feature-card">
+                <h4><span class="feature-icon icon-blue">&#128196;</span> Version Control System</h4>
+                <p>Every change creates a new version of the payment plan. This provides a complete audit trail and allows comparison between versions. The system maintains three statuses:</p>
+                <ul style="margin-top: 10px; padding-left: 20px;">
+                    <li><strong>Draft</strong> - Pending changes not yet active</li>
+                    <li><strong>Active</strong> - The current official schedule</li>
+                    <li><strong>Archived</strong> - Historical versions for reference</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h4><span class="feature-icon icon-green">&#9989;</span> Smart Recalculation</h4>
+                <p>When recalculating, the system intelligently preserves payment history:</p>
+                <ul style="margin-top: 10px; padding-left: 20px;">
+                    <li>Cleared payments are preserved (cannot be undone)</li>
+                    <li>NSF payments are preserved (for tracking purposes)</li>
+                    <li>Cancelled payments are preserved</li>
+                    <li>Only Scheduled (future) payments are recalculated</li>
+                    <li>Running balances continue from the last processed payment</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h4><span class="feature-icon icon-yellow">&#128221;</span> Live Savings Calculation</h4>
+                <p>As you edit fee amounts, the Savings Balance column updates in real-time. The formula is:</p>
+                <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-top: 10px; font-family: monospace;">
+                    Savings = Draft Amount - Banking Fee - Program Fee - Setup Fee
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <h4><span class="feature-icon icon-purple">&#128257;</span> Fill Handle</h4>
+                <p>Excel-like functionality for copying values:</p>
+                <ol style="margin-top: 10px; padding-left: 20px;">
+                    <li>Click a cell to select it</li>
+                    <li>Drag the small square handle at the bottom-right</li>
+                    <li>Release to copy the value to all highlighted cells</li>
+                </ol>
+            </div>
+
+            <div class="feature-card">
+                <h4><span class="feature-icon icon-orange">&#128181;</span> Wired Payments Integration</h4>
+                <p>Track additional payments received outside the regular draft schedule. Hover over the wire button to see a popover with all linked payments including dates, amounts, and descriptions.</p>
+            </div>
+
+            <div class="feature-card">
+                <h4><span class="feature-icon icon-blue">&#128260;</span> Pagination</h4>
+                <p>Schedules are paginated at 50 items per page for performance. Navigation controls at the bottom allow moving between pages. Aggregate totals reflect the entire plan, not just the current page.</p>
+            </div>
+        </section>
+
+        <!-- Section 5: Key Workflows -->
+        <section class="section" id="workflows">
+            <h2>5. Key Workflows</h2>
+
+            <h3>Workflow A: Modify a Payment Amount</h3>
+            <div class="workflow-step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>Click "Manual" Button</h4>
+                    <p>This creates a new Draft version and enables edit mode. You'll be switched to the Pending tab.</p>
+                </div>
+            </div>
+            <div class="workflow-step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>Find the Row to Edit</h4>
+                    <p>Locate the Scheduled payment you want to modify. Use pagination if needed.</p>
+                </div>
+            </div>
+            <div class="workflow-step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4>Edit the Value</h4>
+                    <p>Click the Draft Amount cell and type the new value. Watch the Savings column update live.</p>
+                </div>
+            </div>
+            <div class="workflow-step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h4>Save Changes</h4>
+                    <p>Click "Save" to save your changes to the Draft version.</p>
+                </div>
+            </div>
+            <div class="workflow-step">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <h4>Activate the Plan</h4>
+                    <p>Click "Activate" to make the Draft the new Active plan. Celebrate with confetti!</p>
+                </div>
+            </div>
+
+            <h3>Workflow B: Handle NSF and Recalculate</h3>
+            <div class="workflow-step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>Mark Payment as NSF</h4>
+                    <p>Click "Manual", change the Status dropdown from "Scheduled" to "NSF", and Save.</p>
+                </div>
+            </div>
+            <div class="workflow-step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>Click "Recalculate"</h4>
+                    <p>This creates a new Draft that preserves the NSF payment and recalculates remaining schedule.</p>
+                </div>
+            </div>
+            <div class="workflow-step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4>Review the New Schedule</h4>
+                    <p>Verify the NSF row is preserved and scheduled payments are recalculated correctly.</p>
+                </div>
+            </div>
+            <div class="workflow-step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h4>Activate</h4>
+                    <p>Click "Activate" to make the recalculated plan official.</p>
+                </div>
+            </div>
+
+            <h3>Workflow C: Suspend All Payments</h3>
+            <div class="workflow-step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>Click "Suspend"</h4>
+                    <p>This creates a new Draft where all Scheduled items become Cancelled.</p>
+                </div>
+            </div>
+            <div class="workflow-step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>Review the Changes</h4>
+                    <p>Verify that Cleared/NSF items remain unchanged and only future payments are cancelled.</p>
+                </div>
+            </div>
+            <div class="workflow-step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4>Activate to Confirm</h4>
+                    <p>Click "Activate" to make the suspension official. No more drafts will process.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: Payment Statuses -->
+        <section class="section" id="statuses">
+            <h2>6. Payment Statuses</h2>
+
+            <table>
+                <tr>
+                    <th>Status</th>
+                    <th>Color</th>
+                    <th>Editable?</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><span class="status-badge status-scheduled">Scheduled</span></td>
+                    <td>Blue</td>
+                    <td>Yes</td>
+                    <td>Future payment pending draft. Can be edited, deleted, or recalculated.</td>
+                </tr>
+                <tr>
+                    <td><span class="status-badge status-cleared">Cleared</span></td>
+                    <td>Green</td>
+                    <td>No</td>
+                    <td>Payment successfully processed. Preserved during recalculation.</td>
+                </tr>
+                <tr>
+                    <td><span class="status-badge status-nsf">NSF</span></td>
+                    <td>Red</td>
+                    <td>No</td>
+                    <td>Non-Sufficient Funds. Payment failed. Preserved during recalculation.</td>
+                </tr>
+                <tr>
+                    <td><span class="status-badge status-cancelled">Cancelled</span></td>
+                    <td>Yellow</td>
+                    <td>No</td>
+                    <td>Payment cancelled. Created by Suspend action or manual change.</td>
+                </tr>
+            </table>
+
+            <div class="highlight-box">
+                <strong>Important:</strong> Only "Scheduled" payments can be edited. Once a payment is Cleared, NSF, or Cancelled, it becomes read-only to maintain data integrity.
+            </div>
+        </section>
+
+        <!-- Section 7: Action Buttons -->
+        <section class="section" id="buttons">
+            <h2>7. Action Buttons</h2>
+
+            <table>
+                <tr>
+                    <th>Button</th>
+                    <th>Action</th>
+                    <th>When to Use</th>
+                </tr>
+                <tr>
+                    <td><span class="button-demo btn-neutral">Recalculate</span></td>
+                    <td>Creates a new Draft version recalculated from Opportunity data</td>
+                    <td>When enrollment details change (debt amount, payment amount)</td>
+                </tr>
+                <tr>
+                    <td><span class="button-demo btn-primary">Manual</span></td>
+                    <td>Creates a new Draft version for manual editing</td>
+                    <td>When you need to make specific edits to individual payments</td>
+                </tr>
+                <tr>
+                    <td><span class="button-demo btn-warning">Suspend</span></td>
+                    <td>Creates a Draft where all Scheduled items become Cancelled</td>
+                    <td>When client needs to pause all future payments</td>
+                </tr>
+                <tr>
+                    <td><span class="button-demo btn-success">Activate</span></td>
+                    <td>Activates the Draft plan, archiving the previous Active</td>
+                    <td>When changes are reviewed and ready to become official</td>
+                </tr>
+                <tr>
+                    <td><span class="button-demo btn-primary">Save</span></td>
+                    <td>Saves pending changes to the Draft version</td>
+                    <td>After making edits in Manual mode</td>
+                </tr>
+                <tr>
+                    <td><span class="button-demo btn-neutral">Cancel</span></td>
+                    <td>Discards pending changes and exits edit mode</td>
+                    <td>When you want to abandon changes</td>
+                </tr>
+                <tr>
+                    <td><span class="button-demo btn-success">+ Add Draft Payment</span></td>
+                    <td>Adds a new blank payment row</td>
+                    <td>When extending the program with additional payments</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Section 8: Business Rules -->
+        <section class="section" id="business-rules">
+            <h2>8. Business Rules</h2>
+
+            <h3>Fee Calculation Rules</h3>
+            <table>
+                <tr>
+                    <th>Rule</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>Banking Fee</td>
+                    <td>Flat fee per payment (default $35.00 from CMDT)</td>
+                </tr>
+                <tr>
+                    <td>Setup Fee</td>
+                    <td>Total divided by Setup Fee Payments (default 10 payments from CMDT)</td>
+                </tr>
+                <tr>
+                    <td>Program Fee</td>
+                    <td>Calculated from net amount using split ratio, capped at total program fee</td>
+                </tr>
+                <tr>
+                    <td>Savings Balance</td>
+                    <td>Draft Amount - Banking Fee - Program Fee - Setup Fee (running total)</td>
+                </tr>
+            </table>
+
+            <h3>Version Management Rules</h3>
+            <ul style="padding-left: 30px; margin: 15px 0;">
+                <li>Only one Active version can exist at a time</li>
+                <li>Multiple Draft versions are not allowed (must activate or discard current Draft)</li>
+                <li>Activating a Draft archives the previous Active version</li>
+                <li>Archived versions are read-only for historical reference</li>
+                <li>Each new version increments the version number (v1, v2, v3...)</li>
+            </ul>
+
+            <h3>Data Preservation Rules</h3>
+            <ul style="padding-left: 30px; margin: 15px 0;">
+                <li>Cleared payments are never modified during recalculation</li>
+                <li>NSF payments are preserved for tracking failed attempts</li>
+                <li>Cancelled payments are preserved for audit purposes</li>
+                <li>Program fee cap is reduced by already-collected program fees</li>
+                <li>Running balance continues from last non-scheduled payment</li>
+            </ul>
+
+            <h3>Validation Rules</h3>
+            <ul style="padding-left: 30px; margin: 15px 0;">
+                <li>Currency values must be between -99,999,999.99 and 99,999,999.99</li>
+                <li>Payment dates must be within 10 years of today</li>
+                <li>Status changes only allowed to valid picklist values</li>
+                <li>Only Scheduled rows can be edited or deleted</li>
+            </ul>
+        </section>
+    </div>
+
+    <footer>
+        <p>Payment Plan Editor - Functional User Story v2.0</p>
+        <p>Generated: January 2026</p>
+    </footer>
+</body>
+</html>

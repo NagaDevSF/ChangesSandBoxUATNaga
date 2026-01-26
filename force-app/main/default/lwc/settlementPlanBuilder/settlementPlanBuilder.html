@@ -1,0 +1,498 @@
+<template>
+    <lightning-card title="Settlement Plan Builder" icon-name="standard:contract">
+        <!-- Loading Spinner -->
+        <template lwc:if={isLoading}>
+            <div class="slds-spinner_container slds-is-relative" style="min-height: 200px;">
+                <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Error Alert -->
+        <template lwc:if={error}>
+            <div class="slds-notify slds-notify_alert slds-alert_error slds-m-around_medium" role="alert">
+                <span class="slds-assistive-text">error</span>
+                <h2>{error.message}</h2>
+            </div>
+        </template>
+
+        <!-- Main Content (only show when not loading) -->
+        <template lwc:if={isInitialized}>
+            <div class="slds-p-around_medium">
+                
+                <!-- Draft Tabs with + Button -->
+                <div class="slds-tabs_default">
+                    <ul class="slds-tabs_default__nav" role="tablist">
+                        <template for:each={draftTabs} for:item="tab">
+                            <li key={tab.id}
+                                class={tab.tabClass}
+                                role="presentation"
+                                data-id={tab.id}
+                                onclick={handleDraftTabClick}>
+                                <a class="slds-tabs_default__link"
+                                   role="tab"
+                                   aria-selected={tab.isSelected}>
+                                    <template lwc:if={tab.statusIcon}>
+                                        <lightning-icon icon-name={tab.statusIcon}
+                                                        size="x-small"
+                                                        class="slds-m-right_xx-small"></lightning-icon>
+                                    </template>
+                                    {tab.label}
+                                    <template lwc:if={tab.isUnsaved}>
+                                        <span class="slds-badge slds-badge_warning slds-m-left_xx-small">Unsaved</span>
+                                    </template>
+                                    <template lwc:if={tab.isSuspended}>
+                                        <span class="slds-badge slds-badge_warning slds-m-left_xx-small">Suspended</span>
+                                    </template>
+                                    <template lwc:if={tab.isApplied}>
+                                        <span class="slds-badge slds-badge_inverse slds-m-left_xx-small">Applied</span>
+                                    </template>
+                                    <template lwc:if={tab.isArchived}>
+                                        <span class="slds-badge slds-m-left_xx-small">Archived</span>
+                                    </template>
+                                </a>
+                            </li>
+                        </template>
+                        <!-- + Button for New Draft -->
+                        <li class="slds-tabs_default__item" role="presentation">
+                            <a class="slds-tabs_default__link" role="tab" onclick={handleNewDraftClick}
+                               title="Create new draft with today's date"
+                               aria-label="Create new draft">
+                                <lightning-icon icon-name="utility:add" size="x-small" alternative-text="Add"></lightning-icon>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Draft Content -->
+                <template lwc:if={currentDraft}>
+                    <div class="slds-tabs_default__content slds-show slds-m-top_medium">
+                        
+                        <!-- Header: Status Badge, Draft Name, Action Buttons -->
+                        <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-bottom_medium slds-wrap">
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                                <span class={statusBadgeClass}>{currentDraft.Status__c}</span>
+                                <template lwc:if={isNewUnsavedDraft}>
+                                    <span class="slds-badge slds-badge_warning slds-m-left_x-small">Unsaved</span>
+                                </template>
+                                <template lwc:if={isReadOnly}>
+                                    <span class="slds-text-body_small slds-text-color_weak slds-m-left_small">
+                                        (Read-only - Update to edit)
+                                    </span>
+                                </template>
+                                <lightning-input type="text"
+                                                 label="Draft Name"
+                                                 value={currentDraft.Name}
+                                                 onchange={handleNameChange}
+                                                 disabled={isReadOnly}
+                                                 variant="label-hidden"
+                                                 class="slds-m-left_small draft-name-inline"
+                                                 style="display: inline-block; width: 200px;">
+                                </lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-text-align_right">
+                                <lightning-button-group>
+                                    <lightning-button label="Save"
+                                                      onclick={handleSaveDraft}
+                                                      disabled={cannotSave}
+                                                      icon-name="utility:save"
+                                                      title={saveButtonTooltip}>
+                                    </lightning-button>
+                                    <lightning-button label="Update"
+                                                      onclick={handleCloneDraft}
+                                                      disabled={cannotClone}
+                                                      icon-name="utility:copy">
+                                    </lightning-button>
+                                    <lightning-button label="Delete"
+                                                      onclick={handleDeleteDraft}
+                                                      disabled={cannotDelete}
+                                                      icon-name="utility:delete">
+                                    </lightning-button>
+                                </lightning-button-group>
+                                <lightning-button label="Activate Plan"
+                                                  variant="brand"
+                                                  onclick={handleActivate}
+                                                  disabled={cannotActivate}
+                                                  icon-name="utility:check"
+                                                  class="slds-m-left_small">
+                                </lightning-button>
+                            </div>
+                        </div>
+
+                        <!-- Collapsible Settlement Details & Payment Segments -->
+                        <lightning-accordion
+                            active-section-name={activeSections}
+                            allow-multiple-sections-open
+                            onsectiontoggle={handleSectionToggle}
+                            class="slds-m-bottom_medium">
+
+                            <!-- Settlement Details Section -->
+                            <lightning-accordion-section name="settlement-details" label="Settlement Details">
+                                <div class="slds-grid slds-gutters slds-wrap">
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-p-bottom_small">
+                                        <lightning-input type="text"
+                                                         label="Balance"
+                                                         data-field="Balance__c"
+                                                         value={currentDraft.Balance__c}
+                                                         onchange={handleInputChange}
+                                                         disabled={isReadOnly}
+                                                         pattern="[0-9]*\.?[0-9]*"
+                                                         placeholder="Enter amount">
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-p-bottom_small">
+                                        <lightning-input type="text"
+                                                         label="Original Settlement Offer"
+                                                         data-field="Settlement_Offer_Amount__c"
+                                                         value={currentDraft.Settlement_Offer_Amount__c}
+                                                         onchange={handleInputChange}
+                                                         disabled={isReadOnly}
+                                                         pattern="[0-9]*\.?[0-9]*"
+                                                         placeholder="Enter amount"
+                                                         required>
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-p-bottom_small">
+                                        <lightning-input type="number"
+                                                         label="Revised Settlement Amount"
+                                                         data-field="Revised_Settlement_Amount__c"
+                                                         value={currentDraft.Revised_Settlement_Amount__c}
+                                                         onchange={handleInputChange}
+                                                         disabled={isReadOnly}
+                                                         formatter="currency"
+                                                         step="0.01"
+                                                         placeholder="Leave blank if unchanged"
+                                                         field-level-help="Enter updated amount if creditor added penalties/fees after payments started">
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-p-bottom_small">
+                                        <lightning-input type="number"
+                                                         label="Commission Fee"
+                                                         data-field="Commission_Fee__c"
+                                                         value={currentDraft.Commission_Fee__c}
+                                                         onchange={handleInputChange}
+                                                         disabled={isReadOnly}
+                                                         formatter="currency"
+                                                         step="0.01"
+                                                         placeholder="e.g. 35"
+                                                         required>
+                                        </lightning-input>
+                                    </div>
+                                </div>
+                            </lightning-accordion-section>
+
+                            <!-- Payment Segments Section -->
+                            <lightning-accordion-section name="payment-segments" label="Payment Segments">
+                                <template lwc:if={hasSegments}>
+                                    <div class="slds-m-bottom_small">
+                                        <span class="slds-badge slds-badge_lightest">
+                                            {segments.length} segment(s)
+                                        </span>
+                                    </div>
+                                </template>
+                                <c-segment-builder
+                                    segments={segments}
+                                    is-read-only={isReadOnly}
+                                    frequency-options={frequencyOptions}
+                                    segment-type-options={segmentTypeOptions}
+                                    onsegmentchange={handleSegmentChange}
+                                    onsegmenterror={handleSegmentError}>
+                                </c-segment-builder>
+
+                                <!-- Calculate Button - inside accordion so it hides when collapsed -->
+                                <div class="slds-m-top_medium slds-text-align_center">
+                                    <lightning-button label="Calculate Items"
+                                                      variant="brand"
+                                                      onclick={handleCalculate}
+                                                      disabled={isReadOnly}
+                                                      icon-name="utility:preview">
+                                    </lightning-button>
+                                </div>
+                            </lightning-accordion-section>
+                        </lightning-accordion>
+
+                        <!-- Summary Section (shows when payment items exist) -->
+                        <template lwc:if={hasPaymentItems}>
+                            <div class={summaryBoxClass}>
+                                <div class="slds-grid slds-grid_align-spread slds-wrap">
+                                    <!-- Funding Status Indicator -->
+                                    <div class="slds-col slds-size_1-of-1 slds-p-bottom_small">
+                                        <div class={fundingStatusClass}>
+                                            <lightning-icon icon-name={fundingStatusIcon} size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                            <span class="slds-text-title_bold">{fundingStatusMessage}</span>
+                                        </div>
+                                    </div>
+                                    <!-- Summary Stats -->
+                                    <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 slds-p-around_x-small slds-text-align_center">
+                                        <span class="slds-text-title_caps">Total Paid</span>
+                                        <p class="slds-text-heading_medium summary-value-success">{formattedTotalPaidAmount}</p>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 slds-p-around_x-small slds-text-align_center">
+                                        <span class="slds-text-title_caps">Total Scheduled</span>
+                                        <p class="slds-text-heading_medium">{formattedTotalScheduledAmount}</p>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 slds-p-around_x-small slds-text-align_center">
+                                        <span class="slds-text-title_caps">Current Balance</span>
+                                        <p class={currentBalanceClass}>{formattedCurrentBalance}</p>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 slds-p-around_x-small slds-text-align_center">
+                                        <span class="slds-text-title_caps">Settlement Offer</span>
+                                        <p class="slds-text-heading_medium">{formattedOriginalOfferAmount}</p>
+                                    </div>
+                                    <template lwc:if={shouldShowOfferAmount}>
+                                        <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 slds-p-around_x-small slds-text-align_center">
+                                            <span class="slds-text-title_caps">Revised Offer</span>
+                                            <p class="slds-text-heading_medium">{formattedEffectiveOfferAmount}</p>
+                                        </div>
+                                    </template>
+                                    <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 slds-p-around_x-small slds-text-align_center">
+                                        <span class="slds-text-title_caps">No. of Payments</span>
+                                        <p class="slds-text-heading_medium">{formattedNumberOfPayments}</p>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4 slds-p-around_x-small slds-text-align_center">
+                                        <span class="slds-text-title_caps">Created By</span>
+                                        <p class="slds-text-heading_small">{createdByName}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Payment Table Section -->
+                        <template lwc:if={hasPaymentItems}>
+                            <div class="slds-box slds-m-top_medium">
+                                <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                                    <h3 class="slds-text-heading_small">
+                                        Payment Schedule ({paymentItems.length} payments)
+                                    </h3>
+                                    <div class="slds-button-group">
+                                        <template lwc:if={isEditable}>
+                                            <lightning-button
+                                                label="Add Row"
+                                                icon-name="utility:add"
+                                                variant="neutral"
+                                                size="small"
+                                                onclick={handleAddPaymentRow}>
+                                            </lightning-button>
+                                        </template>
+                                        <template lwc:if={canSuspend}>
+                                            <lightning-button
+                                                label="Suspend"
+                                                icon-name="utility:ban"
+                                                variant="destructive"
+                                                size="small"
+                                                onclick={handleSuspendPlan}
+                                                class="slds-m-left_x-small">
+                                            </lightning-button>
+                                        </template>
+                                    </div>
+                                </div>
+                                <div class="payment-table-container slds-scrollable_x" style="max-height: 400px; overflow-y: auto;">
+                                    <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_striped slds-table_fixed-layout">
+                                        <thead>
+                                            <tr class="slds-line-height_reset">
+                                                <th scope="col" style="width: 32px;"></th>
+                                                <th scope="col" class="slds-text-title_caps" style="width: 40px;">#</th>
+                                                <th scope="col" class="slds-text-title_caps" style="width: 115px;">Date</th>
+                                                <th scope="col" class="slds-text-title_caps" style="width: 50px;">Pmt #</th>
+                                                <th scope="col" class="slds-text-title_caps" style="width: 100px;">Amount</th>
+                                                <th scope="col" class="slds-text-title_caps" style="width: 80px;">Bank Fee</th>
+                                                <th scope="col" class="slds-text-title_caps" style="width: 80px;">Comm. Fee</th>
+                                                <th scope="col" class="slds-text-title_caps" style="width: 80px;">EPPS Fee</th>
+                                                <th scope="col" class="slds-text-title_caps" style="width: 80px;">Total Fees</th>
+                                                <th scope="col" class="slds-text-title_caps" style="width: 95px;">Status</th>
+                                                <template lwc:if={isReadOnly}>
+                                                </template>
+                                                <template lwc:else>
+                                                    <th scope="col" class="slds-text-title_caps" style="width: 80px;">Actions</th>
+                                                </template>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template for:each={formattedPaymentItems} for:item="item">
+                                                <tr key={item.sequenceNumber} class={item.rowClass}>
+                                                    <!-- Modification indicator -->
+                                                    <td class="indicator-cell">
+                                                        <template lwc:if={item.showModifiedIcon}>
+                                                            <lightning-icon
+                                                                icon-name="utility:edit"
+                                                                size="xx-small"
+                                                                alternative-text="Modified"
+                                                                title="This row has been modified"
+                                                                class="modified-icon">
+                                                            </lightning-icon>
+                                                        </template>
+                                                    </td>
+                                                    <!-- Row # (display index) -->
+                                                    <td data-label="#">{item.sequenceNumber}</td>
+                                                    <!-- Date (editable) -->
+                                                    <td data-label="Date">
+                                                        <template lwc:if={item.isEditing}>
+                                                            <lightning-input type="date"
+                                                                             value={item.paymentDate}
+                                                                             variant="label-hidden"
+                                                                             data-row={item.sequenceNumber}
+                                                                             data-field="paymentDate"
+                                                                             onchange={handleCellEdit}>
+                                                            </lightning-input>
+                                                        </template>
+                                                        <template lwc:else>
+                                                            {item.formattedDate}
+                                                        </template>
+                                                    </td>
+                                                    <!-- Payment Number -->
+                                                    <td data-label="Pmt #">{item.paymentNumber}</td>
+
+                                                    <!-- Amount (editable) -->
+                                                    <td data-label="Amount">
+                                                        <template lwc:if={item.isEditing}>
+                                                            <lightning-input type="text"
+                                                                             value={item.paymentAmount}
+                                                                             variant="label-hidden"
+                                                                             data-row={item.sequenceNumber}
+                                                                             data-field="paymentAmount"
+                                                                             onblur={handleCellEditBlur}
+                                                                             pattern="[0-9]*\.?[0-9]*"
+                                                                             class="amount-input">
+                                                            </lightning-input>
+                                                        </template>
+                                                        <template lwc:else>
+                                                            {item.formattedAmount}
+                                                        </template>
+                                                    </td>
+
+                                                    <!-- Bank Fee (editable for non-locked rows) -->
+                                                    <td data-label="Bank Fee">
+                                                        <template lwc:if={item.isEditing}>
+                                                            <lightning-input type="text"
+                                                                             value={item.bankFee}
+                                                                             variant="label-hidden"
+                                                                             data-row={item.sequenceNumber}
+                                                                             data-field="bankFee"
+                                                                             onblur={handleCellEditBlur}
+                                                                             pattern="[0-9]*\.?[0-9]*"
+                                                                             class="fee-input">
+                                                            </lightning-input>
+                                                        </template>
+                                                        <template lwc:else>
+                                                            {item.formattedBankFee}
+                                                        </template>
+                                                    </td>
+
+                                                    <!-- Commission Fee (editable for non-locked rows) -->
+                                                    <td data-label="Comm. Fee">
+                                                        <template lwc:if={item.isEditing}>
+                                                            <lightning-input type="text"
+                                                                             value={item.commissionFee}
+                                                                             variant="label-hidden"
+                                                                             data-row={item.sequenceNumber}
+                                                                             data-field="commissionFee"
+                                                                             onblur={handleCellEditBlur}
+                                                                             pattern="[0-9]*\.?[0-9]*"
+                                                                             class="fee-input">
+                                                            </lightning-input>
+                                                        </template>
+                                                        <template lwc:else>
+                                                            {item.formattedCommissionFee}
+                                                        </template>
+                                                    </td>
+
+                                                    <!-- EPPS Fee (read-only) -->
+                                                    <td data-label="EPPS Fee">{item.formattedEppsFee}</td>
+
+                                                    <!-- Total Fees (read-only) -->
+                                                    <td data-label="Total Fees">{item.formattedTotalFees}</td>
+
+                                                    <!-- Status (editable, but locked rows show lock icon) -->
+                                                    <td data-label="Status">
+                                                        <template lwc:if={item.isEditing}>
+                                                            <lightning-combobox
+                                                                value={item.status}
+                                                                options={statusOptions}
+                                                                variant="label-hidden"
+                                                                data-row={item.sequenceNumber}
+                                                                data-field="status"
+                                                                onchange={handleCellEdit}>
+                                                            </lightning-combobox>
+                                                        </template>
+                                                        <template lwc:else>
+                                                            <template lwc:if={item.isLocked}>
+                                                                <lightning-icon icon-name="utility:lock"
+                                                                                size="x-small"
+                                                                                alternative-text="Locked"
+                                                                                title="This payment is locked and cannot be edited"
+                                                                                class="slds-m-right_xx-small locked-icon">
+                                                                </lightning-icon>
+                                                            </template>
+                                                            <span class={item.statusBadgeClass}>{item.status}</span>
+                                                        </template>
+                                                    </td>
+
+                                                    <!-- Actions -->
+                                                    <template lwc:if={isReadOnly}>
+                                                    </template>
+                                                    <template lwc:else>
+                                                        <td data-label="Actions">
+                                                            <template lwc:if={item.isEditing}>
+                                                                <lightning-button-icon icon-name="utility:check"
+                                                                                        alternative-text="Save"
+                                                                                        title="Save changes"
+                                                                                        variant="brand"
+                                                                                        size="small"
+                                                                                        data-row={item.sequenceNumber}
+                                                                                        onclick={handleRowSaveClick}
+                                                                                        class="slds-m-right_xx-small">
+                                                                </lightning-button-icon>
+                                                                <lightning-button-icon icon-name="utility:close"
+                                                                                        alternative-text="Cancel"
+                                                                                        title="Cancel"
+                                                                                        size="small"
+                                                                                        data-row={item.sequenceNumber}
+                                                                                        onclick={handleRowCancelClick}>
+                                                                </lightning-button-icon>
+                                                            </template>
+                                                            <template lwc:else>
+                                                                <lightning-button-icon icon-name="utility:edit"
+                                                                                        alternative-text="Edit"
+                                                                                        title={item.editButtonTitle}
+                                                                                        size="small"
+                                                                                        data-row={item.sequenceNumber}
+                                                                                        onclick={handleRowEditClick}
+                                                                                        disabled={item.isLocked}
+                                                                                        class="slds-m-right_xx-small">
+                                                                </lightning-button-icon>
+                                                                <lightning-button-icon icon-name="utility:delete"
+                                                                                        alternative-text="Delete"
+                                                                                        title={item.deleteButtonTitle}
+                                                                                        variant="destructive"
+                                                                                        size="small"
+                                                                                        data-row={item.sequenceNumber}
+                                                                                        onclick={handleDeletePaymentRow}
+                                                                                        disabled={item.isLocked}>
+                                                                </lightning-button-icon>
+                                                            </template>
+                                                        </td>
+                                                    </template>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- No Draft Selected State -->
+                <template lwc:if={hasNoCurrentDraft}>
+                    <div class="slds-illustration slds-illustration_small slds-p-vertical_large slds-text-align_center">
+                        <div class="slds-text-longform">
+                            <h3 class="slds-text-heading_medium">No Draft Selected</h3>
+                            <p class="slds-text-body_regular slds-m-top_small">
+                                Click the <lightning-icon icon-name="utility:add" size="xx-small"></lightning-icon> button above to create a new payment plan draft.
+                            </p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </lightning-card>
+</template>

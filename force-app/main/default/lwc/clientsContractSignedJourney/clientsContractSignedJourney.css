@@ -1,0 +1,434 @@
+/* Clients Contract Signed Journey LWC Styles */
+
+/* Stats Section */
+.stats-container {
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 2px solid rgba(30, 64, 175, 0.2);
+    box-shadow: 0 8px 32px rgba(30, 64, 175, 0.15);
+    color: white;
+}
+
+.stat-value {
+    color: white;
+    font-weight: 900;
+    font-size: 2rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.stat-label {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.8rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Filter Buttons */
+.filter-buttons {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+}
+
+/* Table Styling */
+.slds-table thead th {
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+    color: white;
+    border-bottom: 2px solid #1d4ed8;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 1rem 0.75rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.slds-table tbody td {
+    vertical-align: middle;
+    padding: 1rem 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1e40af;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+/* NSF Row Highlighting */
+.slds-table tbody tr[data-stage="NSF"] {
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%) !important;
+    border: 2px solid #f44336;
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.15);
+    animation: pulseRed 2s infinite;
+}
+
+.slds-table tbody tr[data-stage="NSF"] td {
+    color: #c62828 !important;
+    font-weight: 700 !important;
+}
+
+@keyframes pulseRed {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(244, 67, 54, 0.15);
+    }
+    50% {
+        box-shadow: 0 6px 20px rgba(244, 67, 54, 0.3);
+    }
+}
+
+/* Opportunity Info Column */
+.client-name-container {
+    margin-bottom: 0.25rem;
+}
+
+.client-name-link {
+    font-weight: 800;
+    color: #1e40af !important;
+    font-size: 1rem;
+    text-decoration: none;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    display: inline-block;
+    position: relative;
+}
+
+.client-name-link:hover {
+    text-decoration: underline !important;
+    color: #1d4ed8 !important;
+    transform: scale(1.02);
+}
+
+.client-name-link:focus {
+    outline: 2px solid #1e40af;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* Dropdown hint styling */
+.dropdown-hint-icon {
+    margin-right: 0.25rem;
+    opacity: 0.7;
+}
+
+/* Badge Styles */
+.slds-badge {
+    font-size: 0.625rem;
+    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025rem;
+}
+
+/* Tier Badges */
+.tier-1 {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.tier-2 {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.tier-3 {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Status Badges for Opportunity Stages */
+.status-active {
+    background: linear-gradient(135deg, #2e844a 0%, #1e5631 100%) !important;
+    color: white !important;
+    border: 2px solid #0f4c24 !important;
+    box-shadow: 0 4px 12px rgba(46, 132, 74, 0.4) !important;
+    animation: pulseGreen 1.8s infinite;
+    font-weight: 800 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.status-enrolled {
+    background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%) !important;
+    color: white !important;
+    border: 2px solid #1e3a8a !important;
+    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.4) !important;
+    animation: pulseBlue 2s infinite;
+    font-weight: 800 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes pulseGreen {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 12px rgba(46, 132, 74, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(46, 132, 74, 0.6);
+    }
+}
+
+@keyframes pulseBlue {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 12px rgba(30, 64, 175, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(30, 64, 175, 0.6);
+    }
+}
+
+.status-nsf {
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%) !important;
+    color: white !important;
+    border: 2px solid #b71c1c !important;
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3) !important;
+    animation: pulseNSF 1.5s infinite;
+    font-weight: 800 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes pulseNSF {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(244, 67, 54, 0.5);
+    }
+}
+
+.status-cancelled {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
+    color: white !important;
+    border: 2px solid #374151 !important;
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3) !important;
+    animation: pulseCancelled 2.2s infinite;
+    font-weight: 800 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes pulseCancelled {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(107, 114, 128, 0.5);
+    }
+}
+
+/* Dropdown/Combobox Styling */
+lightning-combobox {
+    --slds-c-combobox-color-background: #ffffff;
+    --slds-c-combobox-color-border: #1e40af;
+    --slds-c-combobox-color-text: #1e40af;
+}
+
+lightning-combobox .slds-combobox__input {
+    color: #1e40af !important;
+    font-weight: 600 !important;
+    background: #ffffff !important;
+}
+
+lightning-combobox .slds-listbox__option {
+    color: #1e40af !important;
+    font-weight: 500 !important;
+}
+
+lightning-combobox .slds-listbox__option:hover {
+    background: rgba(30, 64, 175, 0.1) !important;
+    color: #1d4ed8 !important;
+}
+
+lightning-combobox .slds-listbox__option[aria-selected="true"] {
+    background: #1e40af !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+/* Progress Bar */
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.progress-bar-background {
+    flex: 1;
+    height: 6px;
+    background: #e5e5e5;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1e40af, #2563eb);
+    transition: width 2s ease-in-out;
+    border-radius: 3px;
+}
+
+/* Initial state for progress bars - start at 0% */
+.progress-bar-fill.animate-progress {
+    animation: progressBarAnimation 2s ease-in-out forwards;
+}
+
+@keyframes progressBarAnimation {
+    0% {
+        width: 0%;
+    }
+    100% {
+        width: var(--progress-width);
+    }
+}
+
+.progress-text {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #1e40af;
+    min-width: 2.5rem;
+    text-align: right;
+}
+
+/* Financial Display */
+.debt-amount {
+    font-weight: 600;
+    color: #1e40af;
+    font-size: 0.9rem;
+}
+
+.settled-amount {
+    font-weight: 600;
+    color: #2e844a;
+    font-size: 0.9rem;
+}
+
+/* Date Formatting */
+.date-recent {
+    color: #1e40af;
+    font-weight: 600;
+}
+
+/* Row Styling */
+.slds-table tbody tr:hover {
+    background: rgba(30, 64, 175, 0.05);
+    cursor: pointer;
+}
+
+/* New Opportunity Row */
+tbody tr.new-client {
+    border-left: 4px solid #2e844a;
+    background: rgba(46, 132, 74, 0.02);
+}
+
+/* Urgent Opportunity Row */
+tbody tr.urgent-client {
+    border-left: 4px solid #e74c3c;
+    background: rgba(231, 76, 60, 0.02);
+}
+
+/* Expandable Panel Styles */
+.expanded-panel-row {
+    background: #f8f9fa;
+    border-top: 1px solid #e5e5e5;
+}
+
+.expanded-panel-cell {
+    padding: 1rem !important;
+}
+
+.expanded-row {
+    background: rgba(30, 64, 175, 0.1) !important;
+    border-left: 4px solid #1e40af !important;
+}
+
+.expand-icon {
+    transition: transform 0.3s ease;
+}
+
+.expanded-row .expand-icon {
+    transform: rotate(90deg);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .filter-buttons {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .stats-container .slds-col {
+        flex: 1 1 50%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .slds-table {
+        font-size: 0.75rem;
+    }
+    
+    .client-name {
+        font-size: 0.8rem;
+    }
+}
+
+/* Header styling */
+.slds-card__header {
+    background: linear-gradient(45deg, #1e40af, #2563eb);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 0.25rem 0.25rem 0 0;
+}
+
+.slds-card__header .slds-icon_container {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    padding: 0.5rem;
+}
+
+/* Search input styling */
+.slds-form-element__control lightning-input {
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+}
+
+.slds-form-element__control lightning-input:focus-within {
+    background: white;
+}
+
+/* Loading state */
+.slds-spinner_container {
+    position: relative;
+    height: 200px;
+}
+
+/* Accessibility improvements */
+.slds-table tbody tr:focus {
+    outline: 2px solid #1e40af;
+    outline-offset: -2px;
+}
+
+/* Print styles */
+@media print {
+    .filter-buttons,
+    .slds-card__header lightning-button {
+        display: none;
+    }
+    
+    .slds-table {
+        font-size: 12px;
+    }
+    
+    .progress-bar-background {
+        border: 1px solid #000;
+    }
+}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Settlement_Plan_Item__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <label>Settlement Plan Item</label>
+    <referenceTo>Settlement_Plan_Item__c</referenceTo>
+    <relationshipLabel>Fee/Settlement Details</relationshipLabel>
+    <relationshipName>Fee_Settlement_Details</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

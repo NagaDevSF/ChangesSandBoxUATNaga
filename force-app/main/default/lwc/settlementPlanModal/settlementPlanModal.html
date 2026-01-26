@@ -1,0 +1,321 @@
+<template>
+    <lightning-modal-header label="Settlement Plan Builder"></lightning-modal-header>
+
+    <lightning-modal-body>
+        <!-- Loading Spinner -->
+        <template lwc:if={state.isLoading}>
+            <div class="slds-spinner_container">
+                <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Error Alert -->
+        <template lwc:if={state.error}>
+            <div class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_medium" role="alert">
+                <span class="slds-assistive-text">error</span>
+                <h2>{state.error.message}</h2>
+            </div>
+        </template>
+
+        <!-- Draft Tabs -->
+        <div class="slds-tabs_default">
+            <ul class="slds-tabs_default__nav" role="tablist">
+                <template for:each={draftTabs} for:item="tab">
+                    <li key={tab.id}
+                        class="slds-tabs_default__item"
+                        role="presentation"
+                        data-id={tab.id}
+                        onclick={handleDraftTabClick}>
+                        <a class="slds-tabs_default__link"
+                           role="tab"
+                           aria-selected={tab.isActive}>
+                            <template lwc:if={tab.statusIcon}>
+                                <lightning-icon icon-name={tab.statusIcon}
+                                                size="x-small"
+                                                class="slds-m-right_xx-small"></lightning-icon>
+                            </template>
+                            {tab.label}
+                            <template lwc:if={tab.isApplied}>
+                                <span class="slds-badge slds-badge_inverse slds-m-left_xx-small">Applied</span>
+                            </template>
+                            <template lwc:if={tab.isArchived}>
+                                <span class="slds-badge slds-m-left_xx-small">Archived</span>
+                            </template>
+                        </a>
+                    </li>
+                </template>
+                <!-- New Draft Tab -->
+                <li class="slds-tabs_default__item" role="presentation">
+                    <template lwc:if={state.showNewDraftInput}>
+                        <div class="slds-grid slds-grid_vertical-align-center slds-p-horizontal_small">
+                            <lightning-input type="text"
+                                             value={state.newDraftName}
+                                             onchange={handleNewDraftNameChange}
+                                             variant="label-hidden"
+                                             placeholder="Draft name"
+                                             class="slds-m-right_x-small new-draft-input">
+                            </lightning-input>
+                            <lightning-button-icon icon-name="utility:check"
+                                                   variant="brand"
+                                                   alternative-text="Create"
+                                                   onclick={handleCreateDraft}
+                                                   class="slds-m-right_xx-small">
+                            </lightning-button-icon>
+                            <lightning-button-icon icon-name="utility:close"
+                                                   alternative-text="Cancel"
+                                                   onclick={handleCancelNewDraft}>
+                            </lightning-button-icon>
+                        </div>
+                    </template>
+                    <template lwc:else>
+                        <a class="slds-tabs_default__link" role="tab" onclick={handleNewDraftClick}>
+                            <lightning-icon icon-name="utility:add" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+                            New Draft
+                        </a>
+                    </template>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Draft Content -->
+        <template lwc:if={state.currentDraft}>
+            <div class="slds-tabs_default__content slds-show">
+                <!-- Status Badge -->
+                <div class="slds-m-bottom_small">
+                    <span class={statusBadgeClass}>{state.currentDraft.Status__c}</span>
+                    <template lwc:if={isReadOnly}>
+                        <span class="slds-text-body_small slds-text-color_weak slds-m-left_small">
+                            (Read-only - Clone to edit)
+                        </span>
+                    </template>
+                </div>
+
+                <!-- Key Inputs Section -->
+                <div class="slds-box slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">Settlement Details</h3>
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col slds-size_1-of-3">
+                            <lightning-input type="number"
+                                             label="Balance"
+                                             formatter="currency"
+                                             step="0.01"
+                                             data-field="Balance__c"
+                                             value={state.currentDraft.Balance__c}
+                                             onchange={handleInputChange}
+                                             disabled={isReadOnly}>
+                            </lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_1-of-3">
+                            <lightning-input type="number"
+                                             label="Settlement Offer"
+                                             formatter="currency"
+                                             step="0.01"
+                                             data-field="Settlement_Offer__c"
+                                             value={state.currentDraft.Settlement_Offer__c}
+                                             onchange={handleInputChange}
+                                             disabled={isReadOnly}>
+                            </lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_1-of-3">
+                            <lightning-input type="number"
+                                             label="Escrow Start Balance"
+                                             formatter="currency"
+                                             step="0.01"
+                                             data-field="Escrow_Start_Balance__c"
+                                             value={state.currentDraft.Escrow_Start_Balance__c}
+                                             onchange={handleInputChange}
+                                             disabled={isReadOnly}>
+                            </lightning-input>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Segment Builder Section -->
+                <div class="slds-box slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">Payment Segments</h3>
+                    <c-segment-builder
+                        segments={state.segments}
+                        is-read-only={isReadOnly}
+                        frequency-options={frequencyOptions}
+                        segment-type-options={segmentTypeOptions}
+                        onsegmentchange={handleSegmentChange}>
+                    </c-segment-builder>
+                </div>
+
+                <!-- Calculate Button -->
+                <div class="slds-m-bottom_medium">
+                    <lightning-button label="Calculate Preview"
+                                      variant="brand"
+                                      onclick={handleCalculate}
+                                      disabled={isReadOnly}>
+                    </lightning-button>
+                    <template lwc:if={hasSegments}>
+                        <span class="slds-text-body_small slds-text-color_weak slds-m-left_small">
+                            {state.segments.length} segment(s) configured
+                        </span>
+                    </template>
+                </div>
+
+                <!-- Payment Table Section -->
+                <template lwc:if={hasPaymentItems}>
+                    <div class="slds-box slds-m-bottom_medium">
+                        <h3 class="slds-text-heading_small slds-m-bottom_small">
+                            Payment Schedule ({state.paymentItems.length} payments)
+                        </h3>
+                        <div class="payment-table-container">
+                            <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                                <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th scope="col" class="slds-text-title_caps">#</th>
+                                        <th scope="col" class="slds-text-title_caps">Date</th>
+                                        <th scope="col" class="slds-text-title_caps">Amount</th>
+                                        <th scope="col" class="slds-text-title_caps">Fees</th>
+                                        <th scope="col" class="slds-text-title_caps">Balance</th>
+                                        <th scope="col" class="slds-text-title_caps">Escrow</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={formattedPaymentItems} for:item="item">
+                                        <tr key={item.sequenceNumber} class={item.rowClass}>
+                                            <td data-label="#">
+                                                {item.sequenceNumber}
+                                                <template lwc:if={item.isManuallyModified}>
+                                                    <lightning-icon icon-name="utility:edit"
+                                                                    size="xx-small"
+                                                                    alternative-text="Edited"
+                                                                    title="Manually modified">
+                                                    </lightning-icon>
+                                                </template>
+                                            </td>
+                                            <td data-label="Date">
+                                                <template lwc:if={isReadOnly}>
+                                                    {item.paymentDate}
+                                                </template>
+                                                <template lwc:else>
+                                                    <lightning-input type="date"
+                                                                     value={item.paymentDate}
+                                                                     variant="label-hidden"
+                                                                     data-row={item.sequenceNumber}
+                                                                     data-field="paymentDate"
+                                                                     onchange={handleCellEdit}>
+                                                    </lightning-input>
+                                                </template>
+                                            </td>
+                                            <td data-label="Amount">
+                                                <template lwc:if={isReadOnly}>
+                                                    {item.formattedAmount}
+                                                </template>
+                                                <template lwc:else>
+                                                    <lightning-input type="number"
+                                                                     value={item.paymentAmount}
+                                                                     formatter="currency"
+                                                                     step="0.01"
+                                                                     variant="label-hidden"
+                                                                     data-row={item.sequenceNumber}
+                                                                     data-field="paymentAmount"
+                                                                     onchange={handleCellEdit}>
+                                                    </lightning-input>
+                                                </template>
+                                            </td>
+                                            <td data-label="Fees">{item.formattedFees}</td>
+                                            <td data-label="Balance">{item.formattedBalance}</td>
+                                            <td data-label="Escrow" class={item.escrowClass}>
+                                                {item.formattedEscrow}
+                                                <template lwc:if={item.isEscrowShortage}>
+                                                    <lightning-icon icon-name="utility:warning"
+                                                                    size="xx-small"
+                                                                    variant="error"
+                                                                    alternative-text="Escrow shortage"
+                                                                    title="Escrow shortage">
+                                                    </lightning-icon>
+                                                </template>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Summary Section -->
+                <template lwc:if={hasPaymentItems}>
+                    <div class="slds-box slds-theme_shade">
+                        <div class="slds-grid slds-grid_align-spread">
+                            <div>
+                                <span class="slds-text-body_regular">Total Scheduled: </span>
+                                <strong>{totalScheduled}</strong>
+                            </div>
+                            <div>
+                                <span class="slds-text-body_regular">Settlement Offer: </span>
+                                <strong>{settlementOffer}</strong>
+                            </div>
+                            <div class={summaryClass}>
+                                <span class="slds-text-body_regular">Difference: </span>
+                                <strong>${fundingDifference}</strong>
+                                <span class="slds-m-left_xx-small">({balanceStatusText})</span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- No Draft Selected -->
+        <template lwc:else>
+            <div class="slds-illustration slds-illustration_small slds-p-vertical_large">
+                <div class="slds-text-longform">
+                    <h3 class="slds-text-heading_medium">No Draft Selected</h3>
+                    <p class="slds-text-body_regular">
+                        Click "+ New Draft" to create a payment plan draft.
+                    </p>
+                </div>
+            </div>
+        </template>
+    </lightning-modal-body>
+
+    <lightning-modal-footer>
+        <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+            <!-- Left side - Draft name -->
+            <div class="slds-col">
+                <template lwc:if={state.currentDraft}>
+                    <lightning-input type="text"
+                                     label="Draft Name"
+                                     value={state.currentDraft.Name}
+                                     onchange={handleNameChange}
+                                     disabled={isReadOnly}
+                                     class="draft-name-input">
+                    </lightning-input>
+                </template>
+            </div>
+
+            <!-- Right side - Action buttons -->
+            <div class="slds-col slds-text-align_right">
+                <lightning-button label="Save Draft"
+                                  onclick={handleSaveDraft}
+                                  disabled={isReadOnly}
+                                  class="slds-m-right_x-small">
+                </lightning-button>
+                <lightning-button label="Clone"
+                                  onclick={handleCloneDraft}
+                                  disabled={hasNoCurrentDraft}
+                                  class="slds-m-right_x-small">
+                </lightning-button>
+                <lightning-button label="Delete"
+                                  onclick={handleDeleteDraft}
+                                  disabled={cannotDelete}
+                                  class="slds-m-right_x-small">
+                </lightning-button>
+                <lightning-button label="Cancel"
+                                  onclick={handleCancel}
+                                  class="slds-m-right_x-small">
+                </lightning-button>
+                <lightning-button label="Activate Plan"
+                                  variant="brand"
+                                  onclick={handleActivate}
+                                  disabled={cannotActivate}>
+                </lightning-button>
+            </div>
+        </div>
+    </lightning-modal-footer>
+</template>

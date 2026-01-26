@@ -1,0 +1,532 @@
+/* Simple Email Inbox for Utility Bar */
+.email-inbox-simple {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--inbox-bg-color, #ffffff);
+    color: var(--inbox-text-color, #181818);
+    font-family: 'Salesforce Sans', Arial, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+
+/* Header */
+.inbox-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color, #e0e5ee);
+    background-color: var(--header-bg-color, #fafafa);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.filter-tabs {
+    display: flex;
+    gap: 4px;
+}
+
+.filter-tabs button {
+    padding: 3px 6px;
+    font-size: 11px;
+    border: 1px solid var(--border-color, #d8dde6);
+    border-radius: 4px;
+    background-color: var(--button-bg, #ffffff);
+    color: var(--inbox-text-color, #0176d3);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.filter-tabs button:hover {
+    background-color: var(--button-hover-bg, #f3f3f3);
+}
+
+.filter-tabs button.active {
+    background-color: #0176d3;
+    color: #ffffff;
+    border-color: #0176d3;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Connection Status Indicator */
+.connection-status-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.connection-status-indicator:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Connection Status Colors */
+.connection-status.connection-connected {
+    color: #4CAF50 !important; /* Green */
+}
+
+.connection-status.connection-connecting {
+    color: #FF9800 !important; /* Orange */
+    animation: pulse 1.5s infinite;
+}
+
+.connection-status.connection-disconnected {
+    color: #F44336 !important; /* Red */
+}
+
+/* Pulse animation for connecting status */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Container connection status border indicator */
+.email-inbox-container.connection-connected {
+    border-top: 2px solid #4CAF50;
+}
+
+.email-inbox-container.connection-connecting {
+    border-top: 2px solid #FF9800;
+}
+
+.email-inbox-container.connection-disconnected {
+    border-top: 2px solid #F44336;
+}
+
+
+.refresh-btn {
+    --sds-c-button-neutral-color-border: #d8dde6;
+}
+
+
+/* Notification Bell Styling */
+.notification-bell {
+    --sds-c-button-brand-color-background: #e74c3c;
+    --sds-c-button-brand-color-border: #e74c3c;
+    animation: pulse 2s infinite;
+}
+
+.notification-bell:hover {
+    --sds-c-button-brand-color-background: #c0392b;
+    --sds-c-button-brand-color-border: #c0392b;
+}
+
+
+/* Filter Section */
+.filter-section {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color, #e0e5ee);
+    background-color: var(--filter-bg-color, #f8f9fa);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.search-container {
+    margin-bottom: 8px;
+}
+
+.search-input {
+    width: 100%;
+}
+
+.search-input.active-search {
+    --slds-c-input-color-border-focus: #0176d3;
+    --slds-c-input-color-border: #0176d3;
+}
+
+.date-filters {
+    display: flex;
+    align-items: end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.date-input {
+    flex: 1;
+    min-width: 120px;
+}
+
+.date-input .slds-form-element__label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #444;
+}
+
+.clear-btn {
+    flex-shrink: 0;
+}
+
+/* Loading */
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+/* Email List */
+.email-list {
+    flex: 1;
+    overflow-y: auto;
+    background-color: var(--inbox-bg-color, #ffffff);
+    transition: background-color 0.3s ease;
+}
+
+/* Email Item */
+.email-item {
+    position: relative;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color, #f3f3f3);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    color: var(--inbox-text-color, #181818);
+}
+
+.email-item:hover {
+    background-color: var(--item-hover-bg, #f8f9fa);
+}
+
+/* Green highlighting for unseen emails - replacing the old unread styling */
+.email-item.unseen {
+    background-color: #e6f7e1;
+    border-left: 3px solid #28a745;
+    padding-left: 9px;
+}
+
+/* NEW email styling - green bar at top + NEW pill */
+.email-item.new-email {
+    position: relative;
+    background-color: #f0fdf4;
+    border-left: 4px solid #16a34a;
+    padding-left: 8px;
+}
+
+/* Green bar across the top for NEW emails */
+.email-item.new-email::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #16a34a, #22c55e);
+    z-index: 1;
+}
+
+.email-item.new-email:hover {
+    background-color: #ecfdf5;
+}
+
+.email-avatar {
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
+/* Optimized Custom Avatar - Reduced complexity for better performance */
+.custom-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-family: 'Salesforce Sans', Arial, sans-serif;
+    /* Background color and text color set via inline styles for performance */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    /* Removed transition and complex hover effects for better performance */
+}
+
+.avatar-initials {
+    color: inherit;
+    font-weight: inherit;
+    font-size: inherit;
+}
+
+.email-item-content {
+    flex: 1;
+    min-width: 0; /* Allow text truncation */
+}
+
+/* Subject container for NEW pill layout */
+.email-subject-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.email-subject {
+    font-size: 13px;
+    font-weight: 500;
+    color: #181818;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+/* NEW pill styling */
+.new-email-pill {
+    font-size: 9px;
+    font-weight: 700;
+    color: #ffffff;
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    padding: 2px 6px;
+    border-radius: 8px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 1px 3px rgba(22, 163, 74, 0.3);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+}
+
+.email-item.unread .email-subject {
+    font-weight: 600;
+}
+
+.email-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #706e6b;
+}
+
+.email-from {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+}
+
+.email-date {
+    white-space: nowrap;
+    font-size: 10px;
+}
+
+.attachment-icon {
+    color: #706e6b;
+    flex-shrink: 0;
+}
+
+/* Pin Button */
+.pin-container {
+    flex-shrink: 0;
+    margin-left: auto;
+    margin-right: 4px;
+}
+
+.pin-button {
+    --sds-c-button-color-background: transparent;
+    --sds-c-button-color-border: transparent;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+}
+
+.pin-button:hover {
+    opacity: 1;
+    --sds-c-button-color-background: #f3f3f3;
+}
+
+.pin-button.pinned {
+    opacity: 1;
+    --sds-c-icon-color-foreground-default: #e74c3c;
+}
+
+.pin-button.pinned:hover {
+    --sds-c-icon-color-foreground-default: #c0392b;
+    --sds-c-button-color-background: #fef7f7;
+}
+
+/* Calendar Button */
+.calendar-container {
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
+.calendar-button {
+    --sds-c-button-color-background: transparent;
+    --sds-c-button-color-border: transparent;
+    --sds-c-icon-color-foreground-default: #0176d3;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+}
+
+.calendar-button:hover {
+    opacity: 1;
+    --sds-c-button-color-background: #f3f3f3;
+    --sds-c-icon-color-foreground-default: #014486;
+}
+
+.calendar-button:active {
+    --sds-c-button-color-background: #e5f3ff;
+    --sds-c-icon-color-foreground-default: #014486;
+}
+
+/* Pinned Email Styling */
+.email-item.pinned {
+    background-color: #fef2f2;
+    border-left: 3px solid #e74c3c;
+    padding-left: 9px;
+}
+
+.email-item.pinned:hover {
+    background-color: #fecaca;
+}
+
+.email-item.pinned .email-subject {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.email-item.pinned .email-from {
+    color: #b91c1c;
+}
+
+/* Unread Indicator */
+.unread-dot {
+    width: 6px;
+    height: 6px;
+    background-color: #0176d3;
+    border-radius: 50%;
+    margin-left: 8px;
+    flex-shrink: 0;
+}
+
+/* Empty State */
+.empty-state {
+    padding: 20px;
+    text-align: center;
+    color: var(--inbox-text-color, #706e6b);
+    opacity: 0.8;
+}
+
+.empty-icon {
+    color: var(--inbox-text-color, #c9c7c5);
+    opacity: 0.6;
+    margin-bottom: 8px;
+}
+
+.empty-message {
+    font-size: 12px;
+    margin: 0;
+    color: var(--inbox-text-color, #706e6b);
+}
+
+/* Load More */
+.load-more {
+    padding: 8px 12px;
+    text-align: center;
+    border-top: 1px solid #f3f3f3;
+}
+
+/* Error Message */
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    background-color: #fef7f7;
+    border: 1px solid #ea001e;
+    border-radius: 4px;
+    margin: 8px 12px;
+    font-size: 12px;
+    color: #ea001e;
+}
+
+/* Scrollbar Styling */
+.email-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.email-list::-webkit-scrollbar-track {
+    background: #f1f3f4;
+}
+
+.email-list::-webkit-scrollbar-thumb {
+    background: #c9c7c5;
+    border-radius: 2px;
+}
+
+.email-list::-webkit-scrollbar-thumb:hover {
+    background: #706e6b;
+}
+
+/* Load More Button */
+.load-more {
+    padding: 12px;
+    text-align: center;
+    border-top: 1px solid var(--border-color, #e0e5ee);
+    background-color: var(--filter-bg-color, #fafafa);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* No More Emails Message */
+.no-more-emails {
+    padding: 16px 12px;
+    text-align: center;
+    border-top: 1px solid var(--border-color, #e0e5ee);
+    background-color: var(--filter-bg-color, #f9f9f9);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.no-more-message {
+    color: var(--inbox-text-color, #706e6b);
+    font-size: 13px;
+    font-style: italic;
+    margin: 0;
+    opacity: 0.7;
+}
+
+/* Responsive adjustments for utility bar */
+@media (max-width: 400px) {
+    .filter-tabs {
+        gap: 2px;
+    }
+    
+    .filter-tabs button {
+        font-size: 10px;
+        padding: 2px 4px;
+    }
+    
+    .filter-section {
+        padding: 6px 8px;
+    }
+    
+    .date-filters {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+    }
+    
+    .date-input {
+        min-width: auto;
+    }
+    
+    .email-subject {
+        font-size: 12px;
+    }
+    
+    .email-meta {
+        font-size: 10px;
+    }
+    
+    .email-from {
+        max-width: 80px;
+    }
+}

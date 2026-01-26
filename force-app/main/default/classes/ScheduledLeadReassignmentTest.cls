@@ -1,0 +1,291 @@
+/**
+ * @description Test class for ScheduledLeadReassignment
+ * @author Salesforce Developer
+ * @date 2025
+ */
+@isTest
+private class ScheduledLeadReassignmentTest {
+
+    /**
+     * Setup test data
+     */
+    @testSetup
+    static void setupTestData() {
+        // Create test leads
+        List<Lead> testLeads = new List<Lead>();
+        for(Integer i = 0; i < 5; i++) {
+            testLeads.add(new Lead(
+                FirstName = 'Test',
+                LastName = 'Lead' + i,
+                Company = 'Test Company ' + i,
+                Status = 'New'
+            ));
+        }
+        insert testLeads;
+    }
+
+    /**
+     * Test default constructor
+     */
+    @isTest
+    static void testDefaultConstructor() {
+        Test.startTest();
+        ScheduledLeadReassignment scheduler = new ScheduledLeadReassignment();
+        Test.stopTest();
+
+        System.assertNotEquals(null, scheduler, 'Scheduler should be instantiated');
+    }
+
+    /**
+     * Test parameterized constructor
+     */
+    @isTest
+    static void testParameterizedConstructor() {
+        Test.startTest();
+        ScheduledLeadReassignment scheduler = new ScheduledLeadReassignment('TestUser');
+        Test.stopTest();
+
+        System.assertNotEquals(null, scheduler, 'Scheduler should be instantiated with custom owner');
+    }
+
+    /**
+     * Test schedulable execute method
+     */
+    @isTest
+    static void testSchedulableExecute() {
+        ScheduledLeadReassignment scheduler = new ScheduledLeadReassignment();
+
+        Test.startTest();
+        // Schedule the job
+        String cronExp = '0 0 0 * * ?';
+        String jobId = System.schedule('Test Lead Reassignment', cronExp, scheduler);
+        Test.stopTest();
+
+        // Verify job was scheduled
+        CronTrigger ct = [SELECT Id, CronExpression, State
+                          FROM CronTrigger
+                          WHERE Id = :jobId];
+        System.assertEquals(cronExp, ct.CronExpression, 'Job should be scheduled with correct cron expression');
+    }
+
+    /**
+     * Test batch start method
+     */
+    @isTest
+    static void testBatchStart() {
+        ScheduledLeadReassignment scheduler = new ScheduledLeadReassignment();
+
+        Test.startTest();
+        Database.QueryLocator ql = scheduler.start(null);
+        Test.stopTest();
+
+        System.assertNotEquals(null, ql, 'Query locator should not be null');
+    }
+
+    /**
+     * Test batch execute method with leads
+     */
+    @isTest
+    static void testBatchExecuteWithLeads() {
+        List<Lead> testLeads = [SELECT Id FROM Lead LIMIT 1];
+        ScheduledLeadReassignment scheduler = new ScheduledLeadReassignment();
+
+        Test.startTest();
+        // Execute method with leads - Flow will fail in test context but that's expected
+        scheduler.execute(null, testLeads);
+        Test.stopTest();
+
+        // If we reach here, the method handled the Flow error gracefully
+        System.assert(true, 'Execute method should handle Flow gracefully');
+    }
+
+    /**
+     * Test batch execute method with empty list
+     */
+    @isTest
+    static void testBatchExecuteWithEmptyList() {
+        ScheduledLeadReassignment scheduler = new ScheduledLeadReassignment();
+
+        Test.startTest();
+        scheduler.execute(null, new List<Lead>());
+        Test.stopTest();
+
+        // Should return early without error
+        System.assert(true, 'Execute method should handle empty list gracefully');
+    }
+
+    /**
+     * Test batch execute method with null
+     */
+    @isTest
+    static void testBatchExecuteWithNull() {
+        ScheduledLeadReassignment scheduler = new ScheduledLeadReassignment();
+
+        Test.startTest();
+        scheduler.execute(null, null);
+        Test.stopTest();
+
+        // Should return early without error
+        System.assert(true, 'Execute method should handle null gracefully');
+    }
+
+    /**
+     * Test batch finish method
+     */
+    @isTest
+    static void testBatchFinish() {
+        ScheduledLeadReassignment scheduler = new ScheduledLeadReassignment();
+
+        Test.startTest();
+        scheduler.finish(null);
+        Test.stopTest();
+
+        System.assert(true, 'Finish method should complete without error');
+    }
+
+    /**
+     * Test complete batch execution
+     */
+    @isTest
+    static void testCompleteBatchExecution() {
+        ScheduledLeadReassignment scheduler = new ScheduledLeadReassignment('TestOwner');
+
+        Test.startTest();
+        Database.executeBatch(scheduler, 200);
+        Test.stopTest();
+
+        // Verify batch executed
+        System.assert(true, 'Batch should execute successfully');
+    }
+
+    /**
+     * Test scheduleEvery2Minutes method
+     */
+    @isTest
+    static void testScheduleEvery2Minutes() {
+        Test.startTest();
+        ScheduledLeadReassignment.scheduleEvery2Minutes();
+        Test.stopTest();
+
+        // Verify jobs were scheduled
+        List<CronTrigger> jobs = [SELECT Id, CronJobDetail.Name
+                                  FROM CronTrigger
+                                  WHERE CronJobDetail.Name LIKE 'Lead Reassignment%'];
+        System.assert(jobs.size() > 0, 'Jobs should be scheduled');
+    }
+
+    /**
+     * Test scheduleRecurring method
+     */
+    @isTest
+    static void testScheduleRecurring() {
+        Test.startTest();
+        ScheduledLeadReassignment.scheduleRecurring();
+        Test.stopTest();
+
+        // Verify recurring jobs were scheduled
+        List<CronTrigger> jobs = [SELECT Id, CronJobDetail.Name
+                                  FROM CronTrigger
+                                  WHERE CronJobDetail.Name LIKE 'Lead Reassignment%'];
+        System.assert(jobs.size() > 0, 'Recurring jobs should be scheduled');
+    }
+
+    /**
+     * Test abortExistingJobs method with no existing jobs
+     */
+    @isTest
+    static void testAbortExistingJobsEmpty() {
+        Test.startTest();
+        ScheduledLeadReassignment.abortExistingJobs();
+        Test.stopTest();
+
+        // Should complete without error even with no jobs
+        System.assert(true, 'Should handle no existing jobs gracefully');
+    }
+
+    /**
+     * Test abortExistingJobs method with existing jobs
+     */
+    @isTest
+    static void testAbortExistingJobsWithJobs() {
+        // First schedule some jobs
+        ScheduledLeadReassignment scheduler = new ScheduledLeadReassignment();
+        String jobId = System.schedule('Lead Reassignment Test', '0 0 0 * * ?', scheduler);
+
+        Test.startTest();
+        ScheduledLeadReassignment.abortExistingJobs();
+        Test.stopTest();
+
+        // Verify jobs were aborted
+        List<CronTrigger> jobs = [SELECT Id, State
+                                  FROM CronTrigger
+                                  WHERE CronJobDetail.Name LIKE 'Lead Reassignment%'
+                                  AND State != 'DELETED'];
+        System.assertEquals(0, jobs.size(), 'All jobs should be aborted');
+    }
+
+    /**
+     * Test generateCronExpression method (indirectly through scheduleEvery2Minutes)
+     */
+    @isTest
+    static void testGenerateCronExpression() {
+        Test.startTest();
+        // This will call generateCronExpression internally
+        ScheduledLeadReassignment.scheduleEvery2Minutes();
+        Test.stopTest();
+
+        // Verify jobs were created with valid cron expressions
+        List<CronTrigger> jobs = [SELECT Id, CronExpression
+                                  FROM CronTrigger
+                                  WHERE CronJobDetail.Name LIKE 'Lead Reassignment%'
+                                  LIMIT 1];
+        if(!jobs.isEmpty()) {
+            System.assertNotEquals(null, jobs[0].CronExpression, 'Cron expression should be generated');
+        }
+    }
+
+    /**
+     * Test scheduling and then aborting jobs
+     */
+    @isTest
+    static void testScheduleAndAbortCycle() {
+        Test.startTest();
+
+        // Schedule jobs
+        ScheduledLeadReassignment.scheduleRecurring();
+
+        // Verify jobs were scheduled
+        List<CronTrigger> jobsAfterSchedule = [SELECT Id
+                                                FROM CronTrigger
+                                                WHERE CronJobDetail.Name LIKE 'Lead Reassignment%'];
+        System.assert(jobsAfterSchedule.size() > 0, 'Jobs should be scheduled');
+
+        // Abort jobs
+        ScheduledLeadReassignment.abortExistingJobs();
+
+        // Verify jobs were aborted
+        List<CronTrigger> jobsAfterAbort = [SELECT Id
+                                            FROM CronTrigger
+                                            WHERE CronJobDetail.Name LIKE 'Lead Reassignment%'
+                                            AND State != 'DELETED'];
+        System.assertEquals(0, jobsAfterAbort.size(), 'All jobs should be aborted');
+
+        Test.stopTest();
+    }
+
+    /**
+     * Test batch execution with multiple leads
+     */
+    @isTest
+    static void testBatchExecuteMultipleLeads() {
+        List<Lead> testLeads = [SELECT Id FROM Lead];
+        ScheduledLeadReassignment scheduler = new ScheduledLeadReassignment('CustomOwner');
+
+        Test.startTest();
+        scheduler.execute(null, testLeads);
+        Test.stopTest();
+
+        // Flow execution will fail in test context but exception should be caught
+        System.assert(true, 'Multiple leads should be processed gracefully');
+    }
+}

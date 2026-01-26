@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>63.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Decision_2</name>
+        <label>Decision 2</label>
+        <locationX>314</locationX>
+        <locationY>431</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>To_Anthony</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.ModOf4__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <numberValue>0.0</numberValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>To_Anthony1</targetReference>
+            </connector>
+            <label>To Anthony</label>
+        </rules>
+        <rules>
+            <name>To_Alex</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.ModOf4__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <numberValue>1.0</numberValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Too_Alex</targetReference>
+            </connector>
+            <label>To Toni</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Mod_for_Roundrobin</name>
+        <label>Mod for Roundrobin</label>
+        <locationX>1898</locationX>
+        <locationY>431</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>If_Mod_of_Chrises_0</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>varModValCrises</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <numberValue>0.0</numberValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_the_Owner_pineda</targetReference>
+            </connector>
+            <label>If Mod of Chrises 0</label>
+        </rules>
+        <rules>
+            <name>If_mod_of_Chries_1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>varModValCrises</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <numberValue>1.0</numberValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_to_Lopez</targetReference>
+            </connector>
+            <label>If mod of Chries 1</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Mod_value</name>
+        <label>Mod value</label>
+        <locationX>2822</locationX>
+        <locationY>431</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Mod_0</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>varMOdLS5</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <numberValue>0.0</numberValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>To_Lopez1</targetReference>
+            </connector>
+            <label>Mod =0</label>
+        </rules>
+        <rules>
+            <name>Mod_1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>varMOdLS5</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <numberValue>1.0</numberValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>To_Pineda</targetReference>
+            </connector>
+            <label>Mod = 1</label>
+        </rules>
+        <rules>
+            <name>Mod_2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>varMOdLS5</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <numberValue>2.0</numberValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>to_Justin</targetReference>
+            </connector>
+            <label>Mod =2</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Round_robin_When_Int_Zap</name>
+        <label>Round robin When Int = Zap</label>
+        <locationX>1898</locationX>
+        <locationY>323</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Int_ZAPEDD</name>
+            <conditionLogic>or</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Integration_Assignement__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>ZAP Everyday</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Integration_Assignement__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>ZAP PACK</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Decision_2</targetReference>
+            </connector>
+            <label>Int =ZAPEDD</label>
+        </rules>
+        <rules>
+            <name>Int_Zap_Marketing</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Integration_Assignement__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>ZAP Marketting</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>To_Debtifi_Office_RR</targetReference>
+            </connector>
+            <label>Int = Zap Marketing</label>
+        </rules>
+        <rules>
+            <name>INT_ZAP_YP</name>
+            <conditionLogic>or</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Integration_Assignement__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>ZAP YP Health</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Integration_Assignement__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>ZAP YP Construction</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Integration_Assignement__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>ZAP YP Restaurant</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Integration_Assignement__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>ZAP YP Retail</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Integration_Assignement__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>ZAP Mack Blast</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Mod_for_Roundrobin</targetReference>
+            </connector>
+            <label>INT = ZAP YP</label>
+        </rules>
+        <rules>
+            <name>Lead_scaper_Debtifi</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Integration_Assignement__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>ZAP Legal Scaper Debtifi</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Mod_value</targetReference>
+            </connector>
+            <label>Lead scaper Debtifi</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>To_Debtifi_Office_RR</name>
+        <label>To Debtifi Office RR</label>
+        <locationX>1106</locationX>
+        <locationY>431</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>To_pinede</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.ModOf2_Debtifi__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <numberValue>0.0</numberValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Owner_Pinede</targetReference>
+            </connector>
+            <label>To pinede</label>
+        </rules>
+        <rules>
+            <name>To_Lopez</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.ModOf2_Debtifi__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <numberValue>1.0</numberValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_Lopez</targetReference>
+            </connector>
+            <label>To Lopez</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <formulas>
+        <name>FormModChrises2</name>
+        <dataType>Number</dataType>
+        <expression>MOD(VALUE({!$Record.Number__c}), 2)</expression>
+        <scale>0</scale>
+    </formulas>
+    <formulas>
+        <name>forModLegalScaper5</name>
+        <dataType>Number</dataType>
+        <expression>MOD(VALUE({!$Record.Number__c}), 3)</expression>
+        <scale>0</scale>
+    </formulas>
+    <interviewLabel>Roundrobin Lead before create {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Roundrobin Lead before create</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Assign_Lopez</name>
+        <label>Assign Lopez</label>
+        <locationX>1106</locationX>
+        <locationY>539</locationY>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <stringValue>005fK000001HHgbQAG</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>To_Anthony1</name>
+        <label>To Anthony</label>
+        <locationX>50</locationX>
+        <locationY>539</locationY>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <stringValue>005fK000001ON1JQAW</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>to_Justin</name>
+        <label>to Justin</label>
+        <locationX>2954</locationX>
+        <locationY>539</locationY>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <stringValue>005fK000001PtOvQAK</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>To_Lopez1</name>
+        <label>To Lopez</label>
+        <locationX>2426</locationX>
+        <locationY>539</locationY>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <stringValue>005fK000001HHgbQAG</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>To_Pineda</name>
+        <label>To Pineda</label>
+        <locationX>2690</locationX>
+        <locationY>539</locationY>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <stringValue>005fK000001HHqHQAW</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Too_Alex</name>
+        <label>To Anthoni too</label>
+        <locationX>314</locationX>
+        <locationY>539</locationY>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <stringValue>005fK000001ON1JQAW</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Update_Owner_Pinede</name>
+        <label>Update Owner Pinede</label>
+        <locationX>842</locationX>
+        <locationY>539</locationY>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <stringValue>005fK000001HHqHQAW</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Update_the_Owner_pineda</name>
+        <label>Update the Owner pineda</label>
+        <locationX>1634</locationX>
+        <locationY>539</locationY>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <stringValue>005fK000001HHqHQAW	</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Update_to_Lopez</name>
+        <label>Update to Lopez</label>
+        <locationX>1898</locationX>
+        <locationY>539</locationY>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <stringValue>005fK000001HHgbQAG</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>1772</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Round_robin_When_Int_Zap</targetReference>
+        </connector>
+        <object>Lead</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Obsolete</status>
+    <variables>
+        <name>varMOdLS5</name>
+        <dataType>Number</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>true</isOutput>
+        <scale>0</scale>
+        <value>
+            <elementReference>forModLegalScaper5</elementReference>
+        </value>
+    </variables>
+    <variables>
+        <name>varModValCrises</name>
+        <dataType>Number</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>true</isOutput>
+        <scale>0</scale>
+        <value>
+            <elementReference>FormModChrises2</elementReference>
+        </value>
+    </variables>
+    <variables>
+        <name>varRRLeadscaperDebtifi</name>
+        <dataType>Number</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>true</isOutput>
+        <scale>0</scale>
+        <value>
+            <numberValue>0.0</numberValue>
+        </value>
+    </variables>
+</Flow>

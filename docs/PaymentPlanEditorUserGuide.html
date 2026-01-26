@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Plan Editor & Viewer - Advanced User Guide</title>
+    <style>
+        :root {
+            --primary-color: #0176d3;
+            --primary-dark: #014486;
+            --primary-light: #1b96ff;
+            --success-color: #2e844a;
+            --success-light: #45c65a;
+            --warning-color: #dd7a01;
+            --warning-light: #fe9339;
+            --error-color: #c23934;
+            --error-light: #ea6076;
+            --info-color: #0176d3;
+            --purple-color: #9050e9;
+            --gray-50: #fafafa;
+            --gray-100: #f3f3f3;
+            --gray-200: #e5e5e5;
+            --gray-300: #c9c9c9;
+            --gray-400: #9e9e9e;
+            --gray-500: #706e6b;
+            --gray-600: #514f4d;
+            --gray-700: #3e3e3c;
+            --gray-800: #2b2826;
+            --gray-900: #181818;
+            --cleared-bg: #c6f6d5;
+            --cleared-border: #38a169;
+            --nsf-bg: #fed7d7;
+            --nsf-border: #e53e3e;
+            --cancelled-bg: #fefcbf;
+            --cancelled-border: #d69e2e;
+            --scheduled-bg: #bee3f8;
+            --scheduled-border: #3182ce;
+            --header-gradient: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Salesforce Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: var(--gray-700);
+            background: linear-gradient(180deg, #f0f4f8 0%, #e2e8f0 100%);
+            min-height: 100vh;
+        }
+
+        /* ============================================
+           HEADER
+           ============================================ */
+        .header {
+            background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 50%, #4299e1 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.3;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            letter-spacing: -0.5px;
+        }
+
+        .header .subtitle {
+            font-size: 1.4rem;
+            opacity: 0.95;
+            font-weight: 300;
+            margin-bottom: 25px;
+        }
+
+        .header .badges {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .header .badge {
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 25px;
+            font-size: 0.9rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        /* ============================================
+           NAVIGATION
+           ============================================ */
+        .nav {
+            background: white;
+            padding: 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .nav-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            padding: 15px 20px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            font-size: 1.1rem;
+            border-right: 1px solid var(--gray-200);
+        }
+
+        .nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .nav a {
+            color: var(--gray-600);
+            text-decoration: none;
+            padding: 18px 20px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: block;
+            position: relative;
+            font-size: 0.95rem;
+        }
+
+        .nav a:hover {
+            background: var(--gray-50);
+            color: var(--primary-color);
+        }
+
+        .nav a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 3px;
+            background: var(--primary-color);
+            transition: width 0.3s;
+        }
+
+        .nav a:hover::after {
+            width: 80%;
+        }
+
+        .nav-cta {
+            padding: 0 20px;
+        }
+
+        .nav-cta a {
+            background: var(--primary-color);
+            color: white !important;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .nav-cta a:hover {
+            background: var(--primary-dark);
+        }
+
+        .nav-cta a::after {
+            display: none;
+        }
+
+        /* ============================================
+           MAIN CONTENT
+           ============================================ */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 50px 20px;
+        }
+
+        /* Sections */
+        section {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.08);
+            border: 1px solid var(--gray-100);
+        }
+
+        h2 {
+            color: var(--gray-800);
+            font-size: 2rem;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h2 .section-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        h3 {
+            color: var(--gray-700);
+            font-size: 1.4rem;
+            margin: 35px 0 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h3::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        h4 {
+            color: var(--gray-600);
+            font-size: 1.15rem;
+            margin: 25px 0 12px 0;
+            font-weight: 600;
+        }
+
+        p {
+            margin-bottom: 15px;
+            color: var(--gray-600);
+        }
+
+        /* Lists */
+        ul, ol {
+            margin-left: 25px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            color: var(--gray-600);
+        }
+
+        li strong {
+            color: var(--gray-700);
+        }
+
+        /* ============================================
+           UI MOCKUPS
+           ============================================ */
+        .ui-mockup {
+            background: var(--gray-100);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 30px 0;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            border: 1px solid var(--gray-200);
+        }
+
+        .mockup-header {
+            background: var(--header-gradient);
+            color: white;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mockup-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .mockup-title .mode {
+            opacity: 0.8;
+        }
+
+        .mockup-title .plan-name {
+            font-weight: 700;
+        }
+
+        .mockup-title .version-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+
+        .mockup-header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .mockup-icon-btn {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .mockup-selector {
+            background: white;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .mockup-dropdown {
+            flex: 1;
+            max-width: 350px;
+            padding: 8px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+        }
+
+        .mockup-count-badge {
+            background: var(--gray-100);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: var(--gray-600);
+        }
+
+        .mockup-tabs {
+            display: flex;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 0 16px;
+        }
+
+        .mockup-tab {
+            padding: 12px 20px;
+            font-weight: 500;
+            color: var(--gray-500);
+            border-bottom: 2px solid transparent;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .mockup-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .mockup-tab .count {
+            margin-left: 6px;
+            color: var(--gray-400);
+        }
+
+        .mockup-epps {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: var(--gray-500);
+            padding: 4px 10px;
+            background: var(--gray-100);
+            border-radius: 4px;
+        }
+
+        .mockup-table-container {
+            padding: 16px;
+            background: white;
+        }
+
+        .mockup-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .mockup-table th {
+            background: #f1f5f9;
+            padding: 10px 8px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--gray-600);
+            border-bottom: 2px solid var(--gray-200);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .mockup-table th.right {
+            text-align: right;
+        }
+
+        .mockup-table td {
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .mockup-table td.right {
+            text-align: right;
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+
+        .mockup-table tr.scheduled {
+            background: linear-gradient(180deg, #e3f2fd 0%, #bbdefb 100%);
+        }
+
+        .mockup-table tr.cleared {
+            background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%);
+        }
+
+        .mockup-table tr.nsf {
+            background: linear-gradient(180deg, #ffebee 0%, #ffcdd2 100%);
+        }
+
+        .mockup-table tr.cancelled {
+            background: linear-gradient(180deg, #fffde7 0%, #fff9c4 100%);
+        }
+
+        .mockup-table tfoot td {
+            background: #f8fafc;
+            font-weight: 700;
+            border-top: 2px solid var(--gray-200);
+        }
+
+        .mockup-status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .mockup-status-scheduled {
+            background: #2196f3;
+            color: white;
+        }
+
+        .mockup-status-cleared {
+            background: #4caf50;
+            color: white;
+        }
+
+        .mockup-status-nsf {
+            background: #f44336;
+            color: white;
+        }
+
+        .mockup-status-cancelled {
+            background: #ff9800;
+            color: white;
+        }
+
+        .mockup-footer {
+            background: #f8fafc;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .mockup-footer-left,
+        .mockup-footer-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .mockup-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 12px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .mockup-btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .mockup-btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .mockup-btn-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .mockup-btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        /* Callout annotations */
+        .callout-container {
+            position: relative;
+        }
+
+        .callout {
+            position: absolute;
+            background: var(--error-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        .callout-legend {
+            background: var(--gray-50);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .callout-legend h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: var(--gray-700);
+        }
+
+        .callout-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .callout-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .callout-number {
+            background: var(--error-color);
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+
+        .callout-text {
+            font-size: 14px;
+            color: var(--gray-600);
+        }
+
+        .callout-text strong {
+            color: var(--gray-700);
+        }
+
+        /* ============================================
+           TABLES
+           ============================================ */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 14px 18px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        th {
+            background: var(--gray-800);
+            font-weight: 600;
+            color: white;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            background: white;
+        }
+
+        tr:hover td {
+            background: var(--gray-50);
+        }
+
+        /* ============================================
+           STATUS BADGES
+           ============================================ */
+        .status-badge {
+            display: inline-block;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-scheduled {
+            background: linear-gradient(135deg, #bee3f8 0%, #90cdf4 100%);
+            color: #2b6cb0;
+        }
+
+        .status-cleared {
+            background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+            color: #276749;
+        }
+
+        .status-nsf {
+            background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+            color: #c53030;
+        }
+
+        .status-cancelled {
+            background: linear-gradient(135deg, #fefcbf 0%, #faf089 100%);
+            color: #975a16;
+        }
+
+        /* ============================================
+           INFO BOXES
+           ============================================ */
+        .info-box {
+            padding: 20px 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            border-left: 5px solid;
+            display: flex;
+            gap: 15px;
+        }
+
+        .info-box-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .info-box.tip {
+            background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+            border-color: var(--success-color);
+        }
+
+        .info-box.tip .info-box-icon { color: var(--success-color); }
+
+        .info-box.warning {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border-color: var(--warning-color);
+        }
+
+        .info-box.warning .info-box-icon { color: var(--warning-color); }
+
+        .info-box.note {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-color: var(--info-color);
+        }
+
+        .info-box.note .info-box-icon { color: var(--info-color); }
+
+        .info-box.danger {
+            background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+            border-color: var(--error-color);
+        }
+
+        .info-box.danger .info-box-icon { color: var(--error-color); }
+
+        .info-box-content strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 1rem;
+            color: var(--gray-800);
+        }
+
+        .info-box-content p {
+            margin: 0;
+        }
+
+        /* ============================================
+           CODE
+           ============================================ */
+        code {
+            background: var(--gray-100);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+            font-size: 0.9em;
+            color: var(--primary-dark);
+            border: 1px solid var(--gray-200);
+        }
+
+        pre {
+            background: var(--gray-800);
+            color: #f8f8f8;
+            padding: 25px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 20px 0;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+            border: none;
+        }
+
+        /* ============================================
+           BUTTONS
+           ============================================ */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            margin: 5px;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .btn-blue {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, var(--success-color), var(--success-light));
+            color: white;
+        }
+
+        .btn-yellow {
+            background: linear-gradient(135deg, var(--warning-color), var(--warning-light));
+            color: white;
+        }
+
+        .btn-gray {
+            background: linear-gradient(135deg, var(--gray-300), var(--gray-200));
+            color: var(--gray-700);
+        }
+
+        .btn-red {
+            background: linear-gradient(135deg, var(--error-color), var(--error-light));
+            color: white;
+        }
+
+        /* ============================================
+           FEATURE GRID
+           ============================================ */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .feature-card {
+            background: linear-gradient(180deg, var(--gray-50) 0%, white 100%);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border-color: var(--primary-color);
+        }
+
+        .feature-card-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-card h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: var(--gray-800);
+            font-size: 1.1rem;
+        }
+
+        .feature-card p {
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        /* ============================================
+           KEYBOARD SHORTCUTS
+           ============================================ */
+        kbd {
+            background: linear-gradient(180deg, var(--gray-100) 0%, var(--gray-200) 100%);
+            border: 1px solid var(--gray-300);
+            border-radius: 5px;
+            padding: 4px 10px;
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+            font-size: 0.85em;
+            box-shadow: 0 2px 0 var(--gray-300);
+            color: var(--gray-700);
+        }
+
+        /* ============================================
+           STEPS
+           ============================================ */
+        .steps {
+            counter-reset: step-counter;
+            list-style: none;
+            margin-left: 0;
+            padding-left: 0;
+        }
+
+        .steps li {
+            counter-increment: step-counter;
+            position: relative;
+            padding-left: 60px;
+            margin-bottom: 25px;
+            min-height: 45px;
+        }
+
+        .steps li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 3px 10px rgba(1, 118, 211, 0.3);
+        }
+
+        /* ============================================
+           COMPARISON TABLE
+           ============================================ */
+        .comparison-table {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .comparison-table th:first-child {
+            background: var(--primary-dark);
+        }
+
+        .comparison-table .check {
+            color: var(--success-color);
+            font-size: 1.2rem;
+        }
+
+        .comparison-table .cross {
+            color: var(--error-color);
+            font-size: 1.2rem;
+        }
+
+        /* ============================================
+           WIRED PAYMENT MOCKUP
+           ============================================ */
+        .wired-popover-mockup {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            border: 1px solid var(--gray-200);
+            width: 280px;
+            margin: 20px auto;
+        }
+
+        .wired-popover-header {
+            background: linear-gradient(135deg, #ed8936 0%, #f6ad55 100%);
+            color: white;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .wired-popover-body {
+            padding: 15px;
+        }
+
+        .wired-payment-item {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .wired-payment-item:last-child {
+            border-bottom: none;
+        }
+
+        .wired-field {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .wired-field-label {
+            color: var(--gray-500);
+        }
+
+        .wired-field-value {
+            color: var(--gray-700);
+            font-weight: 500;
+        }
+
+        /* ============================================
+           FOOTER
+           ============================================ */
+        .footer {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--gray-500);
+            background: var(--gray-800);
+            margin-top: 60px;
+        }
+
+        .footer-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .footer h3 {
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .footer h3::before {
+            display: none;
+        }
+
+        .footer p {
+            color: var(--gray-400);
+            margin-bottom: 8px;
+        }
+
+        .footer-logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .nav-brand {
+                display: none;
+            }
+
+            .nav ul {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .nav a {
+                text-align: center;
+                padding: 12px 15px;
+            }
+
+            section {
+                padding: 25px 20px;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .ui-mockup {
+                font-size: 11px;
+            }
+
+            .mockup-table th,
+            .mockup-table td {
+                padding: 6px 4px;
+            }
+        }
+
+        /* ============================================
+           PRINT STYLES
+           ============================================ */
+        @media print {
+            .nav {
+                display: none;
+            }
+
+            section {
+                box-shadow: none;
+                border: 1px solid var(--gray-200);
+                break-inside: avoid;
+            }
+
+            .header {
+                background: var(--primary-dark) !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+
+        /* ============================================
+           ANIMATIONS
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        section {
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        /* Star indicator */
+        .star-indicator {
+            color: #f6ad55;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>Payment Plan Editor & Viewer</h1>
+            <p class="subtitle">Comprehensive User Guide with Visual Examples</p>
+            <div class="badges">
+                <span class="badge">Version 2.0</span>
+                <span class="badge">January 2026</span>
+                <span class="badge">Salesforce LWC</span>
+            </div>
+        </div>
+    </header>
+
+    <nav class="nav">
+        <div class="nav-inner">
+            <span class="nav-brand">User Guide</span>
+            <ul>
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#viewer">Viewer</a></li>
+                <li><a href="#editor">Editor</a></li>
+                <li><a href="#statuses">Statuses</a></li>
+                <li><a href="#fill-handle">Fill Handle</a></li>
+                <li><a href="#wired-payments">Wired Payments</a></li>
+                <li><a href="#actions">Actions</a></li>
+                <li><a href="#troubleshooting">Help</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- ============================================
+             OVERVIEW SECTION
+             ============================================ -->
+        <section id="overview">
+            <h2><span class="section-icon">&#128200;</span> Overview</h2>
+            <p>The Payment Plan system consists of two Lightning Web Components that work together to manage payment schedules within Salesforce. These components provide a comprehensive solution for viewing, creating, editing, and managing payment plans and their associated schedule items.</p>
+
+            <h3>Components Overview</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-card-icon">&#128065;</div>
+                    <h4>Payment Plan Viewer</h4>
+                    <p>A read-only component for viewing payment plan details, schedule items, and version history. Ideal for quick access and reference without risk of accidental changes.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card-icon">&#9998;</div>
+                    <h4>Payment Plan Editor</h4>
+                    <p>A full-featured component for creating, editing, and managing payment plans. Includes inline editing, fill handle, version management, and wired payments.</p>
+                </div>
+            </div>
+
+            <h3>Key Features</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-card-icon">&#128196;</div>
+                    <h4>Version Management</h4>
+                    <p>Create, view, and switch between multiple versions of payment plans. Track changes with visual indicators showing modified values.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card-icon">&#128221;</div>
+                    <h4>Inline Editing</h4>
+                    <p>Edit schedule items directly in the table with automatic savings calculation. Changes are highlighted for easy review.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card-icon">&#9999;</div>
+                    <h4>Fill Handle</h4>
+                    <p>Excel-like drag-to-fill functionality with smart pattern detection for dates and numbers. Speeds up data entry significantly.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card-icon">&#128181;</div>
+                    <h4>Wired Payments</h4>
+                    <p>Track and create additional wired payments linked to schedule items. Popover displays payment details on hover.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card-icon">&#127912;</div>
+                    <h4>Status Tracking</h4>
+                    <p>Color-coded status badges and row styling for quick visual identification of payment states (Scheduled, Cleared, NSF, Cancelled).</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card-icon">&#129518;</div>
+                    <h4>Auto-Calculation</h4>
+                    <p>Automatic calculation of savings based on draft amount minus banking, program, and setup fees.</p>
+                </div>
+            </div>
+
+            <div class="info-box note">
+                <span class="info-box-icon">&#128161;</span>
+                <div class="info-box-content">
+                    <strong>Embedded on Opportunity</strong>
+                    <p>Both components are embedded on the Opportunity record page and automatically load the payment plan data for the current opportunity.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================
+             PAYMENT PLAN VIEWER SECTION
+             ============================================ -->
+        <section id="viewer">
+            <h2><span class="section-icon">&#128065;</span> Payment Plan Viewer</h2>
+            <p>The Payment Plan Viewer provides a clean, read-only interface for viewing payment plan details and schedule items. It's perfect for quickly checking payment schedules without the risk of accidental modifications.</p>
+
+            <h3>Viewer Interface</h3>
+            <p>Below is a visual representation of the Payment Plan Viewer with numbered annotations explaining each component:</p>
+
+            <div class="callout-container">
+                <div class="ui-mockup">
+                    <!-- Header -->
+                    <div class="mockup-header" style="position: relative;">
+                        <div class="callout" style="top: -10px; left: 5px;">1</div>
+                        <div class="mockup-title">
+                            <span class="mode">View Plan - </span>
+                            <span class="plan-name">PP-00052</span>
+                            <span class="version-badge">v3 - Active</span>
+                        </div>
+                        <div class="mockup-header-actions" style="position: relative;">
+                            <div class="callout" style="top: -10px; right: -10px;">2</div>
+                            <button class="mockup-icon-btn">&#8635;</button>
+                            <button class="mockup-icon-btn">&#9634;</button>
+                        </div>
+                    </div>
+
+                    <!-- Version Selector -->
+                    <div class="mockup-selector" style="position: relative;">
+                        <div class="callout" style="top: 50%; left: 20px; transform: translateY(-50%);">3</div>
+                        <select class="mockup-dropdown">
+                            <option>PP-00052 v3 (Active)</option>
+                        </select>
+                        <span class="mockup-count-badge">3 version(s)</span>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="mockup-tabs" style="position: relative;">
+                        <div class="callout" style="top: 50%; left: 60px; transform: translateY(-50%);">4</div>
+                        <div class="mockup-tab active">Schedule Items <span class="count">(12)</span></div>
+                        <div class="mockup-epps" style="position: relative;">
+                            <div class="callout" style="top: -12px; right: -12px;">5</div>
+                            EPPS &#9432;
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="mockup-table-container">
+                        <table class="mockup-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px;">#</th>
+                                    <th style="width: 60px;">Draft #</th>
+                                    <th style="width: 90px;">Date</th>
+                                    <th class="right" style="width: 80px;">Draft</th>
+                                    <th class="right" style="width: 60px;">Setup</th>
+                                    <th class="right" style="width: 70px;">Program</th>
+                                    <th class="right" style="width: 70px;">Banking</th>
+                                    <th class="right" style="width: 80px;">Savings</th>
+                                    <th style="width: 80px;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="cleared" style="position: relative;">
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>01/06/2026</td>
+                                    <td class="right">$450.00</td>
+                                    <td class="right">$50.00</td>
+                                    <td class="right">$35.00</td>
+                                    <td class="right">$3.00</td>
+                                    <td class="right">$362.00</td>
+                                    <td><span class="mockup-status-badge mockup-status-cleared">Cleared</span></td>
+                                </tr>
+                                <tr class="cleared">
+                                    <td>2</td>
+                                    <td>2</td>
+                                    <td>01/13/2026</td>
+                                    <td class="right">$450.00</td>
+                                    <td class="right">$0.00</td>
+                                    <td class="right">$35.00</td>
+                                    <td class="right">$3.00</td>
+                                    <td class="right">$412.00</td>
+                                    <td><span class="mockup-status-badge mockup-status-cleared">Cleared</span></td>
+                                </tr>
+                                <tr class="nsf" style="position: relative;">
+                                    <div class="callout" style="top: 50%; left: -12px; transform: translateY(-50%);">6</div>
+                                    <td>3</td>
+                                    <td>-</td>
+                                    <td>01/20/2026</td>
+                                    <td class="right">$450.00</td>
+                                    <td class="right">$0.00</td>
+                                    <td class="right">$35.00</td>
+                                    <td class="right">$3.00</td>
+                                    <td class="right">$412.00</td>
+                                    <td><span class="mockup-status-badge mockup-status-nsf">NSF</span></td>
+                                </tr>
+                                <tr class="scheduled" style="position: relative;">
+                                    <div class="callout" style="top: 50%; right: -12px; transform: translateY(-50%);">7</div>
+                                    <td><span class="star-indicator">&#9733;</span> 4</td>
+                                    <td>3</td>
+                                    <td>01/27/2026</td>
+                                    <td class="right">$475.00</td>
+                                    <td class="right">$0.00</td>
+                                    <td class="right">$35.00</td>
+                                    <td class="right">$3.00</td>
+                                    <td class="right">$437.00</td>
+                                    <td><span class="mockup-status-badge mockup-status-scheduled">Scheduled</span></td>
+                                </tr>
+                                <tr class="scheduled">
+                                    <td>5</td>
+                                    <td>4</td>
+                                    <td>02/03/2026</td>
+                                    <td class="right">$450.00</td>
+                                    <td class="right">$0.00</td>
+                                    <td class="right">$35.00</td>
+                                    <td class="right">$3.00</td>
+                                    <td class="right">$412.00</td>
+                                    <td><span class="mockup-status-badge mockup-status-scheduled">Scheduled</span></td>
+                                </tr>
+                            </tbody>
+                            <tfoot style="position: relative;">
+                                <div class="callout" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">8</div>
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                    <td><strong>Total</strong></td>
+                                    <td class="right">$2,275.00</td>
+                                    <td class="right">$50.00</td>
+                                    <td class="right">$175.00</td>
+                                    <td class="right">$15.00</td>
+                                    <td class="right">$2,035.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="mockup-footer" style="position: relative;">
+                        <div class="callout" style="top: 50%; left: 80px; transform: translateY(-50%);">9</div>
+                        <div class="mockup-footer-left">
+                            &#128065; View-only mode
+                        </div>
+                        <div class="mockup-footer-right">
+                            12 items
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout-legend">
+                <h4>Interface Components</h4>
+                <div class="callout-item">
+                    <span class="callout-number">1</span>
+                    <span class="callout-text"><strong>Header:</strong> Shows "View Plan" mode indicator, plan name (PP-00052), and version badge (v3 - Active)</span>
+                </div>
+                <div class="callout-item">
+                    <span class="callout-number">2</span>
+                    <span class="callout-text"><strong>Header Actions:</strong> Refresh button (&#8635;) reloads data; Maximize button (&#9634;) toggles fullscreen mode</span>
+                </div>
+                <div class="callout-item">
+                    <span class="callout-number">3</span>
+                    <span class="callout-text"><strong>Version Selector:</strong> Dropdown to switch between plan versions. Shows version count badge.</span>
+                </div>
+                <div class="callout-item">
+                    <span class="callout-number">4</span>
+                    <span class="callout-text"><strong>Tab Bar:</strong> Shows "Schedule Items" tab with item count. Single tab in Viewer mode.</span>
+                </div>
+                <div class="callout-item">
+                    <span class="callout-number">5</span>
+                    <span class="callout-text"><strong>EPPS Badge:</strong> Electronic Payment Processing System indicator with info tooltip</span>
+                </div>
+                <div class="callout-item">
+                    <span class="callout-number">6</span>
+                    <span class="callout-text"><strong>NSF Row:</strong> Red gradient background indicates Non-Sufficient Funds. Draft # shows "-" (skipped).</span>
+                </div>
+                <div class="callout-item">
+                    <span class="callout-number">7</span>
+                    <span class="callout-text"><strong>Modified Indicator:</strong> Star (&#9733;) appears when row differs from previous version</span>
+                </div>
+                <div class="callout-item">
+                    <span class="callout-number">8</span>
+                    <span class="callout-text"><strong>Aggregate Footer:</strong> Shows totals for Draft, Setup, Program, Banking, and Savings columns</span>
+                </div>
+                <div class="callout-item">
+                    <span class="callout-number">9</span>
+                    <span class="callout-text"><strong>Footer:</strong> Shows "View-only mode" indicator and total item count</span>
+                </div>
+            </div>
+
+            <h3>Row Color Coding</h3>
+            <p>Each row is color-coded based on its status for quick visual identification:</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Row Color</th>
+                        <th>Meaning</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="status-badge status-scheduled">Scheduled</span></td>
+                        <td style="background: linear-gradient(180deg, #e3f2fd 0%, #bbdefb 100%); width: 120px;">Blue Gradient</td>
+                        <td>Upcoming payment - not yet processed</td>
+                    </tr>
+                    <tr>
+                        <td><span class="status-badge status-cleared">Cleared</span></td>
+                        <td style="background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%);">Green Gradient</td>
+                        <td>Payment successfully processed</td>
+                    </tr>
+                    <tr>
+                        <td><span class="status-badge status-nsf">NSF</span></td>
+                        <td style="background: linear-gradient(180deg, #ffebee 0%, #ffcdd2 100%);">Red Gradient</td>
+                        <td>Non-Sufficient Funds - payment failed</td>
+                    </tr>
+                    <tr>
+                        <td><span class="status-badge status-cancelled">Cancelled</span></td>
+                        <td style="background: linear-gradient(180deg, #fffde7 0%, #fff9c4 100%);">Yellow Gradient</td>
+                        <td>Payment was cancelled</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Wired Payments Popover</h3>
+            <p>When hovering over a row that has associated wired payments, a popover appears showing payment details:</p>
+
+            <div class="wired-popover-mockup">
+                <div class="wired-popover-header">
+                    &#128181; Wired Payments (2)
+                </div>
+                <div class="wired-popover-body">
+                    <div class="wired-payment-item">
+                        <div class="wired-field">
+                            <span class="wired-field-label">Name:</span>
+                            <span class="wired-field-value">WIRE-00012</span>
+                        </div>
+                        <div class="wired-field">
+                            <span class="wired-field-label">Date:</span>
+                            <span class="wired-field-value">01/15/2026</span>
+                        </div>
+                        <div class="wired-field">
+                            <span class="wired-field-label">Amount:</span>
+                            <span class="wired-field-value">$1,500.00</span>
+                        </div>
+                        <div class="wired-field">
+                            <span class="wired-field-label">Description:</span>
+                            <span class="wired-field-value">Initial deposit</span>
+                        </div>
+                    </div>
+                    <div class="wired-payment-item">
+                        <div class="wired-field">
+                            <span class="wired-field-label">Name:</span>
+                            <span class="wired-field-value">WIRE-00015</span>
+                        </div>
+                        <div class="wired-field">
+                            <span class="wired-field-label">Date:</span>
+                            <span class="wired-field-value">01/22/2026</span>
+                        </div>
+                        <div class="wired-field">
+                            <span class="wired-field-label">Amount:</span>
+                            <span class="wired-field-value">$500.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box tip">
+                <span class="info-box-icon">&#128161;</span>
+                <div class="info-box-content">
+                    <strong>Pro Tip: Cursor-Following Popover</strong>
+                    <p>The wired payments popover follows your cursor as you move within the row, making it easy to read details while keeping track of which row you're viewing.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================
+             PAYMENT PLAN EDITOR SECTION
+             ============================================ -->
+        <section id="editor">
+            <h2><span class="section-icon">&#9998;</span> Payment Plan Editor</h2>
+            <p>The Payment Plan Editor provides full editing capabilities for creating and modifying payment plans. It includes all features of the Viewer plus inline editing, version creation, and advanced tools.</p>
+
+            <h3>Editor Interface - View Mode</h3>
+            <p>When not actively editing, the Editor displays in view mode with action buttons available:</p>
+
+            <div class="callout-container">
+                <div class="ui-mockup">
+                    <!-- Header -->
+                    <div class="mockup-header">
+                        <div class="mockup-title">
+                            <span class="mode">View Plan - </span>
+                            <span class="plan-name">PP-00052</span>
+                            <span class="version-badge">v3 - Active</span>
+                        </div>
+                        <div class="mockup-header-actions">
+                            <button class="mockup-icon-btn">&#8635;</button>
+                            <button class="mockup-icon-btn">&#9634;</button>
+                        </div>
+                    </div>
+
+                    <!-- Version Selector -->
+                    <div class="mockup-selector">
+                        <select class="mockup-dropdown">
+                            <option>PP-00052 v3 (Active)</option>
+                        </select>
+                        <span class="mockup-count-badge">3 version(s)</span>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="mockup-tabs">
+                        <div class="mockup-tab active">Active <span class="count">(12)</span></div>
+                        <div class="mockup-tab">Pending <span class="count">(0)</span></div>
+                        <div class="mockup-epps">EPPS &#9432;</div>
+                    </div>
+
+                    <!-- Table (simplified) -->
+                    <div class="mockup-table-container">
+                        <table class="mockup-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 30px;"></th>
+                                    <th style="width: 40px;">#</th>
+                                    <th style="width: 50px;">Draft #</th>
+                                    <th style="width: 85px;">Date</th>
+                                    <th class="right" style="width: 75px;">Draft</th>
+                                    <th class="right" style="width: 55px;">Setup</th>
+                                    <th class="right" style="width: 65px;">Program</th>
+                                    <th class="right" style="width: 65px;">Banking</th>
+                                    <th class="right" style="width: 75px;">Savings</th>
+                                    <th style="width: 75px;">Status</th>
+                                    <th style="width: 45px;">Wire</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="cleared">
+                                    <td><input type="checkbox" disabled></td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>01/06/2026</td>
+                                    <td class="right">$450.00</td>
+                                    <td class="right">$50.00</td>
+                                    <td class="right">$35.00</td>
+                                    <td class="right">$3.00</td>
+                                    <td class="right">$362.00</td>
+                                    <td><span class="mockup-status-badge mockup-status-cleared">Cleared</span></td>
+                                    <td>+</td>
+                                </tr>
+                                <tr class="scheduled">
+                                    <td><input type="checkbox"></td>
+                                    <td>2</td>
+                                    <td>2</td>
+                                    <td>01/13/2026</td>
+                                    <td class="right">$450.00</td>
+                                    <td class="right">$0.00</td>
+                                    <td class="right">$35.00</td>
+                                    <td class="right">$3.00</td>
+                                    <td class="right">$412.00</td>
+                                    <td><span class="mockup-status-badge mockup-status-scheduled">Scheduled</span></td>
+                                    <td>+</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Footer with Actions -->
+                    <div class="mockup-footer" style="position: relative;">
+                        <div class="callout" style="top: -30px; left: 50%; transform: translateX(-50%);">1</div>
+                        <div class="mockup-footer-left" style="gap: 10px;">
+                            <button class="mockup-btn mockup-btn-primary">Manual</button>
+                            <button class="mockup-btn mockup-btn-primary">Recalculate</button>
+                            <button class="mockup-btn mockup-btn-warning">Suspend</button>
+                        </div>
+                        <div class="mockup-footer-right">
+                            12 items | Last updated: 01/10/2026
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout-legend">
+                <h4>Editor Action Buttons</h4>
+                <div class="callout-item">
+                    <span class="callout-number">1</span>
+                    <span class="callout-text"><strong>Action Buttons:</strong> Manual (enter edit mode), Recalculate (create new version from Opp data), Suspend (pause plan)</span>
+                </div>
+            </div>
+
+            <h3>Editor Interface - Edit Mode</h3>
+            <p>After clicking "Manual", the Editor switches to edit mode with editable cells and additional controls:</p>
+
+            <div class="callout-container">
+                <div class="ui-mockup">
+                    <!-- Header - Edit Mode -->
+                    <div class="mockup-header" style="background: linear-gradient(135deg, #2d3748 0%, #1a365d 100%); position: relative;">
+                        <div class="callout" style="top: -10px; left: 80px;">1</div>
+                        <div class="mockup-title">
+                            <span class="mode" style="color: #90cdf4;">Edit Plan - </span>
+                            <span class="plan-name">PP-00052</span>
+                            <span class="version-badge" style="background: #3182ce;">v3 - Editing</span>
+                        </div>
+                        <div class="mockup-header-actions">
+                            <button class="mockup-icon-btn">&#8635;</button>
+                            <button class="mockup-icon-btn">&#9634;</button>
+                        </div>
+                    </div>
+
+                    <!-- Tabs - Pending Active -->
+                    <div class="mockup-tabs" style="position: relative;">
+                        <div class="callout" style="top: 50%; left: 150px; transform: translateY(-50%);">2</div>
+                        <div class="mockup-tab">Active <span class="count">(12)</span></div>
+                        <div class="mockup-tab active" style="color: #3182ce; border-bottom-color: #3182ce;">Pending <span class="count">(12)</span></div>
+                        <div class="mockup-epps">EPPS &#9432;</div>
+                    </div>
+
+                    <!-- Table with Editable Cells -->
+                    <div class="mockup-table-container">
+                        <table class="mockup-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 30px;"></th>
+                                    <th style="width: 40px;">#</th>
+                                    <th style="width: 50px;">Draft #</th>
+                                    <th style="width: 100px;">Date</th>
+                                    <th class="right" style="width: 90px;">Draft</th>
+                                    <th class="right" style="width: 65px;">Setup</th>
+                                    <th class="right" style="width: 75px;">Program</th>
+                                    <th class="right" style="width: 75px;">Banking</th>
+                                    <th class="right" style="width: 85px;">Savings</th>
+                                    <th style="width: 90px;">Status</th>
+                                    <th style="width: 40px;">X</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="cleared">
+                                    <td><input type="checkbox" disabled></td>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td style="color: var(--gray-400);">01/06/2026</td>
+                                    <td class="right" style="color: var(--gray-400);">$450.00</td>
+                                    <td class="right" style="color: var(--gray-400);">$50.00</td>
+                                    <td class="right" style="color: var(--gray-400);">$35.00</td>
+                                    <td class="right" style="color: var(--gray-400);">$3.00</td>
+                                    <td class="right" style="color: var(--gray-400);">$362.00</td>
+                                    <td><span class="mockup-status-badge mockup-status-cleared">Cleared</span></td>
+                                    <td style="color: var(--gray-300);">-</td>
+                                </tr>
+                                <tr class="scheduled" style="position: relative;">
+                                    <div class="callout" style="top: 50%; right: -12px; transform: translateY(-50%);">3</div>
+                                    <td><input type="checkbox" checked></td>
+                                    <td><span class="star-indicator">&#9733;</span> 2</td>
+                                    <td>2</td>
+                                    <td style="position: relative;">
+                                        <div class="callout" style="top: -12px; left: 50%; transform: translateX(-50%);">4</div>
+                                        <input type="date" value="2026-01-13" style="width: 100%; padding: 4px; border: 2px solid #3182ce; border-radius: 4px; font-size: 11px;">
+                                    </td>
+                                    <td class="right">
+                                        <input type="text" value="$475.00" style="width: 100%; padding: 4px; border: 1px solid #cbd5e0; border-radius: 4px; text-align: right; font-size: 11px;">
+                                    </td>
+                                    <td class="right">
+                                        <input type="text" value="$0.00" style="width: 100%; padding: 4px; border: 1px solid #cbd5e0; border-radius: 4px; text-align: right; font-size: 11px;">
+                                    </td>
+                                    <td class="right">
+                                        <input type="text" value="$35.00" style="width: 100%; padding: 4px; border: 1px solid #cbd5e0; border-radius: 4px; text-align: right; font-size: 11px;">
+                                    </td>
+                                    <td class="right">
+                                        <input type="text" value="$3.00" style="width: 100%; padding: 4px; border: 1px solid #cbd5e0; border-radius: 4px; text-align: right; font-size: 11px;">
+                                    </td>
+                                    <td class="right" style="font-weight: 600; color: var(--success-color);">$437.00</td>
+                                    <td>
+                                        <select style="padding: 4px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 10px;">
+                                            <option>Scheduled</option>
+                                        </select>
+                                    </td>
+                                    <td><button style="background: #fc8181; color: white; border: none; border-radius: 4px; padding: 2px 8px; cursor: pointer;">X</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Add Row Button -->
+                        <div style="padding: 12px; text-align: center; border-top: 1px dashed var(--gray-200); position: relative;">
+                            <div class="callout" style="top: 50%; left: 180px; transform: translateY(-50%);">5</div>
+                            <button class="mockup-btn mockup-btn-primary" style="padding: 6px 16px; font-size: 12px;">+ Add Draft Payment</button>
+                        </div>
+                    </div>
+
+                    <!-- Footer - Edit Mode -->
+                    <div class="mockup-footer" style="position: relative;">
+                        <div class="callout" style="top: -30px; left: 50%; transform: translateX(-50%);">6</div>
+                        <div class="mockup-footer-left" style="gap: 10px;">
+                            <button class="mockup-btn mockup-btn-primary">Save as New Version</button>
+                            <button class="mockup-btn mockup-btn-secondary">Cancel</button>
+                        </div>
+                        <div class="mockup-footer-right">
+                            Editing... | 1 row modified
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout-legend">
+                <h4>Edit Mode Components</h4>
+                <div class="callout-item">
+                    <span class="callout-number">1</span>
+                    <span class="callout-text"><strong>Edit Mode Indicator:</strong> Header shows "Edit Plan" and version badge changes to "Editing"</span>
+                </div>
+                <div class="callout-item">
+                    <span class="callout-number">2</span>
+                    <span class="callout-text"><strong>Pending Tab:</strong> Automatically activates in edit mode. Shows items being modified.</span>
+                </div>
+                <div class="callout-item">
+                    <span class="callout-number">3</span>
+                    <span class="callout-text"><strong>Delete Button:</strong> Appears for Scheduled rows. Click to mark row for deletion.</span>
+                </div>
+                <div class="callout-item">
+                    <span class="callout-number">4</span>
+                    <span class="callout-text"><strong>Editable Cell:</strong> Blue border indicates selected/active cell. Supports fill handle.</span>
+                </div>
+                <div class="callout-item">
+                    <span class="callout-number">5</span>
+                    <span class="callout-text"><strong>Add Row Button:</strong> Creates new Scheduled row with date 7 days after last row</span>
+                </div>
+                <div class="callout-item">
+                    <span class="callout-number">6</span>
+                    <span class="callout-text"><strong>Save/Cancel:</strong> Save creates new Draft version. Cancel discards all changes.</span>
+                </div>
+            </div>
+
+            <h3>Editor vs Viewer Comparison</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Viewer</th>
+                        <th>Editor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>View payment plans</td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>Switch between versions</td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>Wired payments popover</td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>Modified row indicators</td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>Inline editing</td>
+                        <td><span class="cross">&#10007;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>Fill handle</td>
+                        <td><span class="cross">&#10007;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>Add/Delete rows</td>
+                        <td><span class="cross">&#10007;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>Create new versions</td>
+                        <td><span class="cross">&#10007;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>Recalculate from Opportunity</td>
+                        <td><span class="cross">&#10007;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>Activate/Suspend plans</td>
+                        <td><span class="cross">&#10007;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>Create wired payments</td>
+                        <td><span class="cross">&#10007;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- ============================================
+             STATUSES SECTION
+             ============================================ -->
+        <section id="statuses">
+            <h2><span class="section-icon">&#127912;</span> Payment Statuses</h2>
+            <p>Each schedule item has a status that determines its appearance, editability, and processing behavior.</p>
+
+            <div class="feature-grid">
+                <div class="feature-card" style="border-left: 4px solid #3182ce;">
+                    <h4><span class="status-badge status-scheduled">Scheduled</span></h4>
+                    <p><strong>Meaning:</strong> Upcoming payment that has not yet been processed.</p>
+                    <p><strong>Editable:</strong> Yes - All fields can be modified</p>
+                    <p><strong>Draft #:</strong> Included in sequential count</p>
+                </div>
+                <div class="feature-card" style="border-left: 4px solid #38a169;">
+                    <h4><span class="status-badge status-cleared">Cleared</span></h4>
+                    <p><strong>Meaning:</strong> Payment was successfully processed and cleared.</p>
+                    <p><strong>Editable:</strong> No - Locked for data integrity</p>
+                    <p><strong>Draft #:</strong> Included in sequential count</p>
+                </div>
+                <div class="feature-card" style="border-left: 4px solid #e53e3e;">
+                    <h4><span class="status-badge status-nsf">NSF</span></h4>
+                    <p><strong>Meaning:</strong> Non-Sufficient Funds - payment failed due to insufficient balance.</p>
+                    <p><strong>Editable:</strong> No - Locked for data integrity</p>
+                    <p><strong>Draft #:</strong> Skipped (shows "-")</p>
+                </div>
+                <div class="feature-card" style="border-left: 4px solid #d69e2e;">
+                    <h4><span class="status-badge status-cancelled">Cancelled</span></h4>
+                    <p><strong>Meaning:</strong> Payment was manually cancelled and will not be processed.</p>
+                    <p><strong>Editable:</strong> No - Locked for data integrity</p>
+                    <p><strong>Draft #:</strong> Skipped (shows "-")</p>
+                </div>
+            </div>
+
+            <div class="info-box warning">
+                <span class="info-box-icon">&#9888;</span>
+                <div class="info-box-content">
+                    <strong>Important: Status Changes</strong>
+                    <p>Once a payment is marked as Cleared, NSF, or Cancelled, it cannot be edited. This ensures historical data integrity for financial records and compliance.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================
+             FILL HANDLE SECTION
+             ============================================ -->
+        <section id="fill-handle">
+            <h2><span class="section-icon">&#9999;</span> Fill Handle Feature</h2>
+            <p>The Fill Handle provides Excel-like drag-to-fill functionality for efficient data entry. This powerful feature saves time when you need to apply values or patterns across multiple rows.</p>
+
+            <h3>How to Use the Fill Handle</h3>
+            <ol class="steps">
+                <li>
+                    <strong>Select a cell:</strong> Click on an editable cell (only works with Scheduled rows). A blue border appears around the selected cell.
+                </li>
+                <li>
+                    <strong>Locate the handle:</strong> Look for the small square at the bottom-right corner of the selected cell.
+                </li>
+                <li>
+                    <strong>Drag to fill:</strong> Click and drag the handle up or down to select target cells. A visual indicator shows which cells will be filled.
+                </li>
+                <li>
+                    <strong>Release:</strong> Let go of the mouse button to apply the fill operation.
+                </li>
+            </ol>
+
+            <h3>Smart Fill Behavior</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field Type</th>
+                        <th>Fill Behavior</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Date</strong></td>
+                        <td>Increments by 7 days per row (weekly schedule)</td>
+                        <td>01/06 → 01/13 → 01/20 → 01/27</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Currency</strong></td>
+                        <td>Detects increment patterns or copies value</td>
+                        <td>$400 → $400 → $400 (copy)<br>$400, $410 → $420 → $430 (pattern)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Status</strong></td>
+                        <td>Copies the same value to all cells</td>
+                        <td>Scheduled → Scheduled → Scheduled</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Keyboard Shortcut</h3>
+            <p>Use <kbd>Ctrl</kbd> + <kbd>D</kbd> (or <kbd>Cmd</kbd> + <kbd>D</kbd> on Mac) to fill down:</p>
+            <ol class="steps">
+                <li>Select the source cell containing the value you want to copy</li>
+                <li>Check the checkbox on each row you want to fill</li>
+                <li>Press <kbd>Ctrl</kbd> + <kbd>D</kbd></li>
+                <li>The value is copied to all checked rows</li>
+            </ol>
+
+            <div class="info-box tip">
+                <span class="info-box-icon">&#128161;</span>
+                <div class="info-box-content">
+                    <strong>Pro Tip: Pattern Detection</strong>
+                    <p>For numeric fields, if the previous cells show an increment pattern (e.g., 100, 110, 120), the fill handle will continue the pattern automatically!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================
+             WIRED PAYMENTS SECTION
+             ============================================ -->
+        <section id="wired-payments">
+            <h2><span class="section-icon">&#128181;</span> Wired Payments</h2>
+            <p>Wired Payments are additional payments that can be linked to specific schedule items. They provide flexibility for tracking one-time or special payments outside the regular schedule.</p>
+
+            <h3>Viewing Wired Payments</h3>
+            <p>In both the Viewer and Editor:</p>
+            <ol class="steps">
+                <li>Hover over any row that has associated wired payments</li>
+                <li>A popover appears showing all linked wired payments</li>
+                <li>The popover follows your cursor for easy reading</li>
+                <li>Move your mouse away from the row to close the popover</li>
+            </ol>
+
+            <h3>Creating a Wired Payment (Editor Only)</h3>
+            <ol class="steps">
+                <li><strong>Exit edit mode:</strong> Make sure you are NOT in edit mode (Cancel any pending changes)</li>
+                <li><strong>Click the + button:</strong> In the "Wire" column, click the + button for the desired row</li>
+                <li><strong>Fill in the details:</strong>
+                    <ul style="margin-top: 10px;">
+                        <li><strong>Payment Date:</strong> When the wired payment was/will be made</li>
+                        <li><strong>Payment Amount:</strong> The amount of the wired payment</li>
+                        <li><strong>Description:</strong> Optional notes about the payment</li>
+                    </ul>
+                </li>
+                <li><strong>Save:</strong> Click the Save button to create the wired payment</li>
+            </ol>
+
+            <div class="info-box note">
+                <span class="info-box-icon">&#128279;</span>
+                <div class="info-box-content">
+                    <strong>Automatic Linking</strong>
+                    <p>Wired payments are automatically linked to the Payment Schedule Item based on which row you clicked. When creating new versions, wired payments carry over based on matching Payment Numbers.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================
+             ACTIONS SECTION
+             ============================================ -->
+        <section id="actions">
+            <h2><span class="section-icon">&#9889;</span> Plan Actions</h2>
+            <p>The Editor provides several powerful actions for managing payment plans:</p>
+
+            <h3>Manual (Edit)</h3>
+            <div class="info-box note">
+                <span class="info-box-icon"><span class="btn btn-blue" style="margin: 0; pointer-events: none;">Manual</span></span>
+                <div class="info-box-content">
+                    <strong>Enter Edit Mode</strong>
+                    <p>Opens the plan for inline editing. You can modify dates, amounts, fees, and statuses for Scheduled rows. Changes are tracked in the Pending tab until saved.</p>
+                </div>
+            </div>
+
+            <h3>Recalculate</h3>
+            <div class="info-box note">
+                <span class="info-box-icon"><span class="btn btn-blue" style="margin: 0; pointer-events: none;">Recalculate</span></span>
+                <div class="info-box-content">
+                    <strong>Create New Version from Opportunity Data</strong>
+                    <p>Fetches the latest values from the Opportunity record and creates a new Draft version. Preserves non-scheduled items (Cleared, NSF, Cancelled) and recalculates remaining scheduled payments.</p>
+                    <p style="margin-top: 10px;"><strong>Use when:</strong> Opportunity payment terms change (weekly amount, number of weeks, fee percentages)</p>
+                </div>
+            </div>
+
+            <h3>Activate</h3>
+            <div class="info-box tip">
+                <span class="info-box-icon"><span class="btn btn-green" style="margin: 0; pointer-events: none;">Activate</span></span>
+                <div class="info-box-content">
+                    <strong>Make Draft Version Active</strong>
+                    <p>Only appears when viewing a Draft version. Sets the version status to "Active" and archives all other versions. A confetti animation celebrates successful activation!</p>
+                </div>
+            </div>
+
+            <h3>Suspend</h3>
+            <div class="info-box warning">
+                <span class="info-box-icon"><span class="btn btn-yellow" style="margin: 0; pointer-events: none;">Suspend</span></span>
+                <div class="info-box-content">
+                    <strong>Pause the Payment Plan</strong>
+                    <p>Creates a new "Suspension" version that cancels all scheduled payments. Cleared and NSF items are preserved. Use when a client needs to pause payments or when enrollment is being cancelled.</p>
+                </div>
+            </div>
+
+            <div class="info-box danger">
+                <span class="info-box-icon">&#9888;</span>
+                <div class="info-box-content">
+                    <strong>Warning: Irreversible Actions</strong>
+                    <p>Activating a plan archives all other versions, and Suspend cancels all scheduled payments. These actions cannot be undone - always review carefully before proceeding.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================
+             TROUBLESHOOTING SECTION
+             ============================================ -->
+        <section id="troubleshooting">
+            <h2><span class="section-icon">&#128295;</span> Troubleshooting</h2>
+
+            <h3>Common Issues</h3>
+
+            <h4>Cannot edit a row</h4>
+            <p><strong>Cause:</strong> The row has a status other than "Scheduled"</p>
+            <p><strong>Solution:</strong> Only rows with <span class="status-badge status-scheduled">Scheduled</span> status can be edited. Cleared, NSF, and Cancelled rows are locked to preserve data integrity.</p>
+
+            <h4>Fill handle not working</h4>
+            <p><strong>Cause:</strong> You may be in view mode or the target row is not editable</p>
+            <p><strong>Solution:</strong> Click "Manual" to enter edit mode, then ensure you're working with Scheduled rows only.</p>
+
+            <h4>Changes not saving</h4>
+            <p><strong>Cause:</strong> Network error or validation failure</p>
+            <p><strong>Solution:</strong> Check for error messages in toast notifications. Ensure all required fields are filled correctly. Try refreshing the page.</p>
+
+            <h4>Version not appearing in dropdown</h4>
+            <p><strong>Cause:</strong> The data may not have refreshed</p>
+            <p><strong>Solution:</strong> Click the Refresh button (&#8635;) to reload the version list.</p>
+
+            <h4>Wired payments not showing on hover</h4>
+            <p><strong>Cause:</strong> You may be in edit mode or the row has no wired payments</p>
+            <p><strong>Solution:</strong> Exit edit mode (Cancel or Save) to enable the hover popover. Check if the row actually has wired payments by looking at the Wire column count.</p>
+
+            <h3>Best Practices</h3>
+            <ul>
+                <li>Always review changes in the Pending tab before saving</li>
+                <li>Use Recalculate when Opportunity data changes significantly</li>
+                <li>Activate Draft plans promptly to ensure correct processing</li>
+                <li>Use the Fill Handle for repetitive data entry to save time</li>
+                <li>Document significant changes using wired payment descriptions</li>
+                <li>Refresh data regularly when multiple users may be making changes</li>
+            </ul>
+        </section>
+
+        <!-- ============================================
+             QUICK REFERENCE SECTION
+             ============================================ -->
+        <section id="quick-reference">
+            <h2><span class="section-icon">&#128218;</span> Quick Reference</h2>
+
+            <h3>Button Reference</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Button</th>
+                        <th>Location</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="btn btn-blue" style="padding: 5px 10px; font-size: 0.8rem;">Manual</span></td>
+                        <td>Footer (View mode)</td>
+                        <td>Enter edit mode</td>
+                    </tr>
+                    <tr>
+                        <td><span class="btn btn-blue" style="padding: 5px 10px; font-size: 0.8rem;">Recalculate</span></td>
+                        <td>Footer (View mode)</td>
+                        <td>Create new version from Opportunity data</td>
+                    </tr>
+                    <tr>
+                        <td><span class="btn btn-green" style="padding: 5px 10px; font-size: 0.8rem;">Activate</span></td>
+                        <td>Footer (Draft only)</td>
+                        <td>Make Draft version active</td>
+                    </tr>
+                    <tr>
+                        <td><span class="btn btn-yellow" style="padding: 5px 10px; font-size: 0.8rem;">Suspend</span></td>
+                        <td>Footer (View mode)</td>
+                        <td>Suspend the payment plan</td>
+                    </tr>
+                    <tr>
+                        <td><span class="btn btn-blue" style="padding: 5px 10px; font-size: 0.8rem;">Save as New Version</span></td>
+                        <td>Footer (Edit mode)</td>
+                        <td>Save changes as new Draft version</td>
+                    </tr>
+                    <tr>
+                        <td><span class="btn btn-gray" style="padding: 5px 10px; font-size: 0.8rem;">Cancel</span></td>
+                        <td>Footer (Edit mode)</td>
+                        <td>Discard all pending changes</td>
+                    </tr>
+                    <tr>
+                        <td><span class="btn btn-blue" style="padding: 5px 10px; font-size: 0.8rem;">+ Add Draft Payment</span></td>
+                        <td>Below table (Edit mode)</td>
+                        <td>Add new Scheduled row</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Keyboard Shortcuts</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Shortcut</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><kbd>Ctrl</kbd> + <kbd>D</kbd></td>
+                        <td>Fill down from selected cell to checked rows</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>Tab</kbd></td>
+                        <td>Move to next editable cell</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>Shift</kbd> + <kbd>Tab</kbd></td>
+                        <td>Move to previous editable cell</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>Enter</kbd></td>
+                        <td>Confirm cell edit and move down</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>Escape</kbd></td>
+                        <td>Cancel current cell edit</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Savings Calculation Formula</h3>
+            <pre><code>Savings = Draft Amount - Banking Fee - Program Fee - Setup Fee</code></pre>
+            <p>This calculation happens automatically whenever any fee field is modified.</p>
+
+            <h3>Version Statuses</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Description</th>
+                        <th>Editable</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Draft</strong></td>
+                        <td>Newly created version, not yet activated</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Active</strong></td>
+                        <td>Currently active version being used for processing</td>
+                        <td>Yes (creates new Draft)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Archived</strong></td>
+                        <td>Previous version that has been replaced</td>
+                        <td>View only</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Suspension</strong></td>
+                        <td>Plan has been suspended, all payments cancelled</td>
+                        <td>View only</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-logo">DCG Pro</div>
+            <h3>Payment Plan Editor & Viewer</h3>
+            <p>User Guide Version 2.0</p>
+            <p>Last Updated: January 2026</p>
+            <p style="margin-top: 20px; opacity: 0.7;">&copy; 2026 DCG Pro. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

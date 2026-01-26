@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Send_to_Convoso</name>
+        <label>Send to Convoso</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>ConvosoFlowIntegration</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>email</name>
+            <value>
+                <elementReference>$Record.Email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>first_name</name>
+            <value>
+                <elementReference>$Record.FirstName</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>last_name</name>
+            <value>
+                <elementReference>$Record.LastName</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>list_id</name>
+            <value>
+                <stringValue>8679</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>notes</name>
+            <value>
+                <elementReference>forNotes</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>phone_number</name>
+            <value>
+                <elementReference>$Record.Phone</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>ConvosoFlowIntegration</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <apiVersion>64.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>to Inbound calls AEM</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>forNotes</name>
+        <dataType>String</dataType>
+        <expression>&quot;Company Name: &quot; &amp; {!$Record.Company} &amp; 
+&quot;, Estimated Total Debt: &quot; &amp; TEXT({!$Record.Est_Total_Debt__c}) &amp; 
+&quot;, Main Source: &quot; &amp; {!$Record.Main_Source__c}</expression>
+    </formulas>
+    <interviewLabel>Convoso Greg Marketing Leads {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Convoso Greg Marketing Leads</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Send_to_Convoso</targetReference>
+        </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>utm_source__c</field>
+            <operator>NotEqualTo</operator>
+        </filters>
+        <filters>
+            <field>Sales_Office__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Everyday debt</stringValue>
+            </value>
+        </filters>
+        <object>Lead</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Obsolete</status>
+</Flow>

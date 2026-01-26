@@ -1,0 +1,360 @@
+/* ========================================
+   Unified Notes Manager - Polished Design
+   ======================================== */
+
+/* Notes Container */
+.notes-container {
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 0.25rem;
+}
+
+/* Individual Note Card */
+.note-item {
+    background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+    border: none;
+    border-left: 4px solid #0176d3;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+.note-item:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+/* Note Header */
+.note-item h3 {
+    color: #181818;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: -0.01em;
+}
+
+/* Metadata (date/author) */
+.note-item .slds-text-body_small {
+    color: #706e6b;
+    font-size: 0.75rem;
+}
+
+/* Note Content Area */
+.note-content {
+    border-top: 1px solid #e5e5e5;
+    padding-top: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.content-text {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    line-height: 1.6;
+    color: #444444;
+    font-size: 0.875rem;
+}
+
+/* Action Buttons */
+.note-item lightning-button-icon {
+    opacity: 0.5;
+    transition: all 0.2s ease;
+}
+
+.note-item:hover lightning-button-icon {
+    opacity: 1;
+}
+
+/* Edit Button */
+.note-item lightning-button-icon:not(.delete-icon) {
+    --slds-c-icon-color-foreground-default: #0176d3;
+}
+
+/* Delete Button */
+.delete-icon {
+    --slds-c-icon-color-foreground-default: #ba0517;
+}
+
+.delete-icon:hover {
+    --slds-c-icon-color-foreground-default: #8e030f;
+}
+
+/* Source Badge */
+.slds-badge_lightest {
+    background: linear-gradient(135deg, #eef4ff 0%, #e3effd 100%);
+    color: #0176d3;
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #d8e6fe;
+}
+
+/* Empty State */
+.slds-illustration {
+    padding: 2rem;
+}
+
+.slds-illustration h3 {
+    color: #3e3e3c;
+    font-weight: 600;
+}
+
+.slds-illustration p {
+    color: #706e6b;
+}
+
+/* Show More/Less Button */
+.note-content lightning-button {
+    --slds-c-button-text-color: #0176d3;
+    --slds-c-button-text-color-hover: #014486;
+}
+
+/* ========================================
+   Modal Styles - Complete Override
+   ======================================== */
+
+/* Backdrop */
+.slds-backdrop_open {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    backdrop-filter: blur(2px);
+    z-index: 9000 !important;
+}
+
+/* Modal Overlay */
+.slds-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 9001 !important;
+    padding: 1rem !important;
+}
+
+/* Reset the SLDS container completely */
+.slds-modal__container {
+    all: unset !important;
+    display: block !important;
+}
+
+/* Our custom modal surface */
+.modal-surface {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    width: 90vw;
+    max-width: 600px;
+    min-width: 320px;
+    animation: modalSlideIn 0.2s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Modal Header */
+.modal-surface .slds-modal__header {
+    background: linear-gradient(135deg, #0176d3 0%, #0b5cab 100%);
+    border: none;
+    padding: 1rem 1.25rem;
+    position: relative;
+    border-radius: 0;
+}
+
+.modal-surface .slds-modal__title {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 1.125rem;
+    margin: 0;
+    padding-right: 2rem;
+}
+
+/* Modal Close Button */
+.close-button {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    padding: 0.375rem;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.close-button:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.close-icon {
+    --slds-c-icon-color-foreground-default: #ffffff;
+    --slds-c-icon-color-foreground: #ffffff;
+}
+
+/* Modal Content */
+.modal-surface .slds-modal__content {
+    padding: 1.5rem;
+    background: #ffffff;
+    border: none;
+}
+
+/* Modal Footer */
+.modal-surface .slds-modal__footer {
+    background: #f8f9fa;
+    border-top: 1px solid #e5e7eb;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    border-radius: 0;
+}
+
+/* Input Fields in Modal */
+.modal-surface lightning-input {
+    --slds-c-input-radius-border: 6px;
+}
+
+/* Native textarea - full CSS control */
+.note-textarea {
+    min-height: 200px;
+    width: 100%;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    padding: 0.75rem;
+    border: 1px solid #dddbda;
+    border-radius: 6px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    background-color: #ffffff;
+}
+
+.note-textarea:focus {
+    outline: none;
+    border-color: #0176d3;
+    box-shadow: 0 0 0 3px rgba(1, 118, 211, 0.15);
+}
+
+.note-textarea::placeholder {
+    color: #706e6b;
+}
+
+.note-textarea.slds-has-error {
+    border-color: #c23934;
+}
+
+/* Remove pink/red validation styling for lightning-input */
+lightning-input:invalid {
+    --slds-c-input-color-background: #ffffff;
+}
+
+/* ========================================
+   Card Header Styles
+   ======================================== */
+
+/* Card Title */
+lightning-card .slds-card__header-title {
+    font-weight: 600;
+    color: #181818;
+}
+
+/* New Note Button */
+lightning-button[variant="brand"] {
+    --slds-c-button-brand-color-background: #0176d3;
+    --slds-c-button-brand-color-background-hover: #014486;
+    --slds-c-button-radius-border: 6px;
+}
+
+/* Refresh Button */
+lightning-button-icon[icon-name="utility:refresh"] {
+    --slds-c-icon-color-foreground-default: #706e6b;
+    transition: transform 0.3s ease;
+}
+
+lightning-button-icon[icon-name="utility:refresh"]:hover {
+    --slds-c-icon-color-foreground-default: #0176d3;
+}
+
+/* ========================================
+   Scrollbar Styling
+   ======================================== */
+
+.notes-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notes-container::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+}
+
+.notes-container::-webkit-scrollbar-thumb {
+    background: #c9c7c5;
+    border-radius: 3px;
+}
+
+.notes-container::-webkit-scrollbar-thumb:hover {
+    background: #969492;
+}
+
+/* ========================================
+   Animations
+   ======================================== */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.note-item {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+/* Stagger animation for multiple notes */
+.note-item:nth-child(1) { animation-delay: 0s; }
+.note-item:nth-child(2) { animation-delay: 0.05s; }
+.note-item:nth-child(3) { animation-delay: 0.1s; }
+.note-item:nth-child(4) { animation-delay: 0.15s; }
+.note-item:nth-child(5) { animation-delay: 0.2s; }
+
+/* ========================================
+   Loading State
+   ======================================== */
+
+.slds-spinner_container {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(2px);
+}

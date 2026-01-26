@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Twilio_Send_SMS_Message_Action_1</name>
+        <label>Twilio Send SMS Message Action 1</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>TwilioSF__TwilioSendSMS</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>fromNumber</name>
+            <value>
+                <elementReference>varTwilioUserPersonalNumber</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>varSendQuizLink</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>toNumber</name>
+            <value>
+                <elementReference>varForGetLeadPhone</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>TwilioSF__TwilioSendSMS</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>64.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <constants>
+        <name>conTwilioPersonalNumber</name>
+        <dataType>Number</dataType>
+        <value>
+            <numberValue>4.793394365E9</numberValue>
+        </value>
+    </constants>
+    <environments>Default</environments>
+    <formulas>
+        <name>forCampConditionalSendQuiz</name>
+        <dataType>String</dataType>
+        <expression>&quot;Thank you for responding! We will be reaching out shortly, in the meantime go to &quot; + 
+IF(
+  CONTAINS(UPPER(TEXT({!Send_SMS.Campaign_Brand__c})), &quot;DEBTIFI&quot;),
+  &quot;https://debtifi.com/savings?utm_source=salesforce&amp;utm_medium=sms&amp;id1=&quot; + {!Send_SMS.Id},
+  IF(
+    CONTAINS(UPPER(TEXT({!Send_SMS.Campaign_Brand__c})), &quot;DEBT CONSULTANTS GROUP&quot;),
+    &quot;https://debtconsultantsgroup.com/savings-calculator?utm_source=salesforce&amp;utm_medium=sms&amp;id1=&quot; + {!Send_SMS.Id},
+    IF(
+      CONTAINS(UPPER(TEXT({!Send_SMS.Campaign_Brand__c})), &quot;QRMCA&quot;),
+      &quot;https://quickquote.qrmca.com/?utm_source=salesforce&amp;utm_medium=sms&amp;id1=&quot; + {!Send_SMS.Id},
+      IF(
+        {!Send_SMS.Sales_Office__c} = &quot;Everyday Debt&quot;,
+        &quot;https://debtconsultantsgroup.com/savings-calculator?utm_source=salesforce&amp;utm_medium=sms&amp;id1=&quot; + {!Send_SMS.Id},
+        IF(
+          {!Send_SMS.Sales_Office__c} = &quot;QRMCA&quot;,
+          &quot;https://quickquote.qrmca.com/?utm_source=salesforce&amp;utm_medium=sms&amp;id1=&quot; + {!Send_SMS.Id},
+          &quot;https://debtconsultantsgroup.com/savings-calculator?utm_source=salesforce&amp;utm_medium=sms&amp;id1=&quot; + {!Send_SMS.Id}
+        )
+      )
+    )
+  )
+) + &quot; to get an instant savings quote!&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>forGetLeadPhone</name>
+        <dataType>String</dataType>
+        <expression>{!Send_SMS.MobilePhone}</expression>
+    </formulas>
+    <formulas>
+        <name>forSubjectSentQuiz</name>
+        <dataType>String</dataType>
+        <expression>&quot;Sent quiz link &quot; &amp; {!varSendQuizLink}</expression>
+    </formulas>
+    <formulas>
+        <name>varTwilioUserPersonalNumber</name>
+        <dataType>String</dataType>
+        <expression>{!$User.TwilioSF__Twilio_Personal_Number__c}</expression>
+    </formulas>
+    <interviewLabel>SendSMS {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>SendSMS QUIZ</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Send_SMS</name>
+        <label>Send SMS</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Twilio_Send_SMS_Message_Action_1</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>recordId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Lead</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <runInMode>SystemModeWithoutSharing</runInMode>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Send_SMS</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+    <variables>
+        <name>recordId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>varForGetLeadPhone</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>true</isOutput>
+        <value>
+            <elementReference>forGetLeadPhone</elementReference>
+        </value>
+    </variables>
+    <variables>
+        <name>varSendQuizLink</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>true</isOutput>
+        <value>
+            <elementReference>forCampConditionalSendQuiz</elementReference>
+        </value>
+    </variables>
+</Flow>

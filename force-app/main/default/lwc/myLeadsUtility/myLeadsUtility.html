@@ -1,0 +1,111 @@
+<template>
+    <lightning-card title="My Leads" icon-name="standard:lead">
+        <div class="slds-p-horizontal_small">
+            <!-- Header -->
+            <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                <div class="slds-col">
+                    <lightning-badge label={totalLeadsCount}></lightning-badge>
+                    <span class="slds-m-left_x-small">leads owned by you</span>
+                    <div class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                        (showing latest 50 in preview)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading spinner -->
+            <template lwc:if={isLoading}>
+                <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+            </template>
+
+            <!-- Error message -->
+            <template lwc:if={error}>
+                <div class="slds-text-color_error slds-m-bottom_small">
+                    <div class="slds-text-heading_small slds-m-bottom_x-small">
+                        {error.message}
+                    </div>
+                    <div class="slds-text-body_small">
+                        {error.details}
+                    </div>
+                    <div class="slds-m-top_small">
+                        <lightning-button 
+                            label="Try Again" 
+                            variant="brand-outline" 
+                            onclick={loadMyLeads}>
+                        </lightning-button>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Leads list -->
+            <template lwc:if={hasLeads}>
+                <div class="leads-container slds-scrollable_y" style="max-height: 300px;">
+                    <template for:each={leads} for:item="lead">
+                        <div key={lead.Id} 
+                             class="lead-item slds-border_bottom slds-p-vertical_x-small slds-cursor_pointer"
+                             data-record-id={lead.Id}
+                             onclick={handleLeadClick}>
+                            
+                            <div class="slds-grid slds-grid_align-spread">
+                                <div class="slds-col slds-truncate">
+                                    <div class="slds-text-heading_small slds-truncate">
+                                        {lead.Name}
+                                    </div>
+                                    <template lwc:if={lead.Phone}>
+                                        <div class="slds-text-body_small slds-truncate">
+                                            <svg class="phone-icon" width="16" height="16" viewBox="0 0 24 24">
+                                                <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                                            </svg> {lead.Phone}
+                                        </div>
+                                    </template>
+                                    <template lwc:if={lead.Main_Source__c}>
+                                        <div class="slds-text-body_small">
+                                            🎯 Main Source: {lead.Main_Source__c}
+                                        </div>
+                                    </template>
+                                    <template lwc:if={lead.Pre_Deal_Status__c}>
+                                        <div class="slds-text-body_small">
+                                            📊 Pre Deal Status: {lead.Pre_Deal_Status__c}
+                                        </div>
+                                    </template>
+                                </div>
+                                <div class="slds-col_bump-left">
+                                    <lightning-icon 
+                                        icon-name="utility:chevronright" 
+                                        size="x-small">
+                                    </lightning-icon>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- View All button -->
+                <div class="slds-m-top_small slds-text-align_center">
+                    <lightning-button 
+                        label="View All My Leads" 
+                        variant="brand-outline" 
+                        onclick={handleViewAllLeads}>
+                    </lightning-button>
+                </div>
+            </template>
+
+            <!-- No leads message -->
+            <template lwc:elseif={isLoading}>
+                <!-- Loading handled above -->
+            </template>
+            <template lwc:else>
+                <div class="slds-text-align_center slds-p-vertical_medium">
+                    <lightning-icon 
+                        icon-name="standard:lead" 
+                        size="large" 
+                        class="slds-m-bottom_small">
+                    </lightning-icon>
+                    <div class="slds-text-heading_small">No Leads Found</div>
+                    <div class="slds-text-body_small slds-text-color_weak">
+                        You don't own any leads at the moment.
+                    </div>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>

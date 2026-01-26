@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Total_Program_Fee_Rollup__c</fullName>
+    <description>Sum of all Program_Fee_Amount__c from Payment Schedule Items</description>
+    <label>Total Program Fee (Rollup)</label>
+    <summarizedField>Payment_Schedule_Item__c.Program_Fee_Amount__c</summarizedField>
+    <summaryForeignKey>Payment_Schedule_Item__c.Payment_Plan__c</summaryForeignKey>
+    <summaryOperation>sum</summaryOperation>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Summary</type>
+</CustomField>

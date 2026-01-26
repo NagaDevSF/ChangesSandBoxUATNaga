@@ -1,0 +1,387 @@
+================================================================================
+                    PAYMENT PLAN EDITOR - TECHNICAL DOCUMENTATION
+                                  Version 2.0
+================================================================================
+
+================================================================================
+1. ARCHITECTURE OVERVIEW
+================================================================================
+
+Component Stack:
++------------------------------------------------------------------+
+|                    PAYMENT PLAN EDITOR                            |
++------------------------------------------------------------------+
+|                                                                   |
+|  +------------------------+    +-----------------------------+    |
+|  |    LWC Component       |    |    Apex Controller          |    |
+|  |  (paymentPlanEditor)   |--->| (PaymentPlanEditorController)|   |
+|  +------------------------+    +-----------------------------+    |
+|           |                              |                        |
+|           v                              v                        |
+|  +------------------------+    +-----------------------------+    |
+|  |   Lightning Data       |    |   PaymentCalcConfigSvc      |    |
+|  |   Service (UI)         |    |   (CMDT Service)            |    |
+|  +------------------------+    +-----------------------------+    |
+|                                          |                        |
+|                                          v                        |
+|                               +-----------------------------+     |
+|                               |  Payment_Calc_Config__mdt   |     |
+|                               |  (Custom Metadata Type)     |     |
+|                               +-----------------------------+     |
++------------------------------------------------------------------+
+
+Key Technologies:
+--------------------------------------------------------------------------------
+| Layer         | Technology                     | Purpose                      |
+--------------------------------------------------------------------------------
+| Frontend      | Lightning Web Components (LWC) | UI, state, events            |
+| Backend       | Apex Controller                | Business logic, CRUD         |
+| Configuration | Custom Metadata Type (CMDT)    | Fee configs, parameters      |
+| Data          | Custom Objects                 | PaymentPlan__c, Items, Wires |
+--------------------------------------------------------------------------------
+
+
+================================================================================
+2. SALESFORCE OBJECTS
+================================================================================
+
+PaymentPlan__c
+--------------------------------------------------------------------------------
+| Field                    | Type                      | Description            |
+--------------------------------------------------------------------------------
+| Opportunity__c           | Lookup(Opportunity)       | Parent opportunity     |
+| Version_Number__c        | Number                    | Plan version (1,2,3)   |
+| Version_Status__c        | Picklist                  | Draft/Active/Archived  |
+| Previous_Version__c      | Lookup(PaymentPlan__c)    | Previous version link  |
+| Weekly_Payment__c        | Currency                  | Weekly payment amount  |
+| Number_of_Payments__c    | Number                    | Total payment count    |
+| Total_Debt__c            | Currency                  | Total enrolled debt    |
+| Program_Fee_Percentage__c| Percent                   | Program fee %          |
+| Setup_Fee__c             | Currency                  | Total setup fee        |
+| Setup_Fee_Payments__c    | Number                    | Setup fee spread count |
+| Banking_Fee__c           | Currency                  | Per-payment bank fee   |
+| Bank2_Fee__c             | Currency                  | Secondary bank fee     |
+| First_Payment_Date__c    | Date                      | First payment date     |
+--------------------------------------------------------------------------------
+
+
+Payment_Schedule_Item__c
+--------------------------------------------------------------------------------
+| Field                    | Type                      | Description            |
+--------------------------------------------------------------------------------
+| Payment_Plan__c          | Master-Detail             | Parent payment plan    |
+| Payment_Number__c        | Number                    | Sequential number      |
+| Draft_Number__c          | Text                      | Display draft number   |
+| Payment_Date__c          | Date                      | Scheduled date         |
+| Total_Payment__c         | Currency                  | Total draft amount     |
+| Setup_Fee_Amount__c      | Currency                  | Setup fee portion      |
+| Program_Fee_Amount__c    | Currency                  | Program fee portion    |
+| Banking_Fee_Amount__c    | Currency                  | Banking fee            |
+| Bank2_Fee_Amount__c      | Currency                  | Secondary bank fee     |
+| To_Escrow_Amount__c      | Currency                  | Amount to escrow       |
+| Savings_Balance__c       | Currency                  | Running escrow balance |
+| Status__c                | Picklist                  | Scheduled/Cleared/etc  |
+--------------------------------------------------------------------------------
+
+
+Wired_Payment__c
+--------------------------------------------------------------------------------
+| Field                      | Type     | Description                          |
+--------------------------------------------------------------------------------
+| Payment_Schedule_Item__c   | Lookup   | Associated schedule item             |
+| Payment_Date__c            | Date     | Wire payment date                    |
+| Payment_Amount__c          | Currency | Wire amount                          |
+| Description__c             | Text     | Payment description                  |
+--------------------------------------------------------------------------------
+
+
+================================================================================
+3. APEX CONTROLLER
+================================================================================
+
+Class: PaymentPlanEditorController
+Location: force-app/main/default/classes/PaymentPlanEditorController.cls
+Security: with sharing (enforces sharing rules)
+
+
+WRAPPER CLASSES
+---------------
+
+PaymentPlanWrapper:
+  - paymentPlan: PaymentPlan__c
+  - scheduleItems: List<ScheduleItemWrapper>
+  - versionNumber: Integer
+  - versionStatus: String
+  - isLatestVersion: Boolean
+
+ScheduleItemWrapper:
+  - id: String
+  - rowNumber: Integer
+  - draftNumber: String
+  - paymentDate: Date
+  - draftAmount: Decimal
+  - setupFee: Decimal
+  - programFee: Decimal
+  - bankingFee: Decimal
+  - banking2Fee: Decimal
+  - savingsBalance: Decimal
+  - toEscrowAmount: Decimal
+  - status: String
+  - isModified: Boolean
+  - isNew: Boolean
+  - isDeleted: Boolean
+
+WiredPaymentWrapper:
+  - id: String
+  - name: String
+  - scheduleItemId: String
+  - paymentDate: Date
+  - paymentAmount: Decimal
+  - description: String
+
+
+CONSTANTS
+---------
+STATUS_SCHEDULED       = 'Scheduled'     (Editable status)
+STATUS_CLEARED         = 'Cleared'       (Payment completed)
+STATUS_NSF             = 'NSF'           (Non-sufficient funds)
+STATUS_CANCELLED       = 'Cancelled'     (Cancelled payment)
+VERSION_STATUS_DRAFT   = 'Draft'         (Pending activation)
+VERSION_STATUS_ACTIVE  = 'Active'        (Current active plan)
+VERSION_STATUS_ARCHIVED= 'Archived'      (Historical version)
+DEFAULT_NUMBER_OF_PAYMENTS = 52          (Default payment count)
+DEFAULT_SPLIT_RATIO    = 0.50            (Program/Escrow split)
+
+
+================================================================================
+4. LWC COMPONENT
+================================================================================
+
+Component: paymentPlanEditor
+Location: force-app/main/default/lwc/paymentPlanEditor/
+
+Files:
+--------------------------------------------------------------------------------
+| File                           | Purpose                          | Lines    |
+--------------------------------------------------------------------------------
+| paymentPlanEditor.js           | Logic, state, event handlers     | ~2200    |
+| paymentPlanEditor.html         | Template with conditionals       | ~620     |
+| paymentPlanEditor.css          | Styles, colors, animations       | ~1400    |
+| paymentPlanEditor.js-meta.xml  | Component configuration          | ~15      |
+--------------------------------------------------------------------------------
+
+
+KEY PROPERTIES
+--------------
+@api recordId        - Opportunity record ID (from record page)
+@track plans         - List of plan versions for dropdown
+selectedPlanId       - Currently selected plan ID
+@track scheduleItems - Active tab items (read-only)
+@track pendingItems  - Pending tab items (editable)
+isEditMode           - Edit mode flag
+activeTab            - 'Active' or 'Pending'
+currentPage          - Pagination current page
+pageSize             - 50 items per page
+
+
+KEY FEATURES
+------------
+1. Version Selector      - Dropdown to switch between plan versions
+2. Dual Tab System       - Active (read-only) and Pending (edit mode)
+3. Inline Editing        - Edit cells directly in the table
+4. Fill Handle           - Excel-like drag-to-copy functionality
+5. Live Savings Calc     - Real-time updates as you type
+6. Pagination            - 50 items per page with navigation
+7. Wired Payments Popover- Hover to see linked wire payments
+8. Confetti Animation    - Celebration on plan activation
+9. Maximize Mode         - Full-screen editing
+
+
+================================================================================
+5. CUSTOM METADATA TYPE (CMDT)
+================================================================================
+
+Object: Payment_Calc_Config__mdt
+Service: PaymentCalcConfigSvc
+
+Fields Used by Payment Plan Editor:
+--------------------------------------------------------------------------------
+| Field                      | API Name                    | Value  | Usage    |
+--------------------------------------------------------------------------------
+| Banking Fee                | Banking_Fee__c              | 35.00  | Bank fee |
+| Bank2 Fee                  | Bank2_Fee__c                | 0.00   | Bank2    |
+| First Payment Days Offset  | First_Payment_Days_Offset__c| 7      | Interval |
+| Setup Fee Payments         | Setup_Fee_Payments__c       | 10     | Spread   |
+| Program Fee Percentage     | Program_Fee_Percentage__c   | 35%    | Fee %    |
+| Program Split Ratio        | Program_Split_Ratio__c      | 0.50   | Split    |
+| Mod Program Split Ratio    | Mod_Program_Split_Ratio__c  | 0.50   | MOD      |
+| Debt Program Split Ratio   | Debt_Program_Split_Ratio__c | 0.70   | DEBT     |
+--------------------------------------------------------------------------------
+
+
+Service Usage:
+--------------
+// Load default configuration
+PaymentCalcConfigSvc.ConfigDTO config = PaymentCalcConfigSvc.getRequiredConfig();
+
+// Load program-specific configuration
+PaymentCalcConfigSvc.ConfigDTO config = PaymentCalcConfigSvc.getRequiredConfigForProgram('DCG_MOD');
+
+// Access values
+Decimal bankingFee = config.bankingFee;
+Decimal setupFeePayments = config.setupFeePayments;
+Integer paymentInterval = config.firstPaymentDaysOffset.intValue();
+
+
+================================================================================
+6. API METHODS
+================================================================================
+
+READ OPERATIONS (Cacheable)
+---------------------------
+
+getStatusPicklistValues()
+  Returns: List<Map<String, String>>
+  Purpose: Dynamic picklist values for Status__c field
+
+getLatestPaymentPlan(Id opportunityId)
+  Returns: PaymentPlanWrapper
+  Purpose: Gets latest active payment plan for an Opportunity
+
+getActivePaymentPlans(Id opportunityId)
+  Returns: List<PaymentPlanWrapper>
+  Purpose: Gets all active plans (Active + Draft) for version dropdown
+
+getPaymentPlanById(Id planId)
+  Returns: PaymentPlanWrapper
+  Purpose: Gets specific payment plan with all schedule items
+
+getPreviousVersionItems(Id planId)
+  Returns: List<ScheduleItemWrapper>
+  Purpose: Gets schedule items from previous version for comparison
+
+getWiredPaymentsByPlanId(Id planId)
+  Returns: Map<String, List<WiredPaymentWrapper>>
+  Purpose: Gets wired payments grouped by schedule item ID
+
+
+WRITE OPERATIONS
+----------------
+
+createManualVersion(Id currentPlanId)
+  Returns: PaymentPlanWrapper
+  Purpose: Creates new draft version by cloning current plan ("Manual" button)
+
+saveScheduleItems(Id planId, List<ScheduleItemWrapper> items)
+  Returns: PaymentPlanWrapper
+  Purpose: Saves changes to schedule items (update/insert/delete)
+
+saveAsNewVersion(Id currentPlanId, List<ScheduleItemWrapper> items)
+  Returns: PaymentPlanWrapper
+  Purpose: Creates new version with provided pending items
+
+recalculatePaymentPlan(Id planId)
+  Returns: PaymentPlanWrapper
+  Purpose: Creates new version recalculated from Opportunity data
+
+suspendPaymentPlan(Id planId)
+  Returns: PaymentPlanWrapper
+  Purpose: Creates suspended version (all Scheduled -> Cancelled)
+
+activatePaymentPlan(Id planId)
+  Returns: PaymentPlanWrapper
+  Purpose: Activates Draft plan, archives previous Active version
+
+addPaymentRow(Id planId, Integer afterRowNumber)
+  Returns: ScheduleItemWrapper
+  Purpose: Adds new blank payment row to plan
+
+deletePaymentRows(List<Id> itemIds)
+  Returns: void
+  Purpose: Deletes multiple payment rows
+
+
+================================================================================
+7. DATA FLOW
+================================================================================
+
+VERSION MANAGEMENT FLOW
+-----------------------
+
+                    +-------------------+
+                    |   Opportunity     |
+                    +-------------------+
+                            |
+                            | (Source data)
+                            v
++--------+    +--------+    +--------+    +--------+
+| Plan   |--->| Plan   |--->| Plan   |--->| Plan   |
+| v1     |    | v2     |    | v3     |    | v4     |
+|ARCHIVED|    |ARCHIVED|    | ACTIVE |    | DRAFT  |
++--------+    +--------+    +--------+    +--------+
+                                              |
+                                              | (Activate)
+                                              v
+                                         v3 becomes ARCHIVED
+                                         v4 becomes ACTIVE
+
+
+FEE CALCULATION FLOW
+--------------------
+
+Weekly Payment ($500)
+       |
+       +-- Banking Fee ($35)  --> To Banking
+       |
+       +-- Net Amount ($465)
+              |
+              +-- Program Fee (Split Ratio: 50%) --> $232.50 (until cap reached)
+              |
+              +-- To Escrow (Remaining) -----------> $232.50 (to Savings Balance)
+
+Setup Fee: $1000 / 10 payments = $100/payment for first 10 payments
+
+
+RECALCULATION LOGIC
+-------------------
+1. Load current plan and existing schedule items
+2. Separate items by status (Scheduled vs Non-Scheduled)
+3. Preserve Non-Scheduled items (Cleared, NSF, Cancelled)
+4. Calculate paid sums from Non-Scheduled items
+5. Reduce remaining program fee cap by already collected amount
+6. Generate new Scheduled items based on Number_of_Weeks__c
+7. Apply split ratio formula to distribute net payment
+8. Calculate running escrow/savings balance
+
+
+================================================================================
+8. SECURITY
+================================================================================
+
+APEX SECURITY
+-------------
+- "with sharing" enforces sharing rules
+- CRUD/FLS respected through standard queries
+- Savepoints for transaction rollback on errors
+
+INPUT VALIDATION
+----------------
+| Validation      | Rule                              |
+|-----------------|-----------------------------------|
+| Currency Values | -99,999,999.99 to 99,999,999.99   |
+| Payment Dates   | Within 10 years of today          |
+| Required Fields | Plan ID validation on all ops     |
+| Status Values   | Dynamic picklist validation       |
+
+ERROR HANDLING
+--------------
+- AuraHandledException for user-friendly error messages
+- Structured logging with emoji prefixes for filtering
+- Error symbols: Warning, Not Found, Validation, Config
+
+
+================================================================================
+                              END OF DOCUMENT
+================================================================================
+Generated: January 2026
+Version: 2.0

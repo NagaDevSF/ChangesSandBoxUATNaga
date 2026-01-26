@@ -1,0 +1,73 @@
+/* Settlement Plan Modal Styles */
+
+/* Tab styling */
+.slds-tabs_default__item.slds-is-active .slds-tabs_default__link {
+    background-color: #f3f3f3;
+    border-color: #dddbda;
+}
+
+.new-draft-input {
+    width: 150px;
+}
+
+/* Payment table */
+.payment-table-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.payment-table-container table {
+    width: 100%;
+}
+
+/* Row highlighting */
+.escrow-shortage-row {
+    background-color: #fef1f1 !important;
+}
+
+.modified-row {
+    background-color: #fffaec !important;
+}
+
+/* Summary section */
+.slds-theme_shade {
+    border-radius: 4px;
+}
+
+/* Draft name input in footer */
+.draft-name-input {
+    width: 250px;
+}
+
+/* Spinner container */
+.slds-spinner_container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.75);
+    z-index: 9999;
+}
+
+/* Status badge colors */
+.slds-badge_success {
+    background-color: #2e844a;
+    color: white;
+}
+
+/* Compact inputs in table */
+.payment-table-container lightning-input {
+    --sds-c-input-spacing-block-start: 0;
+    --sds-c-input-spacing-block-end: 0;
+}
+
+/* Table cell alignment */
+.payment-table-container td {
+    vertical-align: middle;
+}
+
+/* Icon spacing */
+.payment-table-container lightning-icon {
+    margin-left: 4px;
+}

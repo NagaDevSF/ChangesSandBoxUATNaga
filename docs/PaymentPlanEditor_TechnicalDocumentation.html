@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Plan Editor - Technical Documentation</title>
+    <style>
+        :root {
+            --primary: #0176d3;
+            --primary-dark: #014486;
+            --success: #2e844a;
+            --warning: #dd7a01;
+            --error: #c23934;
+            --gray-100: #f3f3f3;
+            --gray-200: #e5e5e5;
+            --gray-600: #514f4d;
+            --gray-800: #2b2826;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Salesforce Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--gray-800);
+            background: var(--gray-100);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        header p { font-size: 1.2rem; opacity: 0.9; }
+
+        .badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-top: 15px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            color: var(--primary-dark);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .section h3 {
+            color: var(--gray-600);
+            margin: 20px 0 10px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        th, td {
+            border: 1px solid var(--gray-200);
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background: var(--gray-100);
+            font-weight: 600;
+        }
+
+        tr:hover { background: #f8fafc; }
+
+        code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+
+        .method-card {
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .method-card h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        .tag-get { background: #dbeafe; color: #1e40af; }
+        .tag-post { background: #dcfce7; color: #166534; }
+        .tag-cacheable { background: #fef3c7; color: #92400e; }
+
+        .toc {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .toc ul {
+            list-style: none;
+            columns: 2;
+        }
+
+        .toc li {
+            margin: 8px 0;
+        }
+
+        .toc a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .toc a:hover { text-decoration: underline; }
+
+        .diagram {
+            background: #f8fafc;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .highlight { background: #fef3c7; padding: 2px 4px; }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray-600);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Payment Plan Editor</h1>
+        <p>Technical Documentation</p>
+        <span class="badge">Version 2.0 | Salesforce LWC</span>
+    </header>
+
+    <div class="container">
+        <!-- Table of Contents -->
+        <div class="toc">
+            <h3>Table of Contents</h3>
+            <ul>
+                <li><a href="#overview">1. Architecture Overview</a></li>
+                <li><a href="#objects">2. Salesforce Objects</a></li>
+                <li><a href="#controller">3. Apex Controller</a></li>
+                <li><a href="#lwc">4. LWC Component</a></li>
+                <li><a href="#cmdt">5. Custom Metadata</a></li>
+                <li><a href="#api">6. API Methods</a></li>
+                <li><a href="#dataflow">7. Data Flow</a></li>
+                <li><a href="#security">8. Security</a></li>
+            </ul>
+        </div>
+
+        <!-- Section 1: Architecture Overview -->
+        <section class="section" id="overview">
+            <h2>1. Architecture Overview</h2>
+
+            <h3>Component Stack</h3>
+            <div class="diagram">
+<pre>
++------------------------------------------------------------------+
+|                    PAYMENT PLAN EDITOR                            |
++------------------------------------------------------------------+
+|                                                                   |
+|  +------------------------+    +-----------------------------+    |
+|  |    LWC Component       |    |    Apex Controller          |    |
+|  |  (paymentPlanEditor)   |--->| (PaymentPlanEditorController)|   |
+|  +------------------------+    +-----------------------------+    |
+|           |                              |                        |
+|           v                              v                        |
+|  +------------------------+    +-----------------------------+    |
+|  |   Lightning Data       |    |   PaymentCalcConfigSvc      |    |
+|  |   Service (UI)         |    |   (CMDT Service)            |    |
+|  +------------------------+    +-----------------------------+    |
+|                                          |                        |
+|                                          v                        |
+|                               +-----------------------------+     |
+|                               |  Payment_Calc_Config__mdt   |     |
+|                               |  (Custom Metadata Type)     |     |
+|                               +-----------------------------+     |
+|                                                                   |
++------------------------------------------------------------------+
+</pre>
+            </div>
+
+            <h3>Key Technologies</h3>
+            <table>
+                <tr>
+                    <th>Layer</th>
+                    <th>Technology</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td>Frontend</td>
+                    <td>Lightning Web Components (LWC)</td>
+                    <td>User interface, state management, event handling</td>
+                </tr>
+                <tr>
+                    <td>Backend</td>
+                    <td>Apex Controller</td>
+                    <td>Business logic, CRUD operations, version management</td>
+                </tr>
+                <tr>
+                    <td>Configuration</td>
+                    <td>Custom Metadata Type (CMDT)</td>
+                    <td>Fee configurations, calculation parameters</td>
+                </tr>
+                <tr>
+                    <td>Data</td>
+                    <td>Custom Objects</td>
+                    <td>PaymentPlan__c, Payment_Schedule_Item__c, Wired_Payment__c</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Section 2: Salesforce Objects -->
+        <section class="section" id="objects">
+            <h2>2. Salesforce Objects</h2>
+
+            <h3>PaymentPlan__c</h3>
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+                <tr><td>Opportunity__c</td><td>Lookup(Opportunity)</td><td>Parent opportunity</td></tr>
+                <tr><td>Version_Number__c</td><td>Number</td><td>Plan version (1, 2, 3...)</td></tr>
+                <tr><td>Version_Status__c</td><td>Picklist</td><td>Draft, Active, Archived</td></tr>
+                <tr><td>Previous_Version__c</td><td>Lookup(PaymentPlan__c)</td><td>Link to previous version</td></tr>
+                <tr><td>Weekly_Payment__c</td><td>Currency</td><td>Weekly payment amount</td></tr>
+                <tr><td>Number_of_Payments__c</td><td>Number</td><td>Total number of scheduled payments</td></tr>
+                <tr><td>Total_Debt__c</td><td>Currency</td><td>Total enrolled debt</td></tr>
+                <tr><td>Program_Fee_Percentage__c</td><td>Percent</td><td>Program fee percentage</td></tr>
+                <tr><td>Setup_Fee__c</td><td>Currency</td><td>Total setup fee amount</td></tr>
+                <tr><td>Setup_Fee_Payments__c</td><td>Number</td><td>Number of payments to spread setup fee</td></tr>
+                <tr><td>Banking_Fee__c</td><td>Currency</td><td>Per-payment banking fee</td></tr>
+                <tr><td>Bank2_Fee__c</td><td>Currency</td><td>Secondary banking fee</td></tr>
+                <tr><td>First_Payment_Date__c</td><td>Date</td><td>First payment date</td></tr>
+            </table>
+
+            <h3>Payment_Schedule_Item__c</h3>
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+                <tr><td>Payment_Plan__c</td><td>Master-Detail(PaymentPlan__c)</td><td>Parent payment plan</td></tr>
+                <tr><td>Payment_Number__c</td><td>Number</td><td>Sequential payment number</td></tr>
+                <tr><td>Draft_Number__c</td><td>Text</td><td>Display draft number</td></tr>
+                <tr><td>Payment_Date__c</td><td>Date</td><td>Scheduled payment date</td></tr>
+                <tr><td>Total_Payment__c</td><td>Currency</td><td>Total draft amount</td></tr>
+                <tr><td>Setup_Fee_Amount__c</td><td>Currency</td><td>Setup fee portion</td></tr>
+                <tr><td>Program_Fee_Amount__c</td><td>Currency</td><td>Program fee portion</td></tr>
+                <tr><td>Banking_Fee_Amount__c</td><td>Currency</td><td>Banking fee</td></tr>
+                <tr><td>Bank2_Fee_Amount__c</td><td>Currency</td><td>Secondary banking fee</td></tr>
+                <tr><td>To_Escrow_Amount__c</td><td>Currency</td><td>Amount going to escrow/savings</td></tr>
+                <tr><td>Savings_Balance__c</td><td>Currency</td><td>Running escrow balance</td></tr>
+                <tr><td>Status__c</td><td>Picklist</td><td>Scheduled, Cleared, NSF, Cancelled</td></tr>
+            </table>
+
+            <h3>Wired_Payment__c</h3>
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+                <tr><td>Payment_Schedule_Item__c</td><td>Lookup</td><td>Associated schedule item</td></tr>
+                <tr><td>Payment_Date__c</td><td>Date</td><td>Wire payment date</td></tr>
+                <tr><td>Payment_Amount__c</td><td>Currency</td><td>Wire amount</td></tr>
+                <tr><td>Description__c</td><td>Text</td><td>Payment description</td></tr>
+            </table>
+        </section>
+
+        <!-- Section 3: Apex Controller -->
+        <section class="section" id="controller">
+            <h2>3. Apex Controller</h2>
+
+            <h3>Class: PaymentPlanEditorController</h3>
+            <p>Main controller handling all server-side operations with <code>with sharing</code> security enforcement.</p>
+
+            <h3>Wrapper Classes</h3>
+            <div class="method-card">
+                <h4>PaymentPlanWrapper</h4>
+                <p>Encapsulates payment plan data with schedule items and version metadata.</p>
+<pre><code>public class PaymentPlanWrapper {
+    @AuraEnabled public PaymentPlan__c paymentPlan;
+    @AuraEnabled public List&lt;ScheduleItemWrapper&gt; scheduleItems;
+    @AuraEnabled public Integer versionNumber;
+    @AuraEnabled public String versionStatus;
+    @AuraEnabled public Boolean isLatestVersion;
+}</code></pre>
+            </div>
+
+            <div class="method-card">
+                <h4>ScheduleItemWrapper</h4>
+                <p>Wraps individual schedule items with editing metadata.</p>
+<pre><code>public class ScheduleItemWrapper {
+    @AuraEnabled public String id;
+    @AuraEnabled public Integer rowNumber;
+    @AuraEnabled public String draftNumber;
+    @AuraEnabled public Date paymentDate;
+    @AuraEnabled public Decimal draftAmount;
+    @AuraEnabled public Decimal setupFee;
+    @AuraEnabled public Decimal programFee;
+    @AuraEnabled public Decimal bankingFee;
+    @AuraEnabled public Decimal banking2Fee;
+    @AuraEnabled public Decimal savingsBalance;
+    @AuraEnabled public String status;
+    @AuraEnabled public Boolean isModified;
+    @AuraEnabled public Boolean isNew;
+    @AuraEnabled public Boolean isDeleted;
+}</code></pre>
+            </div>
+
+            <h3>Constants</h3>
+            <table>
+                <tr><th>Constant</th><th>Value</th><th>Purpose</th></tr>
+                <tr><td>STATUS_SCHEDULED</td><td>'Scheduled'</td><td>Editable status</td></tr>
+                <tr><td>STATUS_CLEARED</td><td>'Cleared'</td><td>Payment completed</td></tr>
+                <tr><td>STATUS_NSF</td><td>'NSF'</td><td>Non-sufficient funds</td></tr>
+                <tr><td>STATUS_CANCELLED</td><td>'Cancelled'</td><td>Cancelled payment</td></tr>
+                <tr><td>VERSION_STATUS_DRAFT</td><td>'Draft'</td><td>Pending activation</td></tr>
+                <tr><td>VERSION_STATUS_ACTIVE</td><td>'Active'</td><td>Current active plan</td></tr>
+                <tr><td>VERSION_STATUS_ARCHIVED</td><td>'Archived'</td><td>Historical version</td></tr>
+                <tr><td>DEFAULT_NUMBER_OF_PAYMENTS</td><td>52</td><td>Default payment count</td></tr>
+                <tr><td>DEFAULT_SPLIT_RATIO</td><td>0.50</td><td>Program/Escrow split</td></tr>
+            </table>
+        </section>
+
+        <!-- Section 4: LWC Component -->
+        <section class="section" id="lwc">
+            <h2>4. LWC Component</h2>
+
+            <h3>Component: paymentPlanEditor</h3>
+            <p>Location: <code>force-app/main/default/lwc/paymentPlanEditor/</code></p>
+
+            <h3>Files</h3>
+            <table>
+                <tr><th>File</th><th>Purpose</th><th>Lines</th></tr>
+                <tr><td>paymentPlanEditor.js</td><td>Component logic, state management, event handlers</td><td>~2200</td></tr>
+                <tr><td>paymentPlanEditor.html</td><td>Template with conditional rendering</td><td>~620</td></tr>
+                <tr><td>paymentPlanEditor.css</td><td>Styles, status colors, animations</td><td>~1400</td></tr>
+                <tr><td>paymentPlanEditor.js-meta.xml</td><td>Component configuration</td><td>~15</td></tr>
+            </table>
+
+            <h3>Key Properties</h3>
+            <table>
+                <tr><th>Property</th><th>Type</th><th>Description</th></tr>
+                <tr><td>recordId</td><td>@api</td><td>Opportunity record ID (from record page)</td></tr>
+                <tr><td>plans</td><td>@track Array</td><td>List of plan versions for dropdown</td></tr>
+                <tr><td>selectedPlanId</td><td>String</td><td>Currently selected plan ID</td></tr>
+                <tr><td>scheduleItems</td><td>@track Array</td><td>Active tab items (read-only)</td></tr>
+                <tr><td>pendingItems</td><td>@track Array</td><td>Pending tab items (editable)</td></tr>
+                <tr><td>isEditMode</td><td>Boolean</td><td>Edit mode flag</td></tr>
+                <tr><td>activeTab</td><td>String</td><td>'Active' or 'Pending'</td></tr>
+                <tr><td>currentPage</td><td>Number</td><td>Pagination current page</td></tr>
+                <tr><td>pageSize</td><td>Number</td><td>50 items per page</td></tr>
+            </table>
+
+            <h3>Key Features</h3>
+            <ul>
+                <li><strong>Version Selector</strong> - Dropdown to switch between plan versions</li>
+                <li><strong>Dual Tab System</strong> - Active (read-only) and Pending (edit mode)</li>
+                <li><strong>Inline Editing</strong> - Edit cells directly in the table</li>
+                <li><strong>Fill Handle</strong> - Excel-like drag-to-copy functionality</li>
+                <li><strong>Live Savings Calculation</strong> - Real-time updates as you type</li>
+                <li><strong>Pagination</strong> - 50 items per page with navigation</li>
+                <li><strong>Wired Payments Popover</strong> - Hover to see linked wire payments</li>
+                <li><strong>Confetti Animation</strong> - Celebration on plan activation</li>
+                <li><strong>Maximize Mode</strong> - Full-screen editing</li>
+            </ul>
+        </section>
+
+        <!-- Section 5: Custom Metadata -->
+        <section class="section" id="cmdt">
+            <h2>5. Custom Metadata Type (CMDT)</h2>
+
+            <h3>Payment_Calc_Config__mdt</h3>
+            <p>Stores all configurable calculation parameters. Accessed via <code>PaymentCalcConfigSvc</code>.</p>
+
+            <h3>Fields Used by Payment Plan Editor</h3>
+            <table>
+                <tr><th>Field</th><th>API Name</th><th>Value</th><th>Usage</th></tr>
+                <tr><td>Banking Fee</td><td>Banking_Fee__c</td><td>35.00</td><td>Default banking fee per payment</td></tr>
+                <tr><td>Bank2 Fee</td><td>Bank2_Fee__c</td><td>0.00</td><td>Secondary banking fee</td></tr>
+                <tr><td>First Payment Days Offset</td><td>First_Payment_Days_Offset__c</td><td>7</td><td>Days between payments (weekly)</td></tr>
+                <tr><td>Setup Fee Payments</td><td>Setup_Fee_Payments__c</td><td>10</td><td>Number of payments to spread setup fee</td></tr>
+                <tr><td>Program Fee Percentage</td><td>Program_Fee_Percentage__c</td><td>35%</td><td>Default program fee percent</td></tr>
+                <tr><td>Program Split Ratio</td><td>Program_Split_Ratio__c</td><td>0.50</td><td>Program fee vs escrow split</td></tr>
+                <tr><td>Mod Program Split Ratio</td><td>Mod_Program_Split_Ratio__c</td><td>0.50</td><td>DCG_MOD program split</td></tr>
+                <tr><td>Debt Program Split Ratio</td><td>Debt_Program_Split_Ratio__c</td><td>0.70</td><td>DCG_DEBT program split</td></tr>
+            </table>
+
+            <h3>Service Class: PaymentCalcConfigSvc</h3>
+<pre><code>// Load default configuration
+PaymentCalcConfigSvc.ConfigDTO config = PaymentCalcConfigSvc.getRequiredConfig();
+
+// Load program-specific configuration
+PaymentCalcConfigSvc.ConfigDTO config = PaymentCalcConfigSvc.getRequiredConfigForProgram('DCG_MOD');
+
+// Access values
+Decimal bankingFee = config.bankingFee;
+Decimal setupFeePayments = config.setupFeePayments;
+Integer paymentInterval = config.firstPaymentDaysOffset.intValue();</code></pre>
+        </section>
+
+        <!-- Section 6: API Methods -->
+        <section class="section" id="api">
+            <h2>6. API Methods</h2>
+
+            <h3>Read Operations (Cacheable)</h3>
+
+            <div class="method-card">
+                <h4>getStatusPicklistValues()</h4>
+                <span class="tag tag-get">GET</span>
+                <span class="tag tag-cacheable">CACHEABLE</span>
+                <p>Returns dynamic picklist values for Status__c field.</p>
+                <p><strong>Returns:</strong> <code>List&lt;Map&lt;String, String&gt;&gt;</code></p>
+            </div>
+
+            <div class="method-card">
+                <h4>getLatestPaymentPlan(Id opportunityId)</h4>
+                <span class="tag tag-get">GET</span>
+                <span class="tag tag-cacheable">CACHEABLE</span>
+                <p>Gets the latest active payment plan for an Opportunity.</p>
+                <p><strong>Returns:</strong> <code>PaymentPlanWrapper</code></p>
+            </div>
+
+            <div class="method-card">
+                <h4>getActivePaymentPlans(Id opportunityId)</h4>
+                <span class="tag tag-get">GET</span>
+                <span class="tag tag-cacheable">CACHEABLE</span>
+                <p>Gets all active payment plans (Active + Draft) for version dropdown.</p>
+                <p><strong>Returns:</strong> <code>List&lt;PaymentPlanWrapper&gt;</code></p>
+            </div>
+
+            <div class="method-card">
+                <h4>getPaymentPlanById(Id planId)</h4>
+                <span class="tag tag-get">GET</span>
+                <p>Gets a specific payment plan with all schedule items.</p>
+                <p><strong>Returns:</strong> <code>PaymentPlanWrapper</code></p>
+            </div>
+
+            <div class="method-card">
+                <h4>getPreviousVersionItems(Id planId)</h4>
+                <span class="tag tag-get">GET</span>
+                <span class="tag tag-cacheable">CACHEABLE</span>
+                <p>Gets schedule items from previous version for comparison.</p>
+                <p><strong>Returns:</strong> <code>List&lt;ScheduleItemWrapper&gt;</code></p>
+            </div>
+
+            <div class="method-card">
+                <h4>getWiredPaymentsByPlanId(Id planId)</h4>
+                <span class="tag tag-get">GET</span>
+                <span class="tag tag-cacheable">CACHEABLE</span>
+                <p>Gets wired payments grouped by schedule item ID.</p>
+                <p><strong>Returns:</strong> <code>Map&lt;String, List&lt;WiredPaymentWrapper&gt;&gt;</code></p>
+            </div>
+
+            <h3>Write Operations</h3>
+
+            <div class="method-card">
+                <h4>createManualVersion(Id currentPlanId)</h4>
+                <span class="tag tag-post">POST</span>
+                <p>Creates a new draft version by cloning the current plan. Used by "Manual" button.</p>
+                <p><strong>Returns:</strong> <code>PaymentPlanWrapper</code></p>
+            </div>
+
+            <div class="method-card">
+                <h4>saveScheduleItems(Id planId, List&lt;ScheduleItemWrapper&gt; items)</h4>
+                <span class="tag tag-post">POST</span>
+                <p>Saves changes to schedule items (update/insert/delete).</p>
+                <p><strong>Returns:</strong> <code>PaymentPlanWrapper</code></p>
+            </div>
+
+            <div class="method-card">
+                <h4>saveAsNewVersion(Id currentPlanId, List&lt;ScheduleItemWrapper&gt; items)</h4>
+                <span class="tag tag-post">POST</span>
+                <p>Creates a new version with the provided pending items.</p>
+                <p><strong>Returns:</strong> <code>PaymentPlanWrapper</code></p>
+            </div>
+
+            <div class="method-card">
+                <h4>recalculatePaymentPlan(Id planId)</h4>
+                <span class="tag tag-post">POST</span>
+                <p>Creates a new version recalculated from Opportunity data. Preserves non-Scheduled items.</p>
+                <p><strong>Returns:</strong> <code>PaymentPlanWrapper</code></p>
+            </div>
+
+            <div class="method-card">
+                <h4>suspendPaymentPlan(Id planId)</h4>
+                <span class="tag tag-post">POST</span>
+                <p>Creates a suspended version where all Scheduled items become Cancelled.</p>
+                <p><strong>Returns:</strong> <code>PaymentPlanWrapper</code></p>
+            </div>
+
+            <div class="method-card">
+                <h4>activatePaymentPlan(Id planId)</h4>
+                <span class="tag tag-post">POST</span>
+                <p>Activates a Draft plan, archiving the previous Active version.</p>
+                <p><strong>Returns:</strong> <code>PaymentPlanWrapper</code></p>
+            </div>
+
+            <div class="method-card">
+                <h4>addPaymentRow(Id planId, Integer afterRowNumber)</h4>
+                <span class="tag tag-post">POST</span>
+                <p>Adds a new blank payment row to the plan.</p>
+                <p><strong>Returns:</strong> <code>ScheduleItemWrapper</code></p>
+            </div>
+
+            <div class="method-card">
+                <h4>deletePaymentRows(List&lt;Id&gt; itemIds)</h4>
+                <span class="tag tag-post">POST</span>
+                <p>Deletes multiple payment rows.</p>
+                <p><strong>Returns:</strong> <code>void</code></p>
+            </div>
+        </section>
+
+        <!-- Section 7: Data Flow -->
+        <section class="section" id="dataflow">
+            <h2>7. Data Flow</h2>
+
+            <h3>Version Management Flow</h3>
+            <div class="diagram">
+<pre>
+                    +-------------------+
+                    |   Opportunity     |
+                    +-------------------+
+                            |
+                            | (Source data)
+                            v
++--------+    +--------+    +--------+    +--------+
+| Plan   |--->| Plan   |--->| Plan   |--->| Plan   |
+| v1     |    | v2     |    | v3     |    | v4     |
+|ARCHIVED|    |ARCHIVED|    | ACTIVE |    | DRAFT  |
++--------+    +--------+    +--------+    +--------+
+                                              |
+                                              | (Activate)
+                                              v
+                                         v3 becomes ARCHIVED
+                                         v4 becomes ACTIVE
+</pre>
+            </div>
+
+            <h3>Fee Calculation Flow</h3>
+            <div class="diagram">
+<pre>
+Weekly Payment ($500)
+       |
+       +-- Banking Fee ($35)  --> To Banking
+       |
+       +-- Net Amount ($465)
+              |
+              +-- Program Fee (Split Ratio: 50%) --> $232.50 (until cap reached)
+              |
+              +-- To Escrow (Remaining) -----------> $232.50 (to Savings Balance)
+
+Setup Fee ($1000 / 10 payments = $100/payment for first 10 payments)
+</pre>
+            </div>
+
+            <h3>Recalculation Logic</h3>
+            <ol>
+                <li>Load current plan and existing schedule items</li>
+                <li>Separate items by status (Scheduled vs Non-Scheduled)</li>
+                <li>Preserve Non-Scheduled items (Cleared, NSF, Cancelled)</li>
+                <li>Calculate paid sums from Non-Scheduled items</li>
+                <li>Reduce remaining program fee cap by already collected amount</li>
+                <li>Generate new Scheduled items based on Number_of_Weeks__c</li>
+                <li>Apply split ratio formula to distribute net payment</li>
+                <li>Calculate running escrow/savings balance</li>
+            </ol>
+        </section>
+
+        <!-- Section 8: Security -->
+        <section class="section" id="security">
+            <h2>8. Security</h2>
+
+            <h3>Apex Security</h3>
+            <ul>
+                <li><code>with sharing</code> - Enforces sharing rules</li>
+                <li><strong>CRUD/FLS</strong> - Field-level security respected through standard queries</li>
+                <li><strong>Savepoints</strong> - Transaction rollback on errors</li>
+            </ul>
+
+            <h3>Input Validation</h3>
+            <table>
+                <tr><th>Validation</th><th>Rule</th></tr>
+                <tr><td>Currency Values</td><td>-99,999,999.99 to 99,999,999.99</td></tr>
+                <tr><td>Payment Dates</td><td>Within 10 years of today</td></tr>
+                <tr><td>Required Fields</td><td>Plan ID validation on all operations</td></tr>
+                <tr><td>Status Values</td><td>Dynamic picklist validation</td></tr>
+            </table>
+
+            <h3>Error Handling</h3>
+            <ul>
+                <li><strong>AuraHandledException</strong> - User-friendly error messages</li>
+                <li><strong>Structured Logging</strong> - Debug logs with emoji prefixes for filtering</li>
+                <li><strong>Error Symbols</strong> - Visual indicators (Warning, Not Found, Validation, Config)</li>
+            </ul>
+        </section>
+    </div>
+
+    <footer>
+        <p>Payment Plan Editor Technical Documentation v2.0</p>
+        <p>Generated: January 2026</p>
+    </footer>
+</body>
+</html>

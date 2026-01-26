@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaymentPlanEditorV2 Architecture</title>
+    <style>
+        :root {
+            --primary: #0176d3;
+            --secondary: #032d60;
+            --accent: #1b96ff;
+            --success: #2e844a;
+            --warning: #fe9339;
+            --error: #ea001e;
+            --bg-light: #f3f3f3;
+            --bg-card: #ffffff;
+            --text-primary: #181818;
+            --text-secondary: #444444;
+            --border: #dddbda;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Salesforce Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+            border-radius: 12px;
+            color: white;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .section h2 {
+            color: var(--secondary);
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+        }
+
+        /* Component Hierarchy Diagram */
+        .hierarchy-diagram {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            padding: 2rem;
+            background: linear-gradient(180deg, #f8fafc 0%, #e8f4fc 100%);
+            border-radius: 8px;
+        }
+
+        .component-box {
+            background: white;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            padding: 1rem 2rem;
+            text-align: center;
+            position: relative;
+            min-width: 300px;
+        }
+
+        .component-box.main {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            border: none;
+            min-width: 400px;
+        }
+
+        .component-box.child {
+            background: #e8f4fc;
+            border-color: var(--accent);
+        }
+
+        .component-box.embedded {
+            background: #fff3e0;
+            border-color: var(--warning);
+        }
+
+        .component-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .component-desc {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-top: 0.25rem;
+        }
+
+        .arrow-down {
+            width: 2px;
+            height: 30px;
+            background: var(--primary);
+            position: relative;
+        }
+
+        .arrow-down::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 10px solid var(--primary);
+        }
+
+        .children-row {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Data Flow Diagram */
+        .flow-diagram {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            padding: 1rem;
+        }
+
+        .flow-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .flow-column h3 {
+            text-align: center;
+            color: var(--secondary);
+            padding: 0.5rem;
+            background: var(--bg-light);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .flow-box {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            position: relative;
+        }
+
+        .flow-box.cmdt {
+            border-color: #9c27b0;
+            background: linear-gradient(135deg, #f3e5f5 0%, #ffffff 100%);
+        }
+
+        .flow-box.lwc {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%);
+        }
+
+        .flow-box.apex {
+            border-color: var(--success);
+            background: linear-gradient(135deg, #e8f5e9 0%, #ffffff 100%);
+        }
+
+        .flow-box.sobject {
+            border-color: var(--warning);
+            background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%);
+        }
+
+        .flow-box h4 {
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .flow-box ul {
+            font-size: 0.8rem;
+            margin-left: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .flow-box ul li {
+            margin-bottom: 0.25rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .badge.cmdt { background: #9c27b0; color: white; }
+        .badge.lwc { background: var(--primary); color: white; }
+        .badge.apex { background: var(--success); color: white; }
+        .badge.sobject { background: var(--warning); color: white; }
+
+        /* Connection Lines */
+        .connections-diagram {
+            position: relative;
+            padding: 2rem;
+            background: #fafafa;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        .connections-grid {
+            display: grid;
+            grid-template-columns: 200px 1fr 200px;
+            gap: 2rem;
+            align-items: start;
+            min-width: 900px;
+        }
+
+        .source-column, .target-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .center-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid var(--primary);
+        }
+
+        .method-box {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        .method-box code {
+            display: block;
+            background: #f5f5f5;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Arrow Styles */
+        .arrow-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .arrow-right {
+            width: 40px;
+            height: 2px;
+            background: var(--primary);
+            position: relative;
+        }
+
+        .arrow-right::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            border-top: 6px solid transparent;
+            border-bottom: 6px solid transparent;
+            border-left: 8px solid var(--primary);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--secondary);
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        tr:hover {
+            background: #e8f4fc;
+        }
+
+        td code {
+            background: #f5f5f5;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.8rem;
+        }
+
+        /* Execution Flow */
+        .execution-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .flow-step.load { border-left-color: #9c27b0; }
+        .flow-step.interact { border-left-color: var(--success); }
+        .flow-step.save { border-left-color: var(--warning); }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .flow-step.load .step-number { background: #9c27b0; }
+        .flow-step.interact .step-number { background: var(--success); }
+        .flow-step.save .step-number { background: var(--warning); }
+
+        .step-content h4 {
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+        }
+
+        .step-content p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .step-content code {
+            background: #f0f0f0;
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .legend-color.cmdt { background: #9c27b0; }
+        .legend-color.lwc { background: var(--primary); }
+        .legend-color.apex { background: var(--success); }
+        .legend-color.sobject { background: var(--warning); }
+        .legend-color.service { background: #00bcd4; }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .flow-diagram {
+                grid-template-columns: 1fr;
+            }
+
+            .connections-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Visual Architecture Diagram */
+        .visual-architecture {
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 12px;
+            padding: 2rem;
+            color: white;
+            overflow-x: auto;
+        }
+
+        .arch-row {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .arch-box {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 180px;
+            position: relative;
+        }
+
+        .arch-box.ui {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .arch-box.controller {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .arch-box.service {
+            background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+        }
+
+        .arch-box.config {
+            background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
+        }
+
+        .arch-box.data {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .arch-box .title {
+            font-weight: bold;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .arch-box .subtitle {
+            font-size: 0.75rem;
+            opacity: 0.85;
+        }
+
+        .arch-connector {
+            display: flex;
+            justify-content: center;
+            margin: 0.5rem 0;
+        }
+
+        .connector-line {
+            width: 2px;
+            height: 30px;
+            background: rgba(255,255,255,0.5);
+            position: relative;
+        }
+
+        .connector-line::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 8px solid rgba(255,255,255,0.5);
+        }
+
+        .connector-horizontal {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .h-line {
+            width: 60px;
+            height: 2px;
+            background: rgba(255,255,255,0.5);
+        }
+
+        .arch-label {
+            text-align: center;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.6;
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        /* Method Signature Box */
+        .method-signature {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+
+        .method-signature pre {
+            color: #d4d4d4;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .method-signature .keyword { color: #569cd6; }
+        .method-signature .type { color: #4ec9b0; }
+        .method-signature .method-name { color: #dcdcaa; }
+        .method-signature .param { color: #9cdcfe; }
+        .method-signature .comment { color: #6a9955; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PaymentPlanEditorV2 Architecture</h1>
+            <p>Comprehensive technical documentation for the Payment Plan Calculator component</p>
+        </header>
+
+        <!-- Section 1: Visual Architecture Overview -->
+        <section class="section">
+            <h2>1. System Architecture Overview</h2>
+
+            <div class="visual-architecture">
+                <div class="arch-label">User Interface Layer</div>
+                <div class="arch-row">
+                    <div class="arch-box ui">
+                        <div class="title">paymentPlanEditorV2</div>
+                        <div class="subtitle">Main Calculator LWC</div>
+                    </div>
+                </div>
+
+                <div class="arch-connector">
+                    <div class="connector-line"></div>
+                </div>
+
+                <div class="arch-row">
+                    <div class="arch-box ui">
+                        <div class="title">c-summary-stats</div>
+                        <div class="subtitle">Stats Display</div>
+                    </div>
+                    <div class="arch-box ui">
+                        <div class="title">c-payment-plan-editor</div>
+                        <div class="subtitle">V1 Editor (Embedded)</div>
+                    </div>
+                </div>
+
+                <div class="arch-label">Controller Layer</div>
+                <div class="arch-connector">
+                    <div class="connector-line"></div>
+                </div>
+
+                <div class="arch-row">
+                    <div class="arch-box controller">
+                        <div class="title">PaymentCalculatorController</div>
+                        <div class="subtitle">calculatePaymentPlan()</div>
+                    </div>
+                    <div class="arch-box controller">
+                        <div class="title">PaymentPlanEditorController</div>
+                        <div class="subtitle">updateOpportunityOnly()</div>
+                    </div>
+                </div>
+
+                <div class="arch-label">Service Layer</div>
+                <div class="arch-connector">
+                    <div class="connector-line"></div>
+                </div>
+
+                <div class="arch-row">
+                    <div class="arch-box service">
+                        <div class="title">CalculationService</div>
+                        <div class="subtitle">Core Math Engine</div>
+                    </div>
+                    <div class="arch-box config">
+                        <div class="title">PaymentCalcConfigSvc</div>
+                        <div class="subtitle">CMDT Config Loader</div>
+                    </div>
+                </div>
+
+                <div class="arch-label">Data Layer</div>
+                <div class="arch-connector">
+                    <div class="connector-line"></div>
+                </div>
+
+                <div class="arch-row">
+                    <div class="arch-box data">
+                        <div class="title">Opportunity</div>
+                        <div class="subtitle">Source & Target</div>
+                    </div>
+                    <div class="arch-box config">
+                        <div class="title">Payment_Calc_Config__mdt</div>
+                        <div class="subtitle">Custom Metadata</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Component Hierarchy -->
+        <section class="section">
+            <h2>2. Component Hierarchy</h2>
+
+            <div class="hierarchy-diagram">
+                <div class="component-box main">
+                    <div class="component-name">paymentPlanEditorV2</div>
+                    <div class="component-desc">Main Calculator Component - Program Settings, Sliders, Inputs</div>
+                </div>
+
+                <div class="arrow-down"></div>
+
+                <div class="children-row">
+                    <div class="component-box child">
+                        <div class="component-name">c-summary-stats</div>
+                        <div class="component-desc">Weekly Payment, Weeks to Payoff, Savings Display</div>
+                    </div>
+
+                    <div class="component-box embedded">
+                        <div class="component-name">c-payment-plan-editor</div>
+                        <div class="component-desc">V1 Editor for Managing Existing Plans</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Data Flow Diagram -->
+        <section class="section">
+            <h2>3. Data Flow Architecture</h2>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color cmdt"></div>
+                    <span>Custom Metadata</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color lwc"></div>
+                    <span>Lightning Web Component</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color apex"></div>
+                    <span>Apex Controller/Service</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color sobject"></div>
+                    <span>SObject (Opportunity)</span>
+                </div>
+            </div>
+
+            <div class="flow-diagram">
+                <div class="flow-column">
+                    <h3>Data Sources</h3>
+
+                    <div class="flow-box cmdt">
+                        <h4><span class="badge cmdt">CMDT</span> Payment_Calc_Config__mdt</h4>
+                        <ul>
+                            <li>Settlement_Percentage__c</li>
+                            <li>Program_Fee_Percentage__c</li>
+                            <li>Banking_Fee__c / Bank2_Fee__c</li>
+                            <li>Mod/Debt_Program_Split_Ratio__c</li>
+                            <li>Min/Max_Program_Weeks__c</li>
+                            <li>Min/Max_Target_Percent__c</li>
+                            <li>Setup_Fee__c / Setup_Fee_Payments__c</li>
+                        </ul>
+                    </div>
+
+                    <div class="flow-box sobject">
+                        <h4><span class="badge sobject">SObject</span> Opportunity</h4>
+                        <ul>
+                            <li>Estimated_Total_Debt__c</li>
+                            <li>Estimated_Current_Payment__c</li>
+                            <li>Setup_Fee__c</li>
+                            <li>Account.BillingState</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="flow-column">
+                    <h3>Processing Layer</h3>
+
+                    <div class="flow-box lwc">
+                        <h4><span class="badge lwc">LWC</span> paymentPlanEditorV2</h4>
+                        <ul>
+                            <li>@wire(getRecord) - Fetch Opp data</li>
+                            <li>loadConfig() - Load CMDT</li>
+                            <li>performCalculations() - Trigger calc</li>
+                            <li>handleSave() - Persist to Opp</li>
+                        </ul>
+                    </div>
+
+                    <div class="flow-box apex">
+                        <h4><span class="badge apex">Apex</span> PaymentCalculatorController</h4>
+                        <ul>
+                            <li>calculatePaymentPlan()</li>
+                            <li>getDebtTotals()</li>
+                            <li>Orchestrates CalculationService</li>
+                        </ul>
+                    </div>
+
+                    <div class="flow-box apex">
+                        <h4><span class="badge apex">Apex</span> CalculationService</h4>
+                        <ul>
+                            <li>calculateAdvancedPaymentPlan()</li>
+                            <li>Settlement & Fee Math</li>
+                            <li>Payment Schedule Generation</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="flow-column">
+                    <h3>Output / Target</h3>
+
+                    <div class="flow-box lwc">
+                        <h4><span class="badge lwc">LWC</span> UI State</h4>
+                        <ul>
+                            <li>this.calculations (summary)</li>
+                            <li>this.paymentSchedule (grid)</li>
+                            <li>c-summary-stats (display)</li>
+                        </ul>
+                    </div>
+
+                    <div class="flow-box sobject">
+                        <h4><span class="badge sobject">SObject</span> Opportunity (Updated)</h4>
+                        <ul>
+                            <li>Number_of_Weeks__c</li>
+                            <li>Est_weekly_payment__c</li>
+                            <li>First_Draft_Date__c</li>
+                            <li>Banking_Fee__c</li>
+                            <li>Program_Type__c</li>
+                            <li>Est_Settlement__c</li>
+                            <li>Program_Fee__c</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Method Call Chain -->
+        <section class="section">
+            <h2>4. Apex Method Call Chain</h2>
+
+            <div class="connections-diagram">
+                <div class="connections-grid">
+                    <div class="source-column">
+                        <div class="method-box">
+                            <strong>LWC: loadConfig()</strong>
+                            <code>getRequiredConfig()</code>
+                        </div>
+                        <div class="method-box">
+                            <strong>LWC: refreshConfigForProgram()</strong>
+                            <code>getRequiredConfigForProgram(type)</code>
+                        </div>
+                        <div class="method-box">
+                            <strong>LWC: performCalculations()</strong>
+                            <code>calculatePaymentPlan(...)</code>
+                        </div>
+                        <div class="method-box">
+                            <strong>LWC: handleSave()</strong>
+                            <code>updateOpportunityOnly(...)</code>
+                        </div>
+                    </div>
+
+                    <div class="center-column">
+                        <h4 style="color: var(--secondary);">Apex Classes</h4>
+
+                        <div style="background: #e8f5e9; padding: 1rem; border-radius: 8px; width: 100%;">
+                            <strong>PaymentCalcConfigSvc</strong>
+                            <ul style="font-size: 0.8rem; margin-top: 0.5rem;">
+                                <li>getRequiredConfig()</li>
+                                <li>getRequiredConfigForProgram()</li>
+                            </ul>
+                        </div>
+
+                        <div style="background: #e3f2fd; padding: 1rem; border-radius: 8px; width: 100%;">
+                            <strong>PaymentCalculatorController</strong>
+                            <ul style="font-size: 0.8rem; margin-top: 0.5rem;">
+                                <li>calculatePaymentPlan()</li>
+                                <li>getDebtTotals()</li>
+                            </ul>
+                        </div>
+
+                        <div style="background: #fff3e0; padding: 1rem; border-radius: 8px; width: 100%;">
+                            <strong>CalculationService</strong>
+                            <ul style="font-size: 0.8rem; margin-top: 0.5rem;">
+                                <li>calculateAdvancedPaymentPlan()</li>
+                            </ul>
+                        </div>
+
+                        <div style="background: #fce4ec; padding: 1rem; border-radius: 8px; width: 100%;">
+                            <strong>PaymentPlanEditorController</strong>
+                            <ul style="font-size: 0.8rem; margin-top: 0.5rem;">
+                                <li>updateOpportunityOnly()</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="target-column">
+                        <div class="method-box">
+                            <strong>Returns: ConfigDTO</strong>
+                            <code>{ settlementPercent, programFeePercent, ... }</code>
+                        </div>
+                        <div class="method-box">
+                            <strong>Returns: ConfigDTO</strong>
+                            <code>Program-specific split ratios</code>
+                        </div>
+                        <div class="method-box">
+                            <strong>Returns: CalculationResult</strong>
+                            <code>{ weeklyPayment, numberOfWeeks, paymentSchedule[] }</code>
+                        </div>
+                        <div class="method-box">
+                            <strong>Updates: Opportunity</strong>
+                            <code>DML Update on Opportunity fields</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Execution Flow -->
+        <section class="section">
+            <h2>5. Execution Flow</h2>
+
+            <div class="execution-flow">
+                <div class="flow-step load">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Page Load - Configuration</h4>
+                        <p>
+                            <code>connectedCallback()</code> triggers <code>loadConfig()</code> which calls
+                            <code>PaymentCalcConfigSvc.getRequiredConfig()</code>. Simultaneously,
+                            <code>@wire(getRecord)</code> fetches Opportunity fields (debt, current payment, state).
+                            If state is 'CA', no-fee program is auto-enabled.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flow-step load">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Bootstrap Calculator</h4>
+                        <p>
+                            <code>renderedCallback()</code> checks if config is loaded and calls
+                            <code>bootstrapCalculator()</code> which triggers initial <code>performCalculations()</code>.
+                            This populates <code>this.calculations</code> and <code>this.paymentSchedule</code>.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flow-step interact">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>User Interaction - Sliders/Inputs</h4>
+                        <p>
+                            User changes trigger handlers like <code>handleTargetPaymentChange()</code>,
+                            <code>handleProgramTypeMod()</code>, <code>handleDesiredPaymentChange()</code>.
+                            Each calls <code>performCalculations()</code> (debounced) which invokes
+                            <code>PaymentCalculatorController.calculatePaymentPlan()</code>.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flow-step interact">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Server-Side Calculation</h4>
+                        <p>
+                            <code>PaymentCalculatorController</code> calls <code>CalculationService.calculateAdvancedPaymentPlan()</code>
+                            which computes settlement amount, program fees, number of weeks, and generates the full payment schedule.
+                            Results are returned as <code>CalculationResult</code> with <code>paymentSchedule[]</code>.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flow-step save">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h4>Save to Opportunity</h4>
+                        <p>
+                            User clicks "Save to Opportunity" button. <code>handleSave()</code> calls
+                            <code>PaymentPlanEditorController.updateOpportunityOnly()</code> with calculated values.
+                            This updates Opportunity fields like <code>Number_of_Weeks__c</code>,
+                            <code>Est_weekly_payment__c</code>, <code>Program_Type__c</code>, etc.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: Key Method Signatures -->
+        <section class="section">
+            <h2>6. Key Method Signatures</h2>
+
+            <h3 style="margin-top: 1rem; color: var(--secondary);">PaymentCalculatorController.calculatePaymentPlan()</h3>
+            <div class="method-signature">
+                <pre><span class="keyword">@AuraEnabled</span>
+<span class="keyword">public static</span> <span class="type">CalculationResult</span> <span class="method-name">calculatePaymentPlan</span>(
+    <span class="type">Id</span> <span class="param">recordId</span>,                      <span class="comment">// Opportunity ID</span>
+    <span class="type">String</span> <span class="param">programType</span>,               <span class="comment">// 'DCG_MOD', 'DCG_DEBT', 'DCG_MOD_CA'</span>
+    <span class="type">String</span> <span class="param">paymentFrequency</span>,          <span class="comment">// 'Weekly' or 'Monthly'</span>
+    <span class="type">String</span> <span class="param">calculationMode</span>,           <span class="comment">// 'percentage' or 'desired_payment'</span>
+    <span class="type">Decimal</span> <span class="param">targetPaymentPercentage</span>,
+    <span class="type">Decimal</span> <span class="param">targetPaymentAmount</span>,
+    <span class="type">Decimal</span> <span class="param">setupFee</span>,
+    <span class="type">Integer</span> <span class="param">setupFeeTerm</span>,
+    <span class="type">Decimal</span> <span class="param">servicingFee</span>,             <span class="comment">// Banking fee</span>
+    <span class="type">Decimal</span> <span class="param">bank2Fee</span>,
+    <span class="type">String</span> <span class="param">firstDraftDate</span>,
+    <span class="type">Integer</span> <span class="param">preferredDayOfWeek</span>,
+    <span class="type">Boolean</span> <span class="param">noFeeProgram</span>,
+    <span class="type">Decimal</span> <span class="param">additionalProductsWeeklyTotal</span>
+)</pre>
+            </div>
+
+            <h3 style="margin-top: 1.5rem; color: var(--secondary);">PaymentPlanEditorController.updateOpportunityOnly()</h3>
+            <div class="method-signature">
+                <pre><span class="keyword">@AuraEnabled</span>
+<span class="keyword">public static void</span> <span class="method-name">updateOpportunityOnly</span>(
+    <span class="type">Id</span> <span class="param">recordId</span>,
+    <span class="type">Integer</span> <span class="param">numberOfWeeks</span>,
+    <span class="type">Decimal</span> <span class="param">weeklyPayment</span>,
+    <span class="type">String</span> <span class="param">firstDraftDate</span>,
+    <span class="type">Decimal</span> <span class="param">bankingFee</span>,
+    <span class="type">Integer</span> <span class="param">setupFeeTerm</span>,
+    <span class="type">Boolean</span> <span class="param">noFeeProgram</span>,
+    <span class="type">String</span> <span class="param">programType</span>,
+    <span class="type">Decimal</span> <span class="param">settlementAmount</span>,
+    <span class="type">Decimal</span> <span class="param">programFee</span>
+)</pre>
+            </div>
+
+            <h3 style="margin-top: 1.5rem; color: var(--secondary);">CalculationService.calculateAdvancedPaymentPlan()</h3>
+            <div class="method-signature">
+                <pre><span class="keyword">public static</span> <span class="type">PaymentCalculationResult</span> <span class="method-name">calculateAdvancedPaymentPlan</span>(
+    <span class="type">Decimal</span> <span class="param">totalDebt</span>,       <span class="comment">// From Opportunity.Estimated_Total_Debt__c</span>
+    <span class="type">Decimal</span> <span class="param">currentPayment</span>,  <span class="comment">// From Opportunity.Estimated_Current_Payment__c</span>
+    <span class="type">Map&lt;String, Object&gt;</span> <span class="param">config</span>,
+    <span class="type">Id</span> <span class="param">recordId</span>
+)</pre>
+            </div>
+        </section>
+
+        <!-- Section 7: Field Mappings -->
+        <section class="section">
+            <h2>7. Field Mappings</h2>
+
+            <h3 style="margin-top: 1rem; color: var(--secondary);">7.1 Custom Metadata Type: Payment_Calc_Config__mdt</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>CMDT Field</th>
+                        <th>ConfigDTO Property</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>Settlement_Percentage__c</code></td>
+                        <td><code>settlementPercent</code></td>
+                        <td>Default settlement % (e.g., 60)</td>
+                    </tr>
+                    <tr>
+                        <td><code>Program_Fee_Percentage__c</code></td>
+                        <td><code>programFeePercent</code></td>
+                        <td>Program fee % (e.g., 35)</td>
+                    </tr>
+                    <tr>
+                        <td><code>Banking_Fee__c</code></td>
+                        <td><code>bankingFee</code></td>
+                        <td>Per-payment banking fee</td>
+                    </tr>
+                    <tr>
+                        <td><code>Bank2_Fee__c</code></td>
+                        <td><code>bank2Fee</code></td>
+                        <td>Secondary bank fee</td>
+                    </tr>
+                    <tr>
+                        <td><code>Mod_Program_Split_Ratio__c</code></td>
+                        <td><code>programSplitRatio</code> (DCG_MOD)</td>
+                        <td>Program/escrow split for DCG MOD (0.50)</td>
+                    </tr>
+                    <tr>
+                        <td><code>Debt_Program_Split_Ratio__c</code></td>
+                        <td><code>programSplitRatio</code> (DCG_DEBT)</td>
+                        <td>Program/escrow split for DCG DEBT (0.70)</td>
+                    </tr>
+                    <tr>
+                        <td><code>Mod_Escrow_Split_Ratio__c</code></td>
+                        <td><code>escrowSplitRatio</code> (DCG_MOD)</td>
+                        <td>Escrow split for DCG MOD (0.50)</td>
+                    </tr>
+                    <tr>
+                        <td><code>Debt_Escrow_Split_Ratio__c</code></td>
+                        <td><code>escrowSplitRatio</code> (DCG_DEBT)</td>
+                        <td>Escrow split for DCG DEBT (0.30)</td>
+                    </tr>
+                    <tr>
+                        <td><code>Min_Weekly_Target_Payment__c</code></td>
+                        <td><code>minWeeklyTargetPayment</code></td>
+                        <td>Minimum weekly payment floor (standard)</td>
+                    </tr>
+                    <tr>
+                        <td><code>Min_Weekly_Target_Payment_DCG_Debt__c</code></td>
+                        <td><code>minWeeklyTargetPaymentDcgDebt</code></td>
+                        <td>Minimum weekly payment floor (DCG DEBT)</td>
+                    </tr>
+                    <tr>
+                        <td><code>Min_Target_Percent_DCG_Mod__c</code></td>
+                        <td><code>minTargetPercentDcgMod</code></td>
+                        <td>Min % of current payment (DCG MOD)</td>
+                    </tr>
+                    <tr>
+                        <td><code>Min_Target_Percent_DCG_Debt__c</code></td>
+                        <td><code>minTargetPercentDcgDebt</code></td>
+                        <td>Min % of current payment (DCG DEBT)</td>
+                    </tr>
+                    <tr>
+                        <td><code>Max_Target_Percent__c</code></td>
+                        <td><code>maxTargetPercent</code></td>
+                        <td>Max % of current payment</td>
+                    </tr>
+                    <tr>
+                        <td><code>Min_Program_Weeks__c</code></td>
+                        <td><code>minProgramWeeks</code></td>
+                        <td>Minimum program duration</td>
+                    </tr>
+                    <tr>
+                        <td><code>Max_Program_Weeks__c</code></td>
+                        <td><code>maxProgramWeeks</code></td>
+                        <td>Maximum program duration</td>
+                    </tr>
+                    <tr>
+                        <td><code>Setup_Fee__c</code></td>
+                        <td><code>setupFee</code></td>
+                        <td>Default setup fee amount</td>
+                    </tr>
+                    <tr>
+                        <td><code>Setup_Fee_Min_Payments__c</code></td>
+                        <td><code>setupFeeMinPayments</code></td>
+                        <td>Min setup fee term</td>
+                    </tr>
+                    <tr>
+                        <td><code>Setup_Fee_Max_Payments__c</code></td>
+                        <td><code>setupFeeMaxPayments</code></td>
+                        <td>Max setup fee term</td>
+                    </tr>
+                    <tr>
+                        <td><code>Weekly_To_Monthly_Factor__c</code></td>
+                        <td><code>weeklyToMonthlyFactor</code></td>
+                        <td>Conversion factor (typically 4.33)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 2rem; color: var(--secondary);">7.2 Opportunity Fields - READ (Input)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Opportunity Field</th>
+                        <th>LWC Property</th>
+                        <th>Wire Method</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>Estimated_Total_Debt__c</code></td>
+                        <td><code>this.totalDebt</code></td>
+                        <td><code>@wire(getRecord)</code></td>
+                        <td>Total debt for calculations</td>
+                    </tr>
+                    <tr>
+                        <td><code>Estimated_Current_Payment__c</code></td>
+                        <td><code>this.currentPayment</code></td>
+                        <td><code>@wire(getRecord)</code></td>
+                        <td>Current payment for % calculations</td>
+                    </tr>
+                    <tr>
+                        <td><code>Setup_Fee__c</code></td>
+                        <td><code>this.setupFeeTotal</code></td>
+                        <td><code>@wire(getRecord)</code></td>
+                        <td>Setup fee amount</td>
+                    </tr>
+                    <tr>
+                        <td><code>Account.BillingState</code></td>
+                        <td><code>(checked for 'CA')</code></td>
+                        <td><code>@wire(getRecord)</code></td>
+                        <td>Triggers no-fee program for California</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 2rem; color: var(--secondary);">7.3 Opportunity Fields - WRITE (Output via updateOpportunityOnly)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Opportunity Field</th>
+                        <th>Source (LWC)</th>
+                        <th>Apex Parameter</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>Number_of_Weeks__c</code></td>
+                        <td><code>this.calculations.programLength</code></td>
+                        <td><code>numberOfWeeks</code></td>
+                        <td>Program duration in weeks</td>
+                    </tr>
+                    <tr>
+                        <td><code>Est_weekly_payment__c</code></td>
+                        <td><code>_calculateBaseWeeklyPayment()</code></td>
+                        <td><code>weeklyPayment</code></td>
+                        <td>Weekly payment amount</td>
+                    </tr>
+                    <tr>
+                        <td><code>First_Draft_Date__c</code></td>
+                        <td><code>this.firstDraftDate</code></td>
+                        <td><code>firstDraftDate</code></td>
+                        <td>First payment date</td>
+                    </tr>
+                    <tr>
+                        <td><code>Banking_Fee__c</code></td>
+                        <td><code>this.bankingFee</code></td>
+                        <td><code>bankingFee</code></td>
+                        <td>Per-payment banking fee</td>
+                    </tr>
+                    <tr>
+                        <td><code>Setup_Fee_Term__c</code></td>
+                        <td><code>this.setupFeePayments</code></td>
+                        <td><code>setupFeeTerm</code></td>
+                        <td>Number of setup fee payments</td>
+                    </tr>
+                    <tr>
+                        <td><code>No_Fee_Program__c</code></td>
+                        <td><code>this.noFeeProgram</code></td>
+                        <td><code>noFeeProgram</code></td>
+                        <td>California no-fee flag</td>
+                    </tr>
+                    <tr>
+                        <td><code>Program_Type__c</code></td>
+                        <td><code>this.programType</code></td>
+                        <td><code>programType</code></td>
+                        <td>'DCG MOD', 'DCG DEBT', 'DCG MOD CA'</td>
+                    </tr>
+                    <tr>
+                        <td><code>Est_Settlement__c</code></td>
+                        <td><code>(from config)</code></td>
+                        <td><code>(derived)</code></td>
+                        <td>Settlement % picklist (e.g., '60%')</td>
+                    </tr>
+                    <tr>
+                        <td><code>Program_Fee__c</code></td>
+                        <td><code>(from config)</code></td>
+                        <td><code>(derived)</code></td>
+                        <td>Program fee % picklist (e.g., '35%')</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 2rem; color: var(--secondary);">7.4 CalculationResult to LWC Mapping</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Apex CalculationResult</th>
+                        <th>LWC this.calculations</th>
+                        <th>Display Location</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>weeklyPayment</code></td>
+                        <td><code>calculations.weeklyPayment</code></td>
+                        <td>Summary Stats, Target Payment Display</td>
+                    </tr>
+                    <tr>
+                        <td><code>monthlyPayment</code></td>
+                        <td><code>calculations.monthlyPayment</code></td>
+                        <td>Monthly mode display</td>
+                    </tr>
+                    <tr>
+                        <td><code>numberOfWeeks</code></td>
+                        <td><code>calculations.programLength</code></td>
+                        <td>Weeks to Payoff, Number of Weeks input</td>
+                    </tr>
+                    <tr>
+                        <td><code>settlementAmount</code></td>
+                        <td><code>calculations.settlementAmount</code></td>
+                        <td>Summary calculations</td>
+                    </tr>
+                    <tr>
+                        <td><code>programFee</code></td>
+                        <td><code>calculations.programFeeAmount</code></td>
+                        <td>Fee breakdown</td>
+                    </tr>
+                    <tr>
+                        <td><code>totalProgram</code></td>
+                        <td><code>calculations.totalProgramCost</code></td>
+                        <td>Total program cost display</td>
+                    </tr>
+                    <tr>
+                        <td><code>totalSavings</code></td>
+                        <td><code>calculations.savingsAmount</code></td>
+                        <td>Estimated Total Savings</td>
+                    </tr>
+                    <tr>
+                        <td><code>savingsPercentage</code></td>
+                        <td><code>calculations.savingsPercent</code></td>
+                        <td>Savings percentage display</td>
+                    </tr>
+                    <tr>
+                        <td><code>bankingFeeTotal</code></td>
+                        <td><code>calculations.bankingFeeTotal</code></td>
+                        <td>Total banking fees</td>
+                    </tr>
+                    <tr>
+                        <td><code>paymentSchedule[]</code></td>
+                        <td><code>this.paymentSchedule</code></td>
+                        <td>Payment schedule grid, c-summary-stats</td>
+                    </tr>
+                    <tr>
+                        <td><code>programSplitRatio</code></td>
+                        <td><code>this.programSplitRatio</code></td>
+                        <td>Internal calculation</td>
+                    </tr>
+                    <tr>
+                        <td><code>escrowSplitRatio</code></td>
+                        <td><code>this.escrowSplitRatio</code></td>
+                        <td>Internal calculation</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 2rem; color: var(--secondary);">7.5 Payment Schedule Item Mapping</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Apex PaymentScheduleEntry</th>
+                        <th>LWC Schedule Item</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>weekNumber</code></td>
+                        <td><code>draftNumber</code></td>
+                        <td>Payment sequence number</td>
+                    </tr>
+                    <tr>
+                        <td><code>paymentDate</code></td>
+                        <td><code>paymentDate</code></td>
+                        <td>Scheduled payment date</td>
+                    </tr>
+                    <tr>
+                        <td><code>paymentAmount</code></td>
+                        <td><code>totalPayment / draftAmount</code></td>
+                        <td>Total payment amount</td>
+                    </tr>
+                    <tr>
+                        <td><code>setupFee</code></td>
+                        <td><code>setupFee / setupFeePortion</code></td>
+                        <td>Setup fee portion</td>
+                    </tr>
+                    <tr>
+                        <td><code>bankingFee</code></td>
+                        <td><code>bankingFee / bankingFeePortion</code></td>
+                        <td>Banking fee portion</td>
+                    </tr>
+                    <tr>
+                        <td><code>programAmount</code></td>
+                        <td><code>programFee / programPortion</code></td>
+                        <td>Program fee portion</td>
+                    </tr>
+                    <tr>
+                        <td><code>escrowAmount</code></td>
+                        <td><code>escrowAmount / savingsBalance</code></td>
+                        <td>Escrow/savings portion</td>
+                    </tr>
+                    <tr>
+                        <td><code>remainingBalance</code></td>
+                        <td><code>runningBalance / runningTotal</code></td>
+                        <td>Remaining balance after payment</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Section 8: Program Type Configuration -->
+        <section class="section">
+            <h2>8. Program Type Configuration</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Program Type</th>
+                        <th>API Value</th>
+                        <th>Program Split</th>
+                        <th>Escrow Split</th>
+                        <th>No-Fee</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>DCG Mod</strong></td>
+                        <td><code>DCG_MOD</code></td>
+                        <td>0.50 (50%)</td>
+                        <td>0.50 (50%)</td>
+                        <td>Optional</td>
+                        <td>Standard modification program</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DCG Debt</strong></td>
+                        <td><code>DCG_DEBT</code></td>
+                        <td>0.70 (70%)</td>
+                        <td>0.30 (30%)</td>
+                        <td>No</td>
+                        <td>Debt settlement program</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DCG MOD CA</strong></td>
+                        <td><code>DCG_MOD_CA</code></td>
+                        <td>0.50 (50%)</td>
+                        <td>0.50 (50%)</td>
+                        <td>Yes (Auto)</td>
+                        <td>California variant - no-fee auto-enabled</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Footer -->
+        <footer style="text-align: center; padding: 2rem; color: var(--text-secondary); font-size: 0.9rem;">
+            <p>PaymentPlanEditorV2 Architecture Documentation</p>
+            <p>Generated: <script>document.write(new Date().toLocaleDateString())</script></p>
+        </footer>
+    </div>
+</body>
+</html>

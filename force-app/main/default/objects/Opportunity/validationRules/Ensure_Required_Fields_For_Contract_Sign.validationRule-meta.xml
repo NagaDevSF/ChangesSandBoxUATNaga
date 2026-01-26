@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Ensure_Required_Fields_For_Contract_Sign</fullName>
+    <active>false</active>
+    <errorConditionFormula>AND(
+    OR(
+        ISPICKVAL(StageName, &quot;Contract Signed&quot;),
+        ISPICKVAL(StageName, &quot;Enrolled&quot;)
+    ),
+    OR(
+        ISBLANK(Amount),
+        ISBLANK(Fronter__c),
+        ISBLANK(Closer__c), 
+        ISBLANK(First_Draft_Date__c)
+    )
+)</errorConditionFormula>
+    <errorMessage>When the Stage is set to &apos;Contract Signed&apos;, the Amount, First draft date, Frontor, and Closer fields must be filled.</errorMessage>
+</ValidationRule>

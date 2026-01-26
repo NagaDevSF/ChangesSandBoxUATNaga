@@ -1,0 +1,134 @@
+<template>
+    <!-- Sales Activity Calendar Container -->
+    <div class="sales-calendar-container">
+        <!-- Calendar Header -->
+        <div class="calendar-header">
+            <div class="header-left">
+                <h1 class="calendar-title">Daily Sales Team Activity</h1>
+                <span class="date-display">{formattedDate}</span>
+            </div>
+            <div class="header-controls">
+                <lightning-input 
+                    type="date" 
+                    name="dateSelector"
+                    label="Select Date"
+                    value={selectedDateValue}
+                    onchange={handleDateChange}
+                    variant="label-hidden">
+                </lightning-input>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <template if:true={isLoading}>
+            <div class="loading-container">
+                <lightning-spinner alternative-text="Loading calendar..." size="medium"></lightning-spinner>
+                <p class="loading-text">Loading sales activities...</p>
+            </div>
+        </template>
+
+        <!-- Error State -->
+        <template if:true={error}>
+            <div class="error-container">
+                <lightning-icon icon-name="utility:error" size="large" variant="error"></lightning-icon>
+                <h3>Unable to load calendar</h3>
+                <p class="error-message">{error.body.message}</p>
+                <button class="retry-button" onclick={refreshCalendar}>Retry</button>
+            </div>
+        </template>
+
+
+        <!-- Calendar Grid -->
+        <template if:false={isLoading}>
+            <template if:false={error}>
+                <div class="calendar-wrapper calendar-wrapper-optimized">
+                    <table class="sales-calendar-table">
+                        <!-- Header with Sales Reps -->
+                        <thead>
+                            <tr class="header-row">
+                                <th class="time-column-header">
+                                    <div class="time-header-content">Time</div>
+                                </th>
+                                <template for:each={activeSalesReps} for:item="rep">
+                                    <th key={rep.Id} class="rep-column-header">
+                                        <div class="rep-header">
+                                            <div class="rep-avatar" style={rep.avatarStyle}>
+                                                <span class="rep-initials">{rep.initials}</span>
+                                            </div>
+                                            <div class="rep-info">
+                                                <div class="rep-name" title={rep.Name}>{rep.Name}</div>
+                                                <div class="rep-badge" style={rep.badgeStyle}></div>
+                                            </div>
+                                        </div>
+                                    </th>
+                                </template>
+                            </tr>
+                        </thead>
+                        
+                        <!-- Time Slots and Events -->
+                        <tbody>
+                            <template for:each={calendarGrid} for:item="row">
+                                <tr key={row.slotKey} class={row.rowClass}>
+                                    <!-- Time Label -->
+                                    <td class="time-label-cell">
+                                        <template if:true={row.isHourMark}>
+                                            <span class="time-label">{row.label}</span>
+                                        </template>
+                                        <template if:true={row.isHalfHour}>
+                                            <span class="half-hour-dot">•</span>
+                                        </template>
+                                    </td>
+                                    
+                                    <!-- Sales Rep Cells -->
+                                    <template for:each={row.cells} for:item="cell">
+                                        <td key={cell.slotKey} class={cell.cellClass}>
+                                            <div class="cell-container">
+                                                <template for:each={cell.events} for:item="event">
+                                                    <template if:true={event.isStart}>
+                                                        <div key={event.id}
+                                                             class="event-card event-optimized"
+                                                             style={event.eventStyle}
+                                                             data-event-id={event.id}
+                                                             onclick={handleEventClick}>
+                                                            <div class="event-time-badge">
+                                                                {event.startTime} - {event.endTime}
+                                                            </div>
+                                                            <div class="event-title">{event.title}</div>
+                                                            <template if:true={event.clientName}>
+                                                                <div class="event-client">
+                                                                    <lightning-icon icon-name="utility:user" size="xx-small"></lightning-icon>
+                                                                    <span>{event.clientName}</span>
+                                                                </div>
+                                                            </template>
+                                                            <template if:true={event.Location}>
+                                                                <div class="event-location">
+                                                                    <lightning-icon icon-name="utility:location" size="xx-small"></lightning-icon>
+                                                                    <span>{event.Location}</span>
+                                                                </div>
+                                                            </template>
+                                                            <div class="event-duration">{event.durationHours}h</div>
+                                                        </div>
+                                                    </template>
+                                                </template>
+                                            </div>
+                                        </td>
+                                    </template>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                <template if:true={showEmptyState}>
+                    <div class="empty-state">
+                        <lightning-icon icon-name="utility:event" size="large"></lightning-icon>
+                        <h3>No activities scheduled</h3>
+                        <p>No sales activities found for {formattedDate}</p>
+                    </div>
+                </template>
+            </template>
+        </template>
+
+    </div>
+</template>

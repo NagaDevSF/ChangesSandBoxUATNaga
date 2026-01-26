@@ -1,0 +1,42 @@
+========================================
+INSTRUCTIONS: Create Custom Metadata Record Manually
+========================================
+
+Since automated deployment is failing, please follow these steps to manually create the Custom Metadata record in Salesforce:
+
+**Step 1: Navigate to Custom Metadata Types**
+1. Go to Setup in Salesforce
+2. In the Quick Find box, search for "Custom Metadata Types"
+3. Click on "Custom Metadata Types"
+
+**Step 2: Find Lead Assignment Config NXDS**
+4. Find "Lead Assignment Config NXDS" in the list
+5. Click on "Manage Records"
+
+**Step 3: Create New Record**
+6. Click "New"
+7. Fill in the following values:
+   - Label: NXDS Default
+   - Lead Assignment Config NXDS Name: NXDS_Default
+   - Active: ☑ (checked)
+   - Batch Size: 10000
+   - Lead Status: New
+   - Pre Deal Status: NEW LEAD
+   - Round Robin Type: Regular
+   - Sales Office: Next day Settlement
+
+8. Click "Save"
+
+**Step 4: Verify Configuration**
+9. Run this query in Developer Console to verify:
+   SELECT DeveloperName, Active__c, Sales_Office__c, Lead_Status__c,
+          Pre_Deal_Status__c, Round_Robin_Type__c, Batch_Size__c
+   FROM Lead_Assignment_Config_NXDS__mdt
+
+**Step 5: Start the Scheduler**
+10. After creating the record, run this in Anonymous Apex:
+    ScheduledLeadReassignmentNXDS.startAutoSchedule();
+
+========================================
+ALTERNATIVE: If you prefer, I can provide a package.xml for deployment
+========================================

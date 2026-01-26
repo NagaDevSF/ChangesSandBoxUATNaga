@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Send_to_Convoso1</name>
+        <label>Send to Convoso</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>ConvosoFlowIntegration</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Loop_Through_Leads</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>email</name>
+            <value>
+                <elementReference>Loop_Through_Leads.Email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>first_name</name>
+            <value>
+                <elementReference>Loop_Through_Leads.FirstName</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>last_name</name>
+            <value>
+                <elementReference>Loop_Through_Leads.LastName</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>list_id</name>
+            <value>
+                <stringValue>8381</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>notes</name>
+            <value>
+                <elementReference>forNotesAsQuiz</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>phone_number</name>
+            <value>
+                <elementReference>Loop_Through_Leads.Phone</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>ConvosoFlowIntegration</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <apiVersion>64.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Check_Lead_Criteria_for_Convoso</name>
+        <label>Check Lead Criteria for Convoso</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Loop_Through_Leads</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Send_to_Convoso</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.LastActivityDate</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Send_to_Convoso1</targetReference>
+            </connector>
+            <label>Send to Convoso</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Main_Decision_Element</name>
+        <label>Main Decision Element</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Check_Day_Monday</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>CheckifWeekday</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Leads_for_Convoso</targetReference>
+            </connector>
+            <label>Check Day - Monday</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <formulas>
+        <name>CheckifWeekday</name>
+        <dataType>Boolean</dataType>
+        <expression>AND(
+    WEEKDAY(TODAY()) &gt;= 2,
+    WEEKDAY(TODAY()) &lt;= 6
+)</expression>
+    </formulas>
+    <formulas>
+        <name>forIsBusinessday</name>
+        <dataType>Boolean</dataType>
+        <expression>AND(
+    WEEKDAY(TODAY()) &gt;= 2,
+    WEEKDAY(TODAY()) &lt;= 6
+)</expression>
+    </formulas>
+    <formulas>
+        <name>forNotesAsQuiz</name>
+        <dataType>String</dataType>
+        <expression>&quot;Quiz Quote = &quot; &amp; TEXT({!Loop_Through_Leads.Quiz_Quote__c})</expression>
+    </formulas>
+    <formulas>
+        <name>IsMonday</name>
+        <dataType>Boolean</dataType>
+        <expression>WEEKDAY(TODAY()) = 2</expression>
+    </formulas>
+    <formulas>
+        <name>LeadQueryEndDate</name>
+        <dataType>DateTime</dataType>
+        <expression>DATETIMEVALUE(TEXT(TODAY()) + &apos; 21:00:00&apos;)</expression>
+    </formulas>
+    <formulas>
+        <name>LeadQueryStartDate</name>
+        <dataType>DateTime</dataType>
+        <expression>IF(
+    WEEKDAY(TODAY()) = 2,
+    DATETIMEVALUE(TEXT(TODAY() - 3) + &apos; 13:00:00&apos;),
+    DATETIMEVALUE(TEXT(TODAY() - 1) + &apos; 13:00:00&apos;)
+)</expression>
+    </formulas>
+    <interviewLabel>Inbound call leads {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Inbound call leads</label>
+    <loops>
+        <name>Loop_Through_Leads</name>
+        <label>Loop Through Leads</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <collectionReference>varLeadsForConvoso</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Check_Lead_Criteria_for_Convoso</targetReference>
+        </nextValueConnector>
+    </loops>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Leads_for_Convoso</name>
+        <label>Get Leads for Convoso</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Loop_Through_Leads</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>utm_source__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <filters>
+            <field>CreatedDate</field>
+            <operator>GreaterThanOrEqualTo</operator>
+            <value>
+                <elementReference>LeadQueryStartDate</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>CreatedDate</field>
+            <operator>LessThanOrEqualTo</operator>
+            <value>
+                <elementReference>LeadQueryEndDate</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>IsConverted</field>
+            <operator>EqualTo</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <object>Lead</object>
+        <outputReference>varLeadsForConvoso</outputReference>
+        <queriedFields>Id</queriedFields>
+        <queriedFields>Phone</queriedFields>
+        <queriedFields>FirstName</queriedFields>
+        <queriedFields>LastName</queriedFields>
+        <queriedFields>Email</queriedFields>
+        <queriedFields>Main_Source__c</queriedFields>
+        <queriedFields>Quiz_Quote__c</queriedFields>
+    </recordLookups>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Main_Decision_Element</targetReference>
+        </connector>
+        <filterLogic>1 AND (2 OR 3)</filterLogic>
+        <filters>
+            <field>Sales_Office__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Everyday Debt</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Pre_Deal_Status__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>NEW LEAD</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Pre_Deal_Status__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>ATTEMPTING</stringValue>
+            </value>
+        </filters>
+        <object>Lead</object>
+        <schedule>
+            <frequency>Daily</frequency>
+            <startDate>2025-06-18</startDate>
+            <startTime>09:15:00.000Z</startTime>
+        </schedule>
+        <triggerType>Scheduled</triggerType>
+    </start>
+    <status>Draft</status>
+    <variables>
+        <name>varLeadsForConvoso</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>true</isInput>
+        <isOutput>true</isOutput>
+        <objectType>Lead</objectType>
+    </variables>
+</Flow>

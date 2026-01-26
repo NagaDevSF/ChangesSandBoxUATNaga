@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>64.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Check_if_EDD_Records_Exist</name>
+        <label>Check if EDD Records Exist</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>No Records Found</defaultConnectorLabel>
+        <rules>
+            <name>Records_Found_EDD</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>colEDDRecords</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_EDD_Round_Robin_Records</targetReference>
+            </connector>
+            <label>Records Found</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Check_if_QRMCA_Records_Exist</name>
+        <label>Check if QRMCA Records Exist</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>No Records Found</defaultConnectorLabel>
+        <rules>
+            <name>Records_Found</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>colQRMCARecords</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Round_Robin_Records</targetReference>
+            </connector>
+            <label>Records Found</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Master_Switch</name>
+        <label>Master Switch</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Automation Disabled</defaultConnectorLabel>
+        <rules>
+            <name>Automation_Enabled</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Setup.Automation_Settings__c.Activate_Automations__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Route_by_Company</targetReference>
+            </connector>
+            <label>Automation Enabled</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Route_by_Company</name>
+        <label>Route by Company</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Unsupported Company</defaultConnectorLabel>
+        <rules>
+            <name>QRMCA_Path</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.CompanyName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Next Day Settlement</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_QRMCA_Records_for_Deactivated_User</targetReference>
+            </connector>
+            <label>Next Day Settlement</label>
+        </rules>
+        <rules>
+            <name>EDD_Path</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.CompanyName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Everyday Debt</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_EDD_Records_for_Deactivated_User</targetReference>
+            </connector>
+            <label>Everyday Debt</label>
+        </rules>
+    </decisions>
+    <description>When a User is deactivated (IsActive = false), this flow automatically removes them from all Round Robin groups by unchecking Add_In_Round_Robin__c on all related QRMCA_Round_Robin__c records.
+
+Uses scheduled path (0 hours) to separate User DML (setup object) from QRMCA_Round_Robin__c DML (non-setup object) to avoid MIXED_DML_OPERATION error.
+
+Business Impact: Critical - prevents deactivated users from receiving leads in round robin assignment.
+Owner: System Administrator
+Last Modified: 2025-11-24</description>
+    <environments>Default</environments>
+    <interviewLabel>User Deactivation Round Robin Update {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>User Deactivation Round Robin Update</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_EDD_Records_for_Deactivated_User</name>
+        <label>Get EDD Records for Deactivated User</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Check_if_EDD_Records_Exist</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>EDD_User__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Add_in_Roundrobin__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <object>EDD_Round_Robin__c</object>
+        <outputReference>colEDDRecords</outputReference>
+        <queriedFields>Id</queriedFields>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_QRMCA_Records_for_Deactivated_User</name>
+        <label>Get QRMCA Records for Deactivated User</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Check_if_QRMCA_Records_Exist</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>USER__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Add_In_Round_Robin__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <object>QRMCA_Round_Robin__c</object>
+        <outputReference>colQRMCARecords</outputReference>
+        <queriedFields>Id</queriedFields>
+    </recordLookups>
+    <recordUpdates>
+        <name>Update_EDD_Round_Robin_Records</name>
+        <label>Update EDD Round Robin Records</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>EDD_User__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Add_in_Roundrobin__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Add_in_Roundrobin__c</field>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputAssignments>
+        <object>EDD_Round_Robin__c</object>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Update_Round_Robin_Records</name>
+        <label>Update Round Robin Records</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>USER__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Add_In_Round_Robin__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Add_In_Round_Robin__c</field>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputAssignments>
+        <object>QRMCA_Round_Robin__c</object>
+    </recordUpdates>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>IsActive</field>
+            <operator>EqualTo</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <object>User</object>
+        <recordTriggerType>Update</recordTriggerType>
+        <scheduledPaths>
+            <name>Scheduled_Path_0_Hours</name>
+            <connector>
+                <targetReference>Master_Switch</targetReference>
+            </connector>
+            <label>Scheduled Path (1 MIN)</label>
+            <maxBatchSize>200</maxBatchSize>
+            <offsetNumber>1</offsetNumber>
+            <offsetUnit>Minutes</offsetUnit>
+            <timeSource>RecordTriggerEvent</timeSource>
+        </scheduledPaths>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <variables>
+        <name>colEDDRecords</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>EDD_Round_Robin__c</objectType>
+    </variables>
+    <variables>
+        <name>colQRMCARecords</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>QRMCA_Round_Robin__c</objectType>
+    </variables>
+</Flow>

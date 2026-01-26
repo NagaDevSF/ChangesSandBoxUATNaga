@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Plan Editor V2 - User Manual</title>
+    <style>
+        :root {
+            --primary: #5B5FCD;
+            --primary-light: #f3f2ff;
+            --success: #22c55e;
+            --success-light: #dcfce7;
+            --warning: #eab308;
+            --warning-light: #fef9c3;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --info: #3b82f6;
+            --info-light: #dbeafe;
+            --teal: #20c997;
+            --teal-light: #d1fae5;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--gray-800);
+            background: var(--gray-50);
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%, #4338ca 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .hero h1 { font-size: 2.5rem; margin-bottom: 10px; font-weight: 700; }
+        .hero .subtitle { font-size: 1.2rem; opacity: 0.9; margin-bottom: 20px; }
+        .version-tag { display: inline-block; background: rgba(255,255,255,0.2); padding: 6px 16px; border-radius: 20px; font-size: 0.9rem; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+
+        .toc {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .toc h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 10px;
+        }
+
+        .toc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 10px;
+        }
+
+        .toc-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: var(--gray-700);
+            transition: all 0.2s;
+        }
+
+        .toc-item:hover { background: var(--primary-light); color: var(--primary); }
+
+        .toc-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            font-size: 0.8rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section h2 .section-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            font-size: 1rem;
+        }
+
+        .section h3 {
+            font-size: 1.2rem;
+            color: var(--gray-700);
+            margin: 25px 0 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .section p { margin-bottom: 15px; color: var(--gray-600); }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .feature-box {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .feature-box.primary { border-left: 4px solid var(--primary); }
+        .feature-box.success { border-left: 4px solid var(--success); }
+        .feature-box.warning { border-left: 4px solid var(--warning); }
+        .feature-box.danger { border-left: 4px solid var(--danger); }
+        .feature-box.info { border-left: 4px solid var(--info); }
+        .feature-box.teal { border-left: 4px solid var(--teal); }
+
+        .feature-box h4 { font-size: 1rem; margin-bottom: 8px; color: var(--gray-800); }
+        .feature-box p { font-size: 0.9rem; margin: 0; }
+
+        .steps { counter-reset: step; margin: 20px 0; }
+
+        .step {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--gray-50);
+            border-radius: 8px;
+        }
+
+        .step::before {
+            counter-increment: step;
+            content: counter(step);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .step-content h4 { margin-bottom: 5px; color: var(--gray-800); }
+        .step-content p { margin: 0; font-size: 0.9rem; }
+
+        .info-box {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .info-box.tip { background: var(--success-light); border-left: 4px solid var(--success); }
+        .info-box.warning { background: var(--warning-light); border-left: 4px solid var(--warning); }
+        .info-box.danger { background: var(--danger-light); border-left: 4px solid var(--danger); }
+        .info-box.info { background: var(--info-light); border-left: 4px solid var(--info); }
+
+        .info-box .icon { font-size: 1.2rem; flex-shrink: 0; }
+        .info-box p { margin: 0; }
+
+        .mock-ui {
+            background: var(--gray-100);
+            border: 2px solid var(--gray-300);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.85rem;
+        }
+
+        .mock-header {
+            background: var(--gray-800);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 6px 6px 0 0;
+            margin: -20px -20px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mock-title { font-weight: 600; }
+        .mock-buttons { display: flex; gap: 8px; }
+
+        .mock-btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            border: none;
+            cursor: pointer;
+        }
+
+        .mock-btn.blue { background: var(--info); color: white; }
+        .mock-btn.green { background: var(--success); color: white; }
+        .mock-btn.yellow { background: var(--warning); color: var(--gray-800); }
+        .mock-btn.teal { background: var(--teal); color: white; }
+        .mock-btn.gray { background: var(--gray-400); color: white; }
+
+        .mock-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.8rem;
+        }
+
+        .mock-table th, .mock-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border: 1px solid var(--gray-300);
+        }
+
+        .mock-table th { background: var(--gray-200); font-weight: 600; }
+        .mock-table tr.row-scheduled { background: #e0f2fe; }
+        .mock-table tr.row-cleared { background: #dcfce7; }
+        .mock-table tr.row-nsf { background: #fee2e2; }
+        .mock-table tr.row-cancelled { background: #fef9c3; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-scheduled { background: #dbeafe; color: #1e40af; }
+        .status-cleared { background: #dcfce7; color: #166534; }
+        .status-nsf { background: #fee2e2; color: #991b1b; }
+        .status-cancelled { background: #fef9c3; color: #854d0e; }
+
+        .version-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .version-draft { background: #fef3c7; color: #92400e; }
+        .version-active { background: #d1fae5; color: #065f46; }
+        .version-archived { background: #e5e7eb; color: #374151; }
+
+        .comparison-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .comparison-table th, .comparison-table td { padding: 12px 16px; text-align: left; border: 1px solid var(--gray-200); }
+        .comparison-table th { background: var(--primary); color: white; }
+        .comparison-table tr:nth-child(even) { background: var(--gray-50); }
+
+        .code-block {
+            background: var(--gray-800);
+            color: #a5f3fc;
+            padding: 16px 20px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            margin: 15px 0;
+            white-space: pre;
+        }
+
+        .code-block .comment { color: #6b7280; }
+        .code-block .keyword { color: #c084fc; }
+        .code-block .string { color: #86efac; }
+        .code-block .number { color: #fbbf24; }
+
+        kbd {
+            display: inline-block;
+            padding: 3px 8px;
+            background: var(--gray-100);
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.8rem;
+            box-shadow: 0 2px 0 var(--gray-300);
+        }
+
+        .workflow-box {
+            background: linear-gradient(135deg, var(--primary-light) 0%, #e0e7ff 100%);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .workflow-box h4 { color: var(--primary); margin-bottom: 15px; }
+        .workflow-arrow { text-align: center; font-size: 1.5rem; color: var(--primary); margin: 10px 0; }
+
+        .selection-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 15px 0; }
+
+        .selection-card {
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .selection-card:hover { border-color: var(--gray-400); }
+        .selection-card.selected { border-color: var(--primary); background: var(--primary-light); }
+        .selection-card h5 { margin: 0 0 4px; color: var(--gray-800); }
+        .selection-card p { margin: 0; font-size: 0.85rem; color: var(--gray-500); }
+
+        .toggle-container {
+            display: flex;
+            background: var(--gray-200);
+            border-radius: 6px;
+            padding: 4px;
+            gap: 4px;
+            width: fit-content;
+            margin: 10px 0;
+        }
+
+        .toggle-btn {
+            padding: 8px 20px;
+            border: none;
+            background: transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--gray-600);
+        }
+
+        .toggle-btn.active { background: white; color: var(--gray-800); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+        .slider-demo { margin: 15px 0; }
+
+        .slider-track {
+            height: 6px;
+            background: linear-gradient(to right, #ef4444 0%, #eab308 50%, #22c55e 100%);
+            border-radius: 3px;
+            position: relative;
+            margin: 20px 0 10px;
+        }
+
+        .slider-thumb {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border: 3px solid white;
+            border-radius: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .slider-labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--gray-500); }
+
+        .fill-demo {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2px;
+            background: var(--gray-300);
+            padding: 2px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .fill-cell { background: white; padding: 10px; text-align: center; position: relative; }
+        .fill-cell.selected { background: var(--primary-light); outline: 2px solid var(--primary); }
+        .fill-cell.in-range { background: #c7d2fe; }
+        .fill-handle { position: absolute; right: -4px; bottom: -4px; width: 8px; height: 8px; background: var(--primary); cursor: crosshair; }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 1.8rem; }
+            .toc-grid { grid-template-columns: 1fr; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .selection-cards { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="hero">
+        <h1>Payment Plan Editor V2</h1>
+        <p class="subtitle">Comprehensive User Manual &amp; Technical Documentation</p>
+        <span class="version-tag">Version 2.0 | January 2026</span>
+    </header>
+
+    <div class="container">
+        <nav class="toc">
+            <h2>Table of Contents</h2>
+            <div class="toc-grid">
+                <a href="#overview" class="toc-item"><span class="toc-number">1</span> Overview</a>
+                <a href="#ui-layout" class="toc-item"><span class="toc-number">2</span> UI Layout</a>
+                <a href="#program-settings" class="toc-item"><span class="toc-number">3</span> Program Settings</a>
+                <a href="#program-type" class="toc-item"><span class="toc-number">4</span> Program Type Selection</a>
+                <a href="#calculate-by" class="toc-item"><span class="toc-number">5</span> Calculate By Mode</a>
+                <a href="#target-payment" class="toc-item"><span class="toc-number">6</span> Target Payment</a>
+                <a href="#number-of-weeks" class="toc-item"><span class="toc-number">7</span> Number of Weeks</a>
+                <a href="#setup-fee" class="toc-item"><span class="toc-number">8</span> Setup Fee Slider</a>
+                <a href="#no-fee-program" class="toc-item"><span class="toc-number">9</span> No-Fee Program</a>
+                <a href="#version-selector" class="toc-item"><span class="toc-number">10</span> Version Selector</a>
+                <a href="#data-table" class="toc-item"><span class="toc-number">11</span> Data Table</a>
+                <a href="#status-colors" class="toc-item"><span class="toc-number">12</span> Status Colors</a>
+                <a href="#edit-mode" class="toc-item"><span class="toc-number">13</span> Edit Mode (Manual)</a>
+                <a href="#fill-handle" class="toc-item"><span class="toc-number">14</span> Fill Handle</a>
+                <a href="#live-savings" class="toc-item"><span class="toc-number">15</span> Live Savings</a>
+                <a href="#recalculate" class="toc-item"><span class="toc-number">16</span> Recalculate</a>
+                <a href="#recalculate-remaining" class="toc-item"><span class="toc-number">17</span> Recalculate Remaining</a>
+                <a href="#save-activate" class="toc-item"><span class="toc-number">18</span> Save &amp; Activate</a>
+                <a href="#suspend" class="toc-item"><span class="toc-number">19</span> Suspend</a>
+                <a href="#wire-payments" class="toc-item"><span class="toc-number">20</span> Wire Payments</a>
+                <a href="#pagination" class="toc-item"><span class="toc-number">21</span> Pagination</a>
+                <a href="#workflows" class="toc-item"><span class="toc-number">22</span> Common Workflows</a>
+                <a href="#technical" class="toc-item"><span class="toc-number">23</span> Technical Implementation</a>
+                <a href="#apex-controller-v1" class="toc-item"><span class="toc-number">24</span> PaymentPlanEditorController.cls</a>
+                <a href="#apex-controller-v2" class="toc-item"><span class="toc-number">25</span> PaymentPlanEditorV2Controller.cls</a>
+                <a href="#apex-config-svc" class="toc-item"><span class="toc-number">26</span> PaymentCalcConfigSvc.cls</a>
+                <a href="#objects-fields" class="toc-item"><span class="toc-number">27</span> Objects &amp; Fields</a>
+                <a href="#rollup-fields" class="toc-item"><span class="toc-number">28</span> Rollup Summary Fields</a>
+                <a href="#formula-fields" class="toc-item"><span class="toc-number">29</span> Formula Fields</a>
+                <a href="#best-practices" class="toc-item"><span class="toc-number">30</span> Best Practices Compliance</a>
+                <a href="#payment-plan-viewer" class="toc-item"><span class="toc-number">31</span> Payment Plan Viewer</a>
+                <a href="#summary-stats" class="toc-item"><span class="toc-number">32</span> Summary Stats Component</a>
+                <a href="#recent-updates" class="toc-item"><span class="toc-number">33</span> Recent Updates (Jan 2026)</a>
+            </div>
+        </nav>
+
+        <!-- Section 1 -->
+        <section id="overview" class="section">
+            <h2><span class="section-number">1</span> Overview</h2>
+            <p>The Payment Plan Editor V2 is a comprehensive Lightning Web Component (LWC) for managing debt settlement payment plans in Salesforce.</p>
+            <div class="feature-grid">
+                <div class="feature-box primary"><h4>Program Configuration</h4><p>Configure program type, calculate by mode, target payment, and setup fee</p></div>
+                <div class="feature-box success"><h4>Payment Schedule</h4><p>View and edit detailed payment schedules with status tracking</p></div>
+                <div class="feature-box info"><h4>Version Management</h4><p>Create, activate, and archive payment plan versions</p></div>
+                <div class="feature-box warning"><h4>Wire Payments</h4><p>Track wire payments linked to schedule items</p></div>
+            </div>
+            <div class="info-box tip">
+                <span class="icon">&#9989;</span>
+                <p><strong>Two Components:</strong> <code>paymentPlanEditorV2</code> (program settings) and <code>paymentPlanEditor</code> (data table).</p>
+            </div>
+        </section>
+
+        <!-- Section 2 -->
+        <section id="ui-layout" class="section">
+            <h2><span class="section-number">2</span> UI Layout</h2>
+
+            <!-- Section 1: Summary Stats -->
+            <h3>Section 1: Summary Stats (c-summary-stats)</h3>
+            <div style="background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                <!-- Row 1: 4 cards -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #38b2ac 100%); color: white; padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 10px; text-transform: uppercase; opacity: 0.9; margin-bottom: 6px;">Total Enrolled Debt</div>
+                        <div style="font-size: 20px; font-weight: 700;">$45,000.00</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #38b2ac 0%, #10b981 100%); color: white; padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 10px; text-transform: uppercase; opacity: 0.9; margin-bottom: 6px;">New Weekly Payment</div>
+                        <div style="font-size: 20px; font-weight: 700;">$347.55</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #0ea5e9 0%, #38b2ac 100%); color: white; padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 10px; text-transform: uppercase; opacity: 0.9; margin-bottom: 6px;">Current Weekly Payment</div>
+                        <div style="font-size: 20px; font-weight: 700;">$632.00</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); color: white; padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 10px; text-transform: uppercase; opacity: 0.9; margin-bottom: 6px;">First Draft</div>
+                        <div style="font-size: 20px; font-weight: 700;">Jan 27, 2025</div>
+                    </div>
+                </div>
+                <!-- Row 2: 3 cards -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                    <div style="background: linear-gradient(135deg, #14b8a6 0%, #0ea5e9 100%); color: white; padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 10px; text-transform: uppercase; opacity: 0.9; margin-bottom: 6px;">Weekly Savings</div>
+                        <div style="font-size: 20px; font-weight: 700;">$284.45</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #0284c7 0%, #0d9488 100%); color: white; padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 10px; text-transform: uppercase; opacity: 0.9; margin-bottom: 6px;">Percent Savings</div>
+                        <div style="font-size: 20px; font-weight: 700;">45.0%</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%); color: white; padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 10px; text-transform: uppercase; opacity: 0.9; margin-bottom: 6px;">Duration</div>
+                        <div style="font-size: 20px; font-weight: 700;">104 weeks</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Program Settings -->
+            <h3>Section 2: Program Settings (paymentPlanEditorV2)</h3>
+            <div style="background: white; border: 1px solid #dddbda; border-radius: 8px; padding: 16px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);">
+                <!-- Header -->
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #5B5FCD; color: white; border-radius: 50%; font-size: 14px; font-weight: 600;">1</span>
+                    <h4 style="font-size: 18px; font-weight: 600; color: #16325c; margin: 0;">Program Settings</h4>
+                </div>
+
+                <!-- Program Type -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 13px; font-weight: 500; color: #3e3e3c; margin-bottom: 10px;">Program Type</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                        <div style="border: 2px solid #5B5FCD; border-radius: 8px; padding: 14px; background: #f3f2ff; cursor: pointer;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div><div style="font-size: 14px; font-weight: 600; color: #16325c;">DCG Mod</div><div style="font-size: 12px; color: #706e6b;">Modification program</div></div>
+                                <div style="width: 20px; height: 20px; border-radius: 50%; background: #5B5FCD; display: flex; align-items: center; justify-content: center;"><div style="width: 8px; height: 8px; background: white; border-radius: 50%;"></div></div>
+                            </div>
+                        </div>
+                        <div style="border: 2px solid #e5e5e5; border-radius: 8px; padding: 14px; background: white; cursor: pointer;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div><div style="font-size: 14px; font-weight: 600; color: #16325c;">DCG Debt</div><div style="font-size: 12px; color: #706e6b;">Debt settlement</div></div>
+                                <div style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid #c9c9c9;"></div>
+                            </div>
+                        </div>
+                        <div style="border: 2px solid #e5e5e5; border-radius: 8px; padding: 14px; background: white; cursor: pointer;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div><div style="font-size: 14px; font-weight: 600; color: #16325c;">DCG MOD CA</div><div style="font-size: 12px; color: #706e6b;">California variant</div></div>
+                                <div style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid #c9c9c9;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- No-Fee Program Toggle -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-top: 1px solid #e5e5e5; margin-bottom: 16px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px; font-weight: 500; color: #3e3e3c;">No-Fee Program</span>
+                        <span style="font-size: 11px; color: #706e6b;">(Special plan - program fee still applies)</span>
+                    </div>
+                    <div style="width: 48px; height: 24px; background: #c9c9c9; border-radius: 12px; position: relative;"><div style="width: 20px; height: 20px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div></div>
+                </div>
+
+                <!-- Calculate By -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 13px; font-weight: 500; color: #3e3e3c; margin-bottom: 10px;">Calculate By</label>
+                    <div style="display: flex; background: #f3f2f2; border-radius: 6px; padding: 4px; gap: 4px; width: fit-content;">
+                        <button style="padding: 8px 16px; border: none; background: white; border-radius: 4px; font-size: 13px; color: #16325c; font-weight: 500; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">% of Current</button>
+                        <button style="padding: 8px 16px; border: none; background: transparent; border-radius: 4px; font-size: 13px; color: #706e6b; font-weight: 500;">Desired Payment</button>
+                    </div>
+                </div>
+
+                <!-- Target Payment Slider -->
+                <div style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <label style="font-size: 13px; font-weight: 500; color: #3e3e3c;">Target Payment</label>
+                        <span style="font-size: 13px; font-weight: 600; color: #5B5FCD;">55.0% → $347.55/week</span>
+                    </div>
+                    <div style="height: 6px; background: linear-gradient(to right, #ef4444 0%, #eab308 50%, #22c55e 100%); border-radius: 3px; position: relative; margin-bottom: 8px;">
+                        <div style="position: absolute; width: 20px; height: 20px; background: #5B5FCD; border: 3px solid white; border-radius: 50%; top: -7px; left: 37.5%; box-shadow: 0 2px 6px rgba(0,0,0,0.2);"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #706e6b;"><span>40%</span><span>50%</span><span>60%</span><span>70%</span><span>80%</span></div>
+                </div>
+
+                <!-- Setup Fee Slider -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 13px; font-weight: 500; color: #3e3e3c; margin-bottom: 10px;">Setup Fee Payment Plan</label>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-size: 13px; font-weight: 600; color: #16325c;">10 payments</span>
+                        <span style="font-size: 13px; color: #706e6b;">$100.00/payment</span>
+                    </div>
+                    <div style="height: 6px; background: #e5e5e5; border-radius: 3px; position: relative; margin-bottom: 8px;">
+                        <div style="position: absolute; width: 20px; height: 20px; background: #5B5FCD; border: 3px solid white; border-radius: 50%; top: -7px; right: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.2);"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #706e6b;"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span></div>
+                </div>
+
+                <!-- Payment Schedule Settings -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 13px; font-weight: 500; color: #3e3e3c; margin-bottom: 10px;">Payment Schedule</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div>
+                            <label style="font-size: 12px; color: #706e6b; display: block; margin-bottom: 4px;">First Draft Date</label>
+                            <input type="text" value="2025-01-27" style="width: 100%; padding: 8px 12px; border: 1px solid #dddbda; border-radius: 4px; font-size: 13px;" readonly>
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: #706e6b; display: block; margin-bottom: 4px;">Preferred Day of Week</label>
+                            <select style="width: 100%; padding: 8px 12px; border: 1px solid #dddbda; border-radius: 4px; font-size: 13px;"><option>Monday</option></select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e5e5e5;">
+                    <button style="background: #0176d3; color: white; border: none; padding: 10px 24px; border-radius: 4px; font-size: 13px; font-weight: 500; cursor: pointer;">
+                        <span style="margin-right: 6px;">💾</span> Save to Opportunity
+                    </button>
+                </div>
+            </div>
+
+            <!-- Section 3: Payment Plan Editor -->
+            <h3>Section 3: Payment Plan Editor (c-payment-plan-editor)</h3>
+            <div style="background: white; border: 1px solid #cbd5e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);">
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%); color: white; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                        <span>View Plan - </span>
+                        <span style="font-weight: 700;">PP-00052</span>
+                        <span style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 4px; font-size: 11px;">v3 - Active</span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button style="background: transparent; border: none; color: white; font-size: 16px; cursor: pointer; padding: 4px 8px;">↻</button>
+                        <button style="background: transparent; border: none; color: white; font-size: 16px; cursor: pointer; padding: 4px 8px;">⬜</button>
+                    </div>
+                </div>
+
+                <!-- Version Selector -->
+                <div style="background: #f7fafc; padding: 10px 16px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 12px;">
+                    <select style="padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 4px; min-width: 250px; font-size: 13px;">
+                        <option>PP-00052 v3 (Active)</option>
+                        <option>PP-00052 v2 (Archived)</option>
+                        <option>PP-00052 v1 (Archived)</option>
+                    </select>
+                    <span style="background: #e2e8f0; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; color: #4a5568;">3 version(s)</span>
+                </div>
+
+                <!-- Tab Bar -->
+                <div style="background: #f7fafc; padding: 0 8px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center;">
+                    <button style="padding: 10px 20px; background: white; border: none; border-bottom: 2px solid #3182ce; font-size: 13px; font-weight: 500; color: #3182ce;">Active <span style="font-size: 11px; opacity: 0.8;">(118)</span></button>
+                    <div style="margin-left: auto; padding: 4px 10px; font-size: 11px; color: #4a5568; background: #e2e8f0; border-radius: 4px; display: flex; align-items: center; gap: 4px;"><span>EPPS</span><span style="font-size: 10px;">ⓘ</span></div>
+                </div>
+
+                <!-- Data Table (Scrollable) -->
+                <div style="max-height: 250px; overflow-y: auto; background: linear-gradient(180deg, #f7fafc 0%, #edf2f7 100%);">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                        <thead>
+                            <tr style="background: linear-gradient(135deg, #1a365d 0%, #2c5282 50%, #2b6cb0 100%); color: white;">
+                                <th style="padding: 12px 8px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; border-bottom: 3px solid #63b3ed;">#</th>
+                                <th style="padding: 12px 8px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; border-bottom: 3px solid #63b3ed;">Draft #</th>
+                                <th style="padding: 12px 8px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; border-bottom: 3px solid #63b3ed;">Date</th>
+                                <th style="padding: 12px 8px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; border-bottom: 3px solid #63b3ed; text-align: right;">Draft</th>
+                                <th style="padding: 12px 8px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; border-bottom: 3px solid #63b3ed; text-align: right;">Setup</th>
+                                <th style="padding: 12px 8px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; border-bottom: 3px solid #63b3ed; text-align: right;">Program</th>
+                                <th style="padding: 12px 8px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; border-bottom: 3px solid #63b3ed; text-align: right;">Banking</th>
+                                <th style="padding: 12px 8px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; border-bottom: 3px solid #63b3ed; text-align: right;">Savings</th>
+                                <th style="padding: 12px 8px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; border-bottom: 3px solid #63b3ed;">Status</th>
+                                <th style="padding: 12px 8px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; border-bottom: 3px solid #63b3ed;">Wire</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="background: linear-gradient(180deg, #c6f6d5 0%, #9ae6b4 100%); border-left: 4px solid #38a169;">
+                                <td style="padding: 10px 8px; text-align: center;">1 ★</td>
+                                <td style="padding: 10px 8px; text-align: center; color: #2b6cb0; font-weight: 600;">1</td>
+                                <td style="padding: 10px 8px; text-align: center;">01/06/2025</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$450.00</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$100.00</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$87.50</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$35.00</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700; color: #38a169;">$227.50</td>
+                                <td style="padding: 10px 8px; text-align: center;"><span style="background: #c6f6d5; color: #276749; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;">CLEARED</span></td>
+                                <td style="padding: 10px 8px; text-align: center;"><button style="background: #48bb78; border: none; padding: 3px 6px; border-radius: 3px; color: white; cursor: pointer;">+</button></td>
+                            </tr>
+                            <tr style="background: linear-gradient(180deg, #c6f6d5 0%, #9ae6b4 100%); border-left: 4px solid #38a169;">
+                                <td style="padding: 10px 8px; text-align: center;">2</td>
+                                <td style="padding: 10px 8px; text-align: center; color: #2b6cb0; font-weight: 600;">2</td>
+                                <td style="padding: 10px 8px; text-align: center;">01/13/2025</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$450.00</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$100.00</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$87.50</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$35.00</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700; color: #38a169;">$227.50</td>
+                                <td style="padding: 10px 8px; text-align: center;"><span style="background: #c6f6d5; color: #276749; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;">CLEARED</span></td>
+                                <td style="padding: 10px 8px; text-align: center;"><button style="background: #48bb78; border: none; padding: 3px 6px; border-radius: 3px; color: white; cursor: pointer;">+</button></td>
+                            </tr>
+                            <tr style="background: linear-gradient(180deg, #fed7d7 0%, #feb2b2 100%); border-left: 4px solid #e53e3e;">
+                                <td style="padding: 10px 8px; text-align: center;">3</td>
+                                <td style="padding: 10px 8px; text-align: center; color: #706e6b;">-</td>
+                                <td style="padding: 10px 8px; text-align: center;">01/20/2025</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$450.00</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$100.00</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$87.50</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$35.00</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700; color: #e53e3e;">$0.00</td>
+                                <td style="padding: 10px 8px; text-align: center;"><span style="background: #fed7d7; color: #c53030; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;">NSF</span></td>
+                                <td style="padding: 10px 8px; text-align: center;"><button style="background: #48bb78; border: none; padding: 3px 6px; border-radius: 3px; color: white; cursor: pointer;">+</button></td>
+                            </tr>
+                            <tr style="background: linear-gradient(180deg, #bee3f8 0%, #90cdf4 100%); border-left: 4px solid #3182ce;">
+                                <td style="padding: 10px 8px; text-align: center;">4</td>
+                                <td style="padding: 10px 8px; text-align: center; color: #2b6cb0; font-weight: 600;">3</td>
+                                <td style="padding: 10px 8px; text-align: center;">01/27/2025</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$347.55</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$100.00</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$87.50</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$35.00</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700; color: #38a169;">$125.05</td>
+                                <td style="padding: 10px 8px; text-align: center;"><span style="background: #bee3f8; color: #2b6cb0; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;">SCHEDULED</span></td>
+                                <td style="padding: 10px 8px; text-align: center;"><button style="background: #48bb78; border: none; padding: 3px 6px; border-radius: 3px; color: white; cursor: pointer;">+</button></td>
+                            </tr>
+                            <tr style="background: linear-gradient(180deg, #fefcbf 0%, #faf089 100%); border-left: 4px solid #d69e2e;">
+                                <td style="padding: 10px 8px; text-align: center;">5</td>
+                                <td style="padding: 10px 8px; text-align: center; color: #706e6b;">-</td>
+                                <td style="padding: 10px 8px; text-align: center;">02/03/2025</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$347.55</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$100.00</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$87.50</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700;">$35.00</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700; color: #706e6b;">$0.00</td>
+                                <td style="padding: 10px 8px; text-align: center;"><span style="background: #fefcbf; color: #975a16; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; text-decoration: line-through;">CANCELLED</span></td>
+                                <td style="padding: 10px 8px; text-align: center;"><button style="background: #48bb78; border: none; padding: 3px 6px; border-radius: 3px; color: white; cursor: pointer;">+</button></td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: linear-gradient(135deg, #1a365d 0%, #2c5282 50%, #2b6cb0 100%); color: white; border-top: 3px solid #63b3ed;">
+                                <td colspan="3" style="padding: 12px 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Total</td>
+                                <td style="padding: 12px 8px; text-align: right; font-family: monospace; font-weight: 700; color: #90cdf4;">$2,045.10</td>
+                                <td style="padding: 12px 8px; text-align: right; font-family: monospace; font-weight: 700; color: #90cdf4;">$500.00</td>
+                                <td style="padding: 12px 8px; text-align: right; font-family: monospace; font-weight: 700; color: #90cdf4;">$437.50</td>
+                                <td style="padding: 12px 8px; text-align: right; font-family: monospace; font-weight: 700; color: #90cdf4;">$175.00</td>
+                                <td style="padding: 12px 8px; text-align: right; font-family: monospace; font-weight: 700; color: #90cdf4;">$580.05</td>
+                                <td colspan="2" style="padding: 12px 8px;"></td>
+                            </tr>
+                            <tr style="background: linear-gradient(135deg, #1a4731 0%, #276749 50%, #2f855a 100%); color: white; border-top: 2px solid #68d391;">
+                                <td colspan="3" style="padding: 10px 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Cleared</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700; color: #9ae6b4;">$900.00</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700; color: #9ae6b4;">$200.00</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700; color: #9ae6b4;">$175.00</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700; color: #9ae6b4;">$70.00</td>
+                                <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-weight: 700; color: #9ae6b4;">$455.00</td>
+                                <td colspan="2" style="padding: 10px 8px;"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Footer Buttons -->
+                <div style="background: #f7fafc; padding: 12px 16px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between;">
+                    <div style="display: flex; gap: 8px;">
+                        <button style="padding: 8px 16px; border: none; border-radius: 4px; font-weight: 500; font-size: 13px; background: #3182ce; color: white; cursor: pointer;">Recalculate</button>
+                        <button style="padding: 8px 16px; border: none; border-radius: 4px; font-weight: 500; font-size: 13px; background: #20c997; color: white; cursor: pointer;">Recalculate Remaining</button>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button style="padding: 8px 16px; border: none; border-radius: 4px; font-weight: 500; font-size: 13px; background: #48bb78; color: white; cursor: pointer;">Activate</button>
+                        <button style="padding: 8px 16px; border: none; border-radius: 4px; font-weight: 500; font-size: 13px; background: #3182ce; color: white; cursor: pointer;">Manual</button>
+                        <button style="padding: 8px 16px; border: none; border-radius: 4px; font-weight: 500; font-size: 13px; background: #ecc94b; color: #1a202c; cursor: pointer;">Suspend</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3 -->
+        <section id="program-settings" class="section">
+            <h2><span class="section-number">3</span> Program Settings</h2>
+            <div class="mock-ui">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;"><span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--primary); color: white; border-radius: 50%; font-weight: 600;">1</span><strong style="font-size: 1.1rem;">Program Settings</strong></div>
+                <div style="margin-bottom: 20px;">
+                    <label style="font-size: 0.85rem; color: var(--gray-600); display: block; margin-bottom: 8px;">Program Type</label>
+                    <div class="selection-cards" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="selection-card selected"><h5>DCG Mod</h5><p>Modification (50/50, min 40%)</p></div>
+                        <div class="selection-card"><h5>DCG Debt</h5><p>Settlement (70/30, min 15%)</p></div>
+                        <div class="selection-card"><h5>DCG MOD CA</h5><p>California (50/50, No-Fee)</p></div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="font-size: 0.85rem; color: var(--gray-600); display: block; margin-bottom: 8px;">Calculate By</label>
+                    <div class="toggle-container"><button class="toggle-btn active">% of Current</button><button class="toggle-btn">Desired Payment</button></div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span style="font-size: 0.85rem; color: var(--gray-600);">Target Payment</span><span style="font-size: 0.85rem; font-weight: 600; color: var(--primary);">55.0% &rarr; $347.55/week</span></div>
+                    <div class="slider-demo"><div class="slider-track"><div class="slider-thumb" style="left: 37.5%;"></div></div><div class="slider-labels"><span>40%</span><span>50%</span><span>60%</span><span>70%</span><span>80%</span></div></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4 -->
+        <section id="program-type" class="section">
+            <h2><span class="section-number">4</span> Program Type Selection</h2>
+            <table class="comparison-table">
+                <thead><tr><th>Feature</th><th>DCG Mod</th><th>DCG Debt</th><th>DCG MOD CA</th></tr></thead>
+                <tbody>
+                    <tr><td>Program Split Ratio</td><td>50% Program / 50% Escrow</td><td>70% Program / 30% Escrow</td><td>50% Program / 50% Escrow</td></tr>
+                    <tr><td>Minimum Target %</td><td>40% of Current Payment</td><td>15% of Current Payment</td><td>40% of Current Payment</td></tr>
+                    <tr><td>No-Fee Program</td><td>&#10003; Available (toggle)</td><td>&#10007; Not Available</td><td>&#10003; Always Enabled</td></tr>
+                    <tr><td>Use Case</td><td>Standard modification</td><td>Debt settlement</td><td>California clients</td></tr>
+                </tbody>
+            </table>
+            <div class="info-box warning"><span class="icon">&#9888;</span><p><strong>Important:</strong> Switching to DCG Debt automatically disables No-Fee Program. DCG MOD CA automatically enables No-Fee Program.</p></div>
+            <div class="info-box info"><span class="icon">&#8505;</span><p><strong>California Auto-Detection:</strong> When Account BillingState = "CA", the system automatically enables No-Fee Program behavior.</p></div>
+        </section>
+
+        <!-- Section 5 -->
+        <section id="calculate-by" class="section">
+            <h2><span class="section-number">5</span> Calculate By Mode</h2>
+            <div class="feature-grid">
+                <div class="feature-box primary"><h4>% of Current Mode</h4><p>Use a slider (40-80%) to set target payment as a percentage of current payment.</p></div>
+                <div class="feature-box info"><h4>Desired Payment Mode</h4><p>Enter a specific dollar amount. Adjust Number of Weeks to recalculate payment.</p></div>
+            </div>
+            <h3>Desired Payment Mode Interface</h3>
+            <div class="mock-ui">
+                <div style="margin-bottom: 15px;"><label style="display: block; margin-bottom: 5px; font-size: 0.85rem;">Desired Weekly Payment</label><input type="text" value="$350.00" style="padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 4px; width: 150px;" readonly><div style="margin-top: 5px; font-size: 0.8rem; color: var(--gray-500);">Min $200.00 | Max $504.00</div></div>
+                <div><label style="display: block; margin-bottom: 5px; font-size: 0.85rem;">Number of Weeks</label><div style="display: flex; align-items: center; gap: 8px;"><button style="padding: 6px 10px; border: 1px solid var(--gray-300); border-radius: 4px; background: white;">&darr;</button><input type="text" value="104" style="padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 4px; width: 80px; text-align: center;" readonly><button style="padding: 6px 10px; border: 1px solid var(--gray-300); border-radius: 4px; background: white;">&uarr;</button><span style="font-size: 0.9rem;">weeks</span></div><div style="margin-top: 5px; font-size: 0.8rem; color: var(--gray-500);">Min 65 weeks | Max 195 weeks</div></div>
+            </div>
+        </section>
+
+        <!-- Section 6 -->
+        <section id="target-payment" class="section">
+            <h2><span class="section-number">6</span> Target Payment</h2>
+            <table class="comparison-table">
+                <thead><tr><th>Program Type</th><th>Min %</th><th>Max %</th></tr></thead>
+                <tbody><tr><td>DCG Mod</td><td>40%</td><td>80%</td></tr><tr><td>DCG Debt</td><td>15%</td><td>80%</td></tr></tbody>
+            </table>
+            <div class="info-box info"><span class="icon">&#8505;</span><p><strong>Auto-Sync:</strong> Slider adjustments automatically calculate the dollar amount: <code>Weekly = Current Payment × (% / 100)</code></p></div>
+        </section>
+
+        <!-- Section 7 -->
+        <section id="number-of-weeks" class="section">
+            <h2><span class="section-number">7</span> Number of Weeks</h2>
+            <p>In Desired Payment mode, adjust program length directly. The weekly payment recalculates automatically.</p>
+
+            <h3>Dynamic Min/Max Weeks</h3>
+            <p>The minimum and maximum weeks are dynamically calculated based on the target payment percentage range:</p>
+            <div class="code-block"><span class="comment">// Min Weeks = from 80% of current payment (max payment = fewer weeks)</span>
+minProgramWeeks = MAX(absoluteMinWeeks, calculateWeeksFromPercent(80%))
+
+<span class="comment">// Max Weeks = from 40% of current payment (min payment = more weeks)</span>
+maxProgramWeeks = MIN(absoluteMaxWeeks, calculateWeeksFromPercent(40%))</div>
+
+            <h3>Weeks-to-Payment Formula</h3>
+            <div class="code-block"><span class="comment">// When user changes Number of Weeks:</span>
+totalProgramCost = settlementAmount + programFee
+netPerWeek = totalProgramCost / numberOfWeeks  <span class="comment">// Exact division</span>
+weeklyPayment = ROUND(netPerWeek + bankingFee, 2)</div>
+
+            <h3>Payment-to-Weeks Formula</h3>
+            <div class="code-block"><span class="comment">// When user changes Desired Payment:</span>
+netPerWeek = weeklyPayment - bankingFee
+numberOfWeeks = CEIL(totalProgramCost / netPerWeek)  <span class="comment">// Uses CEIL like Apex</span></div>
+
+            <div class="info-box tip"><span class="icon">&#9989;</span><p><strong>Two-Way Sync:</strong> Changing payment recalculates weeks (CEIL). Changing weeks recalculates payment (exact division). The component tracks which field the user is editing to prevent infinite loops.</p></div>
+            <div class="info-box info"><span class="icon">&#8505;</span><p><strong>Input Controls:</strong> The Number of Weeks field includes increment/decrement buttons for quick adjustments.</p></div>
+        </section>
+
+        <!-- Section 8 -->
+        <section id="setup-fee" class="section">
+            <h2><span class="section-number">8</span> Setup Fee Slider</h2>
+            <div class="mock-ui">
+                <label style="display: block; margin-bottom: 10px; font-size: 0.85rem; color: var(--gray-600);">Setup Fee Payment Plan</label>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;"><span style="font-weight: 600;">10 payments</span><span style="color: var(--gray-500);">$100.00/payment</span></div>
+                <div style="height: 6px; background: var(--gray-200); border-radius: 3px; position: relative; margin-bottom: 10px;"><div style="position: absolute; width: 20px; height: 20px; background: var(--primary); border: 3px solid white; border-radius: 50%; top: -7px; left: 90%; box-shadow: 0 2px 6px rgba(0,0,0,0.2);"></div></div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--gray-500);"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span></div>
+            </div>
+        </section>
+
+        <!-- Section 9 -->
+        <section id="no-fee-program" class="section">
+            <h2><span class="section-number">9</span> No-Fee Program</h2>
+            <div class="feature-grid">
+                <div class="feature-box success"><h4>When Enabled</h4><p>Program Fee = 0% | Setup Fee from Opportunity | 100% goes to escrow</p></div>
+                <div class="feature-box info"><h4>California Auto-Enable</h4><p>Automatically enabled when Account BillingState = "CA"</p></div>
+                <div class="feature-box primary"><h4>DCG MOD CA</h4><p>Selecting DCG MOD CA automatically enables No-Fee Program</p></div>
+            </div>
+            <div class="info-box warning"><span class="icon">&#9888;</span><p><strong>DCG Mod Only:</strong> No-Fee Program toggle only appears for DCG Mod program type. For DCG MOD CA, it is implicitly enabled.</p></div>
+            <div class="info-box info"><span class="icon">&#8505;</span><p><strong>Setup Fee Source:</strong> Setup Fee is now read from the <code>Opportunity.Setup_Fee__c</code> field, not changed by program type selection.</p></div>
+        </section>
+
+        <!-- Section 10 -->
+        <section id="version-selector" class="section">
+            <h2><span class="section-number">10</span> Version Selector</h2>
+            <div class="mock-ui">
+                <div style="display: flex; align-items: center; gap: 15px;"><select style="padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 4px; min-width: 250px;"><option>PP-00052 v3 (Active)</option><option>PP-00052 v2 (Archived)</option><option>PP-00052 v1 (Archived)</option></select><span class="version-badge version-active">3 version(s)</span></div>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-box warning"><h4><span class="version-badge version-draft">Draft</span></h4><p>Newly created or edited. Can be activated.</p></div>
+                <div class="feature-box success"><h4><span class="version-badge version-active">Active</span></h4><p>Current live version for payment processing.</p></div>
+                <div class="feature-box"><h4><span class="version-badge version-archived">Archived</span></h4><p>Previous versions for historical reference.</p></div>
+            </div>
+        </section>
+
+        <!-- Section 11 -->
+        <section id="data-table" class="section">
+            <h2><span class="section-number">11</span> Data Table</h2>
+            <div class="mock-ui">
+                <table class="mock-table">
+                    <thead><tr><th>#</th><th>Draft #</th><th>Date</th><th>Draft</th><th>Setup</th><th>Program</th><th>Banking</th><th>Savings</th><th>Status</th><th>Wire</th></tr></thead>
+                    <tbody>
+                        <tr class="row-cleared"><td>1 &#9733;</td><td>1</td><td>01/06/2025</td><td>$450.00</td><td>$100.00</td><td>$87.50</td><td>$35.00</td><td style="color: var(--success);">$227.50</td><td><span class="status-badge status-cleared">Cleared</span></td><td>+</td></tr>
+                        <tr class="row-cleared"><td>2</td><td>2</td><td>01/13/2025</td><td>$450.00</td><td>$100.00</td><td>$87.50</td><td>$35.00</td><td style="color: var(--success);">$227.50</td><td><span class="status-badge status-cleared">Cleared</span></td><td>+</td></tr>
+                        <tr class="row-cleared"><td>3</td><td>3</td><td>01/20/2025</td><td>$450.00</td><td>$100.00</td><td>$87.50</td><td>$35.00</td><td style="color: var(--success);">$227.50</td><td><span class="status-badge status-cleared">Cleared</span></td><td>+</td></tr>
+                        <tr class="row-nsf"><td>4</td><td>-</td><td>01/27/2025</td><td>$450.00</td><td>$100.00</td><td>$87.50</td><td>$35.00</td><td style="color: var(--danger);">$0.00</td><td><span class="status-badge status-nsf">NSF</span></td><td>+</td></tr>
+                        <tr class="row-scheduled"><td>5</td><td>4</td><td>02/03/2025</td><td>$350.00</td><td>$100.00</td><td>$87.50</td><td>$35.00</td><td style="color: var(--success);">$127.50</td><td><span class="status-badge status-scheduled">Scheduled</span></td><td>+</td></tr>
+                        <tr class="row-scheduled"><td>6</td><td>5</td><td>02/10/2025</td><td>$350.00</td><td>$100.00</td><td>$87.50</td><td>$35.00</td><td style="color: var(--success);">$127.50</td><td><span class="status-badge status-scheduled">Scheduled</span></td><td>+</td></tr>
+                    </tbody>
+                    <tfoot><tr style="background: var(--gray-100); font-weight: 600;"><td colspan="3">Total</td><td>$2,500.00</td><td>$600.00</td><td>$525.00</td><td>$210.00</td><td>$937.50</td><td colspan="2"></td></tr></tfoot>
+                </table>
+            </div>
+            <div class="info-box info"><span class="icon">&#8505;</span><p><strong>Star Indicator:</strong> The &#9733; next to row numbers indicates items modified from the previous version.</p></div>
+        </section>
+
+        <!-- Section 12 -->
+        <section id="status-colors" class="section">
+            <h2><span class="section-number">12</span> Status Colors</h2>
+            <div class="feature-grid">
+                <div class="feature-box info"><h4><span class="status-badge status-scheduled">Scheduled</span></h4><p>Blue row. Future payment, can be edited. Draft # is assigned.</p></div>
+                <div class="feature-box success"><h4><span class="status-badge status-cleared">Cleared</span></h4><p>Green row. Payment successful. Row is locked (read-only).</p></div>
+                <div class="feature-box danger"><h4><span class="status-badge status-nsf">NSF</span></h4><p>Red row. Non-Sufficient Funds. Draft # shows "-". Locked.</p></div>
+                <div class="feature-box warning"><h4><span class="status-badge status-cancelled">Cancelled</span></h4><p>Yellow row. Payment cancelled. Draft # shows "-". Locked.</p></div>
+            </div>
+            <div class="info-box info"><span class="icon">&#8505;</span><p><strong>Editable Rule:</strong> Only <code>Scheduled</code> status rows can be edited. Others show a lock icon.</p></div>
+        </section>
+
+        <!-- Section 13 -->
+        <section id="edit-mode" class="section">
+            <h2><span class="section-number">13</span> Edit Mode (Manual Button)</h2>
+            <div class="steps">
+                <div class="step"><div class="step-content"><h4>Click "Manual" Button</h4><p>Located in footer. Creates a copy for editing in the Pending tab.</p></div></div>
+                <div class="step"><div class="step-content"><h4>Edit Scheduled Rows</h4><p>Modify Date, Draft, Setup, Program, Banking, or Status. Cleared/NSF/Cancelled rows remain locked.</p></div></div>
+                <div class="step"><div class="step-content"><h4>Add or Delete Rows</h4><p>Use "+ Add Draft Payment" to add. Use X button to mark for deletion.</p></div></div>
+                <div class="step"><div class="step-content"><h4>Save as New Version</h4><p>Creates a Draft version with your changes.</p></div></div>
+            </div>
+            <div class="mock-ui">
+                <div class="mock-header"><span class="mock-title">Edit Plan - PP-00052 <span class="version-badge version-draft" style="margin-left: 10px;">v4 - Draft</span></span></div>
+                <div class="mock-buttons" style="margin-top: 15px;"><button class="mock-btn blue">Recalculate</button><button class="mock-btn teal">Recalculate Remaining</button><button class="mock-btn gray">Cancel</button><button class="mock-btn blue">Save as New Version</button></div>
+            </div>
+        </section>
+
+        <!-- Section 14 -->
+        <section id="fill-handle" class="section">
+            <h2><span class="section-number">14</span> Fill Handle</h2>
+            <p>Excel-like fill handle for copying values to multiple cells.</p>
+            <div class="steps">
+                <div class="step"><div class="step-content"><h4>Click a Cell</h4><p>Click any editable cell to select it. Blue border appears.</p></div></div>
+                <div class="step"><div class="step-content"><h4>Drag the Fill Handle</h4><p>Click and drag the small square in the bottom-right corner.</p></div></div>
+                <div class="step"><div class="step-content"><h4>Release to Fill</h4><p>Source value is copied to all highlighted cells.</p></div></div>
+            </div>
+            <h3>Fill Handle Demo</h3>
+            <div class="fill-demo">
+                <div class="fill-cell" style="font-weight: 600; background: var(--gray-200);">Draft</div><div class="fill-cell" style="font-weight: 600; background: var(--gray-200);">Setup</div><div class="fill-cell" style="font-weight: 600; background: var(--gray-200);">Program</div><div class="fill-cell" style="font-weight: 600; background: var(--gray-200);">Banking</div>
+                <div class="fill-cell selected">$350.00<span class="fill-handle"></span></div><div class="fill-cell">$100.00</div><div class="fill-cell">$87.50</div><div class="fill-cell">$35.00</div>
+                <div class="fill-cell in-range">$350.00</div><div class="fill-cell">$100.00</div><div class="fill-cell">$87.50</div><div class="fill-cell">$35.00</div>
+                <div class="fill-cell in-range">$350.00</div><div class="fill-cell">$100.00</div><div class="fill-cell">$87.50</div><div class="fill-cell">$35.00</div>
+            </div>
+            <p style="text-align: center; font-size: 0.85rem; color: var(--gray-500);">Dragging from Row 1 fills $350.00 into all selected cells</p>
+        </section>
+
+        <!-- Section 15 -->
+        <section id="live-savings" class="section">
+            <h2><span class="section-number">15</span> Live Savings Calculation</h2>
+            <div class="code-block">Savings = Draft Amount - Setup Fee - Program Fee - Banking Fee</div>
+            <table class="comparison-table">
+                <thead><tr><th>Field</th><th>Value</th></tr></thead>
+                <tbody>
+                    <tr><td>Draft Amount</td><td>$350.00</td></tr>
+                    <tr><td>- Setup Fee</td><td>$100.00</td></tr>
+                    <tr><td>- Program Fee</td><td>$87.50</td></tr>
+                    <tr><td>- Banking Fee</td><td>$35.00</td></tr>
+                    <tr style="font-weight: 600; background: var(--success-light);"><td>= Savings</td><td style="color: var(--success);">$127.50</td></tr>
+                </tbody>
+            </table>
+            <div class="info-box tip"><span class="icon">&#9989;</span><p><strong>Real-Time:</strong> Savings updates instantly as you type. No need to blur or press Enter.</p></div>
+        </section>
+
+        <!-- Section 16 -->
+        <section id="recalculate" class="section">
+            <h2><span class="section-number">16</span> Recalculate</h2>
+            <p>Creates a new Draft version by regenerating the payment schedule from current Opportunity data.</p>
+            <div class="feature-box primary"><h4>What It Does</h4><p>Fetches fresh values from Opportunity (Total Debt, Current Payment) and creates a completely new schedule based on current settings.</p></div>
+            <div class="workflow-box">
+                <h4>Before (Outdated Data)</h4><p>Total Debt: $12,000 | Weekly: $300 | 120 weeks</p>
+                <div class="workflow-arrow">&darr; Opportunity Updated: Total Debt = $14,000</div>
+                <h4>After Recalculate</h4><p>Total Debt: $14,000 | Weekly: $350 | 104 weeks</p>
+            </div>
+            <div class="info-box warning"><span class="icon">&#9888;</span><p><strong>Creates New Version:</strong> Always creates a Draft. Must Activate to make it live.</p></div>
+        </section>
+
+        <!-- Section 17 -->
+        <section id="recalculate-remaining" class="section">
+            <h2><span class="section-number">17</span> Recalculate Remaining Balance</h2>
+            <p>Redistributes remaining debt evenly across future Scheduled payments based on what has been paid.</p>
+            <div class="feature-box teal"><h4>Key Difference</h4><p><strong>Recalculate:</strong> Regenerates everything from Opportunity.<br><strong>Recalculate Remaining:</strong> Preserves Cleared/NSF/Cancelled items, redistributes only Scheduled items.</p></div>
+            <div class="code-block"><span class="comment">// Algorithm</span>
+Total Program Cost = Estimated_Total_Debt × 0.95
+Paid To Date = SUM(Cleared payments) + SUM(Wired_Payments)
+Remaining Balance = Total Program Cost - Paid To Date
+Remaining Count = Number_of_Weeks - COUNT(non-Scheduled items)
+Base Payment = FLOOR(Remaining Balance / Remaining Count, 2 decimals)
+Last Payment = Base Payment + Remainder</div>
+            <div class="info-box tip"><span class="icon">&#9989;</span><p><strong>Preserves History:</strong> Cleared, NSF, Cancelled remain unchanged. Wire Payments are carried over.</p></div>
+        </section>
+
+        <!-- Section 18 -->
+        <section id="save-activate" class="section">
+            <h2><span class="section-number">18</span> Save &amp; Activate</h2>
+            <h3>Save as New Version</h3>
+            <div class="steps">
+                <div class="step"><div class="step-content"><h4>Make Changes</h4><p>Edit cells, add/delete rows in Pending tab.</p></div></div>
+                <div class="step"><div class="step-content"><h4>Click "Save as New Version"</h4><p>Creates Draft with incremented version number.</p></div></div>
+            </div>
+            <h3>Activate</h3>
+            <div class="feature-grid">
+                <div class="feature-box success"><h4>What Happens</h4><p>Current Active becomes Archived. Draft becomes Active. Confetti celebration!</p></div>
+                <div class="feature-box warning"><h4>Visibility</h4><p>Activate button only appears for Draft versions.</p></div>
+            </div>
+        </section>
+
+        <!-- Section 19 -->
+        <section id="suspend" class="section">
+            <h2><span class="section-number">19</span> Suspend</h2>
+            <p>Creates a new version where all Scheduled payments become Cancelled.</p>
+            <table class="comparison-table">
+                <thead><tr><th>Status Before</th><th>Status After</th></tr></thead>
+                <tbody>
+                    <tr><td>Cleared</td><td>Cleared (unchanged)</td></tr>
+                    <tr><td>NSF</td><td>NSF (unchanged)</td></tr>
+                    <tr style="background: var(--warning-light);"><td>Scheduled</td><td>Cancelled</td></tr>
+                </tbody>
+            </table>
+            <div class="info-box warning"><span class="icon">&#9888;</span><p><strong>Button Visibility:</strong> Suspend only appears when plan is NOT a Draft.</p></div>
+        </section>
+
+        <!-- Section 20 -->
+        <section id="wire-payments" class="section">
+            <h2><span class="section-number">20</span> Wire Payments</h2>
+            <div class="steps">
+                <div class="step"><div class="step-content"><h4>Click "+" Button</h4><p>In Wire column of any row.</p></div></div>
+                <div class="step"><div class="step-content"><h4>Fill Out Form</h4><p>Enter Payment Date, Amount, optional Description.</p></div></div>
+                <div class="step"><div class="step-content"><h4>Save</h4><p>Creates Wired_Payment__c linked to Payment_Schedule_Item__c.</p></div></div>
+            </div>
+            <p><strong>Viewing:</strong> Hover over any row with wire payments to see a popover with details.</p>
+            <div class="info-box info"><span class="icon">&#8505;</span><p><strong>Included in Recalculate Remaining:</strong> Wire amounts are added to "Paid To Date" and carried over to new versions.</p></div>
+        </section>
+
+        <!-- Section 21 -->
+        <section id="pagination" class="section">
+            <h2><span class="section-number">21</span> Scrolling &amp; Display</h2>
+            <p>All payment schedule items are displayed in a single scrollable table. No pagination is used.</p>
+            <div class="feature-grid">
+                <div class="feature-box primary"><h4>Max Height: 600px</h4><p>Table container has a maximum height of 600px with vertical scrolling enabled.</p></div>
+                <div class="feature-box success"><h4>All Items Visible</h4><p>Scroll to see all payment schedule items without page navigation.</p></div>
+                <div class="feature-box info"><h4>Sticky Header</h4><p>Table header remains fixed while scrolling for easy column reference.</p></div>
+                <div class="feature-box warning"><h4>Sticky Footer</h4><p>Aggregate totals row stays visible at the bottom of the table.</p></div>
+            </div>
+            <div class="info-box tip"><span class="icon">&#9989;</span><p><strong>Footer Totals:</strong> Shows totals for ALL items (Total row) and cleared items only (Cleared row).</p></div>
+        </section>
+
+        <!-- Section 22 -->
+        <section id="workflows" class="section">
+            <h2><span class="section-number">22</span> Common Workflows</h2>
+            <h3>Workflow 1: Creating a New Payment Plan</h3>
+            <div class="workflow-box">
+                <div class="steps">
+                    <div class="step"><div class="step-content"><h4>Set Program Type</h4><p>Select DCG Mod or DCG Debt.</p></div></div>
+                    <div class="step"><div class="step-content"><h4>Configure Target Payment</h4><p>Use slider or enter specific amount.</p></div></div>
+                    <div class="step"><div class="step-content"><h4>Set First Draft Date</h4><p>Choose date for first payment.</p></div></div>
+                    <div class="step"><div class="step-content"><h4>Click Save</h4><p>Saves settings to Opportunity.</p></div></div>
+                </div>
+            </div>
+            <h3>Workflow 2: Handling NSF Payments</h3>
+            <div class="workflow-box">
+                <div class="steps">
+                    <div class="step"><div class="step-content"><h4>Mark Item as NSF</h4><p>Change status from Scheduled to NSF.</p></div></div>
+                    <div class="step"><div class="step-content"><h4>Click "Recalculate Remaining"</h4><p>Redistributes remaining balance.</p></div></div>
+                    <div class="step"><div class="step-content"><h4>Activate</h4><p>Make adjusted plan Active.</p></div></div>
+                </div>
+            </div>
+            <h3>Workflow 3: Suspending a Plan</h3>
+            <div class="workflow-box">
+                <div class="steps">
+                    <div class="step"><div class="step-content"><h4>Click "Suspend"</h4><p>All Scheduled items become Cancelled.</p></div></div>
+                    <div class="step"><div class="step-content"><h4>Activate</h4><p>Make suspended state official.</p></div></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 23 -->
+        <section id="technical" class="section">
+            <h2><span class="section-number">23</span> Technical Implementation</h2>
+
+            <h3>Component Architecture</h3>
+            <div class="code-block">paymentPlanEditorV2 (Parent Component)
+├── c-summary-stats (Child - displays summary metrics)
+└── c-payment-plan-editor (Child - data table and version management)
+    └── Handles all schedule item CRUD operations</div>
+
+            <h3>Apex Controllers Overview</h3>
+            <table class="comparison-table">
+                <thead><tr><th>Controller</th><th>Purpose</th><th>Sharing Model</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>PaymentPlanEditorController</strong></td><td>Full CRUD for PaymentPlan__c and Payment_Schedule_Item__c with version management</td><td>with sharing</td></tr>
+                    <tr><td><strong>PaymentPlanEditorV2Controller</strong></td><td>Lightweight controller to update Opportunity fields only</td><td>with sharing</td></tr>
+                    <tr><td><strong>PaymentCalculatorController</strong></td><td>Calculate payment plans using SalesCalculatorService</td><td>with sharing</td></tr>
+                    <tr><td><strong>PaymentCalcConfigSvc</strong></td><td>Load and validate CMDT configuration (fail-fast approach)</td><td>with sharing</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Related Triggers</h3>
+            <table class="comparison-table">
+                <thead><tr><th>Trigger</th><th>Object</th><th>Handler Class</th></tr></thead>
+                <tbody>
+                    <tr><td>PaymentPlanTrigger</td><td>PaymentPlan__c</td><td>PaymentPlanTriggerHandler</td></tr>
+                    <tr><td>PaymentScheduleItemTrigger</td><td>Payment_Schedule_Item__c</td><td>PaymentScheduleItemTriggerHandler</td></tr>
+                </tbody>
+            </table>
+
+            <div class="info-box tip">
+                <span class="icon">✅</span>
+                <p><strong>Best Practices:</strong> All triggers follow the single-trigger-per-object pattern and delegate to handler classes. No business logic in triggers.</p>
+            </div>
+        </section>
+
+        <!-- Section 24: PaymentPlanEditorController Details -->
+        <section id="apex-controller-v1" class="section">
+            <h2><span class="section-number">24</span> PaymentPlanEditorController.cls</h2>
+            <p>Primary controller for the Payment Plan Editor LWC. Handles all CRUD operations with full version management support.</p>
+
+            <h3>Key Features</h3>
+            <div class="feature-grid">
+                <div class="feature-box primary"><h4>Version Control</h4><p>Draft/Active/Archived states with version numbering</p></div>
+                <div class="feature-box success"><h4>Bulk Operations</h4><p>Efficient handling of multiple schedule items</p></div>
+                <div class="feature-box info"><h4>Wired Payments</h4><p>Track and carry over wire payments between versions</p></div>
+                <div class="feature-box warning"><h4>Plan Suspension</h4><p>Cancel future scheduled items when suspending</p></div>
+            </div>
+
+            <h3>Public Methods</h3>
+            <table class="comparison-table">
+                <thead><tr><th>Method</th><th>Parameters</th><th>Returns</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><code>getActivePaymentPlan</code></td><td>Id opportunityId</td><td>PaymentPlanWrapper</td><td>Get the active payment plan for an Opportunity</td></tr>
+                    <tr><td><code>getActivePaymentPlans</code></td><td>Id opportunityId</td><td>List&lt;PaymentPlanWrapper&gt;</td><td>Get all active plans ordered by first payment date</td></tr>
+                    <tr><td><code>getAllVersions</code></td><td>Id opportunityId</td><td>List&lt;PaymentPlanWrapper&gt;</td><td>Get all versions (draft, active, archived) for version selector</td></tr>
+                    <tr><td><code>getPaymentPlanById</code></td><td>Id planId</td><td>PaymentPlanWrapper</td><td>Get a specific payment plan by ID with all schedule items</td></tr>
+                    <tr><td><code>saveScheduleItems</code></td><td>Id planId, List&lt;ScheduleItemWrapper&gt; items</td><td>PaymentPlanWrapper</td><td>Save modified schedule items (insert, update, delete)</td></tr>
+                    <tr><td><code>saveAsNewVersion</code></td><td>Id currentPlanId, List&lt;ScheduleItemWrapper&gt; items</td><td>PaymentPlanWrapper</td><td>Create new draft version from current plan with modifications</td></tr>
+                    <tr><td><code>createManualDraft</code></td><td>Id currentPlanId</td><td>PaymentPlanWrapper</td><td>Create blank draft version for manual editing</td></tr>
+                    <tr><td><code>recalculatePaymentPlan</code></td><td>Id planId</td><td>PaymentPlanWrapper</td><td>Recalculate from Opportunity data (fresh calculation)</td></tr>
+                    <tr><td><code>recalculateRemainingBalance</code></td><td>Id planId</td><td>PaymentPlanWrapper</td><td>Redistribute remaining balance across future payments</td></tr>
+                    <tr><td><code>suspendPaymentPlan</code></td><td>Id planId</td><td>PaymentPlanWrapper</td><td>Suspend plan - cancel all future Scheduled items</td></tr>
+                    <tr><td><code>activatePaymentPlan</code></td><td>Id planId</td><td>PaymentPlanWrapper</td><td>Activate a draft version (archives previous active)</td></tr>
+                    <tr><td><code>addPaymentRow</code></td><td>Id planId, Integer afterRowNumber</td><td>ScheduleItemWrapper</td><td>Add new blank payment row</td></tr>
+                    <tr><td><code>getWiredPayments</code></td><td>Id scheduleItemId</td><td>List&lt;WiredPaymentWrapper&gt;</td><td>Get wired payments for a schedule item</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Wrapper Classes</h3>
+            <div class="code-block"><span class="comment">// PaymentPlanWrapper - Main response object</span>
+<span class="keyword">public class</span> PaymentPlanWrapper {
+    PaymentPlan__c paymentPlan;      <span class="comment">// The plan record with rollup fields</span>
+    List&lt;ScheduleItemWrapper&gt; scheduleItems;  <span class="comment">// All schedule items</span>
+    Integer versionNumber;           <span class="comment">// Version number for display</span>
+    String versionStatus;            <span class="comment">// Draft, Active, or Archived</span>
+    Boolean isLatestVersion;         <span class="comment">// True if most recent version</span>
+}
+
+<span class="comment">// ScheduleItemWrapper - Individual payment row</span>
+<span class="keyword">public class</span> ScheduleItemWrapper {
+    String id;                <span class="comment">// Salesforce record ID</span>
+    Integer rowNumber;        <span class="comment">// Display row number (1-based)</span>
+    String draftNumber;       <span class="comment">// Draft/check number</span>
+    Date paymentDate;         <span class="comment">// Scheduled payment date</span>
+    Decimal draftAmount;      <span class="comment">// Total payment (→ Total_Payment__c)</span>
+    Decimal setupFee;         <span class="comment">// Setup fee portion</span>
+    Decimal programFee;       <span class="comment">// Program fee portion</span>
+    Decimal bankingFee;       <span class="comment">// Banking fee</span>
+    Decimal savingsBalance;   <span class="comment">// Running escrow balance</span>
+    Decimal toEscrowAmount;   <span class="comment">// Amount to escrow</span>
+    String status;            <span class="comment">// Scheduled, Cleared, NSF, Cancelled</span>
+    Boolean isModified;       <span class="comment">// Changed in UI</span>
+    Boolean isNew;            <span class="comment">// Newly created</span>
+    Boolean isDeleted;        <span class="comment">// Marked for deletion</span>
+}
+
+<span class="comment">// WiredPaymentWrapper - Wire payment record</span>
+<span class="keyword">public class</span> WiredPaymentWrapper {
+    String id;
+    String name;
+    String scheduleItemId;    <span class="comment">// Parent schedule item</span>
+    Date paymentDate;
+    Decimal paymentAmount;
+    String description;
+}</div>
+
+            <h3>Constants Reference</h3>
+            <table class="comparison-table">
+                <thead><tr><th>Constant</th><th>Value</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td>STATUS_SCHEDULED</td><td>'Scheduled'</td><td>Future scheduled payment</td></tr>
+                    <tr><td>STATUS_CLEARED</td><td>'Cleared'</td><td>Successfully processed</td></tr>
+                    <tr><td>STATUS_NSF</td><td>'NSF'</td><td>Insufficient funds</td></tr>
+                    <tr><td>STATUS_CANCELLED</td><td>'Cancelled'</td><td>Cancelled/voided</td></tr>
+                    <tr><td>VERSION_STATUS_DRAFT</td><td>'Draft'</td><td>Editable, not activated</td></tr>
+                    <tr><td>VERSION_STATUS_ACTIVE</td><td>'Active'</td><td>Currently in use</td></tr>
+                    <tr><td>VERSION_STATUS_ARCHIVED</td><td>'Archived'</td><td>Superseded by newer version</td></tr>
+                    <tr><td>DEFAULT_BANKING_FEE</td><td>15.00</td><td>Default banking fee per payment</td></tr>
+                    <tr><td>PAYMENT_INTERVAL_DAYS</td><td>7</td><td>Days between payments (weekly)</td></tr>
+                    <tr><td>MAX_QUERY_LIMIT</td><td>1000</td><td>Maximum SOQL query results</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Section 25: PaymentPlanEditorV2Controller Details -->
+        <section id="apex-controller-v2" class="section">
+            <h2><span class="section-number">25</span> PaymentPlanEditorV2Controller.cls</h2>
+            <p>Lightweight controller for saving program settings directly to Opportunity fields without creating draft records.</p>
+
+            <h3>Key Differences from V1</h3>
+            <table class="comparison-table">
+                <thead><tr><th>Aspect</th><th>V1 (PaymentPlanEditorController)</th><th>V2 (This Controller)</th></tr></thead>
+                <tbody>
+                    <tr><td>Purpose</td><td>Full CRUD for PaymentPlan__c and items</td><td>Quick Opportunity field updates</td></tr>
+                    <tr><td>Records Created</td><td>PaymentPlan__c, Payment_Schedule_Item__c</td><td>None - updates existing Opportunity</td></tr>
+                    <tr><td>Use Case</td><td>Managing actual payment schedules</td><td>Initial setup, calculator results</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Method: updateOpportunityOnly</h3>
+            <div class="code-block"><span class="keyword">@AuraEnabled</span>
+<span class="keyword">public static void</span> updateOpportunityOnly(
+    Id recordId,           <span class="comment">// Opportunity ID</span>
+    Integer numberOfWeeks, <span class="comment">// → Number_of_Weeks__c</span>
+    Decimal weeklyPayment, <span class="comment">// → Est_weekly_payment__c</span>
+    String firstDraftDate, <span class="comment">// → First_Draft_Date__c (YYYY-MM-DD)</span>
+    Decimal bankingFee,    <span class="comment">// → Banking_Fee__c</span>
+    Integer setupFeeTerm,  <span class="comment">// → Setup_Fee_Term__c</span>
+    Boolean noFeeProgram,  <span class="comment">// → No_Fee_Program__c</span>
+    String programType,    <span class="comment">// → Program_Type__c</span>
+    Decimal settlementAmount,
+    Decimal programFee
+)</div>
+
+            <h3>Field Mappings</h3>
+            <table class="comparison-table">
+                <thead><tr><th>Parameter</th><th>Opportunity Field</th><th>Notes</th></tr></thead>
+                <tbody>
+                    <tr><td>numberOfWeeks</td><td>Number_of_Weeks__c</td><td>Program duration</td></tr>
+                    <tr><td>weeklyPayment</td><td>Est_weekly_payment__c</td><td>Calculated weekly payment</td></tr>
+                    <tr><td>firstDraftDate</td><td>First_Draft_Date__c</td><td>Parsed from ISO format</td></tr>
+                    <tr><td>bankingFee</td><td>Banking_Fee__c</td><td>Weekly banking fee</td></tr>
+                    <tr><td>setupFeeTerm</td><td>Setup_Fee_Term__c</td><td>Stored as String</td></tr>
+                    <tr><td>noFeeProgram</td><td>No_Fee_Program__c</td><td>Boolean checkbox</td></tr>
+                    <tr><td>programType</td><td>Program_Type__c</td><td>Converted: DCG_MOD → DCG MOD</td></tr>
+                </tbody>
+            </table>
+
+            <div class="info-box warning">
+                <span class="icon">⚠️</span>
+                <p><strong>Special Handling:</strong> When No-Fee Program is enabled with DCG_MOD, the program type is automatically changed to DCG_MOD_CA.</p>
+            </div>
+        </section>
+
+        <!-- Section 26: PaymentCalcConfigSvc Details -->
+        <section id="apex-config-svc" class="section">
+            <h2><span class="section-number">26</span> PaymentCalcConfigSvc.cls</h2>
+            <p>Service class for loading and validating payment calculation configuration from Custom Metadata Type (Payment_Calc_Config__mdt).</p>
+
+            <h3>Configuration Behavior</h3>
+            <div class="info-box danger">
+                <span class="icon">🛑</span>
+                <p><strong>FAIL-FAST Approach:</strong> Configuration is REQUIRED. There are NO default values. If config is missing or invalid, an exception is thrown immediately.</p>
+            </div>
+
+            <h3>Public Methods</h3>
+            <table class="comparison-table">
+                <thead><tr><th>Method</th><th>Description</th><th>Cacheable</th></tr></thead>
+                <tbody>
+                    <tr><td><code>getRequiredConfig()</code></td><td>Load default configuration - throws if missing/invalid</td><td>Yes</td></tr>
+                    <tr><td><code>getRequiredConfigForProgram(String programType)</code></td><td>Load program-specific config (DCG_MOD, DCG_DEBT, DCG_MOD_CA)</td><td>Yes</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Program-Specific Configuration</h3>
+            <p>When switching program types, the component calls <code>getRequiredConfigForProgram()</code> to load configuration specific to that program:</p>
+            <table class="comparison-table">
+                <thead><tr><th>Config Property</th><th>DCG_MOD</th><th>DCG_DEBT</th><th>DCG_MOD_CA</th></tr></thead>
+                <tbody>
+                    <tr><td>programSplitRatio</td><td>0.50</td><td>0.70</td><td>0.50</td></tr>
+                    <tr><td>escrowSplitRatio</td><td>0.50</td><td>0.30</td><td>0.50</td></tr>
+                    <tr><td>minTargetPercent</td><td>40%</td><td>15%</td><td>40%</td></tr>
+                    <tr><td>No-Fee Behavior</td><td>Optional toggle</td><td>Not available</td><td>Always enabled</td></tr>
+                </tbody>
+            </table>
+
+            <h3>ConfigDTO Properties</h3>
+            <div class="code-block"><span class="comment">// Core Fee Configuration</span>
+Decimal settlementPercent;      <span class="comment">// Settlement percentage</span>
+Decimal programFeePercent;      <span class="comment">// Program fee percentage</span>
+Decimal bankingFee;             <span class="comment">// Banking fee amount</span>
+Decimal bank2Fee;               <span class="comment">// Secondary banking fee</span>
+Decimal programSplitRatio;      <span class="comment">// Program fee split (DCG_MOD: 0.50, DCG_DEBT: 0.70)</span>
+Decimal escrowSplitRatio;       <span class="comment">// Escrow split (DCG_MOD: 0.50, DCG_DEBT: 0.30)</span>
+
+<span class="comment">// Setup Fee Configuration</span>
+Decimal setupFee;               <span class="comment">// Setup fee amount</span>
+Decimal setupFeePayments;       <span class="comment">// Number of payments to collect setup fee</span>
+Decimal setupFeeMinPayments;    <span class="comment">// Minimum setup fee payments</span>
+Decimal setupFeeMaxPayments;    <span class="comment">// Maximum setup fee payments</span>
+
+<span class="comment">// Target Payment Configuration</span>
+Decimal minTargetPercentDcgMod; <span class="comment">// Min target % for DCG MOD (40%)</span>
+Decimal minTargetPercentDcgDebt;<span class="comment">// Min target % for DCG DEBT (15%)</span>
+Decimal maxTargetPercent;       <span class="comment">// Max target percentage</span>
+
+<span class="comment">// Program Duration</span>
+Decimal minProgramWeeks;        <span class="comment">// Minimum program weeks</span>
+Decimal maxProgramWeeks;        <span class="comment">// Maximum program weeks</span>
+Decimal defaultProgramWeeks;    <span class="comment">// Default program duration</span></div>
+
+            <h3>Caching</h3>
+            <p>Configuration is cached per-transaction using static variables:</p>
+            <ul>
+                <li><strong>cachedDefaultConfig:</strong> Stores the default configuration</li>
+                <li><strong>cachedProgramConfigs:</strong> Map of program-type specific configurations</li>
+            </ul>
+        </section>
+
+        <!-- Section 27: Objects & Fields Mapping -->
+        <section id="objects-fields" class="section">
+            <h2><span class="section-number">27</span> Objects &amp; Fields Mapping</h2>
+
+            <h3>Object Relationships</h3>
+            <div class="code-block">Opportunity (Standard Object)
+    │
+    └── PaymentPlan__c (Lookup: Opportunity__c)
+            │
+            └── Payment_Schedule_Item__c (Master-Detail: Payment_Plan__c)
+                    │
+                    └── Wired_Payment__c (Master-Detail: Payment_Schedule_Item__c)</div>
+
+            <h3>Opportunity Fields</h3>
+            <table class="comparison-table">
+                <thead><tr><th>UI Element</th><th>API Name</th><th>Type</th></tr></thead>
+                <tbody>
+                    <tr><td>Total Debt</td><td>Estimated_Total_Debt__c</td><td>Currency</td></tr>
+                    <tr><td>Current Payment</td><td>Estimated_Current_Payment__c</td><td>Currency</td></tr>
+                    <tr><td>Account State</td><td>Account.BillingState</td><td>Text</td></tr>
+                    <tr><td>Number of Weeks</td><td>Number_of_Weeks__c</td><td>Number</td></tr>
+                    <tr><td>Weekly Payment</td><td>Est_weekly_payment__c</td><td>Currency</td></tr>
+                    <tr><td>First Draft Date</td><td>First_Draft_Date__c</td><td>Date</td></tr>
+                    <tr><td>Program Type</td><td>Program_Type__c</td><td>Picklist</td></tr>
+                    <tr><td>No Fee Program</td><td>No_Fee_Program__c</td><td>Checkbox</td></tr>
+                    <tr><td>Banking Fee</td><td>Banking_Fee__c</td><td>Currency</td></tr>
+                    <tr><td>Setup Fee Term</td><td>Setup_Fee_Term__c</td><td>Text</td></tr>
+                </tbody>
+            </table>
+
+            <h3>PaymentPlan__c Fields</h3>
+            <table class="comparison-table">
+                <thead><tr><th>UI Element</th><th>API Name</th><th>Type</th></tr></thead>
+                <tbody>
+                    <tr><td>Plan Name</td><td>Name</td><td>Auto Number</td></tr>
+                    <tr><td>Version Number</td><td>Version_Number__c</td><td>Number</td></tr>
+                    <tr><td>Version Status</td><td>Version_Status__c</td><td>Picklist (Draft, Active, Archived)</td></tr>
+                    <tr><td>Is Active</td><td>Is_Active__c</td><td>Checkbox</td></tr>
+                    <tr><td>Opportunity</td><td>Opportunity__c</td><td>Lookup</td></tr>
+                    <tr><td>Previous Version</td><td>Previous_Version__c</td><td>Lookup (self)</td></tr>
+                    <tr><td>Source</td><td>Source__c</td><td>Picklist</td></tr>
+                    <tr><td>Version Type</td><td>Version_Type__c</td><td>Picklist</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Payment_Schedule_Item__c Fields</h3>
+            <table class="comparison-table">
+                <thead><tr><th>UI Column</th><th>API Name</th><th>Type</th><th>Wrapper Property</th></tr></thead>
+                <tbody>
+                    <tr><td># (Row)</td><td>Payment_Number__c</td><td>Number</td><td>rowNumber</td></tr>
+                    <tr><td>Draft #</td><td>Draft_Number__c</td><td>Text</td><td>draftNumber</td></tr>
+                    <tr><td>Date</td><td>Payment_Date__c</td><td>Date</td><td>paymentDate</td></tr>
+                    <tr><td>Draft</td><td>Total_Payment__c</td><td>Currency</td><td>draftAmount</td></tr>
+                    <tr><td>Setup</td><td>Setup_Fee_Amount__c</td><td>Currency</td><td>setupFee</td></tr>
+                    <tr><td>Program</td><td>Program_Fee_Amount__c</td><td>Currency</td><td>programFee</td></tr>
+                    <tr><td>Banking</td><td>Banking_Fee_Amount__c</td><td>Currency</td><td>bankingFee</td></tr>
+                    <tr><td>Savings</td><td>Savings_Balance__c</td><td>Currency</td><td>savingsBalance</td></tr>
+                    <tr><td>To Escrow</td><td>To_Escrow_Amount__c</td><td>Currency</td><td>toEscrowAmount</td></tr>
+                    <tr><td>Status</td><td>Status__c</td><td>Picklist</td><td>status</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Wired_Payment__c Fields</h3>
+            <table class="comparison-table">
+                <thead><tr><th>UI Element</th><th>API Name</th><th>Type</th></tr></thead>
+                <tbody>
+                    <tr><td>Name</td><td>Name</td><td>Auto Number</td></tr>
+                    <tr><td>Payment Date</td><td>Payment_Date__c</td><td>Date</td></tr>
+                    <tr><td>Payment Amount</td><td>Payment_Amount__c</td><td>Currency</td></tr>
+                    <tr><td>Description</td><td>Description__c</td><td>Long Text</td></tr>
+                    <tr><td>Schedule Item</td><td>Payment_Schedule_Item__c</td><td>Master-Detail</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Section 28: Rollup Summary Fields -->
+        <section id="rollup-fields" class="section">
+            <h2><span class="section-number">28</span> Rollup Summary Fields</h2>
+            <p>Rollup summary fields provide automatic aggregation from child records, eliminating the need for Apex calculations.</p>
+
+            <h3>PaymentPlan__c Rollup Fields (from Payment_Schedule_Item__c)</h3>
+            <table class="comparison-table">
+                <thead><tr><th>Field Label</th><th>API Name</th><th>Operation</th><th>Summarized Field</th></tr></thead>
+                <tbody>
+                    <tr><td>Total Draft Amount</td><td>Total_Draft_Amount__c</td><td>SUM</td><td>Total_Payment__c</td></tr>
+                    <tr><td>Total Setup Fee (Rollup)</td><td>Total_Setup_Fee_Rollup__c</td><td>SUM</td><td>Setup_Fee_Amount__c</td></tr>
+                    <tr><td>Total Program Fee (Rollup)</td><td>Total_Program_Fee_Rollup__c</td><td>SUM</td><td>Program_Fee_Amount__c</td></tr>
+                    <tr><td>Total Banking Fee (Rollup)</td><td>Total_Banking_Fee_Rollup__c</td><td>SUM</td><td>Banking_Fee_Amount__c</td></tr>
+                    <tr><td>Total Savings (Rollup)</td><td>Total_Savings_Rollup__c</td><td>SUM</td><td>Savings_Balance__c</td></tr>
+                    <tr><td>Total To Escrow (Rollup)</td><td>Total_To_Escrow_Rollup__c</td><td>SUM</td><td>To_Escrow_Amount__c</td></tr>
+                    <tr><td>Schedule Item Count (Rollup)</td><td>Schedule_Item_Count_Rollup__c</td><td>COUNT</td><td>-</td></tr>
+                    <tr><td>Cleared Count</td><td>Cleared_Count__c</td><td>COUNT</td><td>WHERE Status = 'Cleared'</td></tr>
+                    <tr><td>Scheduled Count</td><td>Scheduled_Count__c</td><td>COUNT</td><td>WHERE Status = 'Scheduled'</td></tr>
+                    <tr><td>NSF Count</td><td>NSF_Count__c</td><td>COUNT</td><td>WHERE Status = 'NSF'</td></tr>
+                    <tr><td>Cancelled Count</td><td>Cancelled_Count__c</td><td>COUNT</td><td>WHERE Status = 'Cancelled'</td></tr>
+                    <tr><td>Cleared Payment Sum</td><td>Cleared_Payment_Sum__c</td><td>SUM</td><td>Total_Payment__c WHERE Status = 'Cleared'</td></tr>
+                    <tr><td>Cleared Program Fee Sum</td><td>Cleared_Program_Fee_Sum__c</td><td>SUM</td><td>Program_Fee_Amount__c WHERE Status = 'Cleared'</td></tr>
+                    <tr><td>Cleared Escrow Sum</td><td>Cleared_Escrow_Sum__c</td><td>SUM</td><td>To_Escrow_Amount__c WHERE Status = 'Cleared'</td></tr>
+                    <tr><td>First Payment Date (Rollup)</td><td>First_Payment_Date_Rollup__c</td><td>MIN</td><td>Payment_Date__c</td></tr>
+                    <tr><td>Last Payment Date (Rollup)</td><td>Last_Payment_Date_Rollup__c</td><td>MAX</td><td>Payment_Date__c</td></tr>
+                    <tr><td>Total Amount Cleared</td><td>Total_Amount_Cleared__c</td><td>SUM</td><td>Cleared_Amount__c (formula)</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Payment_Schedule_Item__c Rollup Fields (from Wired_Payment__c)</h3>
+            <table class="comparison-table">
+                <thead><tr><th>Field Label</th><th>API Name</th><th>Operation</th><th>Summarized Field</th></tr></thead>
+                <tbody>
+                    <tr><td>Wires Received</td><td>Wires_received__c</td><td>SUM</td><td>Payment_Amount__c</td></tr>
+                    <tr><td>Wired Payment Count</td><td>Wired_Payment_Count__c</td><td>COUNT</td><td>-</td></tr>
+                </tbody>
+            </table>
+
+            <div class="info-box tip">
+                <span class="icon">💡</span>
+                <p><strong>Performance Benefit:</strong> The LWC uses rollup fields for footer totals when viewing (not editing), eliminating client-side calculations and improving load time.</p>
+            </div>
+        </section>
+
+        <!-- Section 29: Formula Fields -->
+        <section id="formula-fields" class="section">
+            <h2><span class="section-number">29</span> Formula Fields</h2>
+
+            <h3>Cleared_Amount__c (Payment_Schedule_Item__c)</h3>
+            <p>Calculates the cleared amount based on payment status, including wired payments.</p>
+
+            <table class="comparison-table">
+                <thead><tr><th>Status</th><th>Formula Result</th></tr></thead>
+                <tbody>
+                    <tr><td>Cleared</td><td>Total_Payment__c + Wires_received__c</td></tr>
+                    <tr><td>NSF</td><td>Wires_received__c (only wired payments count)</td></tr>
+                    <tr><td>Scheduled / Cancelled</td><td>0</td></tr>
+                </tbody>
+            </table>
+
+            <div class="code-block"><span class="comment">// Formula Logic</span>
+IF(
+    ISPICKVAL(Status__c, "Cleared"),
+    Total_Payment__c + Wires_received__c,
+    IF(
+        ISPICKVAL(Status__c, "NSF"),
+        Wires_received__c,
+        <span class="number">0</span>
+    )
+)</div>
+        </section>
+
+        <!-- Section 30: Best Practices Compliance -->
+        <section id="best-practices" class="section">
+            <h2><span class="section-number">30</span> Best Practices Compliance</h2>
+            <p>The codebase follows all 12 Salesforce Apex Best Practices:</p>
+
+            <table class="comparison-table">
+                <thead><tr><th>#</th><th>Best Practice</th><th>Status</th><th>Implementation</th></tr></thead>
+                <tbody>
+                    <tr><td>1</td><td>Bulkify Your Code</td><td>✅</td><td>Uses Lists for all DML operations</td></tr>
+                    <tr><td>2</td><td>Avoid DML/SOQL in Loops</td><td>✅</td><td>All queries outside loops, uses collections</td></tr>
+                    <tr><td>3</td><td>Avoid Hard-Coded IDs</td><td>✅</td><td>No record IDs in code</td></tr>
+                    <tr><td>4</td><td>Explicitly Declare Sharing</td><td>✅</td><td>All classes use <code>with sharing</code></td></tr>
+                    <tr><td>5</td><td>Single Trigger per SObject</td><td>✅</td><td>One trigger per object, delegates to handlers</td></tr>
+                    <tr><td>6</td><td>Use SOQL for Loops</td><td>✅</td><td>Used where appropriate for large datasets</td></tr>
+                    <tr><td>7</td><td>Modularize Your Code</td><td>✅</td><td>Service classes, handlers, DTOs</td></tr>
+                    <tr><td>8</td><td>Test Multiple Scenarios</td><td>✅</td><td>Comprehensive test classes</td></tr>
+                    <tr><td>9</td><td>Avoid Nested Loops</td><td>✅</td><td>No nested loops found</td></tr>
+                    <tr><td>10</td><td>Naming Convention</td><td>✅</td><td>Consistent naming throughout</td></tr>
+                    <tr><td>11</td><td>Avoid Logic in Triggers</td><td>✅</td><td>Triggers delegate to handler classes</td></tr>
+                    <tr><td>12</td><td>Avoid Returning JSON to LWC</td><td>✅</td><td>Returns wrapper objects, not JSON strings</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Section 31: Payment Plan Viewer -->
+        <section id="payment-plan-viewer" class="section">
+            <h2><span class="section-number">31</span> Payment Plan Viewer</h2>
+            <p>A read-only component for viewing payment plans, styled consistently with the Payment Plan Editor.</p>
+
+            <h3>Component Overview</h3>
+            <div class="feature-grid">
+                <div class="feature-box primary"><h4>View-Only Mode</h4><p>Displays payment schedule items without editing capabilities.</p></div>
+                <div class="feature-box success"><h4>Consistent Styling</h4><p>Matches the Payment Plan Editor's visual design (blue gradient theme).</p></div>
+                <div class="feature-box info"><h4>Maximizable</h4><p>Full-screen toggle for better viewing of large schedules.</p></div>
+                <div class="feature-box warning"><h4>Refresh Support</h4><p>Manual refresh button to reload latest data.</p></div>
+            </div>
+
+            <h3>Visual Consistency with Editor</h3>
+            <table class="comparison-table">
+                <thead><tr><th>Element</th><th>Color/Style</th></tr></thead>
+                <tbody>
+                    <tr><td>Header Gradient</td><td><code>#1a365d → #2c5282</code> (Deep Blue)</td></tr>
+                    <tr><td>Table Header Gradient</td><td><code>#1a365d → #2c5282 → #2b6cb0</code></td></tr>
+                    <tr><td>Table Header Border</td><td><code>#63b3ed</code> (Light Blue)</td></tr>
+                    <tr><td>Active Tab Border</td><td><code>#3182ce</code> (Blue)</td></tr>
+                    <tr><td>Aggregate Footer</td><td>Same blue gradient as header</td></tr>
+                    <tr><td>Table Max Height</td><td>600px with scrolling</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Row Status Colors (Same as Editor)</h3>
+            <div class="feature-grid">
+                <div class="feature-box info"><h4><span class="status-badge status-scheduled">Scheduled</span></h4><p>Blue gradient row - future payment</p></div>
+                <div class="feature-box success"><h4><span class="status-badge status-cleared">Cleared</span></h4><p>Green gradient row - payment processed</p></div>
+                <div class="feature-box danger"><h4><span class="status-badge status-nsf">NSF</span></h4><p>Red gradient row - insufficient funds</p></div>
+                <div class="feature-box warning"><h4><span class="status-badge status-cancelled">Cancelled</span></h4><p>Yellow gradient row - payment cancelled</p></div>
+            </div>
+
+            <h3>Wired Payment Display</h3>
+            <p>Wired payments appear as nested orange rows beneath their parent schedule item, showing:</p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li><strong>Date:</strong> Payment date</li>
+                <li><strong>Amount:</strong> Wire payment amount</li>
+                <li><strong>Description:</strong> Optional description text</li>
+            </ul>
+
+            <h3>Component Files</h3>
+            <div class="code-block">force-app/main/default/lwc/paymentPlanViewer/
+├── paymentPlanViewer.html    <span class="comment">// Template with table structure</span>
+├── paymentPlanViewer.js      <span class="comment">// Component logic</span>
+├── paymentPlanViewer.css     <span class="comment">// Styles (matches editor)</span>
+└── paymentPlanViewer.js-meta.xml</div>
+        </section>
+
+        <!-- Section 32: Summary Stats Component -->
+        <section id="summary-stats" class="section">
+            <h2><span class="section-number">32</span> Summary Stats Component</h2>
+            <p>A child component displaying key metrics with gradient-colored cards.</p>
+
+            <h3>Stat Cards</h3>
+            <table class="comparison-table">
+                <thead><tr><th>Card</th><th>Metric</th><th>Gradient Colors</th></tr></thead>
+                <tbody>
+                    <tr><td style="background: linear-gradient(135deg, #667eea 0%, #38b2ac 100%); color: white;">Total Enrolled Debt</td><td>Total debt amount</td><td><code>#667eea → #38b2ac</code></td></tr>
+                    <tr><td style="background: linear-gradient(135deg, #38b2ac 0%, #10b981 100%); color: white;">New Weekly Payment</td><td>Calculated weekly payment</td><td><code>#38b2ac → #10b981</code></td></tr>
+                    <tr><td style="background: linear-gradient(135deg, #0ea5e9 0%, #38b2ac 100%); color: white;">Current Weekly Payment</td><td>Current payment amount</td><td><code>#0ea5e9 → #38b2ac</code></td></tr>
+                    <tr><td style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); color: white;">First Draft</td><td>First payment date</td><td><code>#8b5cf6 → #6366f1</code></td></tr>
+                    <tr><td style="background: linear-gradient(135deg, #14b8a6 0%, #0ea5e9 100%); color: white;">Weekly Savings</td><td>Savings per week</td><td><code>#14b8a6 → #0ea5e9</code></td></tr>
+                    <tr><td style="background: linear-gradient(135deg, #0284c7 0%, #0d9488 100%); color: white;">Percent Savings</td><td>Savings percentage</td><td><code>#0284c7 → #0d9488</code></td></tr>
+                    <tr><td style="background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%); color: white;">Duration</td><td>Program length in weeks</td><td><code>#7c3aed → #8b5cf6</code></td></tr>
+                </tbody>
+            </table>
+
+            <h3>Card Layout</h3>
+            <div class="code-block"><span class="comment">// Row 1: 4 cards (3 columns each on large screens)</span>
+Total Enrolled Debt | New Weekly Payment | Current Weekly Payment | First Draft
+
+<span class="comment">// Row 2: 3 cards (4 columns each on large screens)</span>
+Weekly Savings | Percent Savings | Duration</div>
+
+            <h3>CSS Classes</h3>
+            <table class="comparison-table">
+                <thead><tr><th>Class</th><th>Purpose</th></tr></thead>
+                <tbody>
+                    <tr><td><code>.stat-card</code></td><td>Base card styling (rounded corners, shadow, hover effect)</td></tr>
+                    <tr><td><code>.stat-total-debt</code></td><td>Purple → Teal gradient</td></tr>
+                    <tr><td><code>.stat-new-weekly</code></td><td>Teal → Green gradient</td></tr>
+                    <tr><td><code>.stat-current-weekly</code></td><td>Blue → Teal gradient</td></tr>
+                    <tr><td><code>.stat-first-draft</code></td><td>Violet → Indigo gradient</td></tr>
+                    <tr><td><code>.stat-weekly-savings</code></td><td>Teal → Blue gradient</td></tr>
+                    <tr><td><code>.stat-percent-savings</code></td><td>Blue → Teal gradient</td></tr>
+                    <tr><td><code>.stat-duration</code></td><td>Violet → Purple gradient</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Section 33: Recent Updates -->
+        <section id="recent-updates" class="section">
+            <h2><span class="section-number">33</span> Recent Updates (January 2026)</h2>
+
+            <h3>New Features</h3>
+            <div class="feature-grid">
+                <div class="feature-box primary"><h4>DCG MOD CA Program Type</h4><p>New California variant with automatic No-Fee Program enabled. Uses same 50/50 split as DCG Mod.</p></div>
+                <div class="feature-box success"><h4>Setup Fee from Opportunity</h4><p>Setup Fee is now read from <code>Opportunity.Setup_Fee__c</code> field instead of being set by program type.</p></div>
+                <div class="feature-box info"><h4>Dynamic Min/Max Weeks</h4><p>Number of Weeks min/max are now dynamically calculated based on target payment percentage range.</p></div>
+                <div class="feature-box warning"><h4>Program-Specific Config</h4><p><code>getRequiredConfigForProgram()</code> loads configuration specific to each program type.</p></div>
+            </div>
+
+            <h3>UI/UX Improvements</h3>
+            <div class="feature-grid">
+                <div class="feature-box success"><h4>Pagination Removed</h4><p>Payment table now shows all items with scroll (max-height: 600px). No page navigation needed.</p></div>
+                <div class="feature-box primary"><h4>Viewer Styling Updated</h4><p>Payment Plan Viewer now matches Editor styling with blue gradient theme.</p></div>
+                <div class="feature-box info"><h4>Summary Stats Gradients</h4><p>7 stat cards with unique gradient colors for visual distinction.</p></div>
+                <div class="feature-box warning"><h4>Save Button Moved</h4><p>"Save to Opportunity" button now under Program Settings (removed separate section).</p></div>
+            </div>
+
+            <h3>Bug Fixes in PaymentPlanEditorController.cls</h3>
+            <table class="comparison-table">
+                <thead><tr><th>Issue</th><th>Fix Applied</th></tr></thead>
+                <tbody>
+                    <tr><td>Banking fee cascading on NSF items</td><td>Removed banking fee recovery from NSF items - flat rate per payment</td></tr>
+                    <tr><td>NSF items counted as "paid"</td><td><code>calculatePaidSums</code> now only counts CLEARED items</td></tr>
+                    <tr><td>Setup fee count incorrect</td><td><code>calculateScheduleItems</code> only counts CLEARED setup fees</td></tr>
+                    <tr><td>Missing Opportunity field validation</td><td>Added null checks for required fields (Estimated_Total_Debt__c, Number_of_Weeks__c)</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Key Code Changes</h3>
+            <div class="code-block"><span class="comment">// calculatePaidSums - Only count CLEARED items</span>
+<span class="keyword">for</span> (Payment_Schedule_Item__c item : nonScheduledItems) {
+    <span class="keyword">if</span> (item.Status__c == STATUS_CLEARED) {
+        sums.setupFee += item.Setup_Fee_Amount__c;
+        sums.programFee += item.Program_Fee_Amount__c;
+        sums.escrow += item.To_Escrow_Amount__c;
+    }
+}
+
+<span class="comment">// Banking fee - NO cascading recovery</span>
+Decimal thisBankingFee = bankingFee;  <span class="comment">// Flat rate, no extraBankingFeePerPayment</span>
+
+<span class="comment">// Null check for required Opportunity fields</span>
+<span class="keyword">if</span> (opp.Estimated_Total_Debt__c == null || opp.Estimated_Total_Debt__c &lt;= 0) {
+    <span class="keyword">throw new</span> AuraHandledException(<span class="string">'Missing required field: Estimated Total Debt'</span>);
+}</div>
+
+            <h3>Files Modified</h3>
+            <table class="comparison-table">
+                <thead><tr><th>File</th><th>Changes</th></tr></thead>
+                <tbody>
+                    <tr><td><code>PaymentPlanEditorController.cls</code></td><td>Fixed banking fee cascading, CLEARED-only counting, null checks</td></tr>
+                    <tr><td><code>paymentPlanEditor.js</code></td><td>Removed pagination, displays all items</td></tr>
+                    <tr><td><code>paymentPlanEditor.css</code></td><td>Increased max-height to 600px</td></tr>
+                    <tr><td><code>paymentPlanViewer.css</code></td><td>Updated to match editor styling (blue gradients)</td></tr>
+                    <tr><td><code>summaryStats.html</code></td><td>Added card-specific classes for gradients</td></tr>
+                    <tr><td><code>summaryStats.css</code></td><td>Added 7 gradient color classes</td></tr>
+                    <tr><td><code>paymentPlanEditorV2.html</code></td><td>Added DCG MOD CA card, moved Save button under Program Settings</td></tr>
+                    <tr><td><code>paymentPlanEditorV2.js</code></td><td>Added DCG_MOD_CA program type, setup fee from Opportunity, dynamic weeks min/max, program-specific config loading</td></tr>
+                </tbody>
+            </table>
+
+            <div class="info-box tip">
+                <span class="icon">&#9989;</span>
+                <p><strong>Deployment:</strong> All changes have been deployed to the UAT environment.</p>
+            </div>
+        </section>
+
+        <footer style="text-align: center; padding: 40px 20px; color: var(--gray-500); border-top: 1px solid var(--gray-200); margin-top: 40px;">
+            <p>Payment Plan Editor V2 User Manual</p>
+            <p>Version 2.2 | Last Updated: January 2026</p>
+            <p style="margin-top: 10px;">&copy; DCG | All Rights Reserved</p>
+        </footer>
+    </div>
+</body>
+</html>

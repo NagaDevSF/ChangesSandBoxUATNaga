@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Min_Target_Percent_DCG_Debt__c</fullName>
+    <description>Minimum target percentage slider value for DCG_DEBT programs</description>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>Min Target Percent DCG Debt</label>
+    <precision>5</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <type>Percent</type>
+</CustomField>

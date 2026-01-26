@@ -1,0 +1,14 @@
+<!-- marketingLeadAlert.html -->
+<template>
+    <template if:true={showAlert}>
+        <div class="slds-notify slds-notify_alert slds-theme_warning" role="alert">
+            <span class="slds-icon_container slds-icon-utility-warning slds-m-right_x-small">
+                <lightning-icon icon-name="utility:warning" size="small"></lightning-icon>
+            </span>
+            <h2>New Marketing Lead Created!</h2>
+            <button class="slds-button slds-button_icon slds-notify__close" onclick={closeAlert}>
+                <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
+            </button>
+        </div>
+    </template>
+</template>

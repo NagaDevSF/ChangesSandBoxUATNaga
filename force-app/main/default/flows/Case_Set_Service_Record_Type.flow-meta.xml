@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>64.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <constants>
+        <name>conCaseRecordTypeIdLegal</name>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>012Pe000001Ll09IAC</stringValue>
+        </value>
+    </constants>
+    <constants>
+        <name>conCaseRecordTypeIdWelcome</name>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>012Oy000007AC8jIAG</stringValue>
+        </value>
+    </constants>
+    <decisions>
+        <name>Check_Record_Type</name>
+        <label>Check Record Type</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Is_Welcome_Team</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.RecordTypeId</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>conCaseRecordTypeIdWelcome</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Set_Service_Record_Type</targetReference>
+            </connector>
+            <label>Is Welcome Team</label>
+        </rules>
+        <rules>
+            <name>Is_Legal_Team</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.RecordTypeId</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>conCaseRecordTypeIdLegal</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Set_Service_Record_Type_Legal</targetReference>
+            </connector>
+            <label>Is Legal Team</label>
+        </rules>
+    </decisions>
+    <description>Service Record Type picklist update with basic error handling - gracefully skips update if field not accessible or update fails</description>
+    <environments>Default</environments>
+    <interviewLabel>Case - Set Service Record Type {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Case Before Create</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Set_Service_Record_Type</name>
+        <label>Set Service Record Type</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputAssignments>
+            <field>Service_Record_Type__c</field>
+            <value>
+                <stringValue>Welcome Team</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Set_Service_Record_Type_Legal</name>
+        <label>Set Service Record Type Legal</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputAssignments>
+            <field>Service_Record_Type__c</field>
+            <value>
+                <stringValue>Legal Team</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Check_Record_Type</targetReference>
+        </connector>
+        <object>Case</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Obsolete</status>
+</Flow>

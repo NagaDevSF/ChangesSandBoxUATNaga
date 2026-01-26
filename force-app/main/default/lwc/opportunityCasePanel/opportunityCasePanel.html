@@ -1,0 +1,345 @@
+<template>
+    <div class="opportunity-case-panel slds-card slds-m-top_small">
+        <div class="slds-card__header">
+            <div class="slds-media slds-media_center">
+                <div class="slds-media__figure">
+                    <lightning-icon 
+                        icon-name="standard:case" 
+                        alternative-text="Case Details" 
+                        title="Case Details" 
+                        size="small">
+                    </lightning-icon>
+                </div>
+                <div class="slds-media__body">
+                    <h2 class="slds-card__header-title">
+                        <span class="slds-text-heading_small">Case Management Dashboard</span>
+                    </h2>
+                </div>
+                <div class="slds-no-flex">
+                    <lightning-button-icon 
+                        icon-name="utility:refresh" 
+                        variant="border-filled" 
+                        alternative-text="Refresh case data" 
+                        title="Refresh case data"
+                        onclick={refreshData}>
+                    </lightning-button-icon>
+                </div>
+            </div>
+        </div>
+        
+        <div class="slds-card__body slds-card__body_inner">
+            <!-- Loading State -->
+            <template if:true={isLoading}>
+                <div class="slds-text-align_center slds-p-around_medium">
+                    <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+                </div>
+            </template>
+            
+            <!-- Error State -->
+            <template if:true={error}>
+                <div class="slds-notify slds-notify_alert slds-theme_error">
+                    <span class="slds-assistive-text">Error</span>
+                    <div class="slds-notify__content">
+                        <h2>Error loading case data</h2>
+                    </div>
+                </div>
+            </template>
+            
+            <!-- Case Sections -->
+            <template if:false={isLoading}>
+                <!-- Opportunity Summary -->
+                <template if:true={opportunitySummary}>
+                    <div class="slds-grid slds-gutters slds-m-bottom_medium">
+                        <div class="slds-col slds-size_1-of-3">
+                            <div class="summary-metric">
+                                <div class="metric-value">{opportunitySummary.totalDebt}</div>
+                                <div class="metric-label">Total Debt</div>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-3">
+                            <div class="summary-metric">
+                                <div class="metric-value">{opportunitySummary.settledAmount}</div>
+                                <div class="metric-label">Settled Amount</div>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-3">
+                            <div class="summary-metric">
+                                <div class="metric-value">{activeNegotiationCount}</div>
+                                <div class="metric-label">Active Negotiations</div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Welcome Cases Section -->
+                <template if:true={hasWelcomeCasesData}>
+                    <div class="case-section slds-m-bottom_small">
+                        <div class="section-header slds-grid slds-grid_align-spread" onclick={handleWelcomeSectionToggle}>
+                            <div class="slds-media slds-media_center">
+                                <div class="slds-media__figure">
+                                    <lightning-icon 
+                                        icon-name="standard:person_account" 
+                                        size="small">
+                                    </lightning-icon>
+                                </div>
+                                <div class="slds-media__body">
+                                    <h3 class="slds-text-heading_small">Client Onboarding</h3>
+                                </div>
+                            </div>
+                            <div class="slds-no-flex">
+                                <span class="slds-badge slds-theme_info">{welcomeCaseCount} Cases</span>
+                                <lightning-icon 
+                                    icon-name="utility:chevrondown"
+                                    size="small" 
+                                    class="slds-m-left_small">
+                                </lightning-icon>
+                            </div>
+                        </div>
+                        
+                        <template if:true={isWelcomeSectionExpanded}>
+                            <div class="section-content slds-m-top_small">
+                                <template for:each={welcomeCases} for:item="welcomeCase">
+                                    <div key={welcomeCase.id} class="case-item slds-box slds-m-bottom_x-small">
+                                        <div class="slds-grid">
+                                            <div class="slds-col slds-size_3-of-12">
+                                                <div class="case-number">{welcomeCase.caseNumber}</div>
+                                                <div class="case-subject">{welcomeCase.subject}</div>
+                                            </div>
+                                            <div class="slds-col slds-size_3-of-12">
+                                                <div class="field-label">Current Stage</div>
+                                                <div class="field-value">
+                                                    <span class={welcomeCase.statusBadgeClass}>{welcomeCase.welcomeTeamJourney}</span>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_3-of-12">
+                                                <div class="field-label">Case Owner</div>
+                                                <div class="field-value">{welcomeCase.ownerName}</div>
+                                            </div>
+                                            <div class="slds-col slds-size_3-of-12">
+                                                <div class="field-label">Last Activity</div>
+                                                <div class="field-value">{welcomeCase.lastModifiedDisplay}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Legal Cases Section -->
+                <template if:true={hasLegalCases}>
+                    <div class="case-section slds-m-bottom_small">
+                        <div class="section-header slds-grid slds-grid_align-spread" onclick={handleLegalSectionToggle}>
+                            <div class="slds-media slds-media_center">
+                                <div class="slds-media__figure">
+                                    <lightning-icon 
+                                        icon-name="standard:contract" 
+                                        size="small">
+                                    </lightning-icon>
+                                </div>
+                                <div class="slds-media__body">
+                                    <h3 class="slds-text-heading_small">Legal & Negotiations</h3>
+                                </div>
+                            </div>
+                            <div class="slds-no-flex">
+                                <span class="slds-badge slds-theme_warning">{legalCaseCount} Cases</span>
+                                <lightning-icon 
+                                    icon-name="utility:chevrondown"
+                                    size="small" 
+                                    class="slds-m-left_small">
+                                </lightning-icon>
+                            </div>
+                        </div>
+                        
+                        <template if:true={isLegalSectionExpanded}>
+                            <div class="section-content slds-m-top_small">
+                                <template for:each={legalCases} for:item="legalCase">
+                                    <div key={legalCase.id} class="case-item slds-box slds-m-bottom_x-small">
+                                        <div class="slds-grid">
+                                            <div class="slds-col slds-size_3-of-12">
+                                                <div class="case-number">{legalCase.caseNumber}</div>
+                                                <div class="case-subject">{legalCase.subject}</div>
+                                            </div>
+                                            <div class="slds-col slds-size_3-of-12">
+                                                <div class="field-label">Legal Status</div>
+                                                <div class="field-value">
+                                                    <span class={legalCase.legalStatusBadgeClass}>{legalCase.legalStatus}</span>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_3-of-12">
+                                                <div class="field-label">Legal Representative</div>
+                                                <div class="field-value">{legalCase.legalRepresentative}</div>
+                                            </div>
+                                            <div class="slds-col slds-size_3-of-12">
+                                                <div class="field-label">Active Negotiations</div>
+                                                <div class="field-value">
+                                                    <span class="slds-badge slds-theme_alt-inverse">{legalCase.activeNegotiations}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Client Support Cases Section -->
+                <template if:true={hasSupportCases}>
+                    <div class="case-section slds-m-bottom_small">
+                        <div class="section-header slds-grid slds-grid_align-spread" onclick={handleSupportSectionToggle}>
+                            <div class="slds-media slds-media_center">
+                                <div class="slds-media__figure">
+                                    <lightning-icon 
+                                        icon-name="standard:live_chat" 
+                                        size="small">
+                                    </lightning-icon>
+                                </div>
+                                <div class="slds-media__body">
+                                    <h3 class="slds-text-heading_small">Client Support</h3>
+                                </div>
+                            </div>
+                            <div class="slds-no-flex">
+                                <span class="slds-badge slds-theme_success">{supportCaseCount} Cases</span>
+                                <lightning-icon 
+                                    icon-name="utility:chevrondown"
+                                    size="small" 
+                                    class="slds-m-left_small">
+                                </lightning-icon>
+                            </div>
+                        </div>
+                        
+                        <template if:true={isSupportSectionExpanded}>
+                            <div class="section-content slds-m-top_small">
+                                <template for:each={supportCases} for:item="supportCase">
+                                    <div key={supportCase.id} class="case-item slds-box slds-m-bottom_x-small">
+                                        <div class="slds-grid">
+                                            <div class="slds-col slds-size_3-of-12">
+                                                <div class="case-number">{supportCase.caseNumber}</div>
+                                                <div class="case-subject">{supportCase.subject}</div>
+                                            </div>
+                                            <div class="slds-col slds-size_3-of-12">
+                                                <div class="field-label">Request Type</div>
+                                                <div class="field-value">{supportCase.requestType}</div>
+                                            </div>
+                                            <div class="slds-col slds-size_3-of-12">
+                                                <div class="field-label">Case Owner</div>
+                                                <div class="field-value">{supportCase.ownerName}</div>
+                                            </div>
+                                            <div class="slds-col slds-size_3-of-12">
+                                                <div class="field-label">Status</div>
+                                                <div class="field-value">
+                                                    <span class={supportCase.statusBadgeClass}>{supportCase.status}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Active Negotiations Section -->
+                <template if:true={hasNegotiations}>
+                    <div class="case-section slds-m-bottom_small">
+                        <div class="section-header slds-grid slds-grid_align-spread" onclick={handleNegotiationSectionToggle}>
+                            <div class="slds-media slds-media_center">
+                                <div class="slds-media__figure">
+                                    <lightning-icon 
+                                        icon-name="standard:opportunity" 
+                                        size="small">
+                                    </lightning-icon>
+                                </div>
+                                <div class="slds-media__body">
+                                    <h3 class="slds-text-heading_small">Active Negotiations</h3>
+                                </div>
+                            </div>
+                            <div class="slds-no-flex">
+                                <span class="slds-badge slds-theme_error">{activeNegotiationCount} Active</span>
+                                <lightning-icon 
+                                    icon-name="utility:chevrondown"
+                                    size="small" 
+                                    class="slds-m-left_small">
+                                </lightning-icon>
+                            </div>
+                        </div>
+                        
+                        <template if:true={isNegotiationSectionExpanded}>
+                            <div class="section-content slds-m-top_small">
+                                <template for:each={negotiations} for:item="negotiation">
+                                    <div key={negotiation.id} class="case-item slds-box slds-m-bottom_x-small">
+                                        <div class="slds-grid">
+                                            <div class="slds-col slds-size_3-of-12">
+                                                <div class="case-number">{negotiation.caseNumber}</div>
+                                                <div class="case-subject">{negotiation.name}</div>
+                                            </div>
+                                            <div class="slds-col slds-size_3-of-12">
+                                                <div class="field-label">Status</div>
+                                                <div class="field-value">{negotiation.status}</div>
+                                            </div>
+                                            <div class="slds-col slds-size_3-of-12">
+                                                <div class="field-label">Settlement Offer</div>
+                                                <div class="field-value">{negotiation.settlementOffer}</div>
+                                            </div>
+                                            <div class="slds-col slds-size_3-of-12">
+                                                <div class="field-label">Legal Rep</div>
+                                                <div class="field-value">{negotiation.legalRep}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions slds-m-top_medium">
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col">
+                            <lightning-button 
+                                variant="neutral" 
+                                label="Create Client Support Case" 
+                                onclick={handleCreateCase}
+                                class="slds-m-right_small">
+                            </lightning-button>
+                        </div>
+                        <div class="slds-col">
+                            <lightning-button 
+                                variant="neutral" 
+                                label="View All Legal Cases" 
+                                onclick={handleViewAllLegalCases}>
+                            </lightning-button>
+                        </div>
+                        <div class="slds-col">
+                            <lightning-button 
+                                variant="neutral" 
+                                label="Check Negotiation Status" 
+                                onclick={handleCheckNegotiationStatus}>
+                            </lightning-button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <template if:false={totalCasesCount}>
+                    <div class="slds-text-align_center slds-p-around_large">
+                        <lightning-icon icon-name="utility:cases" size="large" class="slds-text-color_weak"></lightning-icon>
+                        <h3 class="slds-text-heading_small slds-m-top_medium">No cases found</h3>
+                        <p class="slds-text-body_regular slds-m-top_small">
+                            This opportunity doesn't have any associated cases yet.
+                        </p>
+                        <lightning-button 
+                            variant="brand" 
+                            label="Create Case" 
+                            onclick={handleCreateCase}
+                            class="slds-m-top_medium">
+                        </lightning-button>
+                    </div>
+                </template>
+            </template>
+        </div>
+    </div>
+</template>

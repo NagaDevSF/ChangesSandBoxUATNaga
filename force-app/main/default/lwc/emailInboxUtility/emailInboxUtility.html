@@ -1,0 +1,202 @@
+<template>
+    <div class="email-inbox-container" data-keepalive="true" data-connection-status="active">
+    <div class={emailInboxClass}>
+        <!-- Header with filter buttons -->
+        <div class="inbox-header">
+            <div class="filter-tabs">
+                <button class={receivedButtonClass} onclick={showReceived}>
+                    Received ({receivedCount})
+                </button>
+                <button class={sentButtonClass} onclick={showSent}>
+                    Sent ({sentCount})
+                </button>
+                <button class={unseenButtonClass} onclick={showUnseen}>
+                    Unseen ({unseenCount})
+                </button>
+            </div>
+            <div class="header-actions">
+                <!-- Connection Status Indicator -->
+                <div class="connection-status-indicator" title={connectionStatusText}>
+                    <lightning-icon 
+                        icon-name="utility:connected_apps" 
+                        size="xx-small"
+                        class={connectionStatusClass}>
+                    </lightning-icon>
+                </div>
+                
+                <!-- Notification Bell Button -->
+                <lightning-button-icon
+                    if:true={hasNewEmails}
+                    icon-name="utility:notification"
+                    variant="brand"
+                    onclick={handleNotificationClick}
+                    title={notificationTitle}
+                    size="small"
+                    class="notification-bell">
+                </lightning-button-icon>
+                
+                <!-- Refresh Button -->
+                <lightning-button-icon
+                    icon-name="utility:refresh"
+                    variant="border-filled"
+                    onclick={handleRefresh}
+                    title="Refresh"
+                    size="small"
+                    class="refresh-btn"
+                    disabled={isLoading}>
+                </lightning-button-icon>
+            </div>
+        </div>
+
+        <!-- Search and Date Filters -->
+        <div class="filter-section">
+            <!-- Search Bar -->
+            <div class="search-container">
+                <lightning-input
+                    type="search"
+                    placeholder="Search emails..."
+                    value={searchTerm}
+                    onchange={handleSearch}
+                    variant="label-hidden"
+                    class={searchInputClass}>
+                </lightning-input>
+            </div>
+            
+            <!-- Date Range Filters -->
+            <div class="date-filters">
+                <lightning-input
+                    type="date"
+                    name="fromDate"
+                    label="From"
+                    value={fromDate}
+                    onchange={handleDateChange}
+                    variant="label-stacked"
+                    class="date-input">
+                </lightning-input>
+                <lightning-input
+                    type="date"
+                    name="toDate"
+                    label="To"
+                    value={toDate}
+                    onchange={handleDateChange}
+                    variant="label-stacked"
+                    class="date-input">
+                </lightning-input>
+                <lightning-button
+                    label="Clear"
+                    variant="neutral"
+                    onclick={clearDateFilters}
+                    class="clear-btn"
+                    size="small">
+                </lightning-button>
+            </div>
+        </div>
+
+        <!-- Loading spinner -->
+        <div if:true={isLoading} class="loading-container">
+            <lightning-spinner size="small"></lightning-spinner>
+        </div>
+
+        <!-- Email list -->
+        <div if:false={isLoading} class="email-list">
+            <template if:true={hasEmails}>
+                <template for:each={filteredEmails} for:item="email">
+                    <div key={email.id} 
+                         class={email.cssClass} 
+                         onclick={handleEmailClick}
+                         data-email-id={email.id}>
+                        
+                        <!-- Custom Avatar with Full Control -->
+                        <div class="email-avatar">
+                            <div class="custom-avatar" style={email.avatarStyle}>
+                                <span class="avatar-initials">{email.avatarInitials}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="email-item-content">
+                            <div class="email-subject-container">
+                                <div class="email-subject" title={email.subject}>
+                                    {email.subject}
+                                </div>
+                                <!-- NEW pill for new emails -->
+                                <div if:true={email.isNew} class="new-email-pill">
+                                    NEW
+                                </div>
+                            </div>
+                            <div class="email-meta">
+                                <span class="email-from">{email.displayFrom}</span>
+                                <span class="email-date">{email.relativeDate}</span>
+                                <lightning-icon if:true={email.hasAttachment} 
+                                              icon-name="utility:attach" 
+                                              size="xx-small" 
+                                              class="attachment-icon">
+                                </lightning-icon>
+                            </div>
+                        </div>
+
+                        <!-- Pin button -->
+                        <div class="pin-container">
+                            <lightning-button-icon
+                                icon-name={email.pinIconName}
+                                variant="bare"
+                                size="x-small"
+                                onclick={handlePinClick}
+                                data-email-id={email.id}
+                                title={email.pinTitle}
+                                class={email.pinClass}>
+                            </lightning-button-icon>
+                        </div>
+
+                        <!-- Calendar button -->
+                        <div class="calendar-container">
+                            <lightning-button-icon
+                                icon-name="utility:event"
+                                variant="bare"
+                                size="x-small"
+                                onclick={handleCalendarClick}
+                                data-email-id={email.id}
+                                title="Schedule appointment with sender"
+                                class="calendar-button">
+                            </lightning-button-icon>
+                        </div>
+
+                        <!-- Unread indicator -->
+                        <div if:true={email.isUnread} class="unread-dot"></div>
+                    </div>
+                </template>
+            </template>
+
+            <!-- Empty state -->
+            <template if:false={hasEmails}>
+                <div class="empty-state">
+                    <lightning-icon icon-name="utility:email" size="small" class="empty-icon"></lightning-icon>
+                    <p class="empty-message">{emptyMessage}</p>
+                </div>
+            </template>
+
+            <!-- Load More / End of emails indicator -->
+            <div if:true={showLoadMore} class="load-more">
+                <lightning-button
+                    label="Load More"
+                    onclick={handleLoadMore}
+                    variant="neutral"
+                    size="small">
+                </lightning-button>
+            </div>
+            
+            <!-- No more emails message -->
+            <div if:true={showNoMoreEmails} class="no-more-emails">
+                <p class="no-more-message">📪 No more emails to load</p>
+            </div>
+        </div>
+
+        <!-- Error message -->
+        <template if:true={errorMessage}>
+            <div class="error-message">
+                <lightning-icon icon-name="utility:error" size="xx-small" variant="error"></lightning-icon>
+                <span>{errorMessage}</span>
+            </div>
+        </template>
+    </div>
+    </div>
+</template>

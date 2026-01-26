@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Send_it_to_Convoso</name>
+        <label>Send it to Convoso</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>ConvosoFlowIntegration</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>email</name>
+            <value>
+                <elementReference>$Record.Email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>first_name</name>
+            <value>
+                <elementReference>$Record.FirstName</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>last_name</name>
+            <value>
+                <elementReference>$Record.LastName</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>list_id</name>
+            <value>
+                <stringValue>8381</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>notes</name>
+            <value>
+                <elementReference>$Record.Main_Source__c</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>phone_number</name>
+            <value>
+                <elementReference>$Record.Phone_Number__c</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>ConvosoFlowIntegration</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <apiVersion>64.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Check_updated_Activity</name>
+        <label>Check updated || Activity</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>update</name>
+            <conditionLogic>or</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.LastActivityDate</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Send_it_to_Convoso</targetReference>
+            </connector>
+            <label>update</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>If_business_hours</name>
+        <label>If business hours</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>True</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>IsBusinessHours</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Check_updated_Activity</targetReference>
+            </connector>
+            <label>True</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <formulas>
+        <name>IsBusinessHours</name>
+        <dataType>Boolean</dataType>
+        <expression>AND(
+    HOUR(TIMEVALUE({!$Record.CreatedDate})) &gt;= 13,
+    HOUR(TIMEVALUE({!$Record.CreatedDate})) &lt; 21,
+    WEEKDAY(DATEVALUE({!$Record.CreatedDate})) &gt;= 2,
+    WEEKDAY(DATEVALUE({!$Record.CreatedDate})) &lt;= 6
+)</expression>
+    </formulas>
+    <interviewLabel>Lead {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Marketing Lead Round-Robin + SLA Enhancements</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Just_status_new</name>
+        <label>Just status = new</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>New</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Just_status_new</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>utm_source__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <object>Lead</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <scheduledPaths>
+            <name>Hold_for_2_min</name>
+            <connector>
+                <targetReference>If_business_hours</targetReference>
+            </connector>
+            <label>Hold for 2 min</label>
+            <maxBatchSize>100</maxBatchSize>
+            <offsetNumber>2</offsetNumber>
+            <offsetUnit>Minutes</offsetUnit>
+            <timeSource>RecordTriggerEvent</timeSource>
+        </scheduledPaths>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Obsolete</status>
+</Flow>

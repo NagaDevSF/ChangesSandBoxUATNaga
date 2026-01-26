@@ -1,0 +1,357 @@
+<template>
+    <lightning-card title="Account Opportunities & Creditors" icon-name="standard:opportunity">
+        <!-- Header Actions -->
+        <div slot="actions">
+            <lightning-button-group>
+                <lightning-button 
+                    label="Expand All" 
+                    onclick={handleExpandAll}
+                    variant="neutral"
+                    size="small">
+                </lightning-button>
+                <lightning-button 
+                    label="Collapse All" 
+                    onclick={handleCollapseAll}
+                    variant="neutral"
+                    size="small">
+                </lightning-button>
+                <lightning-button 
+                    label="Refresh" 
+                    onclick={handleRefresh}
+                    variant="brand"
+                    size="small"
+                    icon-name="utility:refresh">
+                </lightning-button>
+            </lightning-button-group>
+        </div>
+
+        <div class="slds-card__body slds-card__body_inner">
+            <!-- Loading Spinner -->
+            <template if:true={isLoading}>
+                <div class="slds-is-relative slds-p-around_large">
+                    <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+            <!-- Error Message -->
+            <template if:true={error}>
+                <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" role="alert">
+                    <span class="slds-assistive-text">Error</span>
+                    <h2>
+                        <lightning-icon icon-name="utility:error" alternative-text="Error" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                        Error loading data: {error.body.message}
+                    </h2>
+                </div>
+            </template>
+
+            <!-- Summary Section -->
+            <template if:true={data}>
+                <div class="summary-section slds-box slds-theme_shade slds-m-bottom_medium">
+                    <div class="slds-grid slds-wrap slds-gutters">
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4">
+                            <div class="summary-item">
+                                <div class="summary-label">Total Opportunities</div>
+                                <div class="summary-value">{data.totalOpportunities}</div>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4">
+                            <div class="summary-item">
+                                <div class="summary-label">Total Amount</div>
+                                <div class="summary-value">{formattedTotalAmount}</div>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4">
+                            <div class="summary-item">
+                                <div class="summary-label">Total Estimated Debt</div>
+                                <div class="summary-value">{formattedTotalEstimatedDebt}</div>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4">
+                            <div class="summary-item">
+                                <div class="summary-label">Total Creditors</div>
+                                <div class="summary-value">{data.totalCreditors}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- No Opportunities Message -->
+                <template if:false={hasOpportunities}>
+                    <div class="slds-illustration slds-illustration_small">
+                        <div class="slds-text-align_center slds-p-around_large">
+                            <lightning-icon icon-name="standard:opportunity" size="large" class="slds-m-bottom_small"></lightning-icon>
+                            <h3 class="slds-text-heading_medium">No Opportunities Found</h3>
+                            <p class="slds-text-body_regular">This account doesn't have any opportunities yet.</p>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Opportunities List -->
+                <template if:true={hasOpportunities}>
+                    <template for:each={opportunitiesWithFormatting} for:item="opportunity">
+                        <div key={opportunity.Id} class="opportunity-container slds-box slds-m-bottom_medium">
+                            <!-- Opportunity Header -->
+                            <div class="opportunity-header slds-grid slds-grid_align-spread" 
+                                 data-id={opportunity.Id} 
+                                 onclick={handleToggleExpand}>
+                                <div class="slds-grid slds-grid_vertical-align-center">
+                                    <lightning-icon 
+                                        icon-name={opportunity.expandIcon}
+                                        size="x-small"
+                                        class="slds-m-right_small expand-icon">
+                                    </lightning-icon>
+                                    <div>
+                                        <h3 class="opportunity-name slds-text-heading_small slds-truncate">
+                                            <a onclick={handleNavigateToRecord} 
+                                               data-id={opportunity.Id} 
+                                               data-type="Opportunity"
+                                               class="slds-link">
+                                                {opportunity.Name}
+                                            </a>
+                                        </h3>
+                                        <div class="slds-text-body_small slds-text-color_weak">
+                                            Stage: {opportunity.StageName} • {opportunity.creditorCount} Creditor(s)
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="opportunity-amount">
+                                    <div class="slds-text-align_right">
+                                        <div class="amount-value slds-text-heading_small">{opportunity.formattedAmount}</div>
+                                        <div class="slds-text-body_small slds-text-color_weak">Amount</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Opportunity Details (Expandable) -->
+                            <template if:true={opportunity.isExpanded}>
+                                <div class="opportunity-details slds-m-top_medium">
+                                    <!-- Opportunity Financial Info -->
+                                    <div class="financial-section slds-box slds-theme_shade slds-m-bottom_medium">
+                                        <h4 class="slds-text-heading_small slds-m-bottom_small">Financial Information</h4>
+                                        <div class="slds-grid slds-wrap slds-gutters_small">
+                                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-3">
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Amount:</span>
+                                                    <span class="detail-value">{opportunity.formattedAmount}</span>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-3">
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Estimated Total Debt:</span>
+                                                    <span class="detail-value">{opportunity.formattedEstimatedDebt}</span>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-3">
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Estimated Weekly Payment:</span>
+                                                    <span class="detail-value">{opportunity.formattedWeeklyPayment}</span>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-3">
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Estimated Current Payment:</span>
+                                                    <span class="detail-value">{opportunity.formattedCurrentPayment}</span>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-3">
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Payment Frequency:</span>
+                                                    <span class="detail-value">{opportunity.paymentFrequency}</span>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-3">
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Desired Weekly Payment:</span>
+                                                    <span class="detail-value">{opportunity.formattedDesiredPayment}</span>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-1">
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Quiz Quote:</span>
+                                                    <span class="detail-value">{opportunity.quizQuote}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Creditor Opportunities -->
+                                    <template if:true={opportunity.formattedCreditors}>
+                                        <div class="creditors-section">
+                                            <h4 class="slds-text-heading_small slds-m-bottom_small">
+                                                Creditor Opportunities ({opportunity.creditorCount})
+                                            </h4>
+                                            
+                                            <template for:each={opportunity.formattedCreditors} for:item="creditor">
+                                                <div key={creditor.Id} class="creditor-item slds-box slds-m-bottom_small">
+                                                    <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                                                        <div>
+                                                            <h5 class="creditor-name slds-text-heading_small">
+                                                                <a onclick={handleNavigateToRecord} 
+                                                                   data-id={creditor.Id} 
+                                                                   data-type="CreditorOpportunity__c"
+                                                                   class="slds-link">
+                                                                    {creditor.creditorName}
+                                                                </a>
+                                                            </h5>
+                                                            <div class="slds-text-body_small slds-text-color_weak">
+                                                                Number: {creditor.creditorNumber}
+                                                            </div>
+                                                        </div>
+                                                        <div class="slds-text-align_right">
+                                                            <div class="creditor-amount slds-text-heading_small">{creditor.formattedAmount}</div>
+                                                            <div class="slds-text-body_small slds-text-color_weak">Estimated Balance</div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="slds-grid slds-wrap slds-gutters_small">
+                                                        <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                                                            <div class="creditor-detail">
+                                                                <span class="detail-label">Payment:</span>
+                                                                <span class="detail-value">{creditor.formattedWeeklyPayment}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                                                            <div class="creditor-detail">
+                                                                <span class="detail-label">Frequency:</span>
+                                                                <span class="detail-value">{creditor.frequency}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+                                                            <div class="creditor-detail">
+                                                                <span class="detail-label">Est. Current Weekly Payment:</span>
+                                                                <span class="detail-value">{creditor.formattedCurrentPayment}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Related Negotiations -->
+                                                    <template if:true={creditor.hasNegotiations}>
+                                                        <div class="negotiations-section slds-m-top_small">
+                                                            <h6 class="slds-text-heading_small slds-m-bottom_small">
+                                                                <lightning-icon icon-name="utility:contract" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                                                Related Negotiations ({creditor.negotiationCount})
+                                                            </h6>
+                                                            
+                                                            <template for:each={creditor.negotiations} for:item="negotiation">
+                                                                <div key={negotiation.Id} class="negotiation-section slds-box slds-theme_shade slds-m-bottom_small">
+                                                                    <div class="negotiation-header slds-grid slds-grid_align-spread slds-m-bottom_small">
+                                                                        <div>
+                                                                            <h6 class="negotiation-name slds-text-heading_small">
+                                                                                <a onclick={handleNavigateToRecord} 
+                                                                                   data-id={negotiation.Id} 
+                                                                                   data-type="Negotiation__c"
+                                                                                   class="slds-link">
+                                                                                    {negotiation.Name}
+                                                                                </a>
+                                                                            </h6>
+                                                                            <div class="slds-text-body_small slds-text-color_weak">
+                                                                                {negotiation.negotiationType} • {negotiation.outcome}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="slds-text-align_right">
+                                                                            <div class="negotiation-status-badge">{negotiation.negotiationStatus}</div>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <div class="slds-grid slds-wrap slds-gutters_small">
+                                                                        <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-3">
+                                                                            <div class="creditor-detail">
+                                                                                <span class="detail-label">Payment Due Date:</span>
+                                                                                <span class="detail-value">{negotiation.formattedPaymentDueDate}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-3">
+                                                                            <div class="creditor-detail">
+                                                                                <span class="detail-label">Number of Payments:</span>
+                                                                                <span class="detail-value">{negotiation.numberOfPayments}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                                                            <div class="creditor-detail">
+                                                                                <span class="detail-label">Creditor Representative:</span>
+                                                                                <span class="detail-value">{negotiation.creditorRep}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                                                                            <div class="creditor-detail">
+                                                                                <span class="detail-label">Settlement Offer:</span>
+                                                                                <span class="detail-value settlement-offer">{negotiation.formattedSettlementOffer}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                                                                            <div class="creditor-detail">
+                                                                                <span class="detail-label">Counter Offer:</span>
+                                                                                <span class="detail-value counter-offer">{negotiation.formattedCounterOffer}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                                                                            <div class="creditor-detail">
+                                                                                <span class="detail-label">Final Agreed:</span>
+                                                                                <span class="detail-value final-agreed">{negotiation.formattedFinalAgreed}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                                                                            <div class="creditor-detail">
+                                                                                <span class="detail-label">Actual Payment:</span>
+                                                                                <span class="detail-value actual-payment">{negotiation.formattedActualPayment}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <template if:true={negotiation.formattedNextFollowUp}>
+                                                                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-3">
+                                                                                <div class="creditor-detail">
+                                                                                    <span class="detail-label">Next Follow Up:</span>
+                                                                                    <span class="detail-value">{negotiation.formattedNextFollowUp}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </template>
+                                                                        <template if:true={negotiation.formattedPaymentDate}>
+                                                                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-3">
+                                                                                <div class="creditor-detail">
+                                                                                    <span class="detail-label">Payment Date:</span>
+                                                                                    <span class="detail-value">{negotiation.formattedPaymentDate}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </template>
+                                                                    </div>
+                                                                    
+                                                                    <template if:true={negotiation.notes}>
+                                                                        <div class="slds-m-top_small">
+                                                                            <div class="creditor-detail">
+                                                                                <span class="detail-label">Notes:</span>
+                                                                                <div class="detail-value negotiation-notes">{negotiation.notes}</div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </template>
+                                                                </div>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+
+                                                    <!-- No Negotiations Message -->
+                                                    <template if:false={creditor.hasNegotiations}>
+                                                        <div class="slds-text-align_center slds-p-around_small slds-m-top_small">
+                                                            <lightning-icon icon-name="utility:info" size="small" class="slds-m-bottom_x-small"></lightning-icon>
+                                                            <p class="slds-text-body_small slds-text-color_weak">No active negotiations found for this creditor.</p>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+
+                                    <!-- No Creditors Message -->
+                                    <template if:false={opportunity.formattedCreditors}>
+                                        <div class="slds-text-align_center slds-p-around_medium">
+                                            <lightning-icon icon-name="standard:account" size="medium" class="slds-m-bottom_small"></lightning-icon>
+                                            <p class="slds-text-body_regular">No creditor opportunities found for this opportunity.</p>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+</template>

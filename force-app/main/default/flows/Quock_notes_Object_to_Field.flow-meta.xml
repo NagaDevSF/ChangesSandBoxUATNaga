@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Check</name>
+        <label>Check</label>
+        <locationX>380</locationX>
+        <locationY>323</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Is_Quicknotes_Updated</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.QuickNotes__c</leftValueReference>
+                <operator>IsChanged</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Quick_Notes</targetReference>
+            </connector>
+            <label>Is_Quicknotes_Updated</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Check_with_recent_record</name>
+        <label>Check with recent record</label>
+        <locationX>182</locationX>
+        <locationY>539</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Checking_recent_record_is_equal</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.QuickNotes__c</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <elementReference>Get_Quick_Notes.Notes__c</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_Notes</targetReference>
+            </connector>
+            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+            <label>Checking recent record is equal</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <formulas>
+        <name>ConnectedSubject</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.LastName} &amp; &quot; Connected, please proceed with the formalities&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>Description</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.Phone} &amp; &quot; Next follow up Required&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>DNCsubject</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.LastName} &amp; &quot; Do not call&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>FollowupdateEnd</name>
+        <dataType>DateTime</dataType>
+        <expression>{!$Record.Next_Follow_up_Date__c} + (15 / 1440)</expression>
+    </formulas>
+    <formulas>
+        <name>NeedCallBack</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.LastName} &amp; &quot; needs call back&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>NextFollowUpDate</name>
+        <dataType>Date</dataType>
+        <expression>Now() +1</expression>
+    </formulas>
+    <formulas>
+        <name>Nextfollowupdaterequired</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.LastName} &amp; &quot; Call back required&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>NotAvailableSubject</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.LastName} &amp; &quot; Not available&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>NotInterestedSubject</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.LastName} &amp; &quot; Not Interested&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>Now</name>
+        <dataType>Date</dataType>
+        <expression>now()</expression>
+    </formulas>
+    <formulas>
+        <name>RemindBefore5min</name>
+        <dataType>DateTime</dataType>
+        <expression>{!$Record.Next_Follow_up_Date__c} - (5 / 1440)</expression>
+    </formulas>
+    <interviewLabel>Quock notes Object to Field {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Quick notes Object to Field</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordCreates>
+        <name>Create_Notes</name>
+        <label>Create Notes</label>
+        <locationX>50</locationX>
+        <locationY>647</locationY>
+        <inputAssignments>
+            <field>Lead__c</field>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Name</field>
+            <value>
+                <elementReference>NotesTitle</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Notes__c</field>
+            <value>
+                <elementReference>$Record.QuickNotes__c</elementReference>
+            </value>
+        </inputAssignments>
+        <object>QuickNotes__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
+    <recordLookups>
+        <name>Get_Quick_Notes</name>
+        <label>Get Quick Notes</label>
+        <locationX>182</locationX>
+        <locationY>431</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Check_with_recent_record</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Lead__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>QuickNotes__c</object>
+        <sortField>CreatedDate</sortField>
+        <sortOrder>Desc</sortOrder>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <start>
+        <locationX>254</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Check</targetReference>
+        </connector>
+        <object>Lead</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Obsolete</status>
+    <variables>
+        <name>NotesTitle</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>true</isOutput>
+        <value>
+            <stringValue>&apos;Created From Quick notes&apos;</stringValue>
+        </value>
+    </variables>
+</Flow>

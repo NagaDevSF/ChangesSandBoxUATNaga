@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <!-- DLRS Lookup Rollup Summaries using Fee_Settlement_Detail__c -->
+        <members>dlrs__LookupRollupSummary2.Fee_Settlement_Commission_Fee</members>
+        <members>dlrs__LookupRollupSummary2.Fee_Settlement_Bank_Fee</members>
+        <members>dlrs__LookupRollupSummary2.Fee_Settlement_Payment_Amount</members>
+        <members>dlrs__LookupRollupSummary2.Fee_Settlement_EPPS_Fee</members>
+        <name>CustomMetadata</name>
+    </types>
+    <version>64.0</version>
+</Package>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Payment_Plan__c</fullName>
+    <description>Parent payment plan for this schedule item</description>
+    <label>Payment Plan</label>
+    <referenceTo>PaymentPlan__c</referenceTo>
+    <relationshipLabel>Payment Schedule Items</relationshipLabel>
+    <relationshipName>Payment_Schedule_Items</relationshipName>
+    <relationshipOrder>0</relationshipOrder>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <trackTrending>false</trackTrending>
+    <type>MasterDetail</type>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

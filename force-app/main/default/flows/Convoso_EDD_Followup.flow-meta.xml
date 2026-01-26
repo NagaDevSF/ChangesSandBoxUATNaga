@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Copy_1_of_Copy_2_of_Copy_2_of_Send_Lead_to_Convoso_Action_1</name>
+        <label>Move to COnvoso</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>ConvosoFlowIntegration</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Copy_1_of_Send_to_Convoso_True</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>alt_phone_1</name>
+            <value>
+                <elementReference>$Record.Phone</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>company</name>
+            <value>
+                <elementReference>$Record.Company</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>email</name>
+            <value>
+                <elementReference>$Record.Email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>first_name</name>
+            <value>
+                <elementReference>$Record.FirstName</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>hopper</name>
+            <value>
+                <stringValue>1</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>hopper_priority</name>
+            <value>
+                <stringValue>99</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>inbound_type</name>
+            <value>
+                <elementReference>$Record.Type__c</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>last_name</name>
+            <value>
+                <elementReference>$Record.LastName</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>lead_source</name>
+            <value>
+                <elementReference>$Record.Main_Source__c</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>list_id</name>
+            <value>
+                <stringValue>9019</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>notes</name>
+            <value>
+                <elementReference>forNotes</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>phone_number</name>
+            <value>
+                <elementReference>$Record.MobilePhone</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>salesforceownerid</name>
+            <value>
+                <elementReference>forSalesforceID</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>ConvosoFlowIntegration</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <apiVersion>64.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Copy_1_of_Future_check</name>
+        <label>Follow up Waiting on docs 1 Hr</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Copy_1_of_Future_7_days</name>
+            <conditionLogic>(1 OR 2 OR 3 OR 5) AND 4</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Pre_Deal_Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>FOLLOW UP</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Pre_Deal_Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Waiting On Docs</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Pre_Deal_Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>APPOINTMENT SET</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Convoso__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Pre_Deal_Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>FUTURE FOLLOW UP</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Copy_1_of_Copy_2_of_Copy_2_of_Send_Lead_to_Convoso_Action_1</targetReference>
+            </connector>
+            <label>Follow up WOD</label>
+        </rules>
+    </decisions>
+    <description>Follow Up, Future follow up, Att, WOD DOcs IN.</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>forNotes</name>
+        <dataType>String</dataType>
+        <expression>&quot;Inbound type: &quot; &amp; TEXT({!$Record.Type__c}) &amp;
+&quot;, Lawsuite info (Lawsuit occurred date: &quot; &amp; TEXT({!$Record.Law_suite_occured__c}) &amp;
+&quot;, Lender name: &quot; &amp; {!$Record.Lender_Name__c} &amp;
+&quot;, Balance: &quot; &amp; TEXT({!$Record.Balance__c}) &amp; &quot;)&quot; &amp;
+&quot;, Position information (Lender 1: &quot; &amp; {!$Record.Lender_1__c} &amp;
+&quot;, Frequency 1: &quot; &amp; TEXT({!$Record.Frequency_L1__c}) &amp;
+&quot;, Payment 1: &quot; &amp; TEXT({!$Record.Payments_L1__c}) &amp;
+&quot;, Lender 2: &quot; &amp; {!$Record.Lender_2__c} &amp;
+&quot;, Frequency 2: &quot; &amp; TEXT({!$Record.Frequency_L2__c}) &amp;
+&quot;, Payment 2: &quot; &amp; TEXT({!$Record.Payments_L2__c}) &amp;
+&quot;, Lender 3: &quot; &amp; {!$Record.Lender_3__c} &amp;
+&quot;, Frequency 3: &quot; &amp; TEXT({!$Record.Frequency_L3__c}) &amp;
+&quot;, Payment 3: &quot; &amp; TEXT({!$Record.Payment_3__c}) &amp; &quot;)&quot; &amp;
+&quot;, Total estimated debt: &quot; &amp; TEXT({!$Record.Est_Total_Debt__c}) &amp;
+&quot;, Total estimated weekly payment: &quot; &amp; TEXT({!$Record.Est_weekly_payment__c}) &amp;
+&quot;, Quick notes: &quot; &amp; {!$Record.QuickNotes__c}</expression>
+    </formulas>
+    <formulas>
+        <name>forSalesforceID</name>
+        <dataType>String</dataType>
+        <expression>&quot;https://dmpbalance.lightning.force.com/lightning/r/Lead/&quot;&amp;{!$Record.Id}&amp;&quot;/view&quot;</expression>
+    </formulas>
+    <interviewLabel>Convoso EDD Followup {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Convoso EDD Followup Aug04-25 Warm</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Copy_1_of_Send_to_Convoso_True</name>
+        <label>Send to Convoso True</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputAssignments>
+            <field>Convoso__c</field>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Update_dummy</name>
+        <label>Update dummy</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputAssignments>
+            <field>Past_Ownera__c</field>
+            <value>
+                <stringValue>Yes</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Update_dummy</targetReference>
+        </connector>
+        <filterLogic>1 AND (2 OR 3 OR 4 OR 5)</filterLogic>
+        <filters>
+            <field>Sales_Office__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Everyday Debt</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Pre_Deal_Status__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>APPOINTMENT SET</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Pre_Deal_Status__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>FOLLOW UP</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Pre_Deal_Status__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>FUTURE FOLLOW UP</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Pre_Deal_Status__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Waiting On Docs</stringValue>
+            </value>
+        </filters>
+        <object>Lead</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <scheduledPaths>
+            <name>Follow_up</name>
+            <connector>
+                <targetReference>Copy_1_of_Future_check</targetReference>
+            </connector>
+            <label>Follow up</label>
+            <offsetNumber>1</offsetNumber>
+            <offsetUnit>Hours</offsetUnit>
+            <recordField>LastModifiedDate</recordField>
+            <timeSource>RecordField</timeSource>
+        </scheduledPaths>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Obsolete</status>
+</Flow>

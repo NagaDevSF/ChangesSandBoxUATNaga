@@ -1,0 +1,107 @@
+/* ============================================
+   SUMMARY STATS - GRADIENT CARD DESIGN
+   ============================================ */
+
+.stats-container {
+    padding: 0 1rem 1rem 1rem;
+}
+
+/* Base stat card styling */
+.stat-card {
+    border-radius: 16px;
+    padding: 20px 24px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* White text for all cards */
+.stat-label {
+    color: white;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    font-weight: 500;
+    opacity: 0.95;
+}
+
+.stat-value {
+    color: white;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+/* ============================================
+   GRADIENT COLORS FOR EACH CARD
+   ============================================ */
+
+/* Total Enrolled Debt: Purple (#667eea) -> Teal (#38b2ac) */
+.stat-total-debt {
+    background: linear-gradient(135deg, #667eea 0%, #38b2ac 100%);
+}
+
+/* New Weekly Payment: Teal (#38b2ac) -> Green (#10b981) */
+.stat-new-weekly {
+    background: linear-gradient(135deg, #38b2ac 0%, #10b981 100%);
+}
+
+/* Current Weekly Payment: Blue (#0ea5e9) -> Teal (#38b2ac) */
+.stat-current-weekly {
+    background: linear-gradient(135deg, #0ea5e9 0%, #38b2ac 100%);
+}
+
+/* First Draft: Violet (#8b5cf6) -> Indigo (#6366f1) */
+.stat-first-draft {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+}
+
+/* Weekly Savings: Teal (#14b8a6) -> Blue (#0ea5e9) */
+.stat-weekly-savings {
+    background: linear-gradient(135deg, #14b8a6 0%, #0ea5e9 100%);
+}
+
+/* Percent Savings: Blue (#0284c7) -> Teal (#0d9488) */
+.stat-percent-savings {
+    background: linear-gradient(135deg, #0284c7 0%, #0d9488 100%);
+}
+
+/* Duration: Violet (#7c3aed) -> Purple (#8b5cf6) */
+.stat-duration {
+    background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (max-width: 768px) {
+    .stat-card {
+        padding: 16px 20px;
+        border-radius: 12px;
+    }
+
+    .stat-value {
+        font-size: 22px;
+    }
+
+    .stat-label {
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-card {
+        padding: 14px 16px;
+    }
+
+    .stat-value {
+        font-size: 18px;
+    }
+}

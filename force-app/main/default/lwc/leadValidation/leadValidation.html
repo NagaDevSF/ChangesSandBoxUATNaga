@@ -1,0 +1,25 @@
+<template>
+    <lightning-card title="Lead Contact Information Check" icon-name="utility:warning">
+        <div class="slds-p-around_medium">
+            
+            <!-- If no errors show success message -->
+            <template if:true={noErrors}>
+                <div class="success-box">
+                    <lightning-icon icon-name="utility:success" size="small" class="success-icon"></lightning-icon>
+                    <span class="success-text">Lead phone, mobile number, and email are valid.</span>
+                </div>
+            </template>
+
+            <!-- Show error list -->
+            <template if:false={noErrors}>
+                <template for:each={errors} for:item="err">
+                    <div key={err} class="error-box">
+                        <lightning-icon icon-name="utility:error" size="x-small" class="error-icon"></lightning-icon>
+                        <span class="error-text">{err}</span>
+                    </div>
+                </template>
+            </template>
+
+        </div>
+    </lightning-card>
+</template>

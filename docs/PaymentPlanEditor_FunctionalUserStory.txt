@@ -1,0 +1,371 @@
+================================================================================
+              PAYMENT PLAN EDITOR - FUNCTIONAL USER STORY
+                           Version 2.0
+================================================================================
+
+================================================================================
+1. EPIC OVERVIEW
+================================================================================
+
+EPIC: Payment Schedule Management
+---------------------------------
+
+AS A      Debt Settlement Operations Team Member,
+I WANT    a comprehensive tool to create, view, edit, and manage payment
+          schedules for enrolled clients,
+SO THAT   I can efficiently track payment progress, make adjustments when
+          needed, and maintain accurate financial records throughout the
+          client's program.
+
+
+BUSINESS CONTEXT
+----------------
+The Payment Plan Editor is a critical component of the debt settlement workflow.
+When a client enrolls in a debt settlement program, a payment schedule is
+created based on their financial situation. This schedule determines:
+
+  - Weekly payment amounts (draft amounts)
+  - Fee breakdown (banking fees, program fees, setup fees)
+  - Savings accumulation over time (escrow balance)
+  - Payment dates and status tracking
+
+
+KEY BUSINESS OBJECTIVES
+-----------------------
+| Objective     | Description                                                 |
+|---------------|-------------------------------------------------------------|
+| Accuracy      | Ensure schedules are calculated correctly based on params   |
+| Flexibility   | Allow adjustments as client circumstances change            |
+| Auditability  | Maintain version history of all changes for compliance      |
+| Efficiency    | Provide intuitive tools for quick edits and bulk operations |
+
+
+================================================================================
+2. USER PERSONAS
+================================================================================
+
+OPERATIONS SPECIALIST
+---------------------
+Primary user who manages day-to-day payment schedules. Needs to quickly view
+payment status, make adjustments for NSF situations, and ensure schedules
+align with client agreements.
+
+CLIENT SERVICES REPRESENTATIVE
+------------------------------
+Reviews payment schedules with clients, explains fee breakdowns, and
+coordinates changes requested by clients (payment amount changes, date
+adjustments).
+
+FINANCE MANAGER
+---------------
+Oversees payment operations, reviews suspended plans, approves major schedule
+changes, and monitors overall program performance.
+
+
+================================================================================
+3. USER STORIES
+================================================================================
+
+US-001: VIEW PAYMENT SCHEDULE
+-----------------------------
+AS A      Operations Specialist,
+I WANT    to view the complete payment schedule for a client,
+SO THAT   I can understand their payment history and upcoming drafts.
+
+ACCEPTANCE CRITERIA:
+[x] Schedule displays in a table format with all payment details
+[x] Each row shows: Date, Draft Amount, Fees, Savings Balance, Status
+[x] Rows are color-coded by status (Scheduled=Blue, Cleared=Green, etc.)
+[x] Pagination available for schedules with more than 50 payments
+[x] Aggregate totals displayed at the bottom of the table
+
+
+US-002: SWITCH BETWEEN PLAN VERSIONS
+------------------------------------
+AS A      Operations Specialist,
+I WANT    to switch between different versions of a payment plan,
+SO THAT   I can compare changes and review history.
+
+ACCEPTANCE CRITERIA:
+[x] Version dropdown shows all Active and Draft plans
+[x] Each version displays version number and status (v1 Active, v2 Draft)
+[x] Selecting a version loads its schedule data
+[x] Active version is auto-selected on initial load
+[x] Modified rows (compared to previous version) marked with star indicator
+
+
+US-003: EDIT PAYMENT SCHEDULE (MANUAL MODE)
+-------------------------------------------
+AS A      Operations Specialist,
+I WANT    to manually edit individual payments in the schedule,
+SO THAT   I can make specific adjustments without recalculating entire plan.
+
+ACCEPTANCE CRITERIA:
+[x] Clicking "Manual" creates a new Draft version and enables edit mode
+[x] Only rows with "Scheduled" status are editable
+[x] Editable fields: Date, Draft Amount, Setup Fee, Program Fee, Banking Fee
+[x] Savings Balance recalculates in real-time as fees are edited
+[x] Changes can be saved or cancelled
+[x] Pending tab shows unsaved changes
+
+
+US-004: RECALCULATE PAYMENT PLAN
+--------------------------------
+AS A      Operations Specialist,
+I WANT    to recalculate the payment schedule from the Opportunity data,
+SO THAT   changes to enrollment (debt amount, payment amount) are reflected.
+
+ACCEPTANCE CRITERIA:
+[x] Clicking "Recalculate" creates a new Draft version with recalculated values
+[x] Non-scheduled items (Cleared, NSF, Cancelled) are preserved
+[x] Program fee cap is reduced by already-collected program fees
+[x] New scheduled items continue from where non-scheduled items end
+[x] Running savings balance continues from last non-scheduled row
+
+
+US-005: SUSPEND PAYMENT PLAN
+----------------------------
+AS A      Finance Manager,
+I WANT    to suspend all future payments for a client,
+SO THAT   no more drafts are processed while issues are resolved.
+
+ACCEPTANCE CRITERIA:
+[x] Clicking "Suspend" creates a new Draft version
+[x] All "Scheduled" items are changed to "Cancelled"
+[x] Previously cleared/NSF items remain unchanged
+[x] Plan must be activated to take effect
+
+
+US-006: ACTIVATE PAYMENT PLAN
+-----------------------------
+AS A      Operations Specialist,
+I WANT    to activate a Draft payment plan,
+SO THAT   the changes become the official schedule.
+
+ACCEPTANCE CRITERIA:
+[x] Only Draft plans can be activated
+[x] Activating archives the previous Active version
+[x] The activated plan becomes the new Active version
+[x] Confetti animation celebrates successful activation
+[x] Version dropdown updates to show new status
+
+
+US-007: ADD/DELETE PAYMENT ROWS
+-------------------------------
+AS A      Operations Specialist,
+I WANT    to add or remove payments from the schedule,
+SO THAT   I can extend or shorten the program as needed.
+
+ACCEPTANCE CRITERIA:
+[x] "+ Add Draft Payment" button adds a new row at the end
+[x] New row inherits default values (banking fee from CMDT, scheduled status)
+[x] Delete button available on each row in edit mode
+[x] Only Scheduled rows can be deleted
+[x] Confirmation required for delete operations
+
+
+US-008: FILL HANDLE (BULK COPY)
+-------------------------------
+AS A      Operations Specialist,
+I WANT    to quickly copy a value to multiple cells,
+SO THAT   I can efficiently update many payments at once.
+
+ACCEPTANCE CRITERIA:
+[x] Clicking a cell selects it with a blue border
+[x] A small fill handle appears at the bottom-right corner
+[x] Dragging the handle up or down selects target cells
+[x] Releasing the mouse copies the source value to all target cells
+[x] Toast message confirms number of cells filled
+
+
+US-009: VIEW WIRED PAYMENTS
+---------------------------
+AS A      Operations Specialist,
+I WANT    to see wired payments associated with schedule items,
+SO THAT   I can track additional payments received.
+
+ACCEPTANCE CRITERIA:
+[x] Wire button appears on each row
+[x] Hovering shows popover with linked wired payments
+[x] Popover displays: Date, Amount, Description for each wire
+[x] Clicking wire button opens modal to add new wired payment
+
+
+================================================================================
+4. FEATURE DETAILS
+================================================================================
+
+VERSION CONTROL SYSTEM
+----------------------
+Every change creates a new version of the payment plan. This provides a
+complete audit trail and allows comparison between versions.
+
+Statuses:
+  - Draft    : Pending changes not yet active
+  - Active   : The current official schedule
+  - Archived : Historical versions for reference
+
+
+SMART RECALCULATION
+-------------------
+When recalculating, the system intelligently preserves payment history:
+  - Cleared payments are preserved (cannot be undone)
+  - NSF payments are preserved (for tracking purposes)
+  - Cancelled payments are preserved
+  - Only Scheduled (future) payments are recalculated
+  - Running balances continue from the last processed payment
+
+
+LIVE SAVINGS CALCULATION
+------------------------
+As you edit fee amounts, the Savings Balance column updates in real-time.
+
+Formula:
+  Savings = Draft Amount - Banking Fee - Program Fee - Setup Fee
+
+
+FILL HANDLE
+-----------
+Excel-like functionality for copying values:
+  1. Click a cell to select it
+  2. Drag the small square handle at the bottom-right
+  3. Release to copy the value to all highlighted cells
+
+
+WIRED PAYMENTS INTEGRATION
+--------------------------
+Track additional payments received outside the regular draft schedule.
+Hover over the wire button to see a popover with all linked payments.
+
+
+PAGINATION
+----------
+Schedules are paginated at 50 items per page for performance. Navigation
+controls at the bottom allow moving between pages.
+
+
+================================================================================
+5. KEY WORKFLOWS
+================================================================================
+
+WORKFLOW A: MODIFY A PAYMENT AMOUNT
+-----------------------------------
+Step 1: Click "Manual" Button
+         Creates a new Draft version and enables edit mode.
+
+Step 2: Find the Row to Edit
+         Locate the Scheduled payment you want to modify.
+
+Step 3: Edit the Value
+         Click the Draft Amount cell and type the new value.
+         Watch the Savings column update live.
+
+Step 4: Save Changes
+         Click "Save" to save your changes to the Draft version.
+
+Step 5: Activate the Plan
+         Click "Activate" to make the Draft the new Active plan.
+
+
+WORKFLOW B: HANDLE NSF AND RECALCULATE
+--------------------------------------
+Step 1: Mark Payment as NSF
+         Click "Manual", change Status from "Scheduled" to "NSF", Save.
+
+Step 2: Click "Recalculate"
+         Creates a new Draft that preserves the NSF payment.
+
+Step 3: Review the New Schedule
+         Verify NSF row is preserved and scheduled payments recalculated.
+
+Step 4: Activate
+         Click "Activate" to make the recalculated plan official.
+
+
+WORKFLOW C: SUSPEND ALL PAYMENTS
+--------------------------------
+Step 1: Click "Suspend"
+         Creates a new Draft where all Scheduled items become Cancelled.
+
+Step 2: Review the Changes
+         Verify that Cleared/NSF items remain unchanged.
+
+Step 3: Activate to Confirm
+         Click "Activate" to make the suspension official.
+
+
+================================================================================
+6. PAYMENT STATUSES
+================================================================================
+
+| Status    | Color  | Editable | Description                               |
+|-----------|--------|----------|-------------------------------------------|
+| Scheduled | Blue   | Yes      | Future payment pending draft              |
+| Cleared   | Green  | No       | Payment successfully processed            |
+| NSF       | Red    | No       | Non-Sufficient Funds - payment failed     |
+| Cancelled | Yellow | No       | Payment cancelled                         |
+
+IMPORTANT: Only "Scheduled" payments can be edited. Once a payment is
+Cleared, NSF, or Cancelled, it becomes read-only to maintain data integrity.
+
+
+================================================================================
+7. ACTION BUTTONS
+================================================================================
+
+| Button              | Action                                              |
+|---------------------|-----------------------------------------------------|
+| Recalculate         | Creates new Draft recalculated from Opportunity     |
+| Manual              | Creates new Draft for manual editing                |
+| Suspend             | Creates Draft where Scheduled -> Cancelled          |
+| Activate            | Activates Draft, archives previous Active           |
+| Save                | Saves pending changes to Draft                      |
+| Cancel              | Discards pending changes, exits edit mode           |
+| + Add Draft Payment | Adds new blank payment row                          |
+
+
+================================================================================
+8. BUSINESS RULES
+================================================================================
+
+FEE CALCULATION RULES
+---------------------
+| Rule           | Description                                            |
+|----------------|--------------------------------------------------------|
+| Banking Fee    | Flat fee per payment (default $35.00 from CMDT)        |
+| Setup Fee      | Total divided by Setup Fee Payments (default 10)       |
+| Program Fee    | Calculated from net amount using split ratio, capped   |
+| Savings Balance| Draft - Banking - Program - Setup (running total)      |
+
+
+VERSION MANAGEMENT RULES
+------------------------
+- Only one Active version can exist at a time
+- Multiple Draft versions are not allowed
+- Activating a Draft archives the previous Active version
+- Archived versions are read-only for historical reference
+- Each new version increments the version number (v1, v2, v3...)
+
+
+DATA PRESERVATION RULES
+-----------------------
+- Cleared payments are never modified during recalculation
+- NSF payments are preserved for tracking failed attempts
+- Cancelled payments are preserved for audit purposes
+- Program fee cap is reduced by already-collected program fees
+- Running balance continues from last non-scheduled payment
+
+
+VALIDATION RULES
+----------------
+- Currency values: -99,999,999.99 to 99,999,999.99
+- Payment dates: Within 10 years of today
+- Status changes: Only valid picklist values
+- Editing/Deleting: Only Scheduled rows allowed
+
+
+================================================================================
+                              END OF DOCUMENT
+================================================================================
+Generated: January 2026
+Version: 2.0

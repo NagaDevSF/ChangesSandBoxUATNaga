@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>EMail_to_Lead_dcgpro_com</name>
+        <label>EMail to Lead@dcgpro.com</label>
+        <locationX>176</locationX>
+        <locationY>323</locationY>
+        <actionName>Lead.FB_to_lead_dcgpro_com</actionName>
+        <actionType>emailAlert</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Lead.FB_to_lead_dcgpro_com</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>63.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <environments>Default</environments>
+    <interviewLabel>Lead Alert to Lead@dcgpro.com {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Lead Alert to Lead@dcgpro.com</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>EMail_to_Lead_dcgpro_com</targetReference>
+        </connector>
+        <filterLogic>(1 OR 2 OR 3 OR 4) AND 5</filterLogic>
+        <filters>
+            <field>Integration_Assignement__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>ZAP Marketting</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Integration_Assignement__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>ZAP DCG Marketing</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Integration_Assignement__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>ZAP Marketting QRMCA</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Integration_Assignement__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>ZAP Marketing DC</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>utm_source__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <object>Lead</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

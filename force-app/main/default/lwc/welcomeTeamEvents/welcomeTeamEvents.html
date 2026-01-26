@@ -1,0 +1,153 @@
+<template>
+    <lightning-card title="Welcome Team Events" icon-name="standard:event">
+        <div slot="actions">
+            <lightning-button-icon
+                icon-name="utility:refresh"
+                alternative-text="Refresh"
+                title="Refresh events"
+                onclick={handleRefresh}
+                class="slds-m-right_x-small">
+            </lightning-button-icon>
+        </div>
+
+        <div class="slds-p-horizontal_small">
+            <!-- Header with count -->
+            <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                <div class="slds-col">
+                    <div class="header-info">
+                        <lightning-badge label={totalEventsCount} class="count-badge"></lightning-badge>
+                        <span class="slds-m-left_x-small count-text">upcoming events</span>
+                    </div>
+                    <template lwc:if={showPreviewNote}>
+                        <div class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small preview-note">
+                            (showing next 10 events)
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Loading spinner -->
+            <template lwc:if={isLoading}>
+                <div class="loading-container">
+                    <lightning-spinner alternative-text="Loading events" size="small"></lightning-spinner>
+                </div>
+            </template>
+
+            <!-- Error message -->
+            <template lwc:if={error}>
+                <div class="error-container">
+                    <div class="slds-text-color_error">
+                        <div class="slds-text-heading_small slds-m-bottom_x-small">
+                            <lightning-icon
+                                icon-name="utility:error"
+                                size="x-small"
+                                variant="error"
+                                class="slds-m-right_xx-small">
+                            </lightning-icon>
+                            {error.message}
+                        </div>
+                        <div class="slds-text-body_small">
+                            {error.details}
+                        </div>
+                    </div>
+                    <div class="slds-m-top_small">
+                        <lightning-button
+                            label="Try Again"
+                            variant="brand-outline"
+                            onclick={loadEvents}>
+                        </lightning-button>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Events list -->
+            <template lwc:if={hasEvents}>
+                <div class="events-container slds-scrollable_y">
+                    <template for:each={events} for:item="event">
+                        <div key={event.Id}
+                             class="event-card slds-border_bottom"
+                             data-record-id={event.Id}
+                             onclick={handleEventClick}>
+
+                            <div class="event-header slds-grid slds-grid_align-spread slds-m-bottom_xx-small">
+                                <div class="slds-col">
+                                    <lightning-badge
+                                        label={event.dateBadge}
+                                        class={event.dateVariant}>
+                                    </lightning-badge>
+                                </div>
+                                <template lwc:if={event.duration}>
+                                    <div class="slds-col_bump-left">
+                                        <span class="duration-chip">
+                                            <lightning-icon
+                                                icon-name="utility:clock"
+                                                size="xx-small"
+                                                class="duration-icon">
+                                            </lightning-icon>
+                                            {event.duration}
+                                        </span>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <div class="event-body">
+                                <div class="slds-grid slds-grid_align-spread">
+                                    <div class="slds-col event-info">
+                                        <!-- Invitee Name -->
+                                        <div class="invitee-name slds-truncate">
+                                            <lightning-icon
+                                                icon-name="standard:contact"
+                                                size="x-small"
+                                                class="name-icon">
+                                            </lightning-icon>
+                                            {event.inviteeName}
+                                        </div>
+
+                                        <!-- Time Range -->
+                                        <div class="event-time slds-truncate">
+                                            <lightning-icon
+                                                icon-name="utility:clock"
+                                                size="xx-small"
+                                                class="time-icon">
+                                            </lightning-icon>
+                                            {event.startTimeFormatted} - {event.endTimeFormatted}
+                                        </div>
+                                    </div>
+
+                                    <!-- Chevron -->
+                                    <div class="slds-col_bump-left chevron-container">
+                                        <lightning-icon
+                                            icon-name="utility:chevronright"
+                                            size="x-small"
+                                            class="chevron-icon">
+                                        </lightning-icon>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- No events message -->
+            <template lwc:elseif={isLoading}>
+                <!-- Loading handled above -->
+            </template>
+            <template lwc:else>
+                <div class="empty-state">
+                    <lightning-icon
+                        icon-name="custom:custom78"
+                        size="large"
+                        class="empty-icon">
+                    </lightning-icon>
+                    <div class="slds-text-heading_small slds-m-top_small">
+                        No Upcoming Events
+                    </div>
+                    <div class="slds-text-body_small slds-text-color_weak slds-m-top_x-small">
+                        There are no scheduled Welcome Team events at the moment
+                    </div>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>

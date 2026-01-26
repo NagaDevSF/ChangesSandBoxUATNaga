@@ -1,0 +1,215 @@
+<template>
+    <lightning-card>
+        <div class="slds-p-horizontal_medium slds-p-vertical_small">
+            <!-- Summary Stats above Program Settings -->
+            <div class="section-frame slds-m-bottom_medium">
+                <c-summary-stats items={paymentSchedule} weekly-payment={summaryWeeklyPayment}
+                    program-length={calculations.programLength} current-payment={currentPayment}
+                    total-savings={calculations.savingsAmount} total-debt={totalDebt} first-draft-date={firstDraftDate}>
+                </c-summary-stats>
+            </div>
+            <!-- Header with badge -->
+            <div class="section-frame slds-m-bottom_medium">
+                <div class="header-section">
+                    <span class="number-badge">1</span>
+                    <h2 class="section-title">Program Settings</h2>
+                </div>
+
+                <!-- Program Type Selection -->
+                <div class="settings-group">
+                    <label class="setting-label">Program Type</label>
+                    <div class="selection-cards selection-cards-three">
+                        <div class={dcgModClass} onclick={handleProgramTypeMod}>
+                            <div class="card-content">
+                                <div class="card-info">
+                                    <div class="card-title">DCG Mod</div>
+                                    <div class="card-subtitle">Modification program</div>
+                                </div>
+                                <div class={dcgModCheckClass}></div>
+                            </div>
+                        </div>
+                        <div class={dcgDebtClass} onclick={handleProgramTypeDebt}>
+                            <div class="card-content">
+                                <div class="card-info">
+                                    <div class="card-title">DCG Debt</div>
+                                    <div class="card-subtitle">Debt settlement program</div>
+                                </div>
+                                <div class={dcgDebtCheckClass}></div>
+                            </div>
+                        </div>
+                        <div class={dcgModCaClass} onclick={handleProgramTypeModCa}>
+                            <div class="card-content">
+                                <div class="card-info">
+                                    <div class="card-title">DCG MOD CA</div>
+                                    <div class="card-subtitle">California variant</div>
+                                </div>
+                                <div class={dcgModCaCheckClass}></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- No-Fee Program: only visible for DCG Mod -->
+                <template if:true={showNoFeeProgram}>
+                    <div class="settings-group no-fee-section">
+                        <div class="no-fee-label">
+                            <label class="setting-label">No-Fee Program</label>
+                            <span class="helper-text">(Special plan - program fee still applies)</span>
+                        </div>
+                        <lightning-input type="toggle" variant="label-hidden" checked={noFeeProgram}
+                            onchange={handleNoFeeChange}>
+                        </lightning-input>
+                    </div>
+                </template>
+
+                <!-- Calculate By -->
+                <div class="settings-group">
+                    <label class="setting-label">Calculate By</label>
+                    <div class="toggle-container">
+                        <button class={percentButtonClass} onclick={handleCalculateByPercent}>
+                            % of Current
+                        </button>
+                        <button class={desiredButtonClass} onclick={handleCalculateByDesired}>
+                            Desired Payment
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Target Payment -->
+                <div class="settings-group">
+                    <div class="slider-header">
+                        <label class="setting-label">Target Payment</label>
+                        <span class="slider-value">{targetPaymentDisplay}</span>
+                    </div>
+                    <!-- Percent Mode: show slider 40–80% -->
+                    <template if:true={isPercentMode}>
+                        <div class="slider-container">
+                            <input type="range" class="payment-slider" min={percentMin} max={percentMax}
+                                value={targetPaymentPercent} oninput={handleTargetPaymentInput}
+                                onchange={handleTargetPaymentChange} />
+                            <div class="slider-labels">
+                                <template for:each={percentLabels} for:item="label">
+                                    <span key={label}>{label}%</span>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                    <!-- Desired Mode: show numeric/currency input -->
+                    <template if:true={isDesiredMode}>
+                        <div class="slider-container">
+                            <lightning-input type="number" formatter="currency" currency-code="USD" step="0.01"
+                                value={targetPaymentAmount} oninput={handleDesiredPaymentInput}
+                                onchange={handleDesiredPaymentChange}>
+                            </lightning-input>
+                            <div class="slider-labels">
+                                <span>Min {desiredMinLabel}</span>
+                                <span>Max {desiredMaxLabel}</span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Setup Fee Payment Plan -->
+
+                <div class="settings-group">
+                    <label class="setting-label">Setup Fee Payment Plan</label>
+                    <div class="setup-fee-info">
+                        <span class="setup-payments">{setupFeePayments} payments</span>
+                        <span class="setup-amount">${setupFeePerPayment}/payment</span>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" class="setup-slider" min={setupFeeMinPayments} max={setupFeeMaxPayments} value={setupFeePayments}
+                            onchange={handleSetupFeeChange} />
+                        <div class="slider-numbers">
+                            <template for:each={sliderNumbers} for:item="num">
+                                <span key={num}>{num}</span>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Schedule Settings -->
+                <div class="settings-group">
+                    <label class="setting-label">Payment Schedule</label>
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col">
+                            <label class="slds-form-element__label" for="first-draft-date">First Draft Date</label>
+                            <input type="date" id="first-draft-date" class="slds-input" value={firstDraftDate}
+                                onchange={handleFirstDraftDateChange} />
+                        </div>
+                        <div class="slds-col">
+                            <label class="slds-form-element__label" for="preferred-day">Preferred Day of Week</label>
+                            <lightning-combobox name="preferredDay" value={preferredDayOfWeek}
+                                options={dayOfWeekOptions} onchange={handlePreferredDayChange} variant="label-hidden">
+                            </lightning-combobox>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </lightning-card>
+
+
+
+    <!-- Additional Products placed below Drafts -->
+    <lightning-card>
+        <div class="slds-p-horizontal_medium slds-p-vertical_small additional-products section-frame">
+            <div class="additional-products-header">
+                <span class="ap-badge">AP</span>
+                <h3 class="ap-title">Additional Products</h3>
+            </div>
+            <hr />
+            <template if:true={hasAvailableProducts}>
+                <div class="selection-cards">
+                    <template for:each={availableProducts} for:item="prod">
+                        <div key={prod.code} class={prod.cardClass} data-code={prod.code}
+                            onclick={handleProductCardClick}>
+                            <div class="card-content">
+                                <div class="card-info">
+                                    <div class="card-title">{prod.name}</div>
+                                    <div class="card-subtitle">${prod.weeklyFee}/week</div>
+                                </div>
+                                <div class={prod.checkClass}></div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <div class="ap-total">Selected add-ons: {formattedAdditionalProductsWeeklyTotal}/week</div>
+            </template>
+            <template if:false={hasAvailableProducts}>
+                <div class="ap-empty">No additional products available</div>
+            </template>
+        </div>
+    </lightning-card>
+
+    <!-- Payment Plan Table Component -->
+    <template if:true={showPaymentSchedule}>
+        <div class="slds-m-top_medium">
+            <c-payment-plan-table record-id={recordId} is-reactive-mode={showPaymentSchedule}
+                payment-schedule-data={paymentSchedule} onversioncreated={handleVersionCreated}>
+            </c-payment-plan-table>
+        </div>
+    </template>
+
+    <lightning-card title="Drafts" icon-name="utility:save">
+        <div class="slds-p-horizontal_medium slds-p-vertical_small">
+            <lightning-layout horizontal-align="spread">
+                <lightning-layout-item flexibility="auto" class="slds-p-right_small">
+                    <lightning-button label="Save Draft" variant="brand" onclick={handleSaveDraft} disabled={isLoading}>
+                    </lightning-button>
+                    <lightning-button class="slds-m-left_small" label="Update Loaded Draft" onclick={handleUpdateDraft}
+                        disabled={isUpdateDisabled}>
+                    </lightning-button>
+                    <lightning-button class="slds-m-left_small" label="Refresh" icon-name="utility:refresh"
+                        onclick={handleRefreshDrafts} disabled={isLoading}>
+                    </lightning-button>
+                </lightning-layout-item>
+            </lightning-layout>
+        </div>
+        <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+            <lightning-datatable key-field="Id" data={drafts} columns={draftColumns} selected-rows={selectedDraftRows}
+                onrowaction={handleDraftRowAction} hide-checkbox-column>
+            </lightning-datatable>
+        </div>
+    </lightning-card>
+</template>
