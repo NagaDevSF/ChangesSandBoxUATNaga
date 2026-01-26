@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <!-- Custom Objects (will also delete their fields and list views) -->
+    <types>
+        <members>PaymentDraft__c</members>
+        <members>Payment_Draft_Item__c</members>
+        <members>PaymentPlan__c</members>
+        <members>Payment_Schedule_Item__c</members>
+        <members>Fee_Settlement_Detail__c</members>
+        <name>CustomObject</name>
+    </types>
+
+    <!-- Apex Classes (22 classes) -->
+    <types>
+        <members>PaymentPlanService</members>
+        <members>PaymentPlanServiceTest</members>
+        <members>PaymentPlanEditorController</members>
+        <members>PaymentPlanEditorControllerTest</members>
+        <members>PaymentCalculatorController</members>
+        <members>PaymentCalculatorControllerTest</members>
+        <members>PaymentPlanVersionService</members>
+        <members>PaymentPlanVersionServiceTest</members>
+        <members>PaymentPlanTriggerHandler</members>
+        <members>PaymentPlanVersionController</members>
+        <members>PaymentPlanVersionControllerTest</members>
+        <members>PaymentScheduleItemTriggerHandler</members>
+        <members>FeeSettlementDetailService</members>
+        <members>FeeSettlementDetailServiceTest</members>
+        <members>SalesCalculatorService</members>
+        <members>SalesCalculatorServiceTest</members>
+        <members>OpportunityTriggerHandler</members>
+        <members>OpportunityTriggerHandlerTest</members>
+        <members>CreditorOpportunityTriggerHandlerTest</members>
+        <members>ApprovalService</members>
+        <members>ApprovalServiceTest</members>
+        <members>TestDataFactory</members>
+        <name>ApexClass</name>
+    </types>
+
+    <!-- Apex Triggers (2 triggers) -->
+    <types>
+        <members>PaymentPlanTrigger</members>
+        <members>PaymentScheduleItemTrigger</members>
+        <name>ApexTrigger</name>
+    </types>
+
+    <!-- Lightning Web Components (5 LWCs) -->
+    <types>
+        <members>paymentCalculator</members>
+        <members>paymentPlanEditor</members>
+        <members>paymentPlanEditorV2</members>
+        <members>paymentPlanTable</members>
+        <members>paymentPlanViewer</members>
+        <name>LightningComponentBundle</name>
+    </types>
+
+    <!-- FlexiPages / Lightning Pages (1 page) -->
+    <types>
+        <members>Fee_Settlement_Detail_Record_Page</members>
+        <name>FlexiPage</name>
+    </types>
+
+    <!-- Page Layouts (1 layout) -->
+    <types>
+        <members>Fee_Settlement_Detail__c-Fee/Settlement Detail Layout</members>
+        <name>Layout</name>
+    </types>
+
+    <!-- Custom Metadata Types (1 type with record) -->
+    <types>
+        <members>Payment_Calc_Config__mdt</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
+        <members>Payment_Calc_Config.Default</members>
+        <name>CustomMetadata</name>
+    </types>
+
+    <version>59.0</version>
+</Package>
