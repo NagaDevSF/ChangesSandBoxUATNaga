@@ -13,6 +13,8 @@
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     text-align: center;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+    min-width: 0;
 }
 
 .stat-card:hover {
@@ -33,9 +35,13 @@
 
 .stat-value {
     color: white;
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 700;
     line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
 }
 
 /* ============================================
@@ -88,7 +94,7 @@
     }
 
     .stat-value {
-        font-size: 22px;
+        font-size: 20px;
     }
 
     .stat-label {
@@ -102,6 +108,6 @@
     }
 
     .stat-value {
-        font-size: 18px;
+        font-size: 16px;
     }
 }

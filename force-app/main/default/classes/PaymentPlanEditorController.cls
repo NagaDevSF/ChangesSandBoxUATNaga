@@ -2260,7 +2260,11 @@ public with sharing class PaymentPlanEditorController {
                        Is_Active__c, Version_Type__c, Source__c, Version_Notes__c,
                        Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
                        Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
-                       Calculation_Timestamp__c, Schedule_Item_Count__c
+                       Calculation_Timestamp__c, Schedule_Item_Count__c,
+                       Weekly_Payment__c, Monthly_Payment__c, Number_of_Payments__c,
+                       Total_Debt__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
+                       Total_Program_Cost__c, Settlement_Amount__c, Program_Fee_Amount__c,
+                       First_Payment_Date__c, Program_Type__c, Contract__c
                 FROM PaymentPlan__c
                 WHERE Id = :planId
                 LIMIT 1
