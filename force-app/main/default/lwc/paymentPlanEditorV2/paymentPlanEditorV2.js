@@ -966,6 +966,15 @@ export default class PaymentPlanEditorV2 extends LightningElement {
    }
 
 
+   get summaryProgramLength() {
+       // In Desired Mode, use manually entered weeks if available
+       if (this.isDesiredMode && this._targetNumberOfWeeks != null) {
+           return this._targetNumberOfWeeks;
+       }
+       return this.calculations?.programLength || 0;
+   }
+
+
    // Mode helpers
    get isPercentMode() { return this.calculateBy === 'PERCENT'; }
    get isDesiredMode() { return this.calculateBy === 'DESIRED'; }
