@@ -18,18 +18,20 @@ export default class SummaryStats extends LightningElement {
     }
 
     // New Weekly Payment
-    // Prefer schedule-based calculation for consistency with payment table display
-    // Schedule is front-loaded; last payment may be lower due to rounding
+    // Prefer explicit weeklyPayment prop from parent when provided (user-entered value)
+    // Fallback to schedule-based calculation if prop not provided
     get computedNewWeeklyPayment() {
-        // Schedule is front-loaded; use first payment for display
+        // Use explicit prop if provided (user's entered value takes priority)
+        if (this.weeklyPayment != null && this.weeklyPayment > 0) {
+            return this.weeklyPayment;
+        }
+        // Fallback to schedule-based calculation
         if (this.hasItems) {
             const first = this.items[0] || {};
             const payment = first.paymentAmount ?? first.totalPayment ?? first.draftAmount ?? 0;
             const setup = first.setupFee ?? first.setupFeePortion ?? 0;
             return Math.max(0, payment - setup);
         }
-        // Fallback to prop if schedule not provided
-        if (this.weeklyPayment != null) return this.weeklyPayment;
         return 0;
     }
 

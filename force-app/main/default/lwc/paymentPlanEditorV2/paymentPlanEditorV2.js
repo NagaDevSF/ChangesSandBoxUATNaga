@@ -952,6 +952,10 @@ export default class PaymentPlanEditorV2 extends LightningElement {
 
 
    get summaryWeeklyPayment() {
+       // In Desired Mode, always use the user's entered value
+       if (this.isDesiredMode && this.targetPaymentAmount > 0) {
+           return this.targetPaymentAmount;
+       }
        // When user manually edits weeks, use the locally calculated payment
        if (this._isEditingWeeks && this.targetPaymentAmount > 0) {
            return this.targetPaymentAmount;
