@@ -492,19 +492,21 @@ export default class PaymentPlanEditorV2 extends LightningElement {
        this._isEditingWeeks = false;
 
 
-       let weeklyEquivalent = this._toWeekly(val);
-       const minWeekly = this._minimumWeeklyTarget();
-       const maxWeekly = this._maximumWeeklyTarget();
-       const weeklyTolerance = 0.01;
+       // Round to cents for comparison to avoid floating point issues
+       const weeklyEquivalent = Math.round(this._toWeekly(val) * 100) / 100;
+       const minWeekly = Math.round(this._minimumWeeklyTarget() * 100) / 100;
+       const maxWeekly = this._maximumWeeklyTarget() != null
+           ? Math.round(this._maximumWeeklyTarget() * 100) / 100
+           : null;
 
 
-       if (weeklyEquivalent < minWeekly - weeklyTolerance) {
+       if (weeklyEquivalent < minWeekly) {
            const minDisplay = this.formatCurrency(this._toDisplay(minWeekly));
            event.target.setCustomValidity(`Desired payment must be at least ${minDisplay}.`);
            event.target.reportValidity();
            this.showToast('Invalid Payment', `Target payment must be at least ${minDisplay}.`, 'error', false);
            return;
-       } else if (maxWeekly != null && weeklyEquivalent > maxWeekly + weeklyTolerance) {
+       } else if (maxWeekly != null && weeklyEquivalent > maxWeekly) {
            const maxDisplay = this.formatCurrency(this._toDisplay(maxWeekly));
            event.target.setCustomValidity(`Desired payment must be at or below ${maxDisplay}.`);
            event.target.reportValidity();
@@ -740,18 +742,20 @@ export default class PaymentPlanEditorV2 extends LightningElement {
    async handleSave() {
        // Validate payment bounds before saving
        if (this.isDesiredMode) {
-           const weeklyEquivalent = this._toWeekly(this.targetPaymentAmount);
-           const minWeekly = this._minimumWeeklyTarget();
-           const maxWeekly = this._maximumWeeklyTarget();
-           const weeklyTolerance = 0.01;
+           // Round to cents for comparison to avoid floating point issues
+           const weeklyEquivalent = Math.round(this._toWeekly(this.targetPaymentAmount) * 100) / 100;
+           const minWeekly = Math.round(this._minimumWeeklyTarget() * 100) / 100;
+           const maxWeekly = this._maximumWeeklyTarget() != null
+               ? Math.round(this._maximumWeeklyTarget() * 100) / 100
+               : null;
 
 
-           if (weeklyEquivalent < minWeekly - weeklyTolerance) {
+           if (weeklyEquivalent < minWeekly) {
                const minDisplay = this.formatCurrency(this._toDisplay(minWeekly));
                this.showToast('Validation Error', `Target payment must be at least ${minDisplay}.`, 'error', false);
                return;
            }
-           if (maxWeekly != null && weeklyEquivalent > maxWeekly + weeklyTolerance) {
+           if (maxWeekly != null && weeklyEquivalent > maxWeekly) {
                const maxDisplay = this.formatCurrency(this._toDisplay(maxWeekly));
                this.showToast('Validation Error', `Target payment must be at or below ${maxDisplay}.`, 'error', false);
                return;
