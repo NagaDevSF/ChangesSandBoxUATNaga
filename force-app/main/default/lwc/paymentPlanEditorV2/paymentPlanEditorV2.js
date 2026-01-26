@@ -766,9 +766,15 @@ export default class PaymentPlanEditorV2 extends LightningElement {
            const baseWeeklyPayment = this._calculateBaseWeeklyPayment();
 
 
+           // Use manually entered weeks in Desired Mode, otherwise use calculated value
+           const weeksToSave = this.isDesiredMode && this._targetNumberOfWeeks != null
+               ? this._targetNumberOfWeeks
+               : this.calculations.programLength;
+
+
            await updateOpportunityOnly({
                recordId: this.recordId,
-               numberOfWeeks: this.calculations.programLength,
+               numberOfWeeks: weeksToSave,
                weeklyPayment: baseWeeklyPayment,
                firstDraftDate: this.firstDraftDate,
                bankingFee: this.bankingFee,
