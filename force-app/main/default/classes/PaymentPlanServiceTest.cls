@@ -279,7 +279,7 @@ private class PaymentPlanServiceTest {
         System.assertEquals(30, plan.Setup_Fee__c, 'Should use default setup fee');
         System.assertEquals(50, plan.Banking_Fee__c, 'Should use default banking fee');
         System.assertEquals(55, plan.Bank2_Fee__c, 'Should use default bank2 fee');
-        System.assertEquals(100, plan.Setup_Fee_Payments__c, 'Should use default setup fee payments');
+        System.assertEquals(4, plan.Setup_Fee_Payments__c, 'Should use default setup fee payments');
 
         // Verify no schedule items created (no draft items to copy)
         List<Payment_Schedule_Item__c> scheduleItems = [

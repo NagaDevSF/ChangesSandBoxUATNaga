@@ -23,8 +23,8 @@ public class PaymentPlanService {
 				thisPP.Banking_Fee__c = thisDraft.Banking_Fee__c != null ? thisDraft.Banking_Fee__c : 50;
 				//TODO there is no bank2 fee tracked on Draft
 				thisPP.Bank2_Fee__c = thisDraft.Banking_Fee__c != null ? thisDraft.Banking_Fee__c : 55;
-				// TODO correct field???
-				thisPP.Setup_Fee_Payments__c = thisDraft.Setup_Fee__c != null ? thisDraft.Setup_Fee__c : 100;
+				// Setup Fee Payments from Setup_Fee_Term__c (number of payments), not Setup_Fee__c (dollar amount)
+				thisPP.Setup_Fee_Payments__c = thisDraft.Setup_Fee_Term__c != null ? thisDraft.Setup_Fee_Term__c : 4;
 			} else {
 				// No primary draft found - use default values
 				thisPP.Settlement_Percentage__c = 30;
@@ -32,7 +32,7 @@ public class PaymentPlanService {
 				thisPP.Setup_Fee__c = 30;
 				thisPP.Banking_Fee__c = 50;
 				thisPP.Bank2_Fee__c = 55;
-				thisPP.Setup_Fee_Payments__c = 100;
+				thisPP.Setup_Fee_Payments__c = 4;
 			}
 			paymentPlanMap.put(opp.Id, thisPP);
 		}
@@ -96,8 +96,23 @@ public class PaymentPlanService {
 		}
 
 		Database.insert(allPSIList);
-
 		//Database.insert(allPSIList, AccessLevel.USER_MODE);
+
+		// Create Payment_Fee__c records for all inserted schedule items
+		List<Payment_Fee__c> allFeeRecords = new List<Payment_Fee__c>();
+		for (Payment_Schedule_Item__c psi : allPSIList) {
+			allFeeRecords.addAll(PaymentFeeService.createFeeRecordsForItem(
+				psi,
+				psi.Banking_Fee_Amount__c,
+				psi.Program_Fee_Amount__c,
+				psi.Setup_Fee_Amount__c,
+				psi.To_Escrow_Amount__c  // Payee Fee = Savings/Escrow
+			));
+		}
+		if (!allFeeRecords.isEmpty()) {
+			Database.insert(allFeeRecords);
+		}
+
 		//return returnMap;
 	}
 	
