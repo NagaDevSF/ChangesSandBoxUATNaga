@@ -1646,10 +1646,10 @@ public with sharing class PaymentPlanEditorController {
             System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Remaining Program Fee: ' + remainingProgramFee);
             System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Remaining Setup Fee Payments: ' + remainingSetupFeePayments);
 
-            // Step 2 (cont): Paid To Date = Cleared Program Cost + Wired Payments
-            // Note: Wired payments go directly to escrow, so they count toward program cost paid
-            Decimal paidProgramCost = clearedProgramCostSum + wiredPaymentsSum;
-            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Paid Program Cost (Cleared Program+Escrow + Wired): ' + paidProgramCost);
+            // Step 2 (cont): Paid To Date = Cleared Program Cost
+            // Note: Wire fees are now tracked separately in Payment_Fee__c
+            Decimal paidProgramCost = clearedProgramCostSum;
+            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Paid Program Cost (Cleared Program+Escrow): ' + paidProgramCost);
 
             // Step 3: Remaining Program Cost = Total Program Cost - Paid Program Cost
             Decimal remainingProgramCost = totalProgramCost - paidProgramCost;
