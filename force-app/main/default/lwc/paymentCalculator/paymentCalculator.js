@@ -759,7 +759,8 @@ export default class PaymentCalculator extends LightningElement {
             // Target payment is a percent of CURRENT weekly payment
             const weeklyFromCurrent = (this.currentPayment || 0) * (percent / 100);
             const boundedWeekly = Math.max(this._minimumWeeklyTarget(), weeklyFromCurrent);
-            this.targetPaymentAmount = this._toDisplay(boundedWeekly);
+            // Round to cents like CalculationService setScale(2, HALF_UP)
+            this.targetPaymentAmount = this._roundToCents(this._toDisplay(boundedWeekly));
         }
         // Debounce the heavy calculation (Apex) while dragging
         this.debouncedRecalc();
@@ -849,6 +850,12 @@ export default class PaymentCalculator extends LightningElement {
     _toDisplay(weeklyAmount) {
         if (weeklyAmount == null) return 0;
         return this.paymentFrequency === 'WEEKLY' ? Number(weeklyAmount) : Number(weeklyAmount) * this._weeklyToMonthlyFactor;
+    }
+
+    // Round to cents (2 decimal places) - matches Apex setScale(2, HALF_UP)
+    _roundToCents(amount) {
+        if (amount == null) return 0;
+        return Math.round(amount * 100) / 100;
     }
 
     _minimumWeeklyTarget() {
@@ -996,28 +1003,71 @@ export default class PaymentCalculator extends LightningElement {
     }
 
     // Compute local target amount based on percent of CURRENT weekly payment
+    // Applies rounding to match CalculationService behavior
     computeTargetPaymentAmountLocal() {
         if (this.calculateBy !== 'PERCENT') {
-            return this.targetPaymentAmount || 0;
+            return this._roundToCents(this.targetPaymentAmount || 0);
         }
         const weeklyFromCurrent = (this.currentPayment || 0) * (this.targetPaymentPercent / 100);
         const boundedWeekly = Math.max(this._minimumWeeklyTarget(), weeklyFromCurrent);
+        // Round to cents like Apex setScale(2, HALF_UP)
+        const roundedWeekly = this._roundToCents(boundedWeekly);
         // If UI is in monthly mode, show the equivalent monthly amount
-        return this.paymentFrequency === 'WEEKLY' ? boundedWeekly : (boundedWeekly * this._weeklyToMonthlyFactor);
+        return this.paymentFrequency === 'WEEKLY' ? roundedWeekly : this._roundToCents(roundedWeekly * this._weeklyToMonthlyFactor);
     }
 
     // Display weekly target for instant summary updates while dragging
+    // Applies rounding to match CalculationService behavior
     get displayWeeklyTarget() {
         const amount = this.calculateBy === 'PERCENT' ? this.computeTargetPaymentAmountLocal() : (this.targetPaymentAmount || 0);
         // Always convert to weekly for the summary "New Weekly Payment"
-        return this.paymentFrequency === 'WEEKLY' ? amount : (amount / this._weeklyToMonthlyFactor);
+        const weekly = this.paymentFrequency === 'WEEKLY' ? amount : (amount / this._weeklyToMonthlyFactor);
+        return this._roundToCents(weekly);
     }
 
     // Value to show in Summary Stats: prefer Apex/local calculation result, fallback to slider estimate
+    // All values are rounded to cents to match CalculationService
     get summaryWeeklyPayment() {
         const calc = this.calculations?.weeklyPayment;
-        if (calc && !Number.isNaN(calc) && calc > 0) return calc;
+        if (calc && !Number.isNaN(calc) && calc > 0) return this._roundToCents(calc);
         return this.displayWeeklyTarget;
+    }
+
+    // Local estimate for Duration (number of weeks) during slider dragging
+    // Uses Math.ceil() to match CalculationService behavior
+    get localEstimatedWeeks() {
+        const weeklyPayment = this.displayWeeklyTarget;
+        if (!weeklyPayment || weeklyPayment <= 0) return 0;
+
+        const bFee = this.bankingFee || 0;
+        const netPerWeek = weeklyPayment - bFee;
+        if (netPerWeek <= 0) return 0;
+
+        // Calculate total program cost (settlement + program fee)
+        const debt = this.totalDebt || 0;
+        const settlementPct = this.settlementPercent || 50;
+        const programFeePct = this.noFeeProgram ? 0 : (this.programFeePercent || 25);
+
+        const settlementAmount = debt * (settlementPct / 100);
+        const programFee = settlementAmount * (programFeePct / 100);
+        const totalProgramCost = settlementAmount + programFee;
+
+        if (totalProgramCost <= 0) return 0;
+
+        // Use Math.ceil() like CalculationService
+        const weeks = Math.ceil(totalProgramCost / netPerWeek);
+
+        // Apply min/max bounds from config
+        const minWeeks = this._minProgramWeeks || 1;
+        const maxWeeks = this._maxProgramWeeks || 204;
+        return Math.max(minWeeks, Math.min(maxWeeks, weeks));
+    }
+
+    // Program length for summary stats - prefer Apex result, fallback to local estimate
+    get summaryProgramLength() {
+        const calc = this.calculations?.programLength;
+        if (calc && !Number.isNaN(calc) && calc > 0) return calc;
+        return this.localEstimatedWeeks;
     }
 
     // Mode helpers
