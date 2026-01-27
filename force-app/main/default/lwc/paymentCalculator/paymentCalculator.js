@@ -759,8 +759,7 @@ export default class PaymentCalculator extends LightningElement {
             // Target payment is a percent of CURRENT weekly payment
             const weeklyFromCurrent = (this.currentPayment || 0) * (percent / 100);
             const boundedWeekly = Math.max(this._minimumWeeklyTarget(), weeklyFromCurrent);
-            // Round to cents like CalculationService setScale(2, HALF_UP)
-            this.targetPaymentAmount = this._roundToCents(this._toDisplay(boundedWeekly));
+            this.targetPaymentAmount = this._toDisplay(boundedWeekly);
         }
         // Debounce the heavy calculation (Apex) while dragging
         this.debouncedRecalc();
@@ -852,12 +851,6 @@ export default class PaymentCalculator extends LightningElement {
         return this.paymentFrequency === 'WEEKLY' ? Number(weeklyAmount) : Number(weeklyAmount) * this._weeklyToMonthlyFactor;
     }
 
-    // Round to cents (2 decimal places) - matches Apex setScale(2, HALF_UP)
-    _roundToCents(amount) {
-        if (amount == null) return 0;
-        return Math.round(amount * 100) / 100;
-    }
-
     _minimumWeeklyTarget() {
         const current = this.currentPayment || 0;
         const percentFloor = this.hasCurrentPayment ? current * (this.percentMin / 100) : 0;
@@ -904,27 +897,17 @@ export default class PaymentCalculator extends LightningElement {
         this.targetPaymentAmount = this._toDisplay(boundedWeekly);
     }
 
-    // Get the actual "New Weekly Payment" as displayed in the UI
-    // Uses the exact same calculation as summaryStats.js computedNewWeeklyPayment
+    // Get the "New Weekly Payment" from schedule - schedule is front-loaded and
+    // the last payment may be lower due to rounding
     _getBaseWeeklyPaymentFromSchedule() {
         if (!this.paymentSchedule || this.paymentSchedule.length === 0) {
-            // Fallback to calculated weekly payment when schedule is not yet available
-            const weeklyPayment = this.calculations?.weeklyPayment || 0;
-            console.log('[PaymentCalculator] _getBaseWeeklyPaymentFromSchedule: No schedule, using weeklyPayment:', weeklyPayment);
-            return weeklyPayment;
+            return this.calculations?.weeklyPayment || 0;
         }
-
-        // Exact same logic as summaryStats.js computedNewWeeklyPayment:
-        // First payment amount from schedule minus setup fee
+        // Use the first payment as the representative base amount
         const first = this.paymentSchedule[0] || {};
         const payment = first.paymentAmount ?? first.totalPayment ?? first.draftAmount ?? 0;
         const setup = first.setupFee ?? first.setupFeePortion ?? 0;
-        const result = Math.max(0, payment - setup);
-
-        console.log('[PaymentCalculator] _getBaseWeeklyPaymentFromSchedule: first=', first);
-        console.log('[PaymentCalculator] _getBaseWeeklyPaymentFromSchedule: payment=', payment, 'setup=', setup, 'result=', result);
-
-        return result;
+        return Math.max(0, payment - setup);
     }
 
     handleFirstDraftDateChange(event) {
@@ -1003,96 +986,37 @@ export default class PaymentCalculator extends LightningElement {
     }
 
     // Compute local target amount based on percent of CURRENT weekly payment
-    // Applies rounding to match CalculationService behavior
     computeTargetPaymentAmountLocal() {
         if (this.calculateBy !== 'PERCENT') {
-            return this._roundToCents(this.targetPaymentAmount || 0);
+            return this.targetPaymentAmount || 0;
         }
         const weeklyFromCurrent = (this.currentPayment || 0) * (this.targetPaymentPercent / 100);
         const boundedWeekly = Math.max(this._minimumWeeklyTarget(), weeklyFromCurrent);
-        // Round to cents like Apex setScale(2, HALF_UP)
-        const roundedWeekly = this._roundToCents(boundedWeekly);
         // If UI is in monthly mode, show the equivalent monthly amount
-        return this.paymentFrequency === 'WEEKLY' ? roundedWeekly : this._roundToCents(roundedWeekly * this._weeklyToMonthlyFactor);
+        return this.paymentFrequency === 'WEEKLY' ? boundedWeekly : (boundedWeekly * this._weeklyToMonthlyFactor);
     }
 
-    // Display weekly target (user's input) for instant updates while dragging
-    // Applies rounding to match CalculationService behavior
+    // Display weekly target for instant summary updates while dragging
     get displayWeeklyTarget() {
         const amount = this.calculateBy === 'PERCENT' ? this.computeTargetPaymentAmountLocal() : (this.targetPaymentAmount || 0);
         // Always convert to weekly for the summary "New Weekly Payment"
-        const weekly = this.paymentFrequency === 'WEEKLY' ? amount : (amount / this._weeklyToMonthlyFactor);
-        return this._roundToCents(weekly);
+        return this.paymentFrequency === 'WEEKLY' ? amount : (amount / this._weeklyToMonthlyFactor);
     }
 
-    // Local calculation of draft payment amount (target + banking fee)
-    // This is what the user actually pays per draft, matching CalculationService
-    get localDraftPayment() {
-        const target = this.displayWeeklyTarget;
-        const bFee = this.bankingFee || 0;
-        // Draft payment = target payment (includes net + program portion) + banking fee
-        // Note: Setup fee is added on top during schedule generation, not here
-        return this._roundToCents(target + bFee);
-    }
-
-    // Value to show in Summary Stats: prefer Apex calculation, fallback to local estimate
-    // Shows the actual draft payment amount (target + banking fee)
+    // Value to show in Summary Stats: use schedule-derived value (first payment minus setup fee)
+    // This ensures consistency with targetPaymentDisplay and the payment schedule table
     get summaryWeeklyPayment() {
-        // Use Apex result if available (from paymentSchedule first item)
+        // Use schedule-derived value for consistency with payment table
         if (this.paymentSchedule && this.paymentSchedule.length > 0) {
-            const firstItem = this.paymentSchedule[0];
-            const payment = firstItem.paymentAmount || firstItem.totalPayment || firstItem.draftAmount;
-            if (payment && !Number.isNaN(payment) && payment > 0) {
-                return this._roundToCents(payment);
-            }
+            const first = this.paymentSchedule[0] || {};
+            const payment = first.paymentAmount ?? first.totalPayment ?? first.draftAmount ?? 0;
+            const setup = first.setupFee ?? first.setupFeePortion ?? 0;
+            return Math.max(0, payment - setup);
         }
-        // Fallback to calculations object
+        // Fallback to Apex calculation when schedule not yet available
         const calc = this.calculations?.weeklyPayment;
-        if (calc && !Number.isNaN(calc) && calc > 0) {
-            // weeklyPayment from calc is the target; add banking fee for draft amount
-            return this._roundToCents(calc + (this.bankingFee || 0));
-        }
-        // Final fallback to local calculation
-        return this.localDraftPayment;
-    }
-
-    // Local estimate for Duration (number of weeks) during slider dragging
-    // Uses Math.ceil() to match CalculationService behavior
-    get localEstimatedWeeks() {
-        const targetPayment = this.displayWeeklyTarget;
-        if (!targetPayment || targetPayment <= 0) return 0;
-
-        // Net per week is what goes to settlement/program (target - nothing, since target IS the net)
-        // Actually, in CalculationService: netPerWeek = weeklyPayment - bankingFee
-        // But weeklyPayment IS the target, so netPerWeek = target
-        const netPerWeek = targetPayment;
-        if (netPerWeek <= 0) return 0;
-
-        // Calculate total program cost (settlement + program fee)
-        const debt = this.totalDebt || 0;
-        const settlementPct = this.settlementPercent || 50;
-        const programFeePct = this.noFeeProgram ? 0 : (this.programFeePercent || 25);
-
-        const settlementAmount = debt * (settlementPct / 100);
-        const programFee = settlementAmount * (programFeePct / 100);
-        const totalProgramCost = settlementAmount + programFee;
-
-        if (totalProgramCost <= 0) return 0;
-
-        // Use Math.ceil() like CalculationService
-        const weeks = Math.ceil(totalProgramCost / netPerWeek);
-
-        // Apply min/max bounds from config
-        const minWeeks = this._minProgramWeeks || 1;
-        const maxWeeks = this._maxProgramWeeks || 204;
-        return Math.max(minWeeks, Math.min(maxWeeks, weeks));
-    }
-
-    // Program length for summary stats - prefer Apex result, fallback to local estimate
-    get summaryProgramLength() {
-        const calc = this.calculations?.programLength;
         if (calc && !Number.isNaN(calc) && calc > 0) return calc;
-        return this.localEstimatedWeeks;
+        return this.displayWeeklyTarget;
     }
 
     // Mode helpers
@@ -1483,24 +1407,25 @@ export default class PaymentCalculator extends LightningElement {
 
     // Getters for Display Values
     get targetPaymentDisplay() {
-        // Use the exact same calculation as summaryStats.js computedNewWeeklyPayment:
-        // First payment amount from schedule minus setup fee
-        // Always display weekly amounts
-        let displayAmount = 0;
-
+        // Get the schedule-derived weekly payment (base payment without setup fee)
+        let weeklyPayment = 0;
         if (this.paymentSchedule && this.paymentSchedule.length > 0) {
             const first = this.paymentSchedule[0] || {};
             const payment = first.paymentAmount ?? first.totalPayment ?? first.draftAmount ?? 0;
             const setup = first.setupFee ?? first.setupFeePortion ?? 0;
-            displayAmount = Math.max(0, payment - setup);
+            weeklyPayment = Math.max(0, payment - setup);
         } else {
-            // Fallback when schedule is not yet available
-            displayAmount = this.targetPaymentAmount || 0;
+            // Fallback when schedule not yet available
+            weeklyPayment = this.calculations?.weeklyPayment || 0;
         }
 
-        const amount = this.formatCurrency(displayAmount);
-        const pct = this.isDesiredMode ? (this.desiredPercent || 0) : (this.targetPaymentPercent || 0);
-        const pctText = Number(pct).toFixed(1);
+        // Calculate ACTUAL percentage: schedule weekly / current weekly * 100
+        const current = this.currentPayment || 0;
+        const actualPercent = current > 0 ? (weeklyPayment / current) * 100 : 0;
+
+        // Always show weekly values
+        const amount = this.formatCurrency(weeklyPayment);
+        const pctText = Number(actualPercent).toFixed(1);
         return `${pctText}% → ${amount}/week`;
     }
 

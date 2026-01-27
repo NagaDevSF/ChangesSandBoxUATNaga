@@ -3,8 +3,8 @@
         <div class="slds-p-horizontal_medium slds-p-vertical_small">
             <!-- Summary Stats above Program Settings -->
             <div class="section-frame slds-m-bottom_medium">
-                <c-summary-stats items={paymentSchedule} weekly-payment={summaryWeeklyPayment}
-                    program-length={summaryProgramLength} current-payment={currentPayment}
+                <c-summary-stats items={paymentSchedule} derive-from-schedule="true"
+                    program-length={calculations.programLength} current-payment={currentPayment}
                     total-savings={calculations.savingsAmount} total-debt={totalDebt} first-draft-date={firstDraftDate}>
                 </c-summary-stats>
             </div>

@@ -12,16 +12,25 @@ export default class SummaryStats extends LightningElement {
     @api totalDebt;          // Total of all creditor estimated balances
     @api firstDraftDate;     // First Draft Date (YYYY-MM-DD or ISO)
 
+    // Control flag: when true, always derive values from schedule items
+    // PaymentCalculator sets this to true; PaymentPlanEditorV2 uses default (false)
+    @api deriveFromSchedule = false;
+
     // Helpers
     get hasItems() {
         return Array.isArray(this.items) && this.items.length > 0;
     }
 
     // New Weekly Payment
-    // Prefer explicit weeklyPayment prop from parent when provided (user-entered value)
-    // Fallback to schedule-based calculation if prop not provided
     get computedNewWeeklyPayment() {
-        // Use explicit prop if provided (user's entered value takes priority)
+        // When deriveFromSchedule is true, always use schedule-based calculation
+        if (this.deriveFromSchedule && this.hasItems) {
+            const first = this.items[0] || {};
+            const payment = first.paymentAmount ?? first.totalPayment ?? first.draftAmount ?? 0;
+            const setup = first.setupFee ?? first.setupFeePortion ?? 0;
+            return Math.max(0, payment - setup);
+        }
+        // Default behavior: use prop if provided
         if (this.weeklyPayment != null && this.weeklyPayment > 0) {
             return this.weeklyPayment;
         }
@@ -37,7 +46,13 @@ export default class SummaryStats extends LightningElement {
 
     // Weeks to Payoff
     get computedWeeksToPayoff() {
+        // When deriveFromSchedule is true, always use schedule length
+        if (this.deriveFromSchedule && this.hasItems) {
+            return this.items.length;
+        }
+        // Default behavior: use prop if provided
         if (this.programLength != null) return this.programLength;
+        // Fallback to schedule length
         return this.hasItems ? this.items.length : 0;
     }
 
