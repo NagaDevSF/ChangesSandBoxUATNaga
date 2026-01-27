@@ -1090,19 +1090,37 @@ export default class PaymentCalculator extends LightningElement {
         return (weekly / current) * 100;
     }
 
-    /**
-     * Saves a new draft with current configuration and calculations.
-     * Following LWC best practice: Clean async/await pattern with proper error handling.
-     */
     async handleSaveDraft() {
         try {
             this.isLoading = true;
+            const config = {
+                programType: this.programType,
+                paymentFrequency: this.paymentFrequency,
+                calculateBy: this.calculateBy,
+                targetPaymentPercent: this.targetPaymentPercent,
+                targetPaymentAmount: this.targetPaymentAmount,
+                setupFeePayments: this.setupFeePayments,
+                setupFeeTotal: this.setupFeeTotal,
+                noFeeProgram: this.noFeeProgram,
+                settlementPercent: this.settlementPercent,
+                programFeePercent: this.programFeePercent,
+                bankingFee: this.bankingFee,
+                firstDraftDate: this.firstDraftDate,
+                preferredDayOfWeek: this.preferredDayOfWeek,
+                selectedProductCodes: this.selectedProductCodes
+            };
 
-            // Build configuration object matching ConfigWrapper structure
-            const config = this._buildConfigObject();
-
-            // Calculate base weekly payment from schedule
-            const baseWeeklyPayment = this._calculateBaseWeeklyPayment();
+            // Use schedule-derived value for consistency with payment table display
+            // Schedule is front-loaded; use the first payment as the displayed base
+            let baseWeeklyPayment = 0;
+            if (this.paymentSchedule && this.paymentSchedule.length > 0) {
+                const first = this.paymentSchedule[0] || {};
+                const payment = first.paymentAmount ?? first.totalPayment ?? first.draftAmount ?? 0;
+                const setup = first.setupFee ?? first.setupFeePortion ?? 0;
+                baseWeeklyPayment = Math.max(0, payment - setup);
+            } else {
+                baseWeeklyPayment = this.calculations?.weeklyPayment || 0;
+            }
             const weeklySavings = (this.currentPayment || 0) - baseWeeklyPayment;
             const percentSavings = this.currentPayment > 0
                 ? (weeklySavings / this.currentPayment) * 100
@@ -1116,7 +1134,9 @@ export default class PaymentCalculator extends LightningElement {
                 calculationsOptional: {
                     ...this.calculations,
                     paymentSchedule: this.paymentSchedule,
+                    // Use backend's enforced weeklyPayment (includes minimum enforcement)
                     weeklyPayment: baseWeeklyPayment,
+                    // Summary values that match UI display
                     totalDebt: this.totalDebt,
                     currentPayment: this.currentPayment,
                     newWeeklyPayment: baseWeeklyPayment,
@@ -1129,75 +1149,53 @@ export default class PaymentCalculator extends LightningElement {
             this.showToast('Success', 'Draft saved successfully', 'success', false);
             this.selectedDraftId = newId;
             await this.loadSavedDrafts();
-
-            // Apply the newly created draft
+            // Try to set current selection to the newly created draft's row
             const createdRow = (this.drafts || []).find(d => d.Id === newId);
             if (createdRow) {
                 this.applyDraft(createdRow);
             }
         } catch (error) {
-            const errorMessage = error?.body?.message || error?.message || 'Failed to save draft';
-            this.showToast('Error', errorMessage, 'error', false);
+            this.showToast('Error', 'Failed to save draft', 'error', false);
         } finally {
             this.isLoading = false;
         }
     }
 
-    /**
-     * Builds configuration object for saving to Apex.
-     * Following LWC best practice: Extract reusable logic into helper methods.
-     * @returns {Object} Configuration object matching Apex expectations
-     */
-    _buildConfigObject() {
-        return {
-            programType: this.programType,
-            paymentFrequency: this.paymentFrequency,
-            calculateBy: this.calculateBy,
-            targetPaymentPercent: this.targetPaymentPercent,
-            targetPaymentAmount: this.targetPaymentAmount,
-            setupFeePayments: this.setupFeePayments,
-            setupFeeTotal: this.setupFeeTotal,
-            noFeeProgram: this.noFeeProgram,
-            settlementPercent: this.settlementPercent,
-            programFeePercent: this.programFeePercent,
-            bankingFee: this.bankingFee,
-            firstDraftDate: this.firstDraftDate,
-            preferredDayOfWeek: this.preferredDayOfWeek,
-            selectedProductCodes: this.selectedProductCodes
-        };
-    }
-
-    /**
-     * Calculates base weekly payment from payment schedule.
-     * Following LWC best practice: Extract calculation logic into helper methods.
-     * @returns {number} Base weekly payment amount
-     */
-    _calculateBaseWeeklyPayment() {
-        if (this.paymentSchedule && this.paymentSchedule.length > 0) {
-            const first = this.paymentSchedule[0] || {};
-            const payment = first.paymentAmount ?? first.totalPayment ?? first.draftAmount ?? 0;
-            const setup = first.setupFee ?? first.setupFeePortion ?? 0;
-            return Math.max(0, payment - setup);
-        }
-        return this.calculations?.weeklyPayment || 0;
-    }
-
-    /**
-     * Updates an existing draft with current configuration and calculations.
-     * Following LWC best practice: Clean async/await pattern with proper error handling.
-     */
     async handleUpdateDraft() {
         if (!this.selectedDraftId) {
             this.showToast('Info', 'No draft loaded to update', 'info', false);
             return;
         }
-
         try {
             this.isLoading = true;
+            const config = {
+                programType: this.programType,
+                paymentFrequency: this.paymentFrequency,
+                calculateBy: this.calculateBy,
+                targetPaymentPercent: this.targetPaymentPercent,
+                targetPaymentAmount: this.targetPaymentAmount,
+                setupFeePayments: this.setupFeePayments,
+                setupFeeTotal: this.setupFeeTotal,
+                noFeeProgram: this.noFeeProgram,
+                settlementPercent: this.settlementPercent,
+                programFeePercent: this.programFeePercent,
+                bankingFee: this.bankingFee,
+                firstDraftDate: this.firstDraftDate,
+                preferredDayOfWeek: this.preferredDayOfWeek,
+                selectedProductCodes: this.selectedProductCodes
+            };
 
-            // Reuse helper methods for config and calculations
-            const config = this._buildConfigObject();
-            const baseWeeklyPayment = this._calculateBaseWeeklyPayment();
+            // Use schedule-derived value for consistency with payment table display
+            // Schedule is front-loaded; use the first payment as the displayed base
+            let baseWeeklyPayment = 0;
+            if (this.paymentSchedule && this.paymentSchedule.length > 0) {
+                const first = this.paymentSchedule[0] || {};
+                const payment = first.paymentAmount ?? first.totalPayment ?? first.draftAmount ?? 0;
+                const setup = first.setupFee ?? first.setupFeePortion ?? 0;
+                baseWeeklyPayment = Math.max(0, payment - setup);
+            } else {
+                baseWeeklyPayment = this.calculations?.weeklyPayment || 0;
+            }
             const weeklySavings = (this.currentPayment || 0) - baseWeeklyPayment;
             const percentSavings = this.currentPayment > 0
                 ? (weeklySavings / this.currentPayment) * 100
@@ -1211,7 +1209,9 @@ export default class PaymentCalculator extends LightningElement {
                 calculationsOptional: {
                     ...this.calculations,
                     paymentSchedule: this.paymentSchedule,
+                    // Use backend's enforced weeklyPayment (includes minimum enforcement)
                     weeklyPayment: baseWeeklyPayment,
+                    // Summary values that match UI display
                     totalDebt: this.totalDebt,
                     currentPayment: this.currentPayment,
                     newWeeklyPayment: baseWeeklyPayment,
@@ -1224,9 +1224,8 @@ export default class PaymentCalculator extends LightningElement {
             this.showToast('Success', 'Draft updated', 'success', false);
             this.selectedDraftId = updatedId || this.selectedDraftId;
             await this.loadSavedDrafts();
-        } catch (error) {
-            const errorMessage = error?.body?.message || error?.message || 'Failed to update draft';
-            this.showToast('Error', errorMessage, 'error', false);
+        } catch (e) {
+            this.showToast('Error', e?.body?.message || 'Failed to update draft', 'error', false);
         } finally {
             this.isLoading = false;
         }
