@@ -1016,7 +1016,7 @@ export default class PaymentCalculator extends LightningElement {
         return this.paymentFrequency === 'WEEKLY' ? roundedWeekly : this._roundToCents(roundedWeekly * this._weeklyToMonthlyFactor);
     }
 
-    // Display weekly target for instant summary updates while dragging
+    // Display weekly target (user's input) for instant updates while dragging
     // Applies rounding to match CalculationService behavior
     get displayWeeklyTarget() {
         const amount = this.calculateBy === 'PERCENT' ? this.computeTargetPaymentAmountLocal() : (this.targetPaymentAmount || 0);
@@ -1025,22 +1025,47 @@ export default class PaymentCalculator extends LightningElement {
         return this._roundToCents(weekly);
     }
 
-    // Value to show in Summary Stats: prefer Apex/local calculation result, fallback to slider estimate
-    // All values are rounded to cents to match CalculationService
+    // Local calculation of draft payment amount (target + banking fee)
+    // This is what the user actually pays per draft, matching CalculationService
+    get localDraftPayment() {
+        const target = this.displayWeeklyTarget;
+        const bFee = this.bankingFee || 0;
+        // Draft payment = target payment (includes net + program portion) + banking fee
+        // Note: Setup fee is added on top during schedule generation, not here
+        return this._roundToCents(target + bFee);
+    }
+
+    // Value to show in Summary Stats: prefer Apex calculation, fallback to local estimate
+    // Shows the actual draft payment amount (target + banking fee)
     get summaryWeeklyPayment() {
+        // Use Apex result if available (from paymentSchedule first item)
+        if (this.paymentSchedule && this.paymentSchedule.length > 0) {
+            const firstItem = this.paymentSchedule[0];
+            const payment = firstItem.paymentAmount || firstItem.totalPayment || firstItem.draftAmount;
+            if (payment && !Number.isNaN(payment) && payment > 0) {
+                return this._roundToCents(payment);
+            }
+        }
+        // Fallback to calculations object
         const calc = this.calculations?.weeklyPayment;
-        if (calc && !Number.isNaN(calc) && calc > 0) return this._roundToCents(calc);
-        return this.displayWeeklyTarget;
+        if (calc && !Number.isNaN(calc) && calc > 0) {
+            // weeklyPayment from calc is the target; add banking fee for draft amount
+            return this._roundToCents(calc + (this.bankingFee || 0));
+        }
+        // Final fallback to local calculation
+        return this.localDraftPayment;
     }
 
     // Local estimate for Duration (number of weeks) during slider dragging
     // Uses Math.ceil() to match CalculationService behavior
     get localEstimatedWeeks() {
-        const weeklyPayment = this.displayWeeklyTarget;
-        if (!weeklyPayment || weeklyPayment <= 0) return 0;
+        const targetPayment = this.displayWeeklyTarget;
+        if (!targetPayment || targetPayment <= 0) return 0;
 
-        const bFee = this.bankingFee || 0;
-        const netPerWeek = weeklyPayment - bFee;
+        // Net per week is what goes to settlement/program (target - nothing, since target IS the net)
+        // Actually, in CalculationService: netPerWeek = weeklyPayment - bankingFee
+        // But weeklyPayment IS the target, so netPerWeek = target
+        const netPerWeek = targetPayment;
         if (netPerWeek <= 0) return 0;
 
         // Calculate total program cost (settlement + program fee)
