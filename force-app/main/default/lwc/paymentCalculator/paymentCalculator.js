@@ -384,34 +384,17 @@ export default class PaymentCalculator extends LightningElement {
         }
     }
 
-    /**
-     * Processes draft data from Apex DraftWrapper response.
-     * Following LWC best practice: Use wrapper class property names (camelCase).
-     * @param {Array} rows - Array of DraftWrapper objects from Apex
-     */
     processDrafts(rows) {
         this.selectedDraftId = null; // ensure table redraw by clearing selection
 
-        const processed = (rows || []).map(draft => {
-            // DraftWrapper uses camelCase property names
-            const statusValue = (draft.syncStatus || '').trim().toLowerCase();
+        const processed = (rows || []).map(r => {
+            const statusValue = (r.Sync_Status__c || '').trim().toLowerCase();
             const outOfSync = statusValue === 'out of sync';
 
             return {
-                // Map wrapper properties to datatable expected fields
-                Id: draft.id,
-                Name: draft.name,
-                CreatedDate: draft.createdDate,
-                CreatedBy: draft.createdBy,
-                isPrimary: draft.isPrimary,
-                weeklyPayment: draft.weeklyPayment,
-                numberOfWeeks: draft.numberOfWeeks,
-                savingsPercent: draft.savingsPercent,
-                syncStatus: draft.syncStatus,
-                invalidatedDate: draft.invalidatedDate,
-                config: draft.config,
-                calculations: draft.calculations,
-                // Computed UI properties
+                ...r,
+                CreatedDate: r.CreatedDate, // preserved
+                syncStatus: r.Sync_Status__c,
                 isOutOfSync: outOfSync,
                 rowClass: outOfSync
                     ? 'slds-theme_shade slds-text-color_default row-outofsync'
@@ -419,8 +402,8 @@ export default class PaymentCalculator extends LightningElement {
             };
         });
 
-        // Force Lightning datatable reactivity
-        this.drafts = [...processed];
+        // force Lightning datatable reactivity
+        this.drafts = JSON.parse(JSON.stringify(processed));
     }
 
     async handleRefreshDrafts() {
