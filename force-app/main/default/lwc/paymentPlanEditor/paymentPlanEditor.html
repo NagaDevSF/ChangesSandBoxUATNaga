@@ -386,22 +386,22 @@
                                 </template>
                             </tr>
 
-                            <!-- Wired Payment Sub-Rows -->
-                            <template lwc:if={item.hasWiredPayments}>
-                                <template for:each={item.wiredPayments} for:item="wire">
-                                    <tr key={wire.id} class={wire.wireRowClass} role="row">
+                            <!-- Wire Fee Sub-Rows -->
+                            <template lwc:if={item.hasWireFees}>
+                                <template for:each={item.wireFees} for:item="fee">
+                                    <tr key={fee.id} class={fee.wireRowClass} role="row">
                                         <!-- Empty cells for #, Draft # -->
                                         <td class="td-center" role="gridcell"></td>
                                         <td class="td-center" role="gridcell">
-                                            <lightning-icon icon-name="utility:routing_offline" size="xx-small" alternative-text="Wire" class="wire-icon"></lightning-icon>
+                                            <lightning-icon icon-name="utility:routing_offline" size="xx-small" alternative-text="Wire Fee" class="wire-icon"></lightning-icon>
                                         </td>
-                                        <!-- Date -->
+                                        <!-- Fee Type (under Date column) -->
                                         <td class="td-center" role="gridcell">
-                                            <time class="wire-date">{wire.paymentDateFormatted}</time>
+                                            <span class="wire-type">{fee.feeTypeFormatted}</span>
                                         </td>
                                         <!-- Amount (under Draft column) -->
                                         <td class="td-right td-currency" role="gridcell">
-                                            <data class="wire-amount">{wire.paymentAmountFormatted}</data>
+                                            <data class="wire-amount">{fee.amountFormatted}</data>
                                         </td>
                                         <!-- Empty cells for Setup, Program, Banking -->
                                         <td class="td-center" role="gridcell"></td>
@@ -409,12 +409,19 @@
                                         <td class="td-center" role="gridcell"></td>
                                         <!-- Empty for Savings -->
                                         <td class="td-center" role="gridcell"></td>
-                                        <!-- Description (under Status column) -->
-                                        <td class="td-center wire-description" role="gridcell">
-                                            <span class="wire-desc-text">{wire.description}</span>
-                                        </td>
-                                        <!-- Empty for Wire button -->
+                                        <!-- Empty for Status column -->
                                         <td class="td-center" role="gridcell"></td>
+                                        <!-- Delete button for Wire fee -->
+                                        <td class="td-center" role="gridcell">
+                                            <lightning-button-icon
+                                                icon-name="utility:delete"
+                                                variant="bare"
+                                                size="small"
+                                                alternative-text="Delete wire fee"
+                                                data-fee-id={fee.id}
+                                                onclick={handleDeleteWireFee}>
+                                            </lightning-button-icon>
+                                        </td>
                                         <!-- Empty for Action column if in edit mode -->
                                         <template lwc:if={canEdit}>
                                             <td class="td-center" role="gridcell"></td>
@@ -554,21 +561,19 @@
                     </template>
                 </table>
 
-                <!-- Wired Payments Popover (CSS-based visibility) -->
-                <template lwc:if={showWiredPopover}>
-                    <aside class="wired-payments-popover" style={popoverStyle}>
-                        <header class="wired-popover-header">
-                            <lightning-icon icon-name="utility:money" size="x-small" alternative-text="Wired Payments"></lightning-icon>
-                            <h3 class="wired-popover-title">Wired Payments</h3>
-                            <output class="wired-popover-count">({hoveredRowWiredPaymentsCount})</output>
+                <!-- Wire Fees Popover (CSS-based visibility) -->
+                <template lwc:if={showWireFeePopover}>
+                    <aside class="wire-fees-popover" style={popoverStyle}>
+                        <header class="wire-popover-header">
+                            <lightning-icon icon-name="utility:money" size="x-small" alternative-text="Wire Fees"></lightning-icon>
+                            <h3 class="wire-popover-title">Wire Fees</h3>
+                            <output class="wire-popover-count">({hoveredRowWireFeesCount})</output>
                         </header>
-                        <div class="wired-popover-body">
-                            <template for:each={hoveredRowWiredPayments} for:item="wire">
-                                <article key={wire.id} class="wired-payment-row">
-                                    <data class="wire-field wire-name">{wire.name}</data>
-                                    <time class="wire-field wire-date">{wire.paymentDateFormatted}</time>
-                                    <data class="wire-field wire-amount" value={wire.paymentAmount}>{wire.paymentAmountFormatted}</data>
-                                    <p class="wire-field wire-desc">{wire.description}</p>
+                        <div class="wire-popover-body">
+                            <template for:each={hoveredRowWireFees} for:item="fee">
+                                <article key={fee.id} class="wire-fee-row">
+                                    <span class="wire-field wire-type">{fee.feeTypeFormatted}</span>
+                                    <data class="wire-field wire-amount" value={fee.amount}>{fee.amountFormatted}</data>
                                 </article>
                             </template>
                         </div>
@@ -634,55 +639,47 @@
         </article>
     </template>
 
-    <!-- Wired Payment Creation Modal -->
+    <!-- Wire Fee Creation Modal -->
     <template lwc:if={showWireModal}>
         <dialog class="wire-modal slds-modal slds-fade-in-open" open aria-modal="true" aria-labelledby="wire-modal-heading">
             <article class="slds-modal__container">
                 <header class="slds-modal__header wire-modal-header">
-                    <h2 id="wire-modal-heading" class="slds-modal__title slds-hyphenate">Add Wired Payment</h2>
+                    <h2 id="wire-modal-heading" class="slds-modal__title slds-hyphenate">Add Wire Fee</h2>
                     <p class="wire-modal-subtitle">Payment Schedule Item #{wireModalRowNumber}</p>
                 </header>
 
                 <section class="slds-modal__content slds-p-around_medium wire-modal-body">
-                    <lightning-record-edit-form
-                        object-api-name="Wired_Payment__c"
-                        onsuccess={handleWirePaymentSuccess}
-                        onerror={handleWirePaymentError}>
+                    <lightning-combobox
+                        label="Type"
+                        value={wireFeeType}
+                        options={wireFeeTypeOptions}
+                        onchange={handleWireFeeTypeChange}
+                        required
+                        class="slds-m-bottom_medium">
+                    </lightning-combobox>
 
-                        <lightning-input-field
-                            field-name="Payment_Schedule_Item__c"
-                            value={wireModalScheduleItemId}
-                            class="slds-hide">
-                        </lightning-input-field>
+                    <lightning-input
+                        type="number"
+                        label="Amount"
+                        value={wireFeeAmount}
+                        formatter="currency"
+                        step="0.01"
+                        onchange={handleWireFeeAmountChange}>
+                    </lightning-input>
 
-                        <lightning-input-field
-                            field-name="Payment_Date__c"
-                            required>
-                        </lightning-input-field>
-
-                        <lightning-input-field
-                            field-name="Payment_Amount__c"
-                            required>
-                        </lightning-input-field>
-
-                        <lightning-input-field
-                            field-name="Description__c">
-                        </lightning-input-field>
-
-                        <footer class="slds-m-top_medium slds-text-align_right">
-                            <lightning-button
-                                variant="neutral"
-                                label="Cancel"
-                                onclick={handleCloseWireModal}
-                                class="slds-m-right_x-small">
-                            </lightning-button>
-                            <lightning-button
-                                variant="brand"
-                                type="submit"
-                                label="Save">
-                            </lightning-button>
-                        </footer>
-                    </lightning-record-edit-form>
+                    <footer class="slds-m-top_medium slds-text-align_right">
+                        <lightning-button
+                            variant="neutral"
+                            label="Cancel"
+                            onclick={handleCloseWireModal}
+                            class="slds-m-right_x-small">
+                        </lightning-button>
+                        <lightning-button
+                            variant="brand"
+                            label="Save"
+                            onclick={handleSaveWireFee}>
+                        </lightning-button>
+                    </footer>
                 </section>
             </article>
         </dialog>

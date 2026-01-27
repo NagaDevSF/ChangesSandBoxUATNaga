@@ -79,7 +79,7 @@
                     <tbody>
                         <template for:each={displayItems} for:item="item">
                             <!-- Schedule Item Row -->
-                            <template lwc:if={item.isWiredPayment}>
+                            <template lwc:if={item.isWireFee}>
                             </template>
                             <template lwc:else>
                                 <tr key={item.uniqueKey}
@@ -134,36 +134,29 @@
                                 </tr>
                             </template>
 
-                            <!-- Wired Payment Row (Nested, Indented, Orange) -->
-                            <template lwc:if={item.isWiredPayment}>
-                                <tr key={item.uniqueKey} class="row-wired-payment" role="row">
+                            <!-- Wire Fee Row (Nested, Indented) -->
+                            <template lwc:if={item.isWireFee}>
+                                <tr key={item.uniqueKey} class="row-wire-fee" role="row">
                                     <!-- Empty cell for indent -->
                                     <td class="td-center" role="gridcell"></td>
 
                                     <!-- Wire indicator -->
-                                    <td class="td-center wired-indicator" role="gridcell">
-                                        <lightning-icon icon-name="utility:money" size="xx-small" alternative-text="Wired Payment"></lightning-icon>
+                                    <td class="td-center wire-indicator" role="gridcell">
+                                        <lightning-icon icon-name="utility:money" size="xx-small" alternative-text="Wire Fee"></lightning-icon>
                                     </td>
 
-                                    <!-- Date -->
-                                    <td class="td-center wired-cell" role="gridcell">
-                                        <time datetime={item.paymentDateFormatted}>{item.paymentDateFormatted}</time>
+                                    <!-- Fee Type -->
+                                    <td class="td-center wire-cell" role="gridcell">
+                                        <span class="wire-type">{item.feeTypeFormatted}</span>
                                     </td>
 
-                                    <!-- Amount (spans across Draft column) -->
-                                    <td class="td-right wired-cell wired-amount" role="gridcell">
-                                        <data value={item.paymentAmount}>{item.paymentAmountFormatted}</data>
+                                    <!-- Amount -->
+                                    <td class="td-right wire-cell wire-amount" role="gridcell">
+                                        <data value={item.amount}>{item.amountFormatted}</data>
                                     </td>
 
-                                    <!-- Name (spans Setup column) -->
-                                    <td class="td-left wired-cell wired-name" colspan="2" role="gridcell">
-                                        <data>{item.name}</data>
-                                    </td>
-
-                                    <!-- Description (spans remaining columns) -->
-                                    <td class="td-left wired-cell wired-desc" colspan="3" role="gridcell">
-                                        <p class="text-truncate">{item.description}</p>
-                                    </td>
+                                    <!-- Empty cells for remaining columns -->
+                                    <td class="td-center" colspan="5" role="gridcell"></td>
                                 </tr>
                             </template>
                         </template>

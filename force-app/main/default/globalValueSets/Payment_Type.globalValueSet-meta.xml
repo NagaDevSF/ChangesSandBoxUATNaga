@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GlobalValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customValue>
+        <fullName>Banking Fee</fullName>
+        <default>false</default>
+        <label>Banking Fee</label>
+    </customValue>
+    <customValue>
+        <fullName>Program Fee</fullName>
+        <default>false</default>
+        <label>Program Fee</label>
+    </customValue>
+    <customValue>
+        <fullName>Setup Fee</fullName>
+        <default>false</default>
+        <label>Setup Fee</label>
+    </customValue>
+    <customValue>
+        <fullName>Payee Fee</fullName>
+        <default>false</default>
+        <label>Payee Fee</label>
+    </customValue>
+    <customValue>
+        <fullName>Wire Fee</fullName>
+        <default>false</default>
+        <label>Wire Fee</label>
+    </customValue>
+    <customValue>
+        <fullName>Wire Received Fee</fullName>
+        <default>false</default>
+        <label>Wire Received Fee</label>
+    </customValue>
+    <description>Types of payment fees for Payment_Fee__c records</description>
+    <masterLabel>Payment Type</masterLabel>
+    <sorted>false</sorted>
+</GlobalValueSet>

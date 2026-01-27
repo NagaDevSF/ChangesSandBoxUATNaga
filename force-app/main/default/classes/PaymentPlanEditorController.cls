@@ -8,13 +8,13 @@
  * - Version-controlled payment plans with draft/active/archived states
  * - Bulk operations support for schedule items (create, update, delete)
  * - Recalculation of payment schedules based on Opportunity data
- * - Wired payment tracking and carryover between versions
+ * - Wire fee tracking and carryover between versions
  * - Plan suspension with automatic item status updates
  *
  * RELATED OBJECTS:
  * - PaymentPlan__c: Master record containing plan configuration
  * - Payment_Schedule_Item__c: Individual payment line items
- * - Wired_Payment__c: External wire payments linked to schedule items
+ * - Payment_Fee__c: Fee records including wire fees linked to schedule items
  * - Opportunity: Source of debt and program configuration
  *
  * USAGE:
@@ -183,7 +183,7 @@ public with sharing class PaymentPlanEditorController {
         'Total_Payment__c, Net_Draft_Amount__c, Retainer_Fee_Amount__c, ' +
         'Setup_Fee_Amount__c, Program_Fee_Amount__c, Banking_Fee_Amount__c, ' +
         'Bank2_Fee_Amount__c, Additional_Products_Amount__c, Status__c, ' +
-        'Savings_Balance__c, To_Escrow_Amount__c, Wires_received__c';
+        'Savings_Balance__c, To_Escrow_Amount__c';
 
     // ==================================================================================
     // WRAPPER CLASSES - Data Transfer Objects for LWC Communication
@@ -259,7 +259,7 @@ public with sharing class PaymentPlanEditorController {
         @AuraEnabled public Decimal toEscrowAmount { get; set; }
         /** Payment status: Scheduled, Cleared, NSF, or Cancelled */
         @AuraEnabled public String status { get; set; }
-        /** Total wired payments received for this item (rollup from Wired_Payment__c) */
+        /** Total wire fees for this item (calculated from Payment_Fee__c records) */
         @AuraEnabled public Decimal wiresReceived { get; set; }
         /** Flag indicating item was modified in the UI */
         @AuraEnabled public Boolean isModified { get; set; }
@@ -282,29 +282,25 @@ public with sharing class PaymentPlanEditorController {
     }
 
     /**
-     * @description Wrapper class for Wired Payment records.
+     * @description Wrapper class for Wire Fee records.
      *
-     * Wired payments are external payments (wire transfers) that are linked
-     * to specific schedule items but processed outside the normal draft system.
+     * Wire fees are stored in Payment_Fee__c with Type__c = 'Wire Fee' or 'Wire Received Fee'.
+     * They are linked to specific schedule items.
      */
-    public class WiredPaymentWrapper {
+    public class WireFeeWrapper {
         /** Salesforce record ID */
         @AuraEnabled public String id { get; set; }
-        /** Auto-generated name/number */
-        @AuraEnabled public String name { get; set; }
         /** Parent Payment_Schedule_Item__c ID */
         @AuraEnabled public String scheduleItemId { get; set; }
-        /** Date the wire was received */
-        @AuraEnabled public Date paymentDate { get; set; }
-        /** Wire payment amount */
-        @AuraEnabled public Decimal paymentAmount { get; set; }
-        /** Optional description/notes */
-        @AuraEnabled public String description { get; set; }
+        /** Fee type: 'Wire Fee' or 'Wire Received Fee' */
+        @AuraEnabled public String feeType { get; set; }
+        /** Wire fee amount (optional) */
+        @AuraEnabled public Decimal amount { get; set; }
 
         /**
          * @description Default constructor
          */
-        public WiredPaymentWrapper() {}
+        public WireFeeWrapper() {}
     }
 
     /**
@@ -636,7 +632,7 @@ public with sharing class PaymentPlanEditorController {
                        Total_Payment__c, Net_Draft_Amount__c, Retainer_Fee_Amount__c,
                        Setup_Fee_Amount__c, Program_Fee_Amount__c, Banking_Fee_Amount__c,
                        Bank2_Fee_Amount__c, Additional_Products_Amount__c, Status__c,
-                       Savings_Balance__c, To_Escrow_Amount__c, Wires_received__c
+                       Savings_Balance__c, To_Escrow_Amount__c
                 FROM Payment_Schedule_Item__c
                 WHERE Payment_Plan__c = :currentPlanId
                 ORDER BY Payment_Number__c ASC
@@ -796,8 +792,7 @@ public with sharing class PaymentPlanEditorController {
                        Payment_Date__c, Total_Payment__c, Net_Draft_Amount__c,
                        Setup_Fee_Amount__c, Program_Fee_Amount__c, Banking_Fee_Amount__c,
                        Bank2_Fee_Amount__c, Additional_Products_Amount__c, Status__c,
-                       Savings_Balance__c, To_Escrow_Amount__c, Retainer_Fee_Amount__c,
-                       Wires_received__c
+                       Savings_Balance__c, To_Escrow_Amount__c, Retainer_Fee_Amount__c
                 FROM Payment_Schedule_Item__c
                 WHERE Payment_Plan__c = :previousPlanId
                 ORDER BY Payment_Number__c ASC
@@ -806,10 +801,18 @@ public with sharing class PaymentPlanEditorController {
 
             System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + previousItems.size() + ' schedule items from previous version');
 
+            // Query Payment_Fee__c records for all schedule items
+            Set<Id> scheduleItemIds = new Set<Id>();
+            for (Payment_Schedule_Item__c item : previousItems) {
+                scheduleItemIds.add(item.Id);
+            }
+            Map<Id, Map<String, Payment_Fee__c>> feeRecordsMap =
+                PaymentFeeService.getFeesByScheduleItemIds(scheduleItemIds);
+
             // Build wrapper list
             List<ScheduleItemWrapper> result = new List<ScheduleItemWrapper>();
             for (Integer i = 0; i < previousItems.size(); i++) {
-                result.add(buildScheduleItemWrapper(previousItems[i], i + 1));
+                result.add(buildScheduleItemWrapper(previousItems[i], i + 1, feeRecordsMap));
             }
 
             System.debug(LoggingLevel.DEBUG, LOG_SUCCESS + ' | ' + methodName + ' | Returning ' + result.size() + ' items');
@@ -826,20 +829,20 @@ public with sharing class PaymentPlanEditorController {
     }
 
     /**
-     * @description Get all Wired Payments for a Payment Plan's schedule items
+     * @description Get all Wire Fees for a Payment Plan's schedule items
      * @param planId The Payment Plan ID
-     * @return Map of Schedule Item ID to List of WiredPaymentWrapper
+     * @return Map of Schedule Item ID to List of WireFeeWrapper
      */
     @AuraEnabled(cacheable=true)
-    public static Map<String, List<WiredPaymentWrapper>> getWiredPaymentsByPlanId(Id planId) {
-        String methodName = 'getWiredPaymentsByPlanId';
+    public static Map<String, List<WireFeeWrapper>> getWireFeesByPlanId(Id planId) {
+        String methodName = 'getWireFeesByPlanId';
         System.debug(LoggingLevel.DEBUG, LOG_ENTRY + ' | ' + CLASS_NAME + '.' + methodName);
         System.debug(LoggingLevel.DEBUG, LOG_PARAM + ' | planId: ' + planId);
 
         try {
             if (planId == null) {
                 System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | planId is null, returning empty map');
-                return new Map<String, List<WiredPaymentWrapper>>();
+                return new Map<String, List<WireFeeWrapper>>();
             }
 
             // Get all Schedule Item IDs for this plan
@@ -854,7 +857,7 @@ public with sharing class PaymentPlanEditorController {
 
             if (scheduleItems.isEmpty()) {
                 System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | No schedule items found, returning empty map');
-                return new Map<String, List<WiredPaymentWrapper>>();
+                return new Map<String, List<WireFeeWrapper>>();
             }
 
             Set<Id> scheduleItemIds = new Set<Id>();
@@ -862,47 +865,98 @@ public with sharing class PaymentPlanEditorController {
                 scheduleItemIds.add(item.Id);
             }
 
-            // Query all Wired Payments for these Schedule Items
-            List<Wired_Payment__c> wiredPayments = [
-                SELECT Id, Name, Payment_Schedule_Item__c, Payment_Date__c,
-                       Payment_Amount__c, Description__c
-                FROM Wired_Payment__c
-                WHERE Payment_Schedule_Item__c IN :scheduleItemIds
-                ORDER BY Payment_Date__c ASC
-                LIMIT :MAX_QUERY_LIMIT
-            ];
+            // Query all Wire Fee records for these Schedule Items using PaymentFeeService
+            Map<Id, List<Payment_Fee__c>> wireFeeMap = PaymentFeeService.getWireFeesByScheduleItemIds(scheduleItemIds);
 
-            System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + wiredPayments.size() + ' wired payment(s)');
+            System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found wire fees for ' + wireFeeMap.size() + ' schedule item(s)');
 
-            // Build the map
-            Map<String, List<WiredPaymentWrapper>> resultMap = new Map<String, List<WiredPaymentWrapper>>();
+            // Build the map with String keys for LWC compatibility
+            Map<String, List<WireFeeWrapper>> resultMap = new Map<String, List<WireFeeWrapper>>();
 
-            for (Wired_Payment__c wp : wiredPayments) {
-                String scheduleItemId = String.valueOf(wp.Payment_Schedule_Item__c);
+            for (Id psiId : wireFeeMap.keySet()) {
+                String scheduleItemId = String.valueOf(psiId);
+                List<WireFeeWrapper> wrappers = new List<WireFeeWrapper>();
 
-                if (!resultMap.containsKey(scheduleItemId)) {
-                    resultMap.put(scheduleItemId, new List<WiredPaymentWrapper>());
+                for (Payment_Fee__c fee : wireFeeMap.get(psiId)) {
+                    WireFeeWrapper wrapper = new WireFeeWrapper();
+                    wrapper.id = fee.Id;
+                    wrapper.scheduleItemId = scheduleItemId;
+                    wrapper.feeType = fee.Type__c;
+                    wrapper.amount = fee.Amount__c;
+                    wrappers.add(wrapper);
                 }
 
-                WiredPaymentWrapper wrapper = new WiredPaymentWrapper();
-                wrapper.id = wp.Id;
-                wrapper.name = wp.Name;
-                wrapper.scheduleItemId = scheduleItemId;
-                wrapper.paymentDate = wp.Payment_Date__c;
-                wrapper.paymentAmount = wp.Payment_Amount__c;
-                wrapper.description = wp.Description__c;
-
-                resultMap.get(scheduleItemId).add(wrapper);
+                if (!wrappers.isEmpty()) {
+                    resultMap.put(scheduleItemId, wrappers);
+                }
             }
 
-            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Built map with ' + resultMap.size() + ' schedule item(s) having wired payments');
+            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Built map with ' + resultMap.size() + ' schedule item(s) having wire fees');
             System.debug(LoggingLevel.DEBUG, LOG_EXIT + ' | ' + CLASS_NAME + '.' + methodName + ' | SUCCESS');
             return resultMap;
 
         } catch (Exception e) {
             System.debug(LoggingLevel.ERROR, LOG_ERROR + ' | ' + methodName + ' | Exception: ' + e.getMessage());
             System.debug(LoggingLevel.ERROR, LOG_ERROR + ' | ' + methodName + ' | Stack Trace: ' + e.getStackTraceString());
-            throw new AuraHandledException(ERROR_SYMBOL + 'Error fetching wired payments: ' + e.getMessage());
+            throw new AuraHandledException(ERROR_SYMBOL + 'Error fetching wire fees: ' + e.getMessage());
+        }
+    }
+
+    /**
+     * @description Save a wire fee record for a schedule item
+     * @param scheduleItemId The Payment Schedule Item ID
+     * @param feeType The wire fee type ('Wire Fee' or 'Wire Received Fee')
+     * @param amount The optional amount
+     * @return The created Payment_Fee__c record ID
+     */
+    @AuraEnabled
+    public static String saveWireFee(String scheduleItemId, String feeType, Decimal amount) {
+        String methodName = 'saveWireFee';
+        System.debug(LoggingLevel.DEBUG, LOG_ENTRY + ' | ' + CLASS_NAME + '.' + methodName);
+        System.debug(LoggingLevel.DEBUG, LOG_PARAM + ' | scheduleItemId: ' + scheduleItemId + ' | feeType: ' + feeType + ' | amount: ' + amount);
+
+        try {
+            if (String.isBlank(scheduleItemId)) {
+                throw new AuraHandledException('Schedule Item ID is required');
+            }
+
+            Id feeId = PaymentFeeService.createWireFeeRecord(Id.valueOf(scheduleItemId), feeType, amount);
+
+            System.debug(LoggingLevel.DEBUG, LOG_SUCCESS + ' | ' + methodName + ' | Created wire fee: ' + feeId);
+            System.debug(LoggingLevel.DEBUG, LOG_EXIT + ' | ' + CLASS_NAME + '.' + methodName + ' | SUCCESS');
+            return String.valueOf(feeId);
+
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, LOG_ERROR + ' | ' + methodName + ' | Exception: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, LOG_ERROR + ' | ' + methodName + ' | Stack Trace: ' + e.getStackTraceString());
+            throw new AuraHandledException(ERROR_SYMBOL + 'Error saving wire fee: ' + e.getMessage());
+        }
+    }
+
+    /**
+     * @description Delete a wire fee record
+     * @param feeId The Payment_Fee__c record ID to delete
+     */
+    @AuraEnabled
+    public static void deleteWireFee(String feeId) {
+        String methodName = 'deleteWireFee';
+        System.debug(LoggingLevel.DEBUG, LOG_ENTRY + ' | ' + CLASS_NAME + '.' + methodName);
+        System.debug(LoggingLevel.DEBUG, LOG_PARAM + ' | feeId: ' + feeId);
+
+        try {
+            if (String.isBlank(feeId)) {
+                throw new AuraHandledException('Fee ID is required');
+            }
+
+            PaymentFeeService.deleteWireFeeById(Id.valueOf(feeId));
+
+            System.debug(LoggingLevel.DEBUG, LOG_SUCCESS + ' | ' + methodName + ' | Deleted wire fee: ' + feeId);
+            System.debug(LoggingLevel.DEBUG, LOG_EXIT + ' | ' + CLASS_NAME + '.' + methodName + ' | SUCCESS');
+
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, LOG_ERROR + ' | ' + methodName + ' | Exception: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, LOG_ERROR + ' | ' + methodName + ' | Stack Trace: ' + e.getStackTraceString());
+            throw new AuraHandledException(ERROR_SYMBOL + 'Error deleting wire fee: ' + e.getMessage());
         }
     }
 
@@ -929,6 +983,10 @@ public with sharing class PaymentPlanEditorController {
             List<Payment_Schedule_Item__c> toInsert = new List<Payment_Schedule_Item__c>();
             List<Id> toDelete = new List<Id>();
 
+            // Track wrappers for fee record creation
+            List<ScheduleItemWrapper> insertWrappers = new List<ScheduleItemWrapper>();
+            Map<Id, ScheduleItemWrapper> updateWrapperMap = new Map<Id, ScheduleItemWrapper>();
+
             for (ScheduleItemWrapper item : items) {
                 if (item.isDeleted && String.isNotBlank(item.id)) {
                     toDelete.add(item.id);
@@ -937,27 +995,47 @@ public with sharing class PaymentPlanEditorController {
                     newItem.Payment_Plan__c = planId;
                     mapWrapperToRecord(item, newItem);
                     toInsert.add(newItem);
+                    insertWrappers.add(item);
                 } else if (item.isModified && String.isNotBlank(item.id)) {
                     Payment_Schedule_Item__c updateItem = new Payment_Schedule_Item__c(Id = item.id);
                     mapWrapperToRecord(item, updateItem);
                     toUpdate.add(updateItem);
+                    updateWrapperMap.put(item.id, item);
                 }
             }
 
             System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | DML Summary - Delete: ' + toDelete.size() + ', Update: ' + toUpdate.size() + ', Insert: ' + toInsert.size());
 
             // Perform DML in order: delete, update, insert
+            // Note: Payment_Fee__c cascade deletes automatically via master-detail
             if (!toDelete.isEmpty()) {
                 delete [SELECT Id FROM Payment_Schedule_Item__c WHERE Id IN :toDelete];
                 System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Deleted ' + toDelete.size() + ' item(s)');
             }
+
             if (!toUpdate.isEmpty()) {
                 update toUpdate;
                 System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Updated ' + toUpdate.size() + ' item(s)');
+
+                // Update Payment_Fee__c records for modified items
+                PaymentFeeService.bulkUpsertFeeRecords(updateWrapperMap.keySet(), updateWrapperMap);
+                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Upserted fee records for ' + updateWrapperMap.size() + ' updated item(s)');
             }
+
             if (!toInsert.isEmpty()) {
                 insert toInsert;
                 System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted ' + toInsert.size() + ' item(s)');
+
+                // Create Payment_Fee__c records for inserted items
+                Map<Id, ScheduleItemWrapper> insertWrapperMap = new Map<Id, ScheduleItemWrapper>();
+                for (Integer i = 0; i < toInsert.size(); i++) {
+                    insertWrapperMap.put(toInsert[i].Id, insertWrappers[i]);
+                }
+                List<Payment_Fee__c> feeRecords = PaymentFeeService.createFeeRecordsForItems(toInsert, insertWrapperMap);
+                if (!feeRecords.isEmpty()) {
+                    insert feeRecords;
+                    System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted ' + feeRecords.size() + ' fee record(s)');
+                }
             }
 
             // Update plan timestamp (item count now comes from Schedule_Item_Count_Rollup__c rollup field)
@@ -1296,8 +1374,7 @@ public with sharing class PaymentPlanEditorController {
                 SELECT Id, Payment_Number__c, Draft_Number__c, Payment_Date__c,
                        Total_Payment__c, Setup_Fee_Amount__c, Program_Fee_Amount__c,
                        Banking_Fee_Amount__c, Bank2_Fee_Amount__c, Additional_Products_Amount__c,
-                       Retainer_Fee_Amount__c, To_Escrow_Amount__c, Savings_Balance__c, Status__c,
-                       Wires_received__c
+                       Retainer_Fee_Amount__c, To_Escrow_Amount__c, Savings_Balance__c, Status__c
                 FROM Payment_Schedule_Item__c
                 WHERE Payment_Plan__c = :planId
                 ORDER BY Payment_Number__c ASC
@@ -1329,7 +1406,7 @@ public with sharing class PaymentPlanEditorController {
 
             // Carry over wired payments from old plan to new plan
             System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Carrying over wired payments...');
-            carryOverWiredPayments(existingItems, scheduleItems);
+            carryOverWireFees(existingItems, scheduleItems);
 
             // Update plan item count
             newPlan.Schedule_Item_Count__c = scheduleItems.size();
@@ -1356,7 +1433,7 @@ public with sharing class PaymentPlanEditorController {
      * @description Recalculate remaining balance by redistributing unpaid debt evenly across future scheduled payments.
      * Algorithm:
      * 1. Total Program Cost = Estimated_Total_Debt__c × 0.95 (Settlement 60% + Program Fee 35%)
-     * 2. Paid To Date = SUM(Cleared payments' Total_Payment__c) + SUM(Wired_Payment__c.Payment_Amount__c)
+     * 2. Paid To Date = SUM(Cleared payments' Total_Payment__c) + SUM(Wire Fees Amount__c)
      * 3. Remaining Balance = Total Program Cost - Paid To Date
      * 4. If Remaining Balance <= 0 → Error: "Debt is already paid off"
      * 5. Remaining Count = Number_of_Weeks__c - COUNT(non-Scheduled items)
@@ -1489,13 +1566,12 @@ public with sharing class PaymentPlanEditorController {
             Decimal totalProgramFee = totalDebt * (programFeePercentage / 100);
             System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Total Program Fee (from Opp): ' + totalProgramFee + ' (' + programFeePercentage + '% of ' + totalDebt + ')');
 
-            // Get existing schedule items (include Wires_received__c rollup field)
+            // Get existing schedule items
             List<Payment_Schedule_Item__c> existingItems = [
                 SELECT Id, Payment_Number__c, Draft_Number__c, Payment_Date__c,
                        Total_Payment__c, Setup_Fee_Amount__c, Program_Fee_Amount__c,
                        Banking_Fee_Amount__c, Bank2_Fee_Amount__c, Additional_Products_Amount__c,
-                       Retainer_Fee_Amount__c, To_Escrow_Amount__c, Savings_Balance__c, Status__c,
-                       Wires_received__c
+                       Retainer_Fee_Amount__c, To_Escrow_Amount__c, Savings_Balance__c, Status__c
                 FROM Payment_Schedule_Item__c
                 WHERE Payment_Plan__c = :planId
                 ORDER BY Payment_Number__c ASC
@@ -1510,7 +1586,6 @@ public with sharing class PaymentPlanEditorController {
             Decimal paidProgramFeeSum = 0;
             Decimal paidEscrowSum = 0;
             Integer paidSetupFeeCount = 0;
-            Decimal wiredPaymentsSum = 0;  // Sum of Wires_received__c rollup field from all items
             // Track lost fees from NSF items for logging/reporting purposes
             // Note: Banking fees are NOT recovered (no cascading) per business requirement
             Decimal lostSetupFeeFromNSF = 0;
@@ -1519,11 +1594,6 @@ public with sharing class PaymentPlanEditorController {
             Integer nsfSetupFeeCount = 0; // Count of NSF items that had setup fees
 
             for (Payment_Schedule_Item__c item : existingItems) {
-                // Sum wired payments from rollup field (all items, regardless of status)
-                if (item.Wires_received__c != null) {
-                    wiredPaymentsSum += item.Wires_received__c;
-                }
-
                 if (item.Status__c == STATUS_SCHEDULED) {
                     scheduledItems.add(item);
                 } else {
@@ -1561,7 +1631,6 @@ public with sharing class PaymentPlanEditorController {
             System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Non-Scheduled: ' + nonScheduledItems.size() + ' | Scheduled: ' + scheduledItems.size());
             System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Cleared Program Cost (Program+Escrow): ' + clearedProgramCostSum);
             System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Paid Program Fee: ' + paidProgramFeeSum + ' | Paid Escrow: ' + paidEscrowSum + ' | Paid Setup Fee Payments: ' + paidSetupFeeCount);
-            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Wired Payments Sum (from Wires_received__c rollup): ' + wiredPaymentsSum);
             System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | NSF Items: ' + nsfItemCount + ' | NSF Setup Fee Count: ' + nsfSetupFeeCount);
             System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Lost Setup Fee: ' + lostSetupFeeFromNSF + ' | Lost Program Fee: ' + lostProgramFeeFromNSF + ' (Banking fees not recovered)');
 
@@ -1792,7 +1861,7 @@ public with sharing class PaymentPlanEditorController {
 
             // Carry over wired payments
             System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Carrying over wired payments...');
-            carryOverWiredPayments(existingItems, newItems);
+            carryOverWireFees(existingItems, newItems);
 
             // Update plan item count
             newPlan.Schedule_Item_Count__c = newItems.size();
@@ -2311,7 +2380,7 @@ public with sharing class PaymentPlanEditorController {
                        Total_Payment__c, Retainer_Fee_Amount__c, Setup_Fee_Amount__c,
                        Program_Fee_Amount__c, Banking_Fee_Amount__c, Bank2_Fee_Amount__c,
                        Additional_Products_Amount__c, Status__c, Savings_Balance__c,
-                       To_Escrow_Amount__c, Wires_received__c
+                       To_Escrow_Amount__c
                 FROM Payment_Schedule_Item__c
                 WHERE Payment_Plan__c = :planId
                 ORDER BY Payment_Number__c ASC
@@ -2571,6 +2640,7 @@ public with sharing class PaymentPlanEditorController {
 
             // Create all schedule items for the new plan
             List<Payment_Schedule_Item__c> newItems = new List<Payment_Schedule_Item__c>();
+            List<ScheduleItemWrapper> itemWrappers = new List<ScheduleItemWrapper>();
 
             // Count items by status for logging
             Integer newCount = 0, modifiedCount = 0, deletedCount = 0, frozenCount = 0;
@@ -2606,6 +2676,7 @@ public with sharing class PaymentPlanEditorController {
                 newItem.To_Escrow_Amount__c = item.toEscrowAmount != null ? item.toEscrowAmount : 0;
 
                 newItems.add(newItem);
+                itemWrappers.add(item);
             }
 
             if (!newItems.isEmpty()) {
@@ -2613,6 +2684,17 @@ public with sharing class PaymentPlanEditorController {
                 recalculateDraftNumbers(newItems);
                 insert newItems;
                 System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted ' + newItems.size() + ' schedule items');
+
+                // Create Payment_Fee__c records for all new schedule items
+                Map<Id, ScheduleItemWrapper> wrapperMap = new Map<Id, ScheduleItemWrapper>();
+                for (Integer i = 0; i < newItems.size(); i++) {
+                    wrapperMap.put(newItems[i].Id, itemWrappers[i]);
+                }
+                List<Payment_Fee__c> feeRecords = PaymentFeeService.createFeeRecordsForItems(newItems, wrapperMap);
+                if (!feeRecords.isEmpty()) {
+                    insert feeRecords;
+                    System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted ' + feeRecords.size() + ' fee record(s)');
+                }
             }
 
             // Get old schedule items for wired payments carryover
@@ -2626,7 +2708,7 @@ public with sharing class PaymentPlanEditorController {
 
             // Carry over wired payments from old plan to new plan
             System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Carrying over wired payments...');
-            carryOverWiredPayments(oldScheduleItems, newItems);
+            carryOverWireFees(oldScheduleItems, newItems);
 
             // Update plan item count
             newPlan.Schedule_Item_Count__c = newItems.size();
@@ -2648,22 +2730,22 @@ public with sharing class PaymentPlanEditorController {
     // ============ PRIVATE HELPER METHODS ============
 
     /**
-     * @description Carry over wired payments from old schedule items to new schedule items
-     * Matches by Payment_Number__c (row number) to link wired payments to correct new items
+     * @description Carry over wire fees from old schedule items to new schedule items
+     * Matches by Payment_Number__c (row number) to link wire fees to correct new items
      * @param oldScheduleItems List of old schedule items (must have Id and Payment_Number__c populated)
      * @param newScheduleItems List of new schedule items (must have Id and Payment_Number__c populated after insert)
      */
-    private static void carryOverWiredPayments(
+    private static void carryOverWireFees(
         List<Payment_Schedule_Item__c> oldScheduleItems,
         List<Payment_Schedule_Item__c> newScheduleItems
     ) {
-        String methodName = 'carryOverWiredPayments';
+        String methodName = 'carryOverWireFees';
         System.debug(LoggingLevel.DEBUG, LOG_ENTRY + ' | ' + CLASS_NAME + '.' + methodName);
         System.debug(LoggingLevel.DEBUG, LOG_PARAM + ' | oldScheduleItems: ' + (oldScheduleItems != null ? oldScheduleItems.size() : 0) + ' | newScheduleItems: ' + (newScheduleItems != null ? newScheduleItems.size() : 0));
 
         if (oldScheduleItems == null || oldScheduleItems.isEmpty() ||
             newScheduleItems == null || newScheduleItems.isEmpty()) {
-            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Empty input lists, skipping wired payment carryover');
+            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Empty input lists, skipping wire fee carryover');
             return;
         }
 
@@ -2680,33 +2762,22 @@ public with sharing class PaymentPlanEditorController {
 
         System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Built map with ' + paymentNumToOldItemId.size() + ' payment numbers');
 
-        // Query all wired payments for old schedule items
-        List<Wired_Payment__c> oldWiredPayments = [
-            SELECT Id, Name, Payment_Schedule_Item__c, Payment_Date__c,
-                   Payment_Amount__c, Description__c
-            FROM Wired_Payment__c
-            WHERE Payment_Schedule_Item__c IN :oldItemIds
-            LIMIT :MAX_QUERY_LIMIT
-        ];
+        // Query all wire fee records for old schedule items
+        Map<Id, List<Payment_Fee__c>> oldWireFeeMap = PaymentFeeService.getWireFeesByScheduleItemIds(oldItemIds);
 
-        System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + oldWiredPayments.size() + ' wired payment(s) to carry over');
+        // Count total wire fees
+        Integer totalWireFees = 0;
+        for (List<Payment_Fee__c> fees : oldWireFeeMap.values()) {
+            totalWireFees += fees.size();
+        }
 
-        if (oldWiredPayments.isEmpty()) {
-            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | No wired payments to carry over');
+        System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + totalWireFees + ' wire fee(s) to carry over');
+
+        if (totalWireFees == 0) {
+            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | No wire fees to carry over');
             System.debug(LoggingLevel.DEBUG, LOG_EXIT + ' | ' + CLASS_NAME + '.' + methodName + ' | SUCCESS (no action needed)');
             return;
         }
-
-        // Build map of Old Item ID -> List of Wired Payments
-        Map<Id, List<Wired_Payment__c>> oldItemToWired = new Map<Id, List<Wired_Payment__c>>();
-        for (Wired_Payment__c wp : oldWiredPayments) {
-            if (!oldItemToWired.containsKey(wp.Payment_Schedule_Item__c)) {
-                oldItemToWired.put(wp.Payment_Schedule_Item__c, new List<Wired_Payment__c>());
-            }
-            oldItemToWired.get(wp.Payment_Schedule_Item__c).add(wp);
-        }
-
-        System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Wired payments grouped into ' + oldItemToWired.size() + ' schedule item(s)');
 
         // Build map of Payment_Number__c -> New Item ID
         Map<Decimal, Id> paymentNumToNewItemId = new Map<Decimal, Id>();
@@ -2716,28 +2787,28 @@ public with sharing class PaymentPlanEditorController {
             }
         }
 
-        // Clone wired payments to new schedule items
-        List<Wired_Payment__c> newWiredPayments = new List<Wired_Payment__c>();
+        // Clone wire fees to new schedule items
+        List<Payment_Fee__c> newWireFees = new List<Payment_Fee__c>();
         for (Decimal paymentNum : paymentNumToOldItemId.keySet()) {
             Id oldItemId = paymentNumToOldItemId.get(paymentNum);
             Id newItemId = paymentNumToNewItemId.get(paymentNum);
 
             // Only clone if both old and new items exist for this payment number
-            if (newItemId != null && oldItemToWired.containsKey(oldItemId)) {
-                for (Wired_Payment__c oldWp : oldItemToWired.get(oldItemId)) {
-                    Wired_Payment__c newWp = oldWp.clone(false, true, false, false);
-                    newWp.Payment_Schedule_Item__c = newItemId;
-                    newWiredPayments.add(newWp);
+            if (newItemId != null && oldWireFeeMap.containsKey(oldItemId)) {
+                for (Payment_Fee__c oldFee : oldWireFeeMap.get(oldItemId)) {
+                    Payment_Fee__c newFee = oldFee.clone(false, true, false, false);
+                    newFee.Payment_Schedule_Item__c = newItemId;
+                    newWireFees.add(newFee);
                 }
             }
         }
 
-        if (!newWiredPayments.isEmpty()) {
-            insert newWiredPayments;
-            System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted ' + newWiredPayments.size() + ' new wired payment(s)');
+        if (!newWireFees.isEmpty()) {
+            insert newWireFees;
+            System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted ' + newWireFees.size() + ' new wire fee(s)');
         }
 
-        System.debug(LoggingLevel.DEBUG, LOG_SUCCESS + ' | ' + methodName + ' | Wired payments carried over successfully');
+        System.debug(LoggingLevel.DEBUG, LOG_SUCCESS + ' | ' + methodName + ' | Wire fees carried over successfully');
         System.debug(LoggingLevel.DEBUG, LOG_EXIT + ' | ' + CLASS_NAME + '.' + methodName + ' | SUCCESS');
     }
 
@@ -2763,7 +2834,7 @@ public with sharing class PaymentPlanEditorController {
                        Total_Payment__c, Net_Draft_Amount__c, Retainer_Fee_Amount__c,
                        Setup_Fee_Amount__c, Program_Fee_Amount__c, Banking_Fee_Amount__c,
                        Bank2_Fee_Amount__c, Additional_Products_Amount__c, Status__c,
-                       Savings_Balance__c, To_Escrow_Amount__c, Wires_received__c
+                       Savings_Balance__c, To_Escrow_Amount__c
                 FROM Payment_Schedule_Item__c
                 WHERE Payment_Plan__c = :plan.Id
                 ORDER BY Payment_Number__c ASC
@@ -2772,9 +2843,20 @@ public with sharing class PaymentPlanEditorController {
 
             System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + items.size() + ' schedule items');
 
+            // Query Payment_Fee__c records for all schedule items (including wire fees)
+            Set<Id> scheduleItemIds = new Set<Id>();
+            for (Payment_Schedule_Item__c item : items) {
+                scheduleItemIds.add(item.Id);
+            }
+            Map<Id, Map<String, Payment_Fee__c>> feeRecordsMap =
+                PaymentFeeService.getFeesByScheduleItemIds(scheduleItemIds);
+
+            System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Fetched fee records for ' + scheduleItemIds.size() + ' items');
+
+            // Build wrappers with fee data
             Integer rowNum = 1;
             for (Payment_Schedule_Item__c item : items) {
-                wrapper.scheduleItems.add(buildScheduleItemWrapper(item, rowNum++));
+                wrapper.scheduleItems.add(buildScheduleItemWrapper(item, rowNum++, feeRecordsMap));
             }
         }
 
@@ -2783,9 +2865,20 @@ public with sharing class PaymentPlanEditorController {
     }
 
     /**
-     * @description Build ScheduleItemWrapper from Payment_Schedule_Item__c record
+     * @description Build ScheduleItemWrapper from Payment_Schedule_Item__c record.
+     * Reads fee amounts from Payment_Fee__c child records when available,
+     * falling back to flat fields on Payment_Schedule_Item__c for backwards compatibility.
+     *
+     * @param item The Payment_Schedule_Item__c record
+     * @param rowNum The row number for display
+     * @param feeRecordsMap Map of PSI Id to Map of Fee Type to Payment_Fee__c record (can be null)
+     * @return ScheduleItemWrapper populated with fee data
      */
-    private static ScheduleItemWrapper buildScheduleItemWrapper(Payment_Schedule_Item__c item, Integer rowNum) {
+    private static ScheduleItemWrapper buildScheduleItemWrapper(
+        Payment_Schedule_Item__c item,
+        Integer rowNum,
+        Map<Id, Map<String, Payment_Fee__c>> feeRecordsMap
+    ) {
         ScheduleItemWrapper wrapper = new ScheduleItemWrapper();
         wrapper.id = item.Id;
         wrapper.rowNumber = rowNum;
@@ -2793,15 +2886,44 @@ public with sharing class PaymentPlanEditorController {
         wrapper.paymentDate = item.Payment_Date__c;
         wrapper.draftAmount = item.Total_Payment__c != null ? item.Total_Payment__c : item.Net_Draft_Amount__c;
         wrapper.retainerFee = item.Retainer_Fee_Amount__c;
-        wrapper.setupFee = item.Setup_Fee_Amount__c;
-        wrapper.programFee = item.Program_Fee_Amount__c;
-        wrapper.bankingFee = item.Banking_Fee_Amount__c;
         wrapper.banking2Fee = item.Bank2_Fee_Amount__c;
-        // Use To_Escrow_Amount__c field for Savings display
-        wrapper.savingsBalance = item.To_Escrow_Amount__c != null ? item.To_Escrow_Amount__c : 0;
-        wrapper.toEscrowAmount = item.To_Escrow_Amount__c != null ? item.To_Escrow_Amount__c : 0;
         wrapper.status = item.Status__c;
-        wrapper.wiresReceived = item.Wires_received__c != null ? item.Wires_received__c : 0;
+        wrapper.wiresReceived = 0; // Wire fees are now tracked separately in Payment_Fee__c
+
+        // Read fees from Payment_Fee__c records if available, otherwise fall back to flat fields
+        if (feeRecordsMap != null && feeRecordsMap.containsKey(item.Id)) {
+            Map<String, Payment_Fee__c> fees = feeRecordsMap.get(item.Id);
+
+            // Banking Fee
+            Payment_Fee__c bankingFeeRecord = fees.get(PaymentFeeService.FEE_TYPE_BANKING);
+            wrapper.bankingFee = (bankingFeeRecord != null && bankingFeeRecord.Amount__c != null)
+                ? bankingFeeRecord.Amount__c : (item.Banking_Fee_Amount__c != null ? item.Banking_Fee_Amount__c : 0);
+
+            // Program Fee
+            Payment_Fee__c programFeeRecord = fees.get(PaymentFeeService.FEE_TYPE_PROGRAM);
+            wrapper.programFee = (programFeeRecord != null && programFeeRecord.Amount__c != null)
+                ? programFeeRecord.Amount__c : (item.Program_Fee_Amount__c != null ? item.Program_Fee_Amount__c : 0);
+
+            // Setup Fee
+            Payment_Fee__c setupFeeRecord = fees.get(PaymentFeeService.FEE_TYPE_SETUP);
+            wrapper.setupFee = (setupFeeRecord != null && setupFeeRecord.Amount__c != null)
+                ? setupFeeRecord.Amount__c : (item.Setup_Fee_Amount__c != null ? item.Setup_Fee_Amount__c : 0);
+
+            // Payee Fee (Savings/Escrow)
+            Payment_Fee__c payeeFeeRecord = fees.get(PaymentFeeService.FEE_TYPE_PAYEE);
+            Decimal payeeFeeAmount = (payeeFeeRecord != null && payeeFeeRecord.Amount__c != null)
+                ? payeeFeeRecord.Amount__c : (item.To_Escrow_Amount__c != null ? item.To_Escrow_Amount__c : 0);
+            wrapper.savingsBalance = payeeFeeAmount;
+            wrapper.toEscrowAmount = payeeFeeAmount;
+        } else {
+            // Fall back to flat fields on Payment_Schedule_Item__c (backwards compatibility)
+            wrapper.bankingFee = item.Banking_Fee_Amount__c;
+            wrapper.programFee = item.Program_Fee_Amount__c;
+            wrapper.setupFee = item.Setup_Fee_Amount__c;
+            wrapper.savingsBalance = item.To_Escrow_Amount__c != null ? item.To_Escrow_Amount__c : 0;
+            wrapper.toEscrowAmount = item.To_Escrow_Amount__c != null ? item.To_Escrow_Amount__c : 0;
+        }
+
         return wrapper;
     }
 

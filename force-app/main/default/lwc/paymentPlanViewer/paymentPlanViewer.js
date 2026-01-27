@@ -2,7 +2,7 @@ import { LightningElement, api, track } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 import getLatestPaymentPlan from '@salesforce/apex/PaymentPlanEditorController.getLatestPaymentPlan';
-import getWiredPaymentsByPlanId from '@salesforce/apex/PaymentPlanEditorController.getWiredPaymentsByPlanId';
+import getWireFeesByPlanId from '@salesforce/apex/PaymentPlanEditorController.getWireFeesByPlanId';
 import getStatusPicklistValues from '@salesforce/apex/PaymentPlanEditorController.getStatusPicklistValues';
 
 // Default fallback if dynamic fetch fails
@@ -25,7 +25,7 @@ export default class PaymentPlanViewer extends LightningElement {
     // State for payment plan data
     @track paymentPlan = null;
     @track scheduleItems = [];
-    @track wiredPaymentsMap = {};
+    @track wireFeeMap = {};
 
     // Dynamic picklist values for Status field
     @track statusPicklistOptions = DEFAULT_STATUS_OPTIONS;
@@ -73,8 +73,8 @@ export default class PaymentPlanViewer extends LightningElement {
                 this.paymentPlan = wrapper.paymentPlan;
                 this.scheduleItems = this.processItems(wrapper.scheduleItems || []);
 
-                // Load Wired Payments for this plan
-                await this.loadWiredPayments(wrapper.paymentPlan.Id);
+                // Load Wire Fees for this plan
+                await this.loadWireFees(wrapper.paymentPlan.Id);
             } else {
                 this.paymentPlan = null;
                 this.scheduleItems = [];
@@ -89,15 +89,15 @@ export default class PaymentPlanViewer extends LightningElement {
     }
 
     /**
-     * Load Wired Payments for all schedule items in the plan
+     * Load Wire Fees for all schedule items in the plan
      */
-    async loadWiredPayments(planId) {
+    async loadWireFees(planId) {
         try {
-            const wiredPaymentsResult = await getWiredPaymentsByPlanId({ planId: planId });
-            this.wiredPaymentsMap = wiredPaymentsResult || {};
+            const wireFeesResult = await getWireFeesByPlanId({ planId: planId });
+            this.wireFeeMap = wireFeesResult || {};
         } catch (error) {
-            console.error('Error loading wired payments:', error);
-            this.wiredPaymentsMap = {};
+            console.error('Error loading wire fees:', error);
+            this.wireFeeMap = {};
         }
     }
 
@@ -158,7 +158,7 @@ export default class PaymentPlanViewer extends LightningElement {
     }
 
     /**
-     * Get display items with Draft # calculation and nested wired payments
+     * Get display items with Draft # calculation and nested wire fees
      */
     get displayItems() {
         if (!this.scheduleItems || this.scheduleItems.length === 0) {
@@ -189,21 +189,21 @@ export default class PaymentPlanViewer extends LightningElement {
                 ...item,
                 calculatedDraftNumber: shouldSkip ? '-' : String(draftCounter),
                 hasDraftNumber: !shouldSkip,
-                isWiredPayment: false,
+                isWireFee: false,
                 uniqueKey: `schedule_${item.id || item.tempId}`
             };
             result.push(scheduleItem);
 
-            // Add wired payments as nested rows (if any)
-            const wiredPayments = this.wiredPaymentsMap[item.id] || [];
-            wiredPayments.forEach(wp => {
+            // Add wire fees as nested rows (if any)
+            const wireFees = this.wireFeeMap[item.id] || [];
+            wireFees.forEach(fee => {
                 result.push({
-                    ...wp,
-                    isWiredPayment: true,
+                    ...fee,
+                    isWireFee: true,
                     parentScheduleItemId: item.id,
-                    uniqueKey: `wire_${wp.id}`,
-                    paymentDateFormatted: this.formatDate(wp.paymentDate),
-                    paymentAmountFormatted: this.formatCurrency(wp.paymentAmount || 0)
+                    uniqueKey: `wire_${fee.id}`,
+                    feeTypeFormatted: fee.feeType,
+                    amountFormatted: this.formatCurrency(fee.amount || 0)
                 });
             });
         });
@@ -227,10 +227,10 @@ export default class PaymentPlanViewer extends LightningElement {
 
         let total = items.reduce((sum, item) => sum + (Number(item.draftAmount) || 0), 0);
 
-        // Add wired payments
-        Object.values(this.wiredPaymentsMap).forEach(wiredPayments => {
-            wiredPayments.forEach(wp => {
-                total += Number(wp.paymentAmount) || 0;
+        // Add wire fees
+        Object.values(this.wireFeeMap).forEach(wireFees => {
+            wireFees.forEach(fee => {
+                total += Number(fee.amount) || 0;
             });
         });
 

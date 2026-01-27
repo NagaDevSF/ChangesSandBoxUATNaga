@@ -958,7 +958,7 @@ private class PaymentPlanEditorControllerTest {
     }
 
     @IsTest
-    static void testGetWiredPaymentsByPlanId() {
+    static void testGetWireFeesByPlanId() {
         PaymentPlan__c plan = [SELECT Id FROM PaymentPlan__c LIMIT 1];
         Payment_Schedule_Item__c scheduleItem = [
             SELECT Id
@@ -967,45 +967,50 @@ private class PaymentPlanEditorControllerTest {
             LIMIT 1
         ];
 
-        // Create Wired Payment records
-        List<Wired_Payment__c> wiredPayments = new List<Wired_Payment__c>();
-        for (Integer i = 1; i <= 3; i++) {
-            Wired_Payment__c wp = new Wired_Payment__c(
-                Payment_Schedule_Item__c = scheduleItem.Id,
-                Payment_Date__c = Date.today().addDays(i),
-                Payment_Amount__c = 100 * i,
-                Description__c = 'Test Wire Payment ' + i
-            );
-            wiredPayments.add(wp);
-        }
-        insert wiredPayments;
+        // Create Wire Fee records using PaymentFeeService
+        List<Payment_Fee__c> wireFees = new List<Payment_Fee__c>();
+        wireFees.add(new Payment_Fee__c(
+            Payment_Schedule_Item__c = scheduleItem.Id,
+            Type__c = 'Wire Fee',
+            Amount__c = 100
+        ));
+        wireFees.add(new Payment_Fee__c(
+            Payment_Schedule_Item__c = scheduleItem.Id,
+            Type__c = 'Wire Received Fee',
+            Amount__c = 200
+        ));
+        wireFees.add(new Payment_Fee__c(
+            Payment_Schedule_Item__c = scheduleItem.Id,
+            Type__c = 'Wire Fee',
+            Amount__c = 300
+        ));
+        insert wireFees;
 
         Test.startTest();
-        Map<String, List<PaymentPlanEditorController.WiredPaymentWrapper>> result =
-            PaymentPlanEditorController.getWiredPaymentsByPlanId(plan.Id);
+        Map<String, List<PaymentPlanEditorController.WireFeeWrapper>> result =
+            PaymentPlanEditorController.getWireFeesByPlanId(plan.Id);
         Test.stopTest();
 
         System.assertNotEquals(null, result, 'Should return a map');
-        System.assertEquals(1, result.size(), 'Should have 1 schedule item with wired payments');
+        System.assertEquals(1, result.size(), 'Should have 1 schedule item with wire fees');
 
         String scheduleItemId = String.valueOf(scheduleItem.Id);
         System.assert(result.containsKey(scheduleItemId), 'Map should contain schedule item ID');
-        System.assertEquals(3, result.get(scheduleItemId).size(), 'Should have 3 wired payments');
+        System.assertEquals(3, result.get(scheduleItemId).size(), 'Should have 3 wire fees');
 
         // Verify the wrapper data
-        PaymentPlanEditorController.WiredPaymentWrapper firstWire = result.get(scheduleItemId)[0];
+        PaymentPlanEditorController.WireFeeWrapper firstWire = result.get(scheduleItemId)[0];
         System.assertNotEquals(null, firstWire.id, 'Wrapper should have ID');
-        System.assertNotEquals(null, firstWire.name, 'Wrapper should have Name');
         System.assertEquals(scheduleItemId, firstWire.scheduleItemId, 'Wrapper should have correct schedule item ID');
-        System.assertNotEquals(null, firstWire.paymentDate, 'Wrapper should have payment date');
-        System.assertNotEquals(null, firstWire.paymentAmount, 'Wrapper should have payment amount');
+        System.assertNotEquals(null, firstWire.feeType, 'Wrapper should have fee type');
+        System.assertNotEquals(null, firstWire.amount, 'Wrapper should have amount');
     }
 
     @IsTest
-    static void testGetWiredPaymentsByPlanIdNullId() {
+    static void testGetWireFeesByPlanIdNullId() {
         Test.startTest();
-        Map<String, List<PaymentPlanEditorController.WiredPaymentWrapper>> result =
-            PaymentPlanEditorController.getWiredPaymentsByPlanId(null);
+        Map<String, List<PaymentPlanEditorController.WireFeeWrapper>> result =
+            PaymentPlanEditorController.getWireFeesByPlanId(null);
         Test.stopTest();
 
         System.assertNotEquals(null, result, 'Should return empty map');
@@ -1013,29 +1018,78 @@ private class PaymentPlanEditorControllerTest {
     }
 
     @IsTest
-    static void testGetWiredPaymentsByPlanIdNoWiredPayments() {
+    static void testGetWireFeesByPlanIdNoWireFees() {
         PaymentPlan__c plan = [SELECT Id FROM PaymentPlan__c LIMIT 1];
 
         Test.startTest();
-        Map<String, List<PaymentPlanEditorController.WiredPaymentWrapper>> result =
-            PaymentPlanEditorController.getWiredPaymentsByPlanId(plan.Id);
+        Map<String, List<PaymentPlanEditorController.WireFeeWrapper>> result =
+            PaymentPlanEditorController.getWireFeesByPlanId(plan.Id);
         Test.stopTest();
 
         System.assertNotEquals(null, result, 'Should return empty map');
-        System.assertEquals(0, result.size(), 'Should be empty when no wired payments exist');
+        System.assertEquals(0, result.size(), 'Should be empty when no wire fees exist');
     }
 
     @IsTest
-    static void testWiredPaymentWrapperDefaults() {
-        PaymentPlanEditorController.WiredPaymentWrapper wrapper =
-            new PaymentPlanEditorController.WiredPaymentWrapper();
+    static void testWireFeeWrapperDefaults() {
+        PaymentPlanEditorController.WireFeeWrapper wrapper =
+            new PaymentPlanEditorController.WireFeeWrapper();
 
         System.assertEquals(null, wrapper.id, 'id should be null by default');
-        System.assertEquals(null, wrapper.name, 'name should be null by default');
         System.assertEquals(null, wrapper.scheduleItemId, 'scheduleItemId should be null by default');
-        System.assertEquals(null, wrapper.paymentDate, 'paymentDate should be null by default');
-        System.assertEquals(null, wrapper.paymentAmount, 'paymentAmount should be null by default');
-        System.assertEquals(null, wrapper.description, 'description should be null by default');
+        System.assertEquals(null, wrapper.feeType, 'feeType should be null by default');
+        System.assertEquals(null, wrapper.amount, 'amount should be null by default');
+    }
+
+    @IsTest
+    static void testSaveWireFee() {
+        Payment_Schedule_Item__c scheduleItem = [
+            SELECT Id
+            FROM Payment_Schedule_Item__c
+            LIMIT 1
+        ];
+
+        Test.startTest();
+        String feeId = PaymentPlanEditorController.saveWireFee(
+            String.valueOf(scheduleItem.Id),
+            'Wire Fee',
+            250.00
+        );
+        Test.stopTest();
+
+        System.assertNotEquals(null, feeId, 'Should return fee ID');
+
+        Payment_Fee__c createdFee = [
+            SELECT Id, Type__c, Amount__c, Payment_Schedule_Item__c
+            FROM Payment_Fee__c
+            WHERE Id = :feeId
+        ];
+        System.assertEquals('Wire Fee', createdFee.Type__c, 'Should have correct type');
+        System.assertEquals(250.00, createdFee.Amount__c, 'Should have correct amount');
+        System.assertEquals(scheduleItem.Id, createdFee.Payment_Schedule_Item__c, 'Should be linked to schedule item');
+    }
+
+    @IsTest
+    static void testDeleteWireFee() {
+        Payment_Schedule_Item__c scheduleItem = [
+            SELECT Id
+            FROM Payment_Schedule_Item__c
+            LIMIT 1
+        ];
+
+        Payment_Fee__c fee = new Payment_Fee__c(
+            Payment_Schedule_Item__c = scheduleItem.Id,
+            Type__c = 'Wire Received Fee',
+            Amount__c = 150.00
+        );
+        insert fee;
+
+        Test.startTest();
+        PaymentPlanEditorController.deleteWireFee(String.valueOf(fee.Id));
+        Test.stopTest();
+
+        List<Payment_Fee__c> remaining = [SELECT Id FROM Payment_Fee__c WHERE Id = :fee.Id];
+        System.assertEquals(0, remaining.size(), 'Wire fee should be deleted');
     }
 
     @IsTest
@@ -1154,7 +1208,7 @@ private class PaymentPlanEditorControllerTest {
     }
 
     @IsTest
-    static void testSaveAsNewVersionWithWiredPaymentCarryover() {
+    static void testSaveAsNewVersionWithWireFeeCarryover() {
         PaymentPlan__c originalPlan = [SELECT Id FROM PaymentPlan__c LIMIT 1];
         Payment_Schedule_Item__c scheduleItem = [
             SELECT Id, Payment_Number__c
@@ -1164,14 +1218,13 @@ private class PaymentPlanEditorControllerTest {
             LIMIT 1
         ];
 
-        // Create Wired Payment on the original schedule item
-        Wired_Payment__c wiredPayment = new Wired_Payment__c(
+        // Create Wire Fee on the original schedule item
+        Payment_Fee__c wireFee = new Payment_Fee__c(
             Payment_Schedule_Item__c = scheduleItem.Id,
-            Payment_Date__c = Date.today(),
-            Payment_Amount__c = 500,
-            Description__c = 'Test Wire for Carryover'
+            Type__c = 'Wire Fee',
+            Amount__c = 500
         );
-        insert wiredPayment;
+        insert wireFee;
 
         // Create wrapper items matching the original row numbers
         List<PaymentPlanEditorController.ScheduleItemWrapper> items = new List<PaymentPlanEditorController.ScheduleItemWrapper>();
@@ -1190,7 +1243,7 @@ private class PaymentPlanEditorControllerTest {
             PaymentPlanEditorController.saveAsNewVersion(originalPlan.Id, items);
         Test.stopTest();
 
-        // Verify wired payment was carried over to new plan's schedule items
+        // Verify wire fee was carried over to new plan's schedule items
         List<Payment_Schedule_Item__c> newItems = [
             SELECT Id FROM Payment_Schedule_Item__c
             WHERE Payment_Plan__c = :result.paymentPlan.Id
@@ -1201,15 +1254,16 @@ private class PaymentPlanEditorControllerTest {
             newItemIds.add(newItem.Id);
         }
 
-        List<Wired_Payment__c> carriedOverPayments = [
-            SELECT Id, Payment_Schedule_Item__c, Payment_Amount__c, Description__c
-            FROM Wired_Payment__c
+        List<Payment_Fee__c> carriedOverFees = [
+            SELECT Id, Payment_Schedule_Item__c, Type__c, Amount__c
+            FROM Payment_Fee__c
             WHERE Payment_Schedule_Item__c IN :newItemIds
+            AND Type__c IN ('Wire Fee', 'Wire Received Fee')
         ];
 
-        System.assertEquals(1, carriedOverPayments.size(), 'Wired payment should be carried over');
-        System.assertEquals(500, carriedOverPayments[0].Payment_Amount__c, 'Payment amount should match');
-        System.assertEquals('Test Wire for Carryover', carriedOverPayments[0].Description__c, 'Description should match');
+        System.assertEquals(1, carriedOverFees.size(), 'Wire fee should be carried over');
+        System.assertEquals(500, carriedOverFees[0].Amount__c, 'Amount should match');
+        System.assertEquals('Wire Fee', carriedOverFees[0].Type__c, 'Type should match');
     }
 
     // =============================================
@@ -1284,7 +1338,7 @@ private class PaymentPlanEditorControllerTest {
     }
 
     @IsTest
-    static void testRecalculateRemainingBalanceWithWiredPayments() {
+    static void testRecalculateRemainingBalanceWithWireFees() {
         PaymentPlan__c plan = [SELECT Id FROM PaymentPlan__c LIMIT 1];
         Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
 
@@ -1293,7 +1347,7 @@ private class PaymentPlanEditorControllerTest {
         opp.Number_of_Weeks__c = 52;
         update opp;
 
-        // Get first schedule item and add a wired payment
+        // Get first schedule item and add a wire fee
         Payment_Schedule_Item__c scheduleItem = [
             SELECT Id FROM Payment_Schedule_Item__c
             WHERE Payment_Plan__c = :plan.Id
@@ -1301,13 +1355,12 @@ private class PaymentPlanEditorControllerTest {
             LIMIT 1
         ];
 
-        Wired_Payment__c wiredPayment = new Wired_Payment__c(
+        Payment_Fee__c wireFee = new Payment_Fee__c(
             Payment_Schedule_Item__c = scheduleItem.Id,
-            Payment_Date__c = Date.today(),
-            Payment_Amount__c = 1000,
-            Description__c = 'Test Wire Payment'
+            Type__c = 'Wire Received Fee',
+            Amount__c = 1000
         );
-        insert wiredPayment;
+        insert wireFee;
 
         Test.startTest();
         PaymentPlanEditorController.PaymentPlanWrapper result =
@@ -1316,7 +1369,7 @@ private class PaymentPlanEditorControllerTest {
 
         System.assertNotEquals(null, result, 'Should return wrapper');
 
-        // Verify wired payment was carried over
+        // Verify wire fee was carried over
         List<Payment_Schedule_Item__c> newItems = [
             SELECT Id FROM Payment_Schedule_Item__c
             WHERE Payment_Plan__c = :result.paymentPlan.Id
@@ -1327,14 +1380,15 @@ private class PaymentPlanEditorControllerTest {
             newItemIds.add(item.Id);
         }
 
-        List<Wired_Payment__c> carriedPayments = [
-            SELECT Id, Payment_Amount__c
-            FROM Wired_Payment__c
+        List<Payment_Fee__c> carriedFees = [
+            SELECT Id, Amount__c, Type__c
+            FROM Payment_Fee__c
             WHERE Payment_Schedule_Item__c IN :newItemIds
+            AND Type__c IN ('Wire Fee', 'Wire Received Fee')
         ];
 
-        System.assertEquals(1, carriedPayments.size(), 'Wired payment should be carried over');
-        System.assertEquals(1000, carriedPayments[0].Payment_Amount__c, 'Payment amount should match');
+        System.assertEquals(1, carriedFees.size(), 'Wire fee should be carried over');
+        System.assertEquals(1000, carriedFees[0].Amount__c, 'Amount should match');
     }
 
     @IsTest

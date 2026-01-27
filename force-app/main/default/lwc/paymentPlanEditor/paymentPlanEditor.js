@@ -9,7 +9,9 @@ import recalculatePaymentPlan from '@salesforce/apex/PaymentPlanEditorController
 import recalculateRemainingBalance from '@salesforce/apex/PaymentPlanEditorController.recalculateRemainingBalance';
 import suspendPaymentPlan from '@salesforce/apex/PaymentPlanEditorController.suspendPaymentPlan';
 import activatePaymentPlan from '@salesforce/apex/PaymentPlanEditorController.activatePaymentPlan';
-import getWiredPaymentsByPlanId from '@salesforce/apex/PaymentPlanEditorController.getWiredPaymentsByPlanId';
+import getWireFeesByPlanId from '@salesforce/apex/PaymentPlanEditorController.getWireFeesByPlanId';
+import saveWireFee from '@salesforce/apex/PaymentPlanEditorController.saveWireFee';
+import deleteWireFee from '@salesforce/apex/PaymentPlanEditorController.deleteWireFee';
 import getStatusPicklistValues from '@salesforce/apex/PaymentPlanEditorController.getStatusPicklistValues';
 
 // Default fallback if dynamic fetch fails
@@ -63,16 +65,18 @@ export default class PaymentPlanEditor extends LightningElement {
     fillPreviewValue = null;    // Preview value shown during drag
     selectedCellKey = null;     // Key for currently selected cell
 
-    // Wire Payment Modal state
+    // Wire Fee Modal state
     showWireModal = false;
     wireModalScheduleItemId = null;
     wireModalRowNumber = null;
+    wireFeeType = 'Wire Fee';       // Default wire fee type
+    wireFeeAmount = null;           // Wire fee amount (optional)
 
-    // Wired Payments Hover state
-    @track wiredPaymentsMap = {};      // Map of Schedule Item ID to array of Wired Payments (object needs @track)
-    hoveredRowId = null;        // Currently hovered row's Schedule Item ID
-    popoverTop = 0;             // Popover Y position
-    popoverLeft = 0;            // Popover X position
+    // Wire Fees Hover state
+    @track wireFeeMap = {};         // Map of Schedule Item ID to array of Wire Fees (object needs @track)
+    hoveredRowId = null;            // Currently hovered row's Schedule Item ID
+    popoverTop = 0;                 // Popover Y position
+    popoverLeft = 0;                // Popover X position
 
     // Previous version comparison state (array needs @track)
     @track previousVersionItems = [];  // Items from previous version for comparison
@@ -187,7 +191,7 @@ export default class PaymentPlanEditor extends LightningElement {
                 // this.selectedRowIds = new Set();
 
                 // Load Wired Payments for this plan
-                await this.loadWiredPayments(planId);
+                await this.loadWireFees(planId);
             }
         } catch (error) {
             this.showToast('Error', this.reduceErrors(error), 'error');
@@ -197,16 +201,16 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     /**
-     * Load Wired Payments for all schedule items in the plan
+     * Load Wire Fees for all schedule items in the plan
      */
-    async loadWiredPayments(planId) {
+    async loadWireFees(planId) {
         try {
-            const wiredPaymentsResult = await getWiredPaymentsByPlanId({ planId: planId });
-            this.wiredPaymentsMap = wiredPaymentsResult || {};
+            const wireFeesResult = await getWireFeesByPlanId({ planId: planId });
+            this.wireFeeMap = wireFeesResult || {};
         } catch (error) {
-            // Don't fail the whole load if wired payments fail
-            console.error('Error loading wired payments:', error);
-            this.wiredPaymentsMap = {};
+            // Don't fail the whole load if wire fees fail
+            console.error('Error loading wire fees:', error);
+            this.wireFeeMap = {};
         }
     }
 
@@ -392,9 +396,9 @@ export default class PaymentPlanEditor extends LightningElement {
             return [];
         }
 
-        // Return all items (no pagination) - enrich with wired payments data
+        // Return all items (no pagination) - enrich with wire fees data
         return allItems.map(item => {
-            const wiredPayments = this.wiredPaymentsMap[item.id] || [];
+            const wireFees = this.wireFeeMap[item.id] || [];
             const wiresTotal = Number(item.wiresReceived) || 0;
             const draftAmount = Number(item.draftAmount) || 0;
             // Determine wire status: green if wires >= draft, orange if wires < draft
@@ -402,13 +406,13 @@ export default class PaymentPlanEditor extends LightningElement {
 
             return {
                 ...item,
-                wiredPayments: wiredPayments.map(wp => ({
-                    ...wp,
-                    paymentDateFormatted: this.formatDate(wp.paymentDate),
-                    paymentAmountFormatted: this.formatCurrency(wp.paymentAmount || 0),
+                wireFees: wireFees.map(fee => ({
+                    ...fee,
+                    feeTypeFormatted: fee.feeType,
+                    amountFormatted: this.formatCurrency(fee.amount || 0),
                     wireRowClass: `wire-sub-row ${wireStatusClass}`
                 })),
-                hasWiredPayments: wiredPayments.length > 0,
+                hasWireFees: wireFees.length > 0,
                 wireStatusClass: wireStatusClass
             };
         });
@@ -1366,10 +1370,20 @@ export default class PaymentPlanEditor extends LightningElement {
         return this.isMaximized ? 'payment-plan-modal maximized' : 'payment-plan-modal';
     }
 
-    // ============ WIRE PAYMENT MODAL HANDLERS ============
+    // ============ WIRE FEE MODAL HANDLERS ============
 
     /**
-     * Opens the Wire Payment creation modal
+     * Wire fee type options for the dropdown
+     */
+    get wireFeeTypeOptions() {
+        return [
+            { label: 'Wire Fee', value: 'Wire Fee' },
+            { label: 'Wire Received Fee', value: 'Wire Received Fee' }
+        ];
+    }
+
+    /**
+     * Opens the Wire Fee creation modal
      * Pre-populates the Payment Schedule Item lookup
      */
     handleOpenWireModal(event) {
@@ -1377,68 +1391,114 @@ export default class PaymentPlanEditor extends LightningElement {
         const rowNumber = event.currentTarget.dataset.rowNumber;
 
         if (!scheduleItemId) {
-            this.showToast('Error', 'Cannot create wire payment: Schedule item not saved yet.', 'error');
+            this.showToast('Error', 'Cannot create wire fee: Schedule item not saved yet.', 'error');
             return;
         }
 
         this.wireModalScheduleItemId = scheduleItemId;
         this.wireModalRowNumber = rowNumber;
+        this.wireFeeType = 'Wire Fee';  // Reset to default
+        this.wireFeeAmount = null;      // Reset amount
         this.showWireModal = true;
     }
 
     /**
-     * Closes the Wire Payment modal
+     * Closes the Wire Fee modal
      */
     handleCloseWireModal() {
         this.showWireModal = false;
         this.wireModalScheduleItemId = null;
         this.wireModalRowNumber = null;
+        this.wireFeeType = 'Wire Fee';
+        this.wireFeeAmount = null;
     }
 
     /**
-     * Handles successful Wire Payment creation
+     * Handle wire fee type dropdown change
      */
-    handleWirePaymentSuccess(event) {
-        const recordId = event.detail.id;
-        this.showToast('Success', 'Wired Payment created successfully!', 'success');
-        this.handleCloseWireModal();
-
-        // Refresh wired payments to show the new record
-        this.loadWiredPayments(this.selectedPlanId);
+    handleWireFeeTypeChange(event) {
+        this.wireFeeType = event.detail.value;
     }
 
     /**
-     * Handles Wire Payment creation error
+     * Handle wire fee amount input change
      */
-    handleWirePaymentError(event) {
-        const errorMessage = event.detail.message || 'An error occurred while creating the Wired Payment.';
-        this.showToast('Error', errorMessage, 'error');
+    handleWireFeeAmountChange(event) {
+        this.wireFeeAmount = event.detail.value;
     }
 
-    // ============ WIRED PAYMENTS HOVER HANDLERS (Native HTML Popover API) ============
+    /**
+     * Save the wire fee record
+     */
+    async handleSaveWireFee() {
+        if (!this.wireFeeType) {
+            this.showToast('Error', 'Please select a wire fee type.', 'error');
+            return;
+        }
+
+        try {
+            await saveWireFee({
+                scheduleItemId: this.wireModalScheduleItemId,
+                feeType: this.wireFeeType,
+                amount: this.wireFeeAmount
+            });
+
+            this.showToast('Success', 'Wire fee created successfully!', 'success');
+            this.handleCloseWireModal();
+
+            // Refresh wire fees to show the new record
+            this.loadWireFees(this.selectedPlanId);
+        } catch (error) {
+            const errorMessage = this.reduceErrors(error);
+            this.showToast('Error', errorMessage, 'error');
+        }
+    }
 
     /**
-     * Check if a row has wired payments
+     * Delete a wire fee record
+     */
+    async handleDeleteWireFee(event) {
+        const feeId = event.currentTarget.dataset.feeId;
+        if (!feeId) {
+            return;
+        }
+
+        try {
+            await deleteWireFee({ feeId: feeId });
+            this.showToast('Success', 'Wire fee deleted successfully!', 'success');
+
+            // Refresh wire fees
+            this.loadWireFees(this.selectedPlanId);
+        } catch (error) {
+            const errorMessage = this.reduceErrors(error);
+            this.showToast('Error', errorMessage, 'error');
+        }
+    }
+
+    // ============ WIRE FEES HOVER HANDLERS (Native HTML Popover API) ============
+
+    /**
+     * Check if a row has wire fees
      * @param {String} rowId - The schedule item ID
-     * @returns {Boolean} - True if the row has wired payments
+     * @returns {Boolean} - True if the row has wire fees
      */
-    rowHasWiredPayments(rowId) {
+    rowHasWireFees(rowId) {
         return rowId &&
-               this.wiredPaymentsMap &&
-               this.wiredPaymentsMap[rowId] &&
-               Array.isArray(this.wiredPaymentsMap[rowId]) &&
-               this.wiredPaymentsMap[rowId].length > 0;
+               this.wireFeeMap &&
+               this.wireFeeMap[rowId] &&
+               Array.isArray(this.wireFeeMap[rowId]) &&
+               this.wireFeeMap[rowId].length > 0;
     }
 
     /**
      * Handle mouse enter on a table row
-     * Shows the wired payments popover ONLY if the row has wired payments
+     * Shows the wire fees popover ONLY if the row has wire fees
      */
     handleRowMouseEnter(event) {
         const rowId = event.currentTarget.dataset.rowId;
 
-        // Only show popover if not in edit mode AND row actually has wired payments
-        if (!this.isEditMode && this.rowHasWiredPayments(rowId)) {
+        // Only show popover if not in edit mode AND row actually has wire fees
+        if (!this.isEditMode && this.rowHasWireFees(rowId)) {
             // Calculate position first
             this.updatePopoverPosition(event.clientX, event.clientY);
 
@@ -1457,8 +1517,8 @@ export default class PaymentPlanEditor extends LightningElement {
      * Updates popover position to follow cursor
      */
     handlePopoverMouseMove(event) {
-        // Only update position if we have an active hovered row with wired payments
-        if (!this.hoveredRowId || !this.rowHasWiredPayments(this.hoveredRowId)) {
+        // Only update position if we have an active hovered row with wire fees
+        if (!this.hoveredRowId || !this.rowHasWireFees(this.hoveredRowId)) {
             return;
         }
         this.updatePopoverPosition(event.clientX, event.clientY);
@@ -1509,10 +1569,10 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     /**
-     * Getter: Should the wired popover be shown?
+     * Getter: Should the wire fees popover be shown?
      */
-    get showWiredPopover() {
-        return this.hoveredRowId && this.rowHasWiredPayments(this.hoveredRowId);
+    get showWireFeePopover() {
+        return this.hoveredRowId && this.rowHasWireFees(this.hoveredRowId);
     }
 
     /**
@@ -1597,34 +1657,34 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     /**
-     * Get wired payments for the currently hovered row
+     * Get wire fees for the currently hovered row
      */
-    get hoveredRowWiredPayments() {
-        if (!this.hoveredRowId || !this.wiredPaymentsMap[this.hoveredRowId]) {
+    get hoveredRowWireFees() {
+        if (!this.hoveredRowId || !this.wireFeeMap[this.hoveredRowId]) {
             return [];
         }
-        return this.wiredPaymentsMap[this.hoveredRowId].map(wp => ({
-            ...wp,
-            paymentDateFormatted: this.formatDate(wp.paymentDate),
-            paymentAmountFormatted: this.formatCurrency(wp.paymentAmount || 0)
+        return this.wireFeeMap[this.hoveredRowId].map(fee => ({
+            ...fee,
+            feeTypeFormatted: fee.feeType,
+            amountFormatted: this.formatCurrency(fee.amount || 0)
         }));
     }
 
     /**
-     * Get count of wired payments for the currently hovered row
+     * Get count of wire fees for the currently hovered row
      */
-    get hoveredRowWiredPaymentsCount() {
-        if (!this.hoveredRowId || !this.wiredPaymentsMap[this.hoveredRowId]) {
+    get hoveredRowWireFeesCount() {
+        if (!this.hoveredRowId || !this.wireFeeMap[this.hoveredRowId]) {
             return 0;
         }
-        return this.wiredPaymentsMap[this.hoveredRowId].length;
+        return this.wireFeeMap[this.hoveredRowId].length;
     }
 
     /**
-     * Check if a specific row has wired payments (for visual indicator)
+     * Check if a specific row has wire fees (for visual indicator)
      */
-    hasWiredPayments(rowId) {
-        return rowId && this.wiredPaymentsMap[rowId]?.length > 0;
+    hasWireFees(rowId) {
+        return rowId && this.wireFeeMap[rowId]?.length > 0;
     }
 
     // ============ HELPER METHODS ============
