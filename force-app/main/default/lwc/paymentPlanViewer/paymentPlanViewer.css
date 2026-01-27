@@ -13,6 +13,15 @@
     width: 100%;
 }
 
+/* Section Frame for Summary Stats */
+.section-frame {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 12px;
+    margin: 12px;
+}
+
 /* ============================================
    HEADER
    ============================================ */

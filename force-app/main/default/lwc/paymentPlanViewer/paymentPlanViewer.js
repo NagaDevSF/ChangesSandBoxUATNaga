@@ -135,6 +135,76 @@ export default class PaymentPlanViewer extends LightningElement {
         return this.paymentPlan !== null;
     }
 
+    // ============ SUMMARY STATS COMPUTED PROPERTIES ============
+
+    /**
+     * Schedule items formatted for summaryStats component
+     */
+    get scheduleItemsForSummary() {
+        if (!this.scheduleItems || this.scheduleItems.length === 0) {
+            return [];
+        }
+        return this.scheduleItems.map(item => ({
+            paymentAmount: item.draftAmount || 0,
+            totalPayment: item.draftAmount || 0,
+            draftAmount: item.draftAmount || 0,
+            setupFee: item.setupFee || 0,
+            setupFeePortion: item.setupFee || 0,
+            paymentDate: item.paymentDate,
+            date: item.paymentDate
+        }));
+    }
+
+    /**
+     * New Weekly Payment - first payment minus setup fee
+     */
+    get summaryWeeklyPayment() {
+        if (!this.scheduleItems || this.scheduleItems.length === 0) {
+            return 0;
+        }
+        const first = this.scheduleItems[0];
+        const payment = Number(first.draftAmount) || 0;
+        const setup = Number(first.setupFee) || 0;
+        return Math.max(0, payment - setup);
+    }
+
+    /**
+     * Program length - number of schedule items
+     */
+    get summaryProgramLength() {
+        return this.scheduleItems ? this.scheduleItems.length : 0;
+    }
+
+    /**
+     * Current payment from opportunity
+     */
+    get currentPayment() {
+        return this.paymentPlan?.Opportunity__r?.Current_Weekly_Payment__c || 0;
+    }
+
+    /**
+     * Total debt from opportunity
+     */
+    get totalDebt() {
+        return this.paymentPlan?.Opportunity__r?.Estimated_Total_Debt__c || 0;
+    }
+
+    /**
+     * First draft date from schedule
+     */
+    get firstDraftDate() {
+        if (!this.scheduleItems || this.scheduleItems.length === 0) {
+            return null;
+        }
+        // Sort by date and get the first one
+        const sorted = [...this.scheduleItems].sort((a, b) => {
+            const dateA = a.paymentDate ? new Date(a.paymentDate) : new Date(0);
+            const dateB = b.paymentDate ? new Date(b.paymentDate) : new Date(0);
+            return dateA - dateB;
+        });
+        return sorted[0]?.paymentDate || null;
+    }
+
     get planName() {
         return this.paymentPlan?.Name || 'Payment Plan';
     }

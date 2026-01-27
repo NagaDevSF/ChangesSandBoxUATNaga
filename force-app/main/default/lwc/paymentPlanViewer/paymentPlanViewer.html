@@ -48,6 +48,18 @@
                 </nav>
             </header>
 
+            <!-- Summary Stats Section -->
+            <section class="section-frame slds-m-bottom_medium">
+                <c-summary-stats items={scheduleItemsForSummary}
+                    weekly-payment={summaryWeeklyPayment}
+                    program-length={summaryProgramLength}
+                    current-payment={currentPayment}
+                    total-savings={totalSavingsBalance}
+                    total-debt={totalDebt}
+                    first-draft-date={firstDraftDate}>
+                </c-summary-stats>
+            </section>
+
             <!-- Tab Navigation (Single Tab - View Only) -->
             <nav class="tab-bar" role="tablist" aria-label="Payment plan tabs">
                 <button type="button" class="tab active" role="tab" aria-selected="true" aria-controls="view-panel">
