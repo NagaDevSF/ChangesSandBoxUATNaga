@@ -196,6 +196,10 @@ export default class PaymentPlanViewer extends LightningElement {
 
             // Add wire fees as nested rows (if any)
             const wireFees = this.wireFeeMap[item.id] || [];
+            // Calculate wire status class based on total wires vs draft amount
+            const wiresTotal = wireFees.reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
+            const wireStatusClass = wiresTotal >= draftAmount ? 'wire-row-green' : 'wire-row-orange';
+
             wireFees.forEach(fee => {
                 result.push({
                     ...fee,
@@ -203,7 +207,8 @@ export default class PaymentPlanViewer extends LightningElement {
                     parentScheduleItemId: item.id,
                     uniqueKey: `wire_${fee.id}`,
                     feeTypeFormatted: fee.feeType,
-                    amountFormatted: this.formatCurrency(fee.amount || 0)
+                    amountFormatted: this.formatCurrency(fee.amount || 0),
+                    wireRowClass: `wire-sub-row ${wireStatusClass}`
                 });
             });
         });

@@ -316,11 +316,11 @@
     transition: all 0.2s ease;
 }
 
-.data-table tbody tr:nth-child(even):not(.row-wired-payment) {
+.data-table tbody tr:nth-child(even):not(.wire-sub-row) {
     background: linear-gradient(180deg, #f7fafc 0%, #edf2f7 100%);
 }
 
-.data-table tbody tr:hover:not(.row-wired-payment) {
+.data-table tbody tr:hover:not(.wire-sub-row) {
     background: linear-gradient(180deg, #ebf8ff 0%, #bee3f8 100%);
     box-shadow: 0 2px 8px rgba(74, 85, 104, 0.15);
 }
@@ -395,55 +395,67 @@
 }
 
 /* ============================================
-   WIRED PAYMENT NESTED ROWS (Orange)
+   WIRE FEE SUB-ROWS
    ============================================ */
-.row-wired-payment {
-    background: linear-gradient(90deg, #fed7aa 0%, #feebc8 100%) !important;
-    border-left: 4px solid #ed8936;
+.wire-sub-row {
+    font-size: 12px;
+    border-left: 4px solid;
 }
 
-.row-wired-payment:hover {
-    background: linear-gradient(90deg, #fdba74 0%, #fed7aa 100%) !important;
+.wire-sub-row td {
+    padding: 8px;
+    border-bottom: 1px dashed var(--gray-200);
 }
 
-.row-wired-payment td {
-    padding: 4px 4px;
-    height: 28px;
-    border-bottom: 1px solid #f6ad55;
+/* Orange - Wires received less than draft amount */
+.wire-row-orange {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border-left-color: #f97316;
 }
 
-.wired-indicator {
-    color: #c05621;
+.wire-row-orange td {
+    color: #9a3412;
 }
 
-.wired-indicator lightning-icon {
-    --slds-c-icon-color-foreground-default: #c05621;
-}
-
-.wired-cell {
-    color: #744210;
-    font-size: 11px;
-}
-
-.wired-name {
-    font-weight: 600;
-    color: #7b341e;
-    padding-left: 8px !important;
-}
-
-.wired-amount {
+.wire-row-orange .wire-amount {
+    color: #ea580c;
     font-weight: 700;
-    font-family: 'SF Mono', Consolas, monospace;
-    color: #7b341e !important;
 }
 
-.wired-desc {
+.wire-row-orange .wire-icon {
+    --slds-c-icon-color-foreground-default: #f97316;
+}
+
+/* Green - Wires received equal to or greater than draft amount */
+.wire-row-green {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border-left-color: #22c55e;
+}
+
+.wire-row-green td {
+    color: #166534;
+}
+
+.wire-row-green .wire-amount {
+    color: #16a34a;
+    font-weight: 700;
+}
+
+.wire-row-green .wire-icon {
+    --slds-c-icon-color-foreground-default: #22c55e;
+}
+
+/* Wire row content styling */
+.wire-type {
     font-size: 11px;
-    color: #975a16;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 200px;
+}
+
+.wire-amount {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', Consolas, monospace;
+}
+
+.wire-icon {
+    opacity: 0.7;
 }
 
 /* ============================================

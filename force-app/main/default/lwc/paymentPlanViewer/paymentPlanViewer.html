@@ -136,27 +136,29 @@
 
                             <!-- Wire Fee Row (Nested, Indented) -->
                             <template lwc:if={item.isWireFee}>
-                                <tr key={item.uniqueKey} class="row-wire-fee" role="row">
-                                    <!-- Empty cell for indent -->
+                                <tr key={item.uniqueKey} class={item.wireRowClass} role="row">
+                                    <!-- Empty cell for # column -->
                                     <td class="td-center" role="gridcell"></td>
-
-                                    <!-- Wire indicator -->
-                                    <td class="td-center wire-indicator" role="gridcell">
-                                        <lightning-icon icon-name="utility:money" size="xx-small" alternative-text="Wire Fee"></lightning-icon>
+                                    <!-- Wire indicator (under Draft # column) -->
+                                    <td class="td-center" role="gridcell">
+                                        <lightning-icon icon-name="utility:routing_offline" size="xx-small" alternative-text="Wire Fee" class="wire-icon"></lightning-icon>
                                     </td>
-
-                                    <!-- Fee Type -->
-                                    <td class="td-center wire-cell" role="gridcell">
+                                    <!-- Fee Type (under Date column) -->
+                                    <td class="td-center" role="gridcell">
                                         <span class="wire-type">{item.feeTypeFormatted}</span>
                                     </td>
-
-                                    <!-- Amount -->
-                                    <td class="td-right wire-cell wire-amount" role="gridcell">
-                                        <data value={item.amount}>{item.amountFormatted}</data>
+                                    <!-- Amount (under Draft column) -->
+                                    <td class="td-right td-currency" role="gridcell">
+                                        <data class="wire-amount">{item.amountFormatted}</data>
                                     </td>
-
-                                    <!-- Empty cells for remaining columns -->
-                                    <td class="td-center" colspan="5" role="gridcell"></td>
+                                    <!-- Empty cells for Setup, Program, Banking -->
+                                    <td class="td-center" role="gridcell"></td>
+                                    <td class="td-center" role="gridcell"></td>
+                                    <td class="td-center" role="gridcell"></td>
+                                    <!-- Empty for Savings -->
+                                    <td class="td-center" role="gridcell"></td>
+                                    <!-- Empty for Status column -->
+                                    <td class="td-center" role="gridcell"></td>
                                 </tr>
                             </template>
                         </template>

@@ -143,8 +143,6 @@
                             <tr key={item.tempId}
                                 class={item.rowClass}
                                 data-row-id={item.id}
-                                onmouseenter={handleRowMouseEnter}
-                                onmouseleave={handleRowMouseLeave}
                                 role="row">
 
                                 <!-- Checkbox Column removed - functionality was not working -->
@@ -561,24 +559,6 @@
                     </template>
                 </table>
 
-                <!-- Wire Fees Popover (CSS-based visibility) -->
-                <template lwc:if={showWireFeePopover}>
-                    <aside class="wire-fees-popover" style={popoverStyle}>
-                        <header class="wire-popover-header">
-                            <lightning-icon icon-name="utility:money" size="x-small" alternative-text="Wire Fees"></lightning-icon>
-                            <h3 class="wire-popover-title">Wire Fees</h3>
-                            <output class="wire-popover-count">({hoveredRowWireFeesCount})</output>
-                        </header>
-                        <div class="wire-popover-body">
-                            <template for:each={hoveredRowWireFees} for:item="fee">
-                                <article key={fee.id} class="wire-fee-row">
-                                    <span class="wire-field wire-type">{fee.feeTypeFormatted}</span>
-                                    <data class="wire-field wire-amount" value={fee.amount}>{fee.amountFormatted}</data>
-                                </article>
-                            </template>
-                        </div>
-                    </aside>
-                </template>
             </section>
 
             <!-- Add Row Button (Edit Mode Only) -->
