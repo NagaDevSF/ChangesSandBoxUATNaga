@@ -12,6 +12,11 @@ public class PaymentPlanService {
 			// TODO calling service does an opp query, refactor to pass in the needed data
 			PaymentPlan__c thisPP = SalesCalculatorService.createNewVersion(opp.Id);
 
+			// Set plan as Active when created from contract signing
+			thisPP.Status__c = 'Active';
+			thisPP.Version_Status__c = 'Active';
+			thisPP.Is_Active__c = true;
+
 			// blend in the paymentdraft data into the PaymentPlan__c record
 			PaymentDraft__c thisDraft = primaryDraftMap.get(opp.Id);
 
@@ -99,14 +104,15 @@ public class PaymentPlanService {
 		//Database.insert(allPSIList, AccessLevel.USER_MODE);
 
 		// Create Payment_Fee__c records for all inserted schedule items
+		// Note: Only Banking, Program, and Setup fees are created as Payment_Fee__c records
+		// Savings/Escrow is stored directly on Payment_Schedule_Item__c.To_Escrow_Amount__c
 		List<Payment_Fee__c> allFeeRecords = new List<Payment_Fee__c>();
 		for (Payment_Schedule_Item__c psi : allPSIList) {
 			allFeeRecords.addAll(PaymentFeeService.createFeeRecordsForItem(
 				psi,
 				psi.Banking_Fee_Amount__c,
 				psi.Program_Fee_Amount__c,
-				psi.Setup_Fee_Amount__c,
-				psi.To_Escrow_Amount__c  // Payee Fee = Savings/Escrow
+				psi.Setup_Fee_Amount__c
 			));
 		}
 		if (!allFeeRecords.isEmpty()) {

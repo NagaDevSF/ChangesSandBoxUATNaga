@@ -2913,12 +2913,9 @@ public with sharing class PaymentPlanEditorController {
             wrapper.setupFee = (setupFeeRecord != null && setupFeeRecord.Amount__c != null)
                 ? setupFeeRecord.Amount__c : (item.Setup_Fee_Amount__c != null ? item.Setup_Fee_Amount__c : 0);
 
-            // Payee Fee (Savings/Escrow)
-            Payment_Fee__c payeeFeeRecord = fees.get(PaymentFeeService.FEE_TYPE_PAYEE);
-            Decimal payeeFeeAmount = (payeeFeeRecord != null && payeeFeeRecord.Amount__c != null)
-                ? payeeFeeRecord.Amount__c : (item.To_Escrow_Amount__c != null ? item.To_Escrow_Amount__c : 0);
-            wrapper.savingsBalance = payeeFeeAmount;
-            wrapper.toEscrowAmount = payeeFeeAmount;
+            // Savings/Escrow - read directly from To_Escrow_Amount__c field
+            wrapper.savingsBalance = item.To_Escrow_Amount__c != null ? item.To_Escrow_Amount__c : 0;
+            wrapper.toEscrowAmount = item.To_Escrow_Amount__c != null ? item.To_Escrow_Amount__c : 0;
         } else {
             // Fall back to flat fields on Payment_Schedule_Item__c (backwards compatibility)
             wrapper.bankingFee = item.Banking_Fee_Amount__c;

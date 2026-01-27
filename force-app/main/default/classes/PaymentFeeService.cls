@@ -3,11 +3,12 @@
  * Handles creation, retrieval, update, and deletion of fee records
  * associated with Payment_Schedule_Item__c records.
  *
- * Each Payment_Schedule_Item__c can have 4 fee types:
+ * Each Payment_Schedule_Item__c can have 3 fee types:
  * - Banking Fee
  * - Program Fee
  * - Setup Fee
- * - Payee Fee (maps to Savings/Escrow column)
+ *
+ * Note: Savings/Escrow amounts are stored directly on Payment_Schedule_Item__c.To_Escrow_Amount__c
  */
 public with sharing class PaymentFeeService {
 
@@ -15,7 +16,6 @@ public with sharing class PaymentFeeService {
     public static final String FEE_TYPE_BANKING = 'Banking Fee';
     public static final String FEE_TYPE_PROGRAM = 'Program Fee';
     public static final String FEE_TYPE_SETUP = 'Setup Fee';
-    public static final String FEE_TYPE_PAYEE = 'Payee Fee';
     public static final String FEE_TYPE_WIRE = 'Wire Fee';
     public static final String FEE_TYPE_WIRE_RECEIVED = 'Wire Received Fee';
 
@@ -23,8 +23,7 @@ public with sharing class PaymentFeeService {
     public static final Set<String> SCHEDULE_ITEM_FEE_TYPES = new Set<String>{
         FEE_TYPE_BANKING,
         FEE_TYPE_PROGRAM,
-        FEE_TYPE_SETUP,
-        FEE_TYPE_PAYEE
+        FEE_TYPE_SETUP
     };
 
     // Wire fee types
@@ -35,21 +34,20 @@ public with sharing class PaymentFeeService {
 
     /**
      * @description Create Payment_Fee__c records for a single Payment_Schedule_Item__c.
-     * Creates 4 fee records (Banking, Program, Setup, Payee) linked to the schedule item.
+     * Creates 3 fee records (Banking, Program, Setup) linked to the schedule item.
+     * Note: Savings/Escrow is stored directly on Payment_Schedule_Item__c.To_Escrow_Amount__c
      *
      * @param psi The Payment_Schedule_Item__c record (must have Id populated)
      * @param bankingFee Banking fee amount
      * @param programFee Program fee amount
      * @param setupFee Setup fee amount
-     * @param payeeFee Payee fee amount (corresponds to Savings/Escrow)
      * @return List of Payment_Fee__c records (not yet inserted)
      */
     public static List<Payment_Fee__c> createFeeRecordsForItem(
         Payment_Schedule_Item__c psi,
         Decimal bankingFee,
         Decimal programFee,
-        Decimal setupFee,
-        Decimal payeeFee
+        Decimal setupFee
     ) {
         List<Payment_Fee__c> feeRecords = new List<Payment_Fee__c>();
 
@@ -66,14 +64,12 @@ public with sharing class PaymentFeeService {
         // Create Setup Fee record
         feeRecords.add(createFeeRecord(psi.Id, FEE_TYPE_SETUP, setupFee));
 
-        // Create Payee Fee record (Savings column)
-        feeRecords.add(createFeeRecord(psi.Id, FEE_TYPE_PAYEE, payeeFee));
-
         return feeRecords;
     }
 
     /**
      * @description Bulk create Payment_Fee__c records for multiple Payment_Schedule_Item__c records.
+     * Creates Banking, Program, and Setup fees only. Savings/Escrow is stored on the schedule item.
      *
      * @param items List of Payment_Schedule_Item__c records (must have Id populated)
      * @param wrapperMap Map of PSI Id to wrapper containing fee amounts
@@ -99,8 +95,7 @@ public with sharing class PaymentFeeService {
                 psi,
                 wrapper.bankingFee,
                 wrapper.programFee,
-                wrapper.setupFee,
-                wrapper.savingsBalance  // Payee Fee = Savings
+                wrapper.setupFee
             ));
         }
 
@@ -148,19 +143,18 @@ public with sharing class PaymentFeeService {
     /**
      * @description Create or update Payment_Fee__c records for a single Payment_Schedule_Item__c.
      * If fee records exist, they are updated; otherwise new records are created.
+     * Note: Savings/Escrow is stored directly on Payment_Schedule_Item__c.To_Escrow_Amount__c
      *
      * @param scheduleItemId The Payment_Schedule_Item__c Id
      * @param bankingFee Banking fee amount
      * @param programFee Program fee amount
      * @param setupFee Setup fee amount
-     * @param payeeFee Payee fee amount (corresponds to Savings/Escrow)
      */
     public static void upsertFeeRecords(
         Id scheduleItemId,
         Decimal bankingFee,
         Decimal programFee,
-        Decimal setupFee,
-        Decimal payeeFee
+        Decimal setupFee
     ) {
         if (scheduleItemId == null) {
             return;
@@ -186,9 +180,6 @@ public with sharing class PaymentFeeService {
         // Setup Fee
         toUpsert.add(upsertSingleFee(scheduleItemId, FEE_TYPE_SETUP, setupFee, feesByType));
 
-        // Payee Fee (Savings)
-        toUpsert.add(upsertSingleFee(scheduleItemId, FEE_TYPE_PAYEE, payeeFee, feesByType));
-
         if (!toUpsert.isEmpty()) {
             upsert toUpsert;
         }
@@ -197,6 +188,7 @@ public with sharing class PaymentFeeService {
     /**
      * @description Bulk upsert Payment_Fee__c records for multiple schedule items.
      * More efficient than calling upsertFeeRecords for each item individually.
+     * Note: Savings/Escrow is stored directly on Payment_Schedule_Item__c.To_Escrow_Amount__c
      *
      * @param scheduleItemIds Set of schedule item Ids to process
      * @param wrapperMap Map of PSI Id to wrapper containing fee amounts
@@ -228,7 +220,6 @@ public with sharing class PaymentFeeService {
             toUpsert.add(upsertSingleFee(psiId, FEE_TYPE_BANKING, wrapper.bankingFee, feesByType));
             toUpsert.add(upsertSingleFee(psiId, FEE_TYPE_PROGRAM, wrapper.programFee, feesByType));
             toUpsert.add(upsertSingleFee(psiId, FEE_TYPE_SETUP, wrapper.setupFee, feesByType));
-            toUpsert.add(upsertSingleFee(psiId, FEE_TYPE_PAYEE, wrapper.savingsBalance, feesByType));
         }
 
         if (!toUpsert.isEmpty()) {
@@ -265,7 +256,7 @@ public with sharing class PaymentFeeService {
      * @description Create a single Payment_Fee__c record.
      *
      * @param scheduleItemId The parent Payment_Schedule_Item__c Id
-     * @param feeType The fee type (Banking Fee, Program Fee, Setup Fee, Payee Fee)
+     * @param feeType The fee type (Banking Fee, Program Fee, Setup Fee)
      * @param amount The fee amount
      * @return Payment_Fee__c record (not yet inserted)
      */
