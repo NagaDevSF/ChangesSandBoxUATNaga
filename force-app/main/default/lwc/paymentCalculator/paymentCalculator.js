@@ -388,13 +388,19 @@ export default class PaymentCalculator extends LightningElement {
         this.selectedDraftId = null; // ensure table redraw by clearing selection
 
         const processed = (rows || []).map(r => {
-            const statusValue = (r.Sync_Status__c || '').trim().toLowerCase();
+            // Handle both DraftWrapper (camelCase) and Map (Salesforce API names) formats
+            const statusValue = (r.Sync_Status__c || r.syncStatus || '').trim().toLowerCase();
             const outOfSync = statusValue === 'out of sync';
 
             return {
                 ...r,
-                CreatedDate: r.CreatedDate, // preserved
-                syncStatus: r.Sync_Status__c,
+                // Normalize field names for datatable (handle both formats)
+                Id: r.Id || r.id,
+                Name: r.Name || r.name,
+                CreatedDate: r.CreatedDate || r.createdDate,
+                CreatedBy: r.CreatedBy || r.createdBy,
+                isPrimary: r.isPrimary,
+                syncStatus: r.Sync_Status__c || r.syncStatus,
                 isOutOfSync: outOfSync,
                 rowClass: outOfSync
                     ? 'slds-theme_shade slds-text-color_default row-outofsync'
