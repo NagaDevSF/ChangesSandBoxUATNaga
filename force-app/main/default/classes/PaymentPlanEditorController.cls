@@ -2410,6 +2410,10 @@ public with sharing class PaymentPlanEditorController {
                 recalculateDraftNumbers(newItems);
                 insert newItems;
                 System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted ' + newItems.size() + ' schedule items');
+
+                // Carry over wire fees (Wire Fee and Wire Received Fee) from old items to new items
+                System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Carrying over wire fees...');
+                carryOverWireFees(currentItems, newItems);
             }
 
             // Update the new plan's item count
