@@ -172,7 +172,11 @@ public with sharing class PaymentPlanEditorController {
         'Version_Type__c, Version_Notes__c, Schedule_Item_Count__c, ' +
         'Total_Draft_Amount__c, Total_Setup_Fee_Rollup__c, Total_Program_Fee_Rollup__c, ' +
         'Total_Banking_Fee_Rollup__c, Total_Savings_Rollup__c, Total_To_Escrow_Rollup__c, ' +
-        'Schedule_Item_Count_Rollup__c, Total_Amount_Cleared__c';
+        'Schedule_Item_Count_Rollup__c, Total_Amount_Cleared__c, ' +
+        'Cleared_Payment_Sum__c, Cleared_Setup_Fee_Sum__c, Cleared_Program_Fee_Sum__c, ' +
+        'Cleared_Banking_Fee_Sum__c, Cleared_Savings_Sum__c, ' +
+        'NSF_Draft_Amount_Sum__c, NSF_Setup_Fee_Sum__c, NSF_Program_Fee_Sum__c, ' +
+        'NSF_Banking_Fee_Sum__c, NSF_Savings_Sum__c';
 
     /**
      * Standard fields to query for Payment_Schedule_Item__c records.

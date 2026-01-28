@@ -535,9 +535,13 @@ export default class PaymentPlanEditor extends LightningElement {
     // }
 
     // ============ AGGREGATE GETTERS (Footer Totals) ============
-    // Total row shows simple SUM of all items (no filtering)
+    // Uses rollup fields when viewing (faster), live calculation when editing (real-time updates)
 
+    // ----- TOTAL ROW -----
     get totalDraftAmount() {
+        if (!this.isEditMode && this.paymentPlan?.Total_Draft_Amount__c != null) {
+            return Number(this.paymentPlan.Total_Draft_Amount__c) || 0;
+        }
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
         return items.reduce((sum, item) => sum + (Number(item.draftAmount) || 0), 0);
@@ -548,6 +552,9 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get totalSetupFee() {
+        if (!this.isEditMode && this.paymentPlan?.Total_Setup_Fee_Rollup__c != null) {
+            return Number(this.paymentPlan.Total_Setup_Fee_Rollup__c) || 0;
+        }
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
         return items.reduce((sum, item) => sum + (Number(item.setupFee) || 0), 0);
@@ -558,6 +565,9 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get totalProgramFee() {
+        if (!this.isEditMode && this.paymentPlan?.Total_Program_Fee_Rollup__c != null) {
+            return Number(this.paymentPlan.Total_Program_Fee_Rollup__c) || 0;
+        }
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
         return items.reduce((sum, item) => sum + (Number(item.programFee) || 0), 0);
@@ -568,6 +578,9 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get totalBankingFee() {
+        if (!this.isEditMode && this.paymentPlan?.Total_Banking_Fee_Rollup__c != null) {
+            return Number(this.paymentPlan.Total_Banking_Fee_Rollup__c) || 0;
+        }
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
         return items.reduce((sum, item) => sum + (Number(item.bankingFee) || 0), 0);
@@ -578,6 +591,9 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get totalSavingsBalance() {
+        if (!this.isEditMode && this.paymentPlan?.Total_Savings_Rollup__c != null) {
+            return Number(this.paymentPlan.Total_Savings_Rollup__c) || 0;
+        }
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
         return items.reduce((sum, item) => sum + (Number(item.savingsBalance) || 0), 0);
@@ -588,14 +604,12 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get totalWiresReceived() {
-        // Sum of all wires received across all items
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
         return items.reduce((sum, item) => sum + (Number(item.wiresReceived) || 0), 0);
     }
 
     get totalRowCount() {
-        // Use rollup field when not editing, otherwise calculate from items
         if (!this.isEditMode && this.paymentPlan?.Schedule_Item_Count_Rollup__c != null) {
             return Number(this.paymentPlan.Schedule_Item_Count_Rollup__c) || 0;
         }
@@ -603,8 +617,11 @@ export default class PaymentPlanEditor extends LightningElement {
         return items ? items.length : 0;
     }
 
-    // Cleared row totals - calculated from items for live updates
+    // ----- CLEARED ROW -----
     get clearedDraftAmount() {
+        if (!this.isEditMode && this.paymentPlan?.Cleared_Payment_Sum__c != null) {
+            return Number(this.paymentPlan.Cleared_Payment_Sum__c) || 0;
+        }
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
         return items
@@ -617,6 +634,9 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get clearedSetupFee() {
+        if (!this.isEditMode && this.paymentPlan?.Cleared_Setup_Fee_Sum__c != null) {
+            return Number(this.paymentPlan.Cleared_Setup_Fee_Sum__c) || 0;
+        }
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
         return items
@@ -629,6 +649,9 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get clearedProgramFee() {
+        if (!this.isEditMode && this.paymentPlan?.Cleared_Program_Fee_Sum__c != null) {
+            return Number(this.paymentPlan.Cleared_Program_Fee_Sum__c) || 0;
+        }
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
         return items
@@ -641,6 +664,9 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get clearedBankingFee() {
+        if (!this.isEditMode && this.paymentPlan?.Cleared_Banking_Fee_Sum__c != null) {
+            return Number(this.paymentPlan.Cleared_Banking_Fee_Sum__c) || 0;
+        }
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
         return items
@@ -653,6 +679,9 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get clearedSavingsBalance() {
+        if (!this.isEditMode && this.paymentPlan?.Cleared_Savings_Sum__c != null) {
+            return Number(this.paymentPlan.Cleared_Savings_Sum__c) || 0;
+        }
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
         return items
@@ -664,8 +693,11 @@ export default class PaymentPlanEditor extends LightningElement {
         return this.formatCurrency(this.clearedSavingsBalance);
     }
 
-    // NSF row totals - only from items where status === 'NSF'
+    // ----- NSF ROW -----
     get nsfDraftAmount() {
+        if (!this.isEditMode && this.paymentPlan?.NSF_Draft_Amount_Sum__c != null) {
+            return Number(this.paymentPlan.NSF_Draft_Amount_Sum__c) || 0;
+        }
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
         return items
@@ -678,6 +710,9 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get nsfSetupFee() {
+        if (!this.isEditMode && this.paymentPlan?.NSF_Setup_Fee_Sum__c != null) {
+            return Number(this.paymentPlan.NSF_Setup_Fee_Sum__c) || 0;
+        }
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
         return items
@@ -690,6 +725,9 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get nsfProgramFee() {
+        if (!this.isEditMode && this.paymentPlan?.NSF_Program_Fee_Sum__c != null) {
+            return Number(this.paymentPlan.NSF_Program_Fee_Sum__c) || 0;
+        }
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
         return items
@@ -702,6 +740,9 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get nsfBankingFee() {
+        if (!this.isEditMode && this.paymentPlan?.NSF_Banking_Fee_Sum__c != null) {
+            return Number(this.paymentPlan.NSF_Banking_Fee_Sum__c) || 0;
+        }
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
         return items
@@ -714,6 +755,9 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get nsfSavingsBalance() {
+        if (!this.isEditMode && this.paymentPlan?.NSF_Savings_Sum__c != null) {
+            return Number(this.paymentPlan.NSF_Savings_Sum__c) || 0;
+        }
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
         return items
@@ -725,7 +769,7 @@ export default class PaymentPlanEditor extends LightningElement {
         return this.formatCurrency(this.nsfSavingsBalance);
     }
 
-    // Wires total formatted
+    // ----- WIRES ROW -----
     get totalWiresReceivedFormatted() {
         return this.formatCurrency(this.totalWiresReceived);
     }
