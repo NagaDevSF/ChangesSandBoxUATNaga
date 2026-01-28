@@ -59,13 +59,14 @@ public with sharing class PaymentFeeService {
         Decimal programFee,
         Decimal setupFee
     ) {
-        System.debug(LOG_PREFIX + ' ' + LOG_ENTRY + ' createFeeRecordsForItem | psiId=' + (psi != null ? psi.Id : 'null'));
         List<Payment_Fee__c> feeRecords = new List<Payment_Fee__c>();
 
         if (psi == null || psi.Id == null) {
             System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' createFeeRecordsForItem | Skipping - null PSI');
             return feeRecords;
         }
+
+        System.debug(LOG_PREFIX + ' ' + LOG_ENTRY + ' createFeeRecordsForItem | psiId=' + psi.Id);
 
         // Create Banking Fee record
         feeRecords.add(createFeeRecord(psi.Id, FEE_TYPE_BANKING, bankingFee));
