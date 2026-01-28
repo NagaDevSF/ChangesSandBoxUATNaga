@@ -190,7 +190,7 @@ public class PaymentCalculatorControllerTest {
         insert d2;
 
         Test.startTest();
-        List<PaymentCalculatorController.DraftWrapper> loaded = PaymentCalculatorController.loadDrafts(opp.Id);
+        List<Map<String, Object>> loaded = PaymentCalculatorController.loadDrafts(opp.Id);
         Test.stopTest();
 
         System.assertEquals(2, loaded.size(), 'Should load 2 drafts');
@@ -205,14 +205,16 @@ public class PaymentCalculatorControllerTest {
             Opportunity__c = opp.Id,
             Draft_Name__c = 'D1',
             Configuration_JSON__c = '{"programType":"DCG_MOD"}',
-            Calculations_JSON__c = '{"totalDebt":50000}'
+            Calculations_JSON__c = '{"totalDebt":50000}',
+            Created_By_Calculator__c = true
         );
         insert d1;
         PaymentDraft__c d2 = new PaymentDraft__c(
             Opportunity__c = opp.Id,
             Draft_Name__c = 'D2',
             Configuration_JSON__c = '{"programType":"DCG_MOD"}',
-            Calculations_JSON__c = '{"totalDebt":50000}'
+            Calculations_JSON__c = '{"totalDebt":50000}',
+            Created_By_Calculator__c = true
         );
         insert d2;
 
@@ -223,8 +225,8 @@ public class PaymentCalculatorControllerTest {
         System.assertEquals(true, checkD1.Is_Primary__c);
 
         // Get Primary
-        PaymentCalculatorController.DraftWrapper primary = PaymentCalculatorController.getPrimaryDraft(opp.Id);
-        System.assertEquals(d1.Id, primary.id);
+        Map<String, Object> primary = PaymentCalculatorController.getPrimaryDraft(opp.Id);
+        System.assertEquals(d1.Id, (Id)primary.get('id'));
 
         // Set another Primary
         PaymentCalculatorController.setPrimaryDraft(d2.Id);
@@ -392,7 +394,7 @@ public class PaymentCalculatorControllerTest {
         Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
 
         Test.startTest();
-        PaymentCalculatorController.DraftWrapper result = PaymentCalculatorController.getPrimaryDraft(opp.Id);
+        Map<String, Object> result = PaymentCalculatorController.getPrimaryDraft(opp.Id);
         Test.stopTest();
 
         System.assertEquals(null, result, 'Should return null when no primary draft');
@@ -619,16 +621,17 @@ public class PaymentCalculatorControllerTest {
             Lead__c = lead.Id,
             Draft_Name__c = 'Lead Draft',
             Configuration_JSON__c = '{"programType":"DCG_MOD"}',
-            Calculations_JSON__c = '{"totalDebt":30000}'
+            Calculations_JSON__c = '{"totalDebt":30000}',
+            Created_By_Calculator__c = true
         );
         insert draft;
 
         Test.startTest();
-        List<PaymentCalculatorController.DraftWrapper> drafts = PaymentCalculatorController.loadDrafts(lead.Id);
+        List<Map<String, Object>> drafts = PaymentCalculatorController.loadDrafts(lead.Id);
         Test.stopTest();
 
         System.assertEquals(1, drafts.size(), 'Should load 1 draft for Lead');
-        System.assertEquals('Lead Draft', drafts[0].name, 'Should have correct name');
+        System.assertEquals('Lead Draft', (String)drafts[0].get('name'), 'Should have correct name');
     }
 
     @isTest
@@ -647,16 +650,17 @@ public class PaymentCalculatorControllerTest {
             Configuration_JSON__c = '{"test":true}',
             Calculations_JSON__c = '{"value":100}',
             Is_Primary__c = true,
-            Primary_Key__c = String.valueOf(lead.Id)
+            Primary_Key__c = String.valueOf(lead.Id),
+            Created_By_Calculator__c = true
         );
         insert draft;
 
         Test.startTest();
-        PaymentCalculatorController.DraftWrapper primary = PaymentCalculatorController.getPrimaryDraft(lead.Id);
+        Map<String, Object> primary = PaymentCalculatorController.getPrimaryDraft(lead.Id);
         Test.stopTest();
 
         System.assertNotEquals(null, primary, 'Should return primary draft');
-        System.assertEquals('Lead Primary', primary.name, 'Should return correct draft');
+        System.assertEquals('Lead Primary', (String)primary.get('name'), 'Should return correct draft');
     }
 
     @isTest
@@ -1230,7 +1234,7 @@ public class PaymentCalculatorControllerTest {
         PaymentCalculatorController.deactivateDraft(d3.Id);
 
         Test.startTest();
-        List<PaymentCalculatorController.DraftWrapper> loadedDrafts = PaymentCalculatorController.loadDrafts(opp.Id);
+        List<Map<String, Object>> loadedDrafts = PaymentCalculatorController.loadDrafts(opp.Id);
         Test.stopTest();
 
         // Should return ALL drafts (active and inactive) for sync status UI display
@@ -1238,8 +1242,8 @@ public class PaymentCalculatorControllerTest {
 
         // Verify all drafts are in results
         Set<String> loadedNames = new Set<String>();
-        for (PaymentCalculatorController.DraftWrapper draft : loadedDrafts) {
-            loadedNames.add(draft.name);
+        for (Map<String, Object> draft : loadedDrafts) {
+            loadedNames.add((String)draft.get('name'));
         }
         System.assert(loadedNames.contains('To Be Inactive'), 'Inactive draft should be in results for sync status');
         System.assert(loadedNames.contains('Active 1'), 'Active 1 should be in results');
@@ -1262,14 +1266,14 @@ public class PaymentCalculatorControllerTest {
         insert draft;
 
         // Verify it's returned as primary
-        PaymentCalculatorController.DraftWrapper primary = PaymentCalculatorController.getPrimaryDraft(opp.Id);
+        Map<String, Object> primary = PaymentCalculatorController.getPrimaryDraft(opp.Id);
         System.assertNotEquals(null, primary, 'Should return primary draft');
 
         // Deactivate it
         PaymentCalculatorController.deactivateDraft(draft.Id);
 
         Test.startTest();
-        PaymentCalculatorController.DraftWrapper primaryAfterDeactivate = PaymentCalculatorController.getPrimaryDraft(opp.Id);
+        Map<String, Object> primaryAfterDeactivate = PaymentCalculatorController.getPrimaryDraft(opp.Id);
         Test.stopTest();
 
         // Should return null since the primary draft is now inactive
@@ -1329,16 +1333,16 @@ public class PaymentCalculatorControllerTest {
         insert draft;
 
         Test.startTest();
-        List<PaymentCalculatorController.DraftWrapper> loaded = PaymentCalculatorController.loadDrafts(opp.Id);
+        List<Map<String, Object>> loaded = PaymentCalculatorController.loadDrafts(opp.Id);
         Test.stopTest();
 
         System.assertEquals(1, loaded.size(), 'Should load 1 draft');
 
-        PaymentCalculatorController.ConfigWrapper config = loaded[0].config;
+        Map<String, Object> config = (Map<String, Object>)loaded[0].get('config');
         // Native field value should be returned in wrapper
-        System.assertEquals(65.0, config.targetPaymentPercent, 'Native field should be in config wrapper');
-        System.assertEquals('DESIRED', config.calculateBy, 'Calculation mode from native field');
-        System.assertEquals(5, config.preferredDayOfWeek, 'Preferred day from native field');
+        System.assertEquals(65.0, config.get('targetPaymentPercent'), 'Native field should be in config wrapper');
+        System.assertEquals('DESIRED', config.get('calculateBy'), 'Calculation mode from native field');
+        System.assertEquals(5.0, config.get('preferredDayOfWeek'), 'Preferred day from native field');
     }
 
     @isTest
@@ -1359,15 +1363,15 @@ public class PaymentCalculatorControllerTest {
         insert draft;
 
         Test.startTest();
-        PaymentCalculatorController.DraftWrapper result = PaymentCalculatorController.getPrimaryDraft(opp.Id);
+        Map<String, Object> result = PaymentCalculatorController.getPrimaryDraft(opp.Id);
         Test.stopTest();
 
         System.assertNotEquals(null, result, 'Should return primary draft');
 
-        PaymentCalculatorController.ConfigWrapper config = result.config;
-        System.assertEquals(72.0, config.targetPaymentPercent, 'Should return native field value');
-        System.assertEquals('PERCENT', config.calculateBy, 'Should return native field value');
-        System.assertEquals(1, config.preferredDayOfWeek, 'Should return native field value');
+        Map<String, Object> config = (Map<String, Object>)result.get('config');
+        System.assertEquals(72.0, config.get('targetPaymentPercent'), 'Should return native field value');
+        System.assertEquals('PERCENT', config.get('calculateBy'), 'Should return native field value');
+        System.assertEquals(1.0, config.get('preferredDayOfWeek'), 'Should return native field value');
     }
 
 }
