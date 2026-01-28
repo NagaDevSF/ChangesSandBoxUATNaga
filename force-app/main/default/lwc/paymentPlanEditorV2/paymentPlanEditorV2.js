@@ -767,19 +767,19 @@ export default class PaymentPlanEditorV2 extends LightningElement {
            this.isLoading = true;
 
 
-           const baseWeeklyPayment = this._calculateBaseWeeklyPayment();
+           // Use summaryWeeklyPayment to match what's displayed in the UI
+           // This ensures the saved value matches what the user sees
+           const weeklyPaymentToSave = this.summaryWeeklyPayment;
 
 
-           // Use manually entered weeks in Desired Mode, otherwise use calculated value
-           const weeksToSave = this.isDesiredMode && this._targetNumberOfWeeks != null
-               ? this._targetNumberOfWeeks
-               : this.calculations.programLength;
+           // Use summaryProgramLength to match what's displayed in the UI
+           const weeksToSave = this.summaryProgramLength;
 
 
            await updateOpportunityOnly({
                recordId: this.recordId,
                numberOfWeeks: weeksToSave,
-               weeklyPayment: baseWeeklyPayment,
+               weeklyPayment: weeklyPaymentToSave,
                firstDraftDate: this.firstDraftDate,
                bankingFee: this.bankingFee,
                setupFeeTerm: this.setupFeePayments,
@@ -1234,5 +1234,4 @@ export default class PaymentPlanEditorV2 extends LightningElement {
        });
        this.dispatchEvent(event);
    }
-} 
-
+}

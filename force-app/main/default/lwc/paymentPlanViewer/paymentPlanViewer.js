@@ -346,11 +346,9 @@ export default class PaymentPlanViewer extends LightningElement {
     }
 
     get totalSavingsBalance() {
-        // Use Total_To_Escrow_Rollup__c which sums To_Escrow_Amount__c (per-payment savings)
-        // NOT Total_Savings_Rollup__c which sums Savings_Balance__c (running balance)
-        if (this.paymentPlan?.Total_To_Escrow_Rollup__c != null) {
-            return Number(this.paymentPlan.Total_To_Escrow_Rollup__c) || 0;
-        }
+        // Always calculate from items for fresh, accurate data
+        // Each item's savingsBalance comes from To_Escrow_Amount__c (per-payment savings)
+        // NOT from Savings_Balance__c (running balance) which would give wrong totals
         const items = this.scheduleItems;
         if (!items || items.length === 0) return 0;
         return items.reduce((sum, item) => sum + (Number(item.savingsBalance) || 0), 0);
