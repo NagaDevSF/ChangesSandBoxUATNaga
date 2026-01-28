@@ -357,16 +357,17 @@ export default class PaymentPlanViewer extends LightningElement {
         return this.formatCurrency(this.totalWiresReceived);
     }
 
-    // Cleared row - uses rollup field or calculates from Cleared status items
-    get totalAmountCleared() {
-        if (this.paymentPlan?.Total_Amount_Cleared__c != null) {
-            return Number(this.paymentPlan.Total_Amount_Cleared__c) || 0;
-        }
-        return 0;
+    // Cleared row totals - calculated from items for live updates
+    get clearedDraftAmount() {
+        const items = this.scheduleItems;
+        if (!items || items.length === 0) return 0;
+        return items
+            .filter(item => item.status === 'Cleared')
+            .reduce((sum, item) => sum + (Number(item.draftAmount) || 0), 0);
     }
 
-    get totalAmountClearedFormatted() {
-        return this.formatCurrency(this.totalAmountCleared);
+    get clearedDraftAmountFormatted() {
+        return this.formatCurrency(this.clearedDraftAmount);
     }
 
     get clearedSetupFee() {
