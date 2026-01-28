@@ -291,17 +291,11 @@ export default class PaymentPlanViewer extends LightningElement {
 
     // ============ AGGREGATE GETTERS (Footer Totals) ============
 
-    // Total row - SUM of all items excluding NSF, plus wires received
+    // Total row - simple SUM of all items (no filtering)
     get totalDraftAmount() {
         const items = this.scheduleItems;
         if (!items || items.length === 0) return 0;
-        // Sum draft amounts excluding NSF items
-        const draftSum = items
-            .filter(item => item.status !== 'NSF')
-            .reduce((sum, item) => sum + (Number(item.draftAmount) || 0), 0);
-        // Add wires received from all items
-        const wiresSum = items.reduce((sum, item) => sum + (Number(item.wiresReceived) || 0), 0);
-        return draftSum + wiresSum;
+        return items.reduce((sum, item) => sum + (Number(item.draftAmount) || 0), 0);
     }
 
     get totalDraftAmountFormatted() {
@@ -311,9 +305,7 @@ export default class PaymentPlanViewer extends LightningElement {
     get totalSetupFee() {
         const items = this.scheduleItems;
         if (!items || items.length === 0) return 0;
-        return items
-            .filter(item => item.status !== 'NSF')
-            .reduce((sum, item) => sum + (Number(item.setupFee) || 0), 0);
+        return items.reduce((sum, item) => sum + (Number(item.setupFee) || 0), 0);
     }
 
     get totalSetupFeeFormatted() {
@@ -323,9 +315,7 @@ export default class PaymentPlanViewer extends LightningElement {
     get totalProgramFee() {
         const items = this.scheduleItems;
         if (!items || items.length === 0) return 0;
-        return items
-            .filter(item => item.status !== 'NSF')
-            .reduce((sum, item) => sum + (Number(item.programFee) || 0), 0);
+        return items.reduce((sum, item) => sum + (Number(item.programFee) || 0), 0);
     }
 
     get totalProgramFeeFormatted() {
@@ -335,9 +325,7 @@ export default class PaymentPlanViewer extends LightningElement {
     get totalBankingFee() {
         const items = this.scheduleItems;
         if (!items || items.length === 0) return 0;
-        return items
-            .filter(item => item.status !== 'NSF')
-            .reduce((sum, item) => sum + (Number(item.bankingFee) || 0), 0);
+        return items.reduce((sum, item) => sum + (Number(item.bankingFee) || 0), 0);
     }
 
     get totalBankingFeeFormatted() {
@@ -347,9 +335,7 @@ export default class PaymentPlanViewer extends LightningElement {
     get totalSavingsBalance() {
         const items = this.scheduleItems;
         if (!items || items.length === 0) return 0;
-        return items
-            .filter(item => item.status !== 'NSF')
-            .reduce((sum, item) => sum + (Number(item.savingsBalance) || 0), 0);
+        return items.reduce((sum, item) => sum + (Number(item.savingsBalance) || 0), 0);
     }
 
     get totalSavingsBalanceFormatted() {

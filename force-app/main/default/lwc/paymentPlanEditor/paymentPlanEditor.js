@@ -535,20 +535,12 @@ export default class PaymentPlanEditor extends LightningElement {
     // }
 
     // ============ AGGREGATE GETTERS (Footer Totals) ============
-    // Uses rollup summary fields from PaymentPlan__c when viewing (faster, no calculation)
-    // Falls back to client-side calculation when editing (reflects unsaved changes)
+    // Total row shows simple SUM of all items (no filtering)
 
     get totalDraftAmount() {
-        // Calculate from items: SUM(Draft WHERE Status != 'NSF') + SUM(Wires_received)
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
-        // Sum draft amounts excluding NSF items
-        const draftSum = items
-            .filter(item => item.status !== 'NSF')
-            .reduce((sum, item) => sum + (Number(item.draftAmount) || 0), 0);
-        // Add wires received from all items (including NSF - they can have wires)
-        const wiresSum = items.reduce((sum, item) => sum + (Number(item.wiresReceived) || 0), 0);
-        return draftSum + wiresSum;
+        return items.reduce((sum, item) => sum + (Number(item.draftAmount) || 0), 0);
     }
 
     get totalDraftAmountFormatted() {
@@ -556,12 +548,9 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get totalSetupFee() {
-        // Calculate from items: SUM(Setup WHERE Status != 'NSF')
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
-        return items
-            .filter(item => item.status !== 'NSF')
-            .reduce((sum, item) => sum + (Number(item.setupFee) || 0), 0);
+        return items.reduce((sum, item) => sum + (Number(item.setupFee) || 0), 0);
     }
 
     get totalSetupFeeFormatted() {
@@ -569,12 +558,9 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get totalProgramFee() {
-        // Calculate from items: SUM(Program WHERE Status != 'NSF')
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
-        return items
-            .filter(item => item.status !== 'NSF')
-            .reduce((sum, item) => sum + (Number(item.programFee) || 0), 0);
+        return items.reduce((sum, item) => sum + (Number(item.programFee) || 0), 0);
     }
 
     get totalProgramFeeFormatted() {
@@ -582,12 +568,9 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get totalBankingFee() {
-        // Calculate from items: SUM(Banking WHERE Status != 'NSF')
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
-        return items
-            .filter(item => item.status !== 'NSF')
-            .reduce((sum, item) => sum + (Number(item.bankingFee) || 0), 0);
+        return items.reduce((sum, item) => sum + (Number(item.bankingFee) || 0), 0);
     }
 
     get totalBankingFeeFormatted() {
@@ -595,12 +578,9 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get totalSavingsBalance() {
-        // Calculate from items: SUM(Savings WHERE Status != 'NSF')
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
-        return items
-            .filter(item => item.status !== 'NSF')
-            .reduce((sum, item) => sum + (Number(item.savingsBalance) || 0), 0);
+        return items.reduce((sum, item) => sum + (Number(item.savingsBalance) || 0), 0);
     }
 
     get totalSavingsBalanceFormatted() {
