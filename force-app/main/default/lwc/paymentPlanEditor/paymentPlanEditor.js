@@ -591,12 +591,11 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get totalSavingsBalance() {
-        if (!this.isEditMode && this.paymentPlan?.Total_Savings_Rollup__c != null) {
-            return Number(this.paymentPlan.Total_Savings_Rollup__c) || 0;
-        }
+        // Always calculate from items using toEscrowAmount (per-payment escrow)
+        // NOT from Total_Savings_Rollup__c which sums running balance (wrong)
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
-        return items.reduce((sum, item) => sum + (Number(item.savingsBalance) || 0), 0);
+        return items.reduce((sum, item) => sum + (Number(item.toEscrowAmount) || Number(item.savingsBalance) || 0), 0);
     }
 
     get totalSavingsBalanceFormatted() {
@@ -679,14 +678,12 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get clearedSavingsBalance() {
-        if (!this.isEditMode && this.paymentPlan?.Cleared_Savings_Sum__c != null) {
-            return Number(this.paymentPlan.Cleared_Savings_Sum__c) || 0;
-        }
+        // Always calculate from items using toEscrowAmount (per-payment escrow)
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
         return items
             .filter(item => item.status === 'Cleared')
-            .reduce((sum, item) => sum + (Number(item.savingsBalance) || 0), 0);
+            .reduce((sum, item) => sum + (Number(item.toEscrowAmount) || Number(item.savingsBalance) || 0), 0);
     }
 
     get clearedSavingsBalanceFormatted() {
@@ -755,14 +752,12 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get nsfSavingsBalance() {
-        if (!this.isEditMode && this.paymentPlan?.NSF_Savings_Sum__c != null) {
-            return Number(this.paymentPlan.NSF_Savings_Sum__c) || 0;
-        }
+        // Always calculate from items using toEscrowAmount (per-payment escrow)
         const items = this.allSortedItems;
         if (!items || items.length === 0) return 0;
         return items
             .filter(item => item.status === 'NSF')
-            .reduce((sum, item) => sum + (Number(item.savingsBalance) || 0), 0);
+            .reduce((sum, item) => sum + (Number(item.toEscrowAmount) || Number(item.savingsBalance) || 0), 0);
     }
 
     get nsfSavingsBalanceFormatted() {
