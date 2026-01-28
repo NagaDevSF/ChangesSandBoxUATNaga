@@ -2,7 +2,6 @@ import { LightningElement, api, track } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 import getLatestPaymentPlan from '@salesforce/apex/PaymentPlanEditorController.getLatestPaymentPlan';
-import getWireFeesByPlanId from '@salesforce/apex/PaymentPlanEditorController.getWireFeesByPlanId';
 import getStatusPicklistValues from '@salesforce/apex/PaymentPlanEditorController.getStatusPicklistValues';
 
 // Default fallback if dynamic fetch fails
@@ -90,15 +89,11 @@ export default class PaymentPlanViewer extends LightningElement {
 
     /**
      * Load Wire Fees for all schedule items in the plan
+     * Note: Wire fee functionality disabled - Payment_Fee__c object not deployed
      */
     async loadWireFees(planId) {
-        try {
-            const wireFeesResult = await getWireFeesByPlanId({ planId: planId });
-            this.wireFeeMap = wireFeesResult || {};
-        } catch (error) {
-            console.error('Error loading wire fees:', error);
-            this.wireFeeMap = {};
-        }
+        // Wire fee loading disabled until Payment_Fee__c object is deployed
+        this.wireFeeMap = {};
     }
 
     /**
@@ -268,7 +263,7 @@ export default class PaymentPlanViewer extends LightningElement {
             const wireFees = this.wireFeeMap[item.id] || [];
             // Calculate wire status class based on total wires vs draft amount
             const wiresTotal = wireFees.reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
-            const wireStatusClass = wiresTotal >= draftAmount ? 'wire-row-green' : 'wire-row-orange';
+            const wireStatusClass = wiresTotal >= item.draftAmount ? 'wire-row-green' : 'wire-row-orange';
 
             wireFees.forEach(fee => {
                 result.push({
