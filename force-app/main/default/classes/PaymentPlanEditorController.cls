@@ -2933,19 +2933,19 @@ public with sharing class PaymentPlanEditorController {
             Payment_Fee__c bankingFeeRecord = fees.get(PaymentFeeService.FEE_TYPE_BANKING);
             wrapper.bankingFee = (bankingFeeRecord != null && bankingFeeRecord.Amount__c != null)
                 ? bankingFeeRecord.Amount__c : (item.Banking_Fee_Amount__c != null ? item.Banking_Fee_Amount__c : 0);
-            wrapper.bankingFeeStatus = (bankingFeeRecord != null) ? bankingFeeRecord.Status_Code__c : null;
+            wrapper.bankingFeeStatus = (bankingFeeRecord != null) ? bankingFeeRecord.Status__c : null;
 
             // Program Fee
             Payment_Fee__c programFeeRecord = fees.get(PaymentFeeService.FEE_TYPE_PROGRAM);
             wrapper.programFee = (programFeeRecord != null && programFeeRecord.Amount__c != null)
                 ? programFeeRecord.Amount__c : (item.Program_Fee_Amount__c != null ? item.Program_Fee_Amount__c : 0);
-            wrapper.programFeeStatus = (programFeeRecord != null) ? programFeeRecord.Status_Code__c : null;
+            wrapper.programFeeStatus = (programFeeRecord != null) ? programFeeRecord.Status__c : null;
 
             // Setup Fee
             Payment_Fee__c setupFeeRecord = fees.get(PaymentFeeService.FEE_TYPE_SETUP);
             wrapper.setupFee = (setupFeeRecord != null && setupFeeRecord.Amount__c != null)
                 ? setupFeeRecord.Amount__c : (item.Setup_Fee_Amount__c != null ? item.Setup_Fee_Amount__c : 0);
-            wrapper.setupFeeStatus = (setupFeeRecord != null) ? setupFeeRecord.Status_Code__c : null;
+            wrapper.setupFeeStatus = (setupFeeRecord != null) ? setupFeeRecord.Status__c : null;
 
             // Savings/Escrow - read directly from To_Escrow_Amount__c field
             wrapper.savingsBalance = item.To_Escrow_Amount__c != null ? item.To_Escrow_Amount__c : 0;

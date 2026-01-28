@@ -124,7 +124,7 @@ public with sharing class PaymentFeeService {
         // Query fee records
         List<Payment_Fee__c> fees = [
             SELECT Id, Payment_Schedule_Item__c, Type__c, Amount__c,
-                   Fee_Id__c, Status_Code__c, Transaction_Id__c
+                   Fee_Id__c, Status_Code__c, Status__c, Transaction_Id__c
             FROM Payment_Fee__c
             WHERE Payment_Schedule_Item__c IN :scheduleItemIds
             AND Type__c IN :SCHEDULE_ITEM_FEE_TYPES
