@@ -246,11 +246,17 @@
                                             </div>
                                         </template>
                                         <template lwc:else>
-                                            <data class={item.setupFeeClass} value={item.setupFee}>{item.setupFeeFormatted}</data>
+                                            <span class="fee-with-status">
+                                                <span class={item.feeStatusDotClass} aria-hidden="true"></span>
+                                                <data class={item.setupFeeClass} value={item.setupFee}>{item.setupFeeFormatted}</data>
+                                            </span>
                                         </template>
                                     </template>
                                     <template lwc:else>
-                                        <data class={item.setupFeeClass} value={item.setupFee}>{item.setupFeeFormatted}</data>
+                                        <span class="fee-with-status">
+                                            <span class={item.feeStatusDotClass} aria-hidden="true"></span>
+                                            <data class={item.setupFeeClass} value={item.setupFee}>{item.setupFeeFormatted}</data>
+                                        </span>
                                     </template>
                                 </td>
 
@@ -276,11 +282,17 @@
                                             </div>
                                         </template>
                                         <template lwc:else>
-                                            <data class={item.programFeeClass} value={item.programFee}>{item.programFeeFormatted}</data>
+                                            <span class="fee-with-status">
+                                                <span class={item.feeStatusDotClass} aria-hidden="true"></span>
+                                                <data class={item.programFeeClass} value={item.programFee}>{item.programFeeFormatted}</data>
+                                            </span>
                                         </template>
                                     </template>
                                     <template lwc:else>
-                                        <data class={item.programFeeClass} value={item.programFee}>{item.programFeeFormatted}</data>
+                                        <span class="fee-with-status">
+                                            <span class={item.feeStatusDotClass} aria-hidden="true"></span>
+                                            <data class={item.programFeeClass} value={item.programFee}>{item.programFeeFormatted}</data>
+                                        </span>
                                     </template>
                                 </td>
 
@@ -306,11 +318,17 @@
                                             </div>
                                         </template>
                                         <template lwc:else>
-                                            <data class={item.bankingFeeClass} value={item.bankingFee}>{item.bankingFeeFormatted}</data>
+                                            <span class="fee-with-status">
+                                                <span class={item.feeStatusDotClass} aria-hidden="true"></span>
+                                                <data class={item.bankingFeeClass} value={item.bankingFee}>{item.bankingFeeFormatted}</data>
+                                            </span>
                                         </template>
                                     </template>
                                     <template lwc:else>
-                                        <data class={item.bankingFeeClass} value={item.bankingFee}>{item.bankingFeeFormatted}</data>
+                                        <span class="fee-with-status">
+                                            <span class={item.feeStatusDotClass} aria-hidden="true"></span>
+                                            <data class={item.bankingFeeClass} value={item.bankingFee}>{item.bankingFeeFormatted}</data>
+                                        </span>
                                     </template>
                                 </td>
 

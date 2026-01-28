@@ -1583,6 +1583,7 @@ export default class PaymentPlanEditor extends LightningElement {
                 toEscrowAmount: toEscrowAmount,
                 status: itemStatus,
                 statusBadgeClass: this.getStatusBadgeClass(itemStatus),
+                feeStatusDotClass: this.getFeeStatusDotClass(itemStatus),
                 statusOptionsWithSelection: statusOptionsWithSelection,
                 isRowEditable: isRowEditable,
                 rowClass: this.getRowClass({ ...item, isModified, isNew, status: itemStatus }),
@@ -1594,6 +1595,26 @@ export default class PaymentPlanEditor extends LightningElement {
                 isSelected: item.isSelected || false
             };
         });
+    }
+
+    /**
+     * Get the CSS class for fee status indicator dot based on item status
+     * @param {String} status - The item status
+     * @returns {String} - CSS class for the status dot
+     */
+    getFeeStatusDotClass(status) {
+        switch (status) {
+            case 'Cleared':
+                return 'status-dot status-dot--cleared';
+            case 'Pending':
+                return 'status-dot status-dot--pending';
+            case 'NSF':
+            case 'Cancelled':
+            case 'Missed':
+                return 'status-dot status-dot--failed';
+            default:
+                return 'status-dot status-dot--none';
+        }
     }
 
     /**
