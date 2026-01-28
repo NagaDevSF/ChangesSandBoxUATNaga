@@ -1424,6 +1424,9 @@ public with sharing class PaymentPlanEditorController {
                 recalculateDraftNumbers(scheduleItems);
                 insert scheduleItems;
                 System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted ' + scheduleItems.size() + ' schedule items');
+
+                // Create Payment_Fee__c records for all new schedule items
+                createFeeRecordsForScheduleItems(scheduleItems);
             }
 
             // Carry over wired payments from old plan to new plan
@@ -1879,6 +1882,9 @@ public with sharing class PaymentPlanEditorController {
                 recalculateDraftNumbers(newItems);
                 insert newItems;
                 System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted ' + newItems.size() + ' schedule items total');
+
+                // Create Payment_Fee__c records for all new schedule items
+                createFeeRecordsForScheduleItems(newItems);
             }
 
             // Carry over wired payments
@@ -2432,6 +2438,9 @@ public with sharing class PaymentPlanEditorController {
                 recalculateDraftNumbers(newItems);
                 insert newItems;
                 System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted ' + newItems.size() + ' schedule items');
+
+                // Create Payment_Fee__c records for all new schedule items
+                createFeeRecordsForScheduleItems(newItems);
 
                 // Carry over wire fees (Wire Fee and Wire Received Fee) from old items to new items
                 System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Carrying over wire fees...');
@@ -3027,6 +3036,38 @@ public with sharing class PaymentPlanEditorController {
         }
 
         System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | recalculateDraftNumbers | Processed ' + items.size() + ' items, assigned ' + draftCounter + ' draft numbers');
+    }
+
+    /**
+     * @description Create Payment_Fee__c records for a list of Payment_Schedule_Item__c records.
+     * Uses the fee amounts from the schedule item fields (Setup_Fee_Amount__c, Program_Fee_Amount__c, Banking_Fee_Amount__c).
+     * @param items List of Payment_Schedule_Item__c records (must have Ids populated)
+     */
+    private static void createFeeRecordsForScheduleItems(List<Payment_Schedule_Item__c> items) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+
+        // Build wrapper map from schedule items
+        Map<Id, ScheduleItemWrapper> wrapperMap = new Map<Id, ScheduleItemWrapper>();
+        for (Payment_Schedule_Item__c item : items) {
+            if (item.Id == null) {
+                continue;
+            }
+            ScheduleItemWrapper wrapper = new ScheduleItemWrapper();
+            wrapper.id = item.Id;
+            wrapper.setupFee = item.Setup_Fee_Amount__c != null ? item.Setup_Fee_Amount__c : 0;
+            wrapper.programFee = item.Program_Fee_Amount__c != null ? item.Program_Fee_Amount__c : 0;
+            wrapper.bankingFee = item.Banking_Fee_Amount__c != null ? item.Banking_Fee_Amount__c : 0;
+            wrapperMap.put(item.Id, wrapper);
+        }
+
+        // Create and insert fee records
+        List<Payment_Fee__c> feeRecords = PaymentFeeService.createFeeRecordsForItems(items, wrapperMap);
+        if (!feeRecords.isEmpty()) {
+            insert feeRecords;
+            System.debug(LoggingLevel.DEBUG, LOG_DML + ' | createFeeRecordsForScheduleItems | Inserted ' + feeRecords.size() + ' fee record(s)');
+        }
     }
 
     /**
