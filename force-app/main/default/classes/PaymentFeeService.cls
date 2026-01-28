@@ -12,6 +12,16 @@
  */
 public with sharing class PaymentFeeService {
 
+    // ==================================================================================
+    // DEBUG LOGGING CONSTANTS
+    // ==================================================================================
+    private static final String LOG_PREFIX = '[PaymentFeeService]';
+    private static final String LOG_ENTRY = '▶️';
+    private static final String LOG_EXIT = '◀️';
+    private static final String LOG_ERROR = '❌';
+    private static final String LOG_SUCCESS = '✅';
+    private static final String LOG_DEBUG = '🔧';
+
     // Fee Type Constants
     public static final String FEE_TYPE_BANKING = 'Banking Fee';
     public static final String FEE_TYPE_PROGRAM = 'Program Fee';
@@ -49,9 +59,11 @@ public with sharing class PaymentFeeService {
         Decimal programFee,
         Decimal setupFee
     ) {
+        System.debug(LOG_PREFIX + ' ' + LOG_ENTRY + ' createFeeRecordsForItem | psiId=' + (psi != null ? psi.Id : 'null'));
         List<Payment_Fee__c> feeRecords = new List<Payment_Fee__c>();
 
         if (psi == null || psi.Id == null) {
+            System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' createFeeRecordsForItem | Skipping - null PSI');
             return feeRecords;
         }
 
@@ -197,7 +209,9 @@ public with sharing class PaymentFeeService {
         Set<Id> scheduleItemIds,
         Map<Id, PaymentPlanEditorController.ScheduleItemWrapper> wrapperMap
     ) {
+        System.debug(LOG_PREFIX + ' ' + LOG_ENTRY + ' bulkUpsertFeeRecords | itemCount=' + (scheduleItemIds != null ? scheduleItemIds.size() : 0));
         if (scheduleItemIds == null || scheduleItemIds.isEmpty() || wrapperMap == null) {
+            System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' bulkUpsertFeeRecords | Skipping - empty input');
             return;
         }
 
@@ -224,6 +238,7 @@ public with sharing class PaymentFeeService {
 
         if (!toUpsert.isEmpty()) {
             upsert toUpsert;
+            System.debug(LOG_PREFIX + ' ' + LOG_EXIT + ' bulkUpsertFeeRecords | ' + LOG_SUCCESS + ' upserted=' + toUpsert.size());
         }
     }
 
@@ -234,6 +249,7 @@ public with sharing class PaymentFeeService {
      * @param scheduleItemIds Set of Payment_Schedule_Item__c Ids
      */
     public static void deleteFeeRecords(Set<Id> scheduleItemIds) {
+        System.debug(LOG_PREFIX + ' ' + LOG_ENTRY + ' deleteFeeRecords | itemCount=' + (scheduleItemIds != null ? scheduleItemIds.size() : 0));
         if (scheduleItemIds == null || scheduleItemIds.isEmpty()) {
             return;
         }
@@ -247,6 +263,7 @@ public with sharing class PaymentFeeService {
 
         if (!toDelete.isEmpty()) {
             delete toDelete;
+            System.debug(LOG_PREFIX + ' ' + LOG_EXIT + ' deleteFeeRecords | ' + LOG_SUCCESS + ' deleted=' + toDelete.size());
         }
     }
 

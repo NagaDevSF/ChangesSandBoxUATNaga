@@ -5,13 +5,24 @@
  * @date 2025-09-02
  */
 public with sharing class PaymentPlanVersionService {
-    
+
+    // ==================================================================================
+    // DEBUG LOGGING CONSTANTS
+    // ==================================================================================
+    private static final String LOG_PREFIX = '[PaymentPlanVersionService]';
+    private static final String LOG_ENTRY = '▶️';
+    private static final String LOG_EXIT = '◀️';
+    private static final String LOG_ERROR = '❌';
+    private static final String LOG_SUCCESS = '✅';
+    private static final String LOG_DEBUG = '🔧';
+
     /**
      * Activates a specific payment plan version
      * Deactivates all other versions for the same opportunity
      */
     @AuraEnabled
     public static PaymentPlan__c activateVersion(Id paymentPlanId) {
+        System.debug(LOG_PREFIX + ' ' + LOG_ENTRY + ' activateVersion | paymentPlanId=' + paymentPlanId);
         try {
             // Get the payment plan to activate
             PaymentPlan__c planToActivate = [
@@ -55,15 +66,17 @@ public with sharing class PaymentPlanVersionService {
                 planToActivate.Is_Active__c = true;
                 planToActivate.Version_Status__c = 'Active';
                 Database.update(planToActivate, AccessLevel.USER_MODE);
-                
+
+                System.debug(LOG_PREFIX + ' ' + LOG_EXIT + ' activateVersion | ' + LOG_SUCCESS + ' version=' + planToActivate.Version_Number__c);
                 return planToActivate;
-                
+
             } catch (Exception e) {
                 Database.rollback(sp);
                 throw e;
             }
-            
+
         } catch (Exception e) {
+            System.debug(LOG_PREFIX + ' ' + LOG_ERROR + ' activateVersion | ' + e.getMessage());
             throw new AuraHandledException('Failed to activate version: ' + e.getMessage());
         }
     }
@@ -74,6 +87,7 @@ public with sharing class PaymentPlanVersionService {
      */
     @AuraEnabled
     public static PaymentPlan__c createNewVersion(Id existingPlanId, String versionNotes) {
+        System.debug(LOG_PREFIX + ' ' + LOG_ENTRY + ' createNewVersion | existingPlanId=' + existingPlanId);
         try {
             // Get existing plan
             PaymentPlan__c existingPlan = [
@@ -115,10 +129,12 @@ public with sharing class PaymentPlanVersionService {
             newVersion.No_Fee_Program__c = existingPlan.No_Fee_Program__c;
             
             Database.insert(newVersion, AccessLevel.USER_MODE);
-            
+
+            System.debug(LOG_PREFIX + ' ' + LOG_EXIT + ' createNewVersion | ' + LOG_SUCCESS + ' newId=' + newVersion.Id + ', version=' + newVersion.Version_Number__c);
             return newVersion;
-            
+
         } catch (Exception e) {
+            System.debug(LOG_PREFIX + ' ' + LOG_ERROR + ' createNewVersion | ' + e.getMessage());
             throw new AuraHandledException('Failed to create new version: ' + e.getMessage());
         }
     }

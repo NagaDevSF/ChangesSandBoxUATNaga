@@ -33,6 +33,17 @@
  */
 public with sharing class PaymentCalcConfigSvc {
 
+    // ==================================================================================
+    // DEBUG LOGGING CONSTANTS
+    // ==================================================================================
+    private static final String LOG_PREFIX = '[PaymentCalcConfigSvc]';
+    private static final String LOG_ENTRY = '▶️';
+    private static final String LOG_EXIT = '◀️';
+    private static final String LOG_ERROR = '❌';
+    private static final String LOG_WARN = '⚠️';
+    private static final String LOG_SUCCESS = '✅';
+    private static final String LOG_DEBUG = '🔧';
+
     /** The default CMDT record name to load */
     @TestVisible
     private static String DEFAULT_PAYMENT_CALC_CONFIG = 'Default';
@@ -112,8 +123,10 @@ public with sharing class PaymentCalcConfigSvc {
      */
     @AuraEnabled(cacheable=true)
     public static ConfigDTO getRequiredConfig() {
+        System.debug(LOG_PREFIX + ' ' + LOG_ENTRY + ' getRequiredConfig');
         // Return cached config if available
         if (cachedDefaultConfig != null) {
+            System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' Returning cached default config');
             return cachedDefaultConfig;
         }
 
@@ -142,6 +155,7 @@ public with sharing class PaymentCalcConfigSvc {
             // Cache the validated config
             cachedDefaultConfig = dto;
 
+            System.debug(LOG_PREFIX + ' ' + LOG_EXIT + ' getRequiredConfig | ' + LOG_SUCCESS + ' Config loaded and cached');
             return dto;
 
         } catch (PaymentCalcConfigException configEx) {

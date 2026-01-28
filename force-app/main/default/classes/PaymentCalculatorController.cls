@@ -1,4 +1,15 @@
 public with sharing class PaymentCalculatorController {
+    // ==================================================================================
+    // DEBUG LOGGING CONSTANTS
+    // ==================================================================================
+    private static final String LOG_PREFIX = '[PaymentCalculatorController]';
+    private static final String LOG_ENTRY = '▶️';
+    private static final String LOG_EXIT = '◀️';
+    private static final String LOG_ERROR = '❌';
+    private static final String LOG_WARN = '⚠️';
+    private static final String LOG_SUCCESS = '✅';
+    private static final String LOG_DEBUG = '🔧';
+
     // Use CalculationService config-backed properties instead of local constants
     public static Decimal WEEKLY_TARGET_PAYMENT_FLOOR {
         get { return CalculationService.MIN_WEEKLY_TARGET_PAYMENT; }
@@ -133,9 +144,11 @@ public with sharing class PaymentCalculatorController {
         Boolean noFeeProgram,
         Decimal additionalProductsWeeklyTotal
     ) {
+        System.debug(LOG_PREFIX + ' ' + LOG_ENTRY + ' calculatePaymentPlan | recordId=' + recordId + ', programType=' + programType + ', calculationMode=' + calculationMode);
         try {
             // Get debt totals from Opportunity rollup fields
             DebtTotals debtTotals = getDebtTotals(recordId);
+            System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' Debt totals retrieved: totalDebt=' + debtTotals.totalDebt + ', currentPayment=' + debtTotals.currentPayment);
             Decimal totalDebt = debtTotals.totalDebt;
             Decimal currentPayment = debtTotals.currentPayment;
 
@@ -303,9 +316,11 @@ public with sharing class PaymentCalculatorController {
             
             // Update Lead/Opportunity with calculated debt totals
             updateRecordDebtTotals(recordId, result.totalDebt, currentPayment);
-            
+
+            System.debug(LOG_PREFIX + ' ' + LOG_EXIT + ' calculatePaymentPlan | weeklyPayment=' + result.weeklyPayment + ', numberOfWeeks=' + result.numberOfWeeks + ', totalProgram=' + result.totalProgram);
             return result;
         } catch (Exception e) {
+            System.debug(LOG_PREFIX + ' ' + LOG_ERROR + ' calculatePaymentPlan | ' + e.getMessage());
             throw new AuraHandledException('Error calculating payment plan: ' + e.getMessage() + ' - ' + e.getStackTraceString());
         }
     }
@@ -374,8 +389,8 @@ public with sharing class PaymentCalculatorController {
      *    and auditors can review how payment schedules evolved over time for a draft.
      *
      * 4. RECOVERY: Allows potential reactivation of previous calculation versions
-     *    from stored data. Useful if a user wants to revert to a prior
-     *    calculation state.
+     *    using native field values. Useful if a user wants to revert to a
+     *    prior calculation state.
      *
      * 5. TRADE-OFFS:
      *    - Storage accumulation: Mitigated by scheduled cleanup batch job that can
@@ -600,8 +615,11 @@ public with sharing class PaymentCalculatorController {
     }
 
     /**
-     * Deserializes a single payment schedule item from various input formats.
-     * Supports both LWC Map format and typed PaymentScheduleItem.
+     * Converts a single payment schedule item from LWC format to typed PaymentScheduleItem.
+     * Uses direct Apex type casting - no JSON serialization needed.
+     *
+     * @param itemObj Object from LWC (typically Map<String, Object>)
+     * @return PaymentScheduleItem with mapped field values
      */
     private static PaymentScheduleItem deserializeScheduleItem(Object itemObj) {
         if (itemObj == null) {
@@ -613,13 +631,12 @@ public with sharing class PaymentCalculatorController {
             return (PaymentScheduleItem) itemObj;
         }
 
-        // Convert to Map for field extraction
+        // Direct cast to Map - LWC sends data as Map<String, Object>
         Map<String, Object> itemMap;
-        // Direct cast - LWC JavaScript objects deserialize as Map<String, Object> in Apex
         if (itemObj instanceof Map<String, Object>) {
             itemMap = (Map<String, Object>) itemObj;
         } else {
-            System.debug(LoggingLevel.ERROR, 'Unexpected type for schedule item: ' + String.valueOf(itemObj));
+            System.debug(LOG_PREFIX + ' ' + LOG_WARN + ' deserializeScheduleItem | Unexpected type: ' + getTypeName(itemObj));
             return null;
         }
 
@@ -637,6 +654,15 @@ public with sharing class PaymentCalculatorController {
         item.remainingBalance = getDecimalValue(itemMap, 'remainingBalance');
 
         return item;
+    }
+
+    /**
+     * Helper to get type name for logging
+     */
+    private static String getTypeName(Object obj) {
+        if (obj == null) return 'null';
+        String typeName = String.valueOf(obj);
+        return typeName.length() > 50 ? typeName.substring(0, 50) + '...' : typeName;
     }
 
     // Type-safe value extraction helpers
@@ -691,56 +717,56 @@ public with sharing class PaymentCalculatorController {
     }
 
     /**
-     * Builds a ConfigWrapper from native PaymentDraft__c fields.
-     * Following Salesforce best practice: Use strongly-typed wrapper classes instead of Maps.
+     * Builds a config map from native PaymentDraft__c fields.
+     * Uses only native Salesforce fields - no JSON parsing.
      *
      * @param draft The PaymentDraft__c record with native fields
-     * @return ConfigWrapper with configuration values for LWC consumption
+     * @return Map of configuration key-value pairs for LWC consumption
      */
-    private static ConfigWrapper buildConfigFromDraft(PaymentDraft__c draft) {
-        ConfigWrapper config = new ConfigWrapper();
+    private static Map<String, Object> buildConfigMapFromDraft(PaymentDraft__c draft) {
+        Map<String, Object> configMap = new Map<String, Object>();
 
-        // Map native fields to wrapper properties
-        config.programType = draft.Program_Type__c;
-        config.paymentFrequency = draft.Payment_Frequency__c;
-        config.noFeeProgram = draft.No_Fee_Program__c;
-        config.settlementPercent = draft.Settlement_Percentage__c;
-        config.programFeePercent = draft.Program_Fee_Percentage__c;
-        config.setupFeeTotal = draft.Setup_Fee__c;
-        config.setupFeePayments = draft.Setup_Fee_Term__c != null ? draft.Setup_Fee_Term__c.intValue() : null;
-        config.bankingFee = draft.Banking_Fee__c;
-        config.firstDraftDate = draft.First_Draft_Date__c != null ? String.valueOf(draft.First_Draft_Date__c) : null;
-        config.targetPaymentPercent = draft.Target_Payment_Percent__c;
-        config.calculateBy = draft.Calculation_Mode__c;
-        config.preferredDayOfWeek = draft.Preferred_Day_of_Week__c != null ? draft.Preferred_Day_of_Week__c.intValue() : null;
+        // Build config from native fields only
+        if (draft.Program_Type__c != null) configMap.put('programType', draft.Program_Type__c);
+        if (draft.Payment_Frequency__c != null) configMap.put('paymentFrequency', draft.Payment_Frequency__c);
+        if (draft.No_Fee_Program__c != null) configMap.put('noFeeProgram', draft.No_Fee_Program__c);
+        if (draft.Settlement_Percentage__c != null) configMap.put('settlementPercent', draft.Settlement_Percentage__c);
+        if (draft.Program_Fee_Percentage__c != null) configMap.put('programFeePercent', draft.Program_Fee_Percentage__c);
+        if (draft.Setup_Fee__c != null) configMap.put('setupFeeTotal', draft.Setup_Fee__c);
+        if (draft.Setup_Fee_Term__c != null) configMap.put('setupFeePayments', draft.Setup_Fee_Term__c);
+        if (draft.Banking_Fee__c != null) configMap.put('bankingFee', draft.Banking_Fee__c);
+        if (draft.First_Draft_Date__c != null) configMap.put('firstDraftDate', String.valueOf(draft.First_Draft_Date__c));
+        if (draft.Target_Payment_Percent__c != null) configMap.put('targetPaymentPercent', draft.Target_Payment_Percent__c);
+        if (draft.Calculation_Mode__c != null) configMap.put('calculateBy', draft.Calculation_Mode__c);
+        if (draft.Preferred_Day_of_Week__c != null) configMap.put('preferredDayOfWeek', draft.Preferred_Day_of_Week__c);
 
-        return config;
+        return configMap;
     }
 
     /**
-     * Builds a CalculationResult from native PaymentDraft__c fields.
-     * Following Salesforce best practice: Use strongly-typed wrapper classes instead of Maps.
+     * Builds a calculations map from native PaymentDraft__c fields.
+     * Uses only native Salesforce fields - no JSON parsing.
      *
      * @param draft The PaymentDraft__c record with native fields
-     * @return CalculationResult with calculation values for LWC consumption
+     * @return Map of calculation key-value pairs for LWC consumption
      */
-    private static CalculationResult buildCalcFromDraft(PaymentDraft__c draft) {
-        CalculationResult calc = new CalculationResult();
+    private static Map<String, Object> buildCalcMapFromDraft(PaymentDraft__c draft) {
+        Map<String, Object> calcMap = new Map<String, Object>();
 
-        // Map native fields to wrapper properties
-        calc.weeklyPayment = draft.Weekly_Payment__c;
-        calc.monthlyPayment = draft.Monthly_Payment__c;
-        calc.numberOfWeeks = draft.Number_of_Weeks__c != null ? draft.Number_of_Weeks__c.intValue() : null;
-        calc.settlementAmount = draft.Settlement_Amount__c;
-        calc.programFee = draft.Program_Fee_Amount__c;
-        calc.bankingFeeTotal = draft.Total_Banking_Fee__c;
-        calc.totalProgram = draft.Total_Program__c;
-        calc.totalSavings = draft.Total_Savings__c;
-        calc.totalDebt = draft.Estimated_Total_Debt__c;
-        calc.currentPayment = draft.Estimated_Current_Payment__c;
-        calc.firstDraftDate = draft.First_Draft_Date__c != null ? String.valueOf(draft.First_Draft_Date__c) : null;
+        // Build calculations from native fields only
+        if (draft.Weekly_Payment__c != null) calcMap.put('weeklyPayment', draft.Weekly_Payment__c);
+        if (draft.Monthly_Payment__c != null) calcMap.put('monthlyPayment', draft.Monthly_Payment__c);
+        if (draft.Number_of_Weeks__c != null) calcMap.put('numberOfWeeks', draft.Number_of_Weeks__c.intValue());
+        if (draft.Settlement_Amount__c != null) calcMap.put('settlementAmount', draft.Settlement_Amount__c);
+        if (draft.Program_Fee_Amount__c != null) calcMap.put('programFee', draft.Program_Fee_Amount__c);
+        if (draft.Total_Banking_Fee__c != null) calcMap.put('bankingFeeTotal', draft.Total_Banking_Fee__c);
+        if (draft.Total_Program__c != null) calcMap.put('totalProgram', draft.Total_Program__c);
+        if (draft.Total_Savings__c != null) calcMap.put('totalSavings', draft.Total_Savings__c);
+        if (draft.Estimated_Total_Debt__c != null) calcMap.put('totalDebt', draft.Estimated_Total_Debt__c);
+        if (draft.Estimated_Current_Payment__c != null) calcMap.put('currentPayment', draft.Estimated_Current_Payment__c);
+        if (draft.First_Draft_Date__c != null) calcMap.put('firstDraftDate', String.valueOf(draft.First_Draft_Date__c));
 
-        return calc;
+        return calcMap;
     }
 
     /**
@@ -755,11 +781,8 @@ public with sharing class PaymentCalculatorController {
         Id draftIdToOverwrite,
         Map<String, Object> calculationsOptional
     ) {
-        System.debug(LoggingLevel.DEBUG, '=== saveDraftV2 START ===');
-        System.debug(LoggingLevel.DEBUG, 'recordId: ' + recordId);
-        System.debug(LoggingLevel.DEBUG, 'draftName: ' + draftName);
-        System.debug(LoggingLevel.DEBUG, 'draftIdToOverwrite: ' + draftIdToOverwrite);
-        System.debug(LoggingLevel.DEBUG, 'config keys: ' + (config != null ? String.valueOf(config.keySet()) : 'null'));
+        System.debug(LOG_PREFIX + ' ' + LOG_ENTRY + ' saveDraftV2 | recordId=' + recordId + ', draftName=' + draftName + ', overwrite=' + (draftIdToOverwrite != null));
+        System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' config keys: ' + (config != null ? String.valueOf(config.keySet()) : 'null'));
 
         try {
             String sObjectType = recordId.getSObjectType().getDescribe().getName();
@@ -858,39 +881,26 @@ public with sharing class PaymentCalculatorController {
                 System.debug(LoggingLevel.DEBUG, 'Updating opportunity from draft');
                 updateOpportunityFromDraft(recordId, config, typedCalculations);
 
-                System.debug(LoggingLevel.DEBUG, '=== saveDraftV2 END (success) ===');
+                System.debug(LOG_PREFIX + ' ' + LOG_EXIT + ' saveDraftV2 | draftId=' + draft.Id);
                 return draft.Id;
             }
         } catch (DmlException dmx) {
-            System.debug(LoggingLevel.ERROR, '=== saveDraftV2 DML EXCEPTION ===');
-            System.debug(LoggingLevel.ERROR, 'Message: ' + dmx.getMessage());
-            System.debug(LoggingLevel.ERROR, 'DML Index: ' + dmx.getDmlIndex(0));
-            System.debug(LoggingLevel.ERROR, 'DML Fields: ' + dmx.getDmlFieldNames(0));
-            System.debug(LoggingLevel.ERROR, 'Stack: ' + dmx.getStackTraceString());
+            System.debug(LOG_PREFIX + ' ' + LOG_ERROR + ' saveDraftV2 DML EXCEPTION | ' + dmx.getMessage());
+            System.debug(LOG_PREFIX + ' ' + LOG_ERROR + ' DML Index: ' + dmx.getDmlIndex(0) + ', Fields: ' + dmx.getDmlFieldNames(0));
             throw new AuraHandledException('Error saving draft: ' + dmx.getMessage());
         } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, '=== saveDraftV2 GENERAL EXCEPTION ===');
-            System.debug(LoggingLevel.ERROR, 'Type: ' + e.getTypeName());
-            System.debug(LoggingLevel.ERROR, 'Message: ' + e.getMessage());
-            System.debug(LoggingLevel.ERROR, 'Stack: ' + e.getStackTraceString());
+            System.debug(LOG_PREFIX + ' ' + LOG_ERROR + ' saveDraftV2 | ' + e.getTypeName() + ': ' + e.getMessage());
             throw new AuraHandledException('Error saving draft: ' + e.getMessage());
         }
     }
     
-    /**
-     * Loads all drafts for a given record.
-     * Following Salesforce best practice: Returns strongly-typed wrapper class instead of Map<String, Object>.
-     *
-     * @param recordId The Lead or Opportunity ID
-     * @return List of DraftWrapper objects for LWC consumption
-     */
     @AuraEnabled
-    public static List<DraftWrapper> loadDrafts(Id recordId) {
+    public static List<Map<String, Object>> loadDrafts(Id recordId) {
         try {
             String sObjectType = recordId.getSObjectType().getDescribe().getName();
-            List<DraftWrapper> drafts = new List<DraftWrapper>();
+            List<Map<String, Object>> drafts = new List<Map<String, Object>>();
             List<PaymentDraft__c> draftRecords = new List<PaymentDraft__c>();
-
+            
             if (sObjectType == 'Lead') {
                 draftRecords = [
                     SELECT Id, Draft_Name__c, CreatedDate, CreatedBy.Name, Is_Primary__c,
@@ -905,7 +915,6 @@ public with sharing class PaymentCalculatorController {
                     FROM PaymentDraft__c
                     WHERE Lead__c = :recordId
                     ORDER BY Is_Primary__c DESC, CreatedDate DESC
-                    LIMIT 1999
                 ];
             } else if (sObjectType == 'Opportunity') {
                 draftRecords = [
@@ -921,42 +930,45 @@ public with sharing class PaymentCalculatorController {
                     FROM PaymentDraft__c
                     WHERE Opportunity__c = :recordId
                     ORDER BY Is_Primary__c DESC, CreatedDate DESC
-                    LIMIT 1999
                 ];
             }
 
-            // Convert to DraftWrapper for LWC consumption
+            // Convert to Map format for LWC consumption (tolerant of null/malformed JSON)
             for (PaymentDraft__c draft : draftRecords) {
-                DraftWrapper wrapper = new DraftWrapper();
+                // Use helper methods for hybrid read (native fields take precedence over JSON)
+                Map<String, Object> configMap = buildConfigMapFromDraft(draft);
+                Map<String, Object> calcMap = buildCalcMapFromDraft(draft);
 
-                // Basic draft info
-                wrapper.id = draft.Id;
-                wrapper.name = draft.Draft_Name__c;
-                wrapper.createdDate = draft.CreatedDate;
-                wrapper.createdBy = draft.CreatedBy?.Name;
-                wrapper.isPrimary = draft.Is_Primary__c == true;
-                wrapper.syncStatus = draft.Sync_Status__c;
-                wrapper.invalidatedDate = draft.Invalidated_Date__c;
+                // Get weeklyPayment and numberOfWeeks from calcMap (already populated by helper)
+                Decimal weeklyPayment = getDecimalValue(calcMap, 'weeklyPayment');
+                Integer numberOfWeeks = getIntegerValue(calcMap, 'numberOfWeeks', 'programLength', 'numberOfPayments');
 
-                // Use helper methods to build config and calculations
-                wrapper.config = buildConfigFromDraft(draft);
-                wrapper.calculations = buildCalcFromDraft(draft);
-
-                // Set summary fields from calculations
-                wrapper.weeklyPayment = wrapper.calculations.weeklyPayment;
-                wrapper.numberOfWeeks = wrapper.calculations.numberOfWeeks;
-
-                // Calculate percent savings: (currentPayment - weeklyPayment) / currentPayment * 100
-                Decimal currentPayment = wrapper.calculations.currentPayment;
-                Decimal weeklyPayment = wrapper.calculations.weeklyPayment;
+                // Calculate percent savings same as summary stats component:
+                // percentSavings = (currentPayment - weeklyPayment) / currentPayment * 100
+                Decimal currentPayment = getDecimalValue(calcMap, 'currentPayment');
+                Decimal savingsPercent = null;
                 if (currentPayment != null && currentPayment > 0 && weeklyPayment != null) {
                     Decimal weeklySavings = currentPayment - weeklyPayment;
-                    wrapper.savingsPercent = (weeklySavings / currentPayment * 100).setScale(1, System.RoundingMode.HALF_UP);
+                    savingsPercent = (weeklySavings / currentPayment * 100).setScale(1, System.RoundingMode.HALF_UP);
                 }
 
-                drafts.add(wrapper);
+                Map<String, Object> draftMap = new Map<String, Object>{
+                    'Id' => draft.Id,
+					'Sync_Status__c' => draft.Sync_Status__c,
+					'Invalidated_Date__c' => draft.Invalidated_Date__c,
+                    'Name' => draft.Draft_Name__c,
+                    'CreatedDate' => draft.CreatedDate,
+                    'CreatedBy' => draft.CreatedBy?.Name,
+                    'isPrimary' => draft.Is_Primary__c == true,
+                    'weeklyPayment' => weeklyPayment,
+                    'numberOfWeeks' => numberOfWeeks,
+                    'savingsPercent' => savingsPercent,
+                    'config' => configMap,
+                    'calculations' => calcMap
+                };
+                drafts.add(draftMap);
             }
-
+            
             return drafts;
         } catch (Exception e) {
             throw new AuraHandledException('Error loading drafts: ' + e.getMessage());
@@ -965,13 +977,9 @@ public with sharing class PaymentCalculatorController {
 
     /**
      * Returns the primary draft for a given parent record, if any.
-     * Following Salesforce best practice: Returns strongly-typed wrapper class instead of Map<String, Object>.
-     *
-     * @param recordId The Lead or Opportunity ID
-     * @return DraftWrapper object or null if no primary draft exists
      */
     @AuraEnabled
-    public static DraftWrapper getPrimaryDraft(Id recordId) {
+    public static Map<String, Object> getPrimaryDraft(Id recordId) {
         try {
             String sObjectType = recordId.getSObjectType().getDescribe().getName();
             PaymentDraft__c draft = null;
@@ -981,7 +989,6 @@ public with sharing class PaymentCalculatorController {
                     SELECT Id, Draft_Name__c, CreatedDate, CreatedBy.Name, Is_Primary__c,
                            Weekly_Payment__c, Monthly_Payment__c, Number_of_Weeks__c,
                            Total_Savings__c, Estimated_Total_Debt__c, Estimated_Current_Payment__c,
-                           Sync_Status__c, Invalidated_Date__c,
                            Settlement_Amount__c, Program_Fee_Amount__c, Total_Banking_Fee__c, Total_Program__c,
                            Program_Type__c, Payment_Frequency__c, No_Fee_Program__c,
                            Settlement_Percentage__c, Program_Fee_Percentage__c,
@@ -997,7 +1004,6 @@ public with sharing class PaymentCalculatorController {
                     SELECT Id, Draft_Name__c, CreatedDate, CreatedBy.Name, Is_Primary__c,
                            Weekly_Payment__c, Monthly_Payment__c, Number_of_Weeks__c,
                            Total_Savings__c, Estimated_Total_Debt__c, Estimated_Current_Payment__c,
-                           Sync_Status__c, Invalidated_Date__c,
                            Settlement_Amount__c, Program_Fee_Amount__c, Total_Banking_Fee__c, Total_Program__c,
                            Program_Type__c, Payment_Frequency__c, No_Fee_Program__c,
                            Settlement_Percentage__c, Program_Fee_Percentage__c,
@@ -1010,27 +1016,21 @@ public with sharing class PaymentCalculatorController {
                 draft = rows.isEmpty() ? null : rows[0];
             }
 
-            if (draft == null) {
-                return null;
-            }
+            if (draft == null) return null;
 
-            // Build DraftWrapper from draft record
-            DraftWrapper wrapper = new DraftWrapper();
-            wrapper.id = draft.Id;
-            wrapper.name = draft.Draft_Name__c;
-            wrapper.createdDate = draft.CreatedDate;
-            wrapper.createdBy = draft.CreatedBy?.Name;
-            wrapper.isPrimary = draft.Is_Primary__c == true;
-            wrapper.syncStatus = draft.Sync_Status__c;
-            wrapper.invalidatedDate = draft.Invalidated_Date__c;
-            wrapper.config = buildConfigFromDraft(draft);
-            wrapper.calculations = buildCalcFromDraft(draft);
+            // Build maps from native fields only (no JSON parsing)
+            Map<String, Object> configMap = buildConfigMapFromDraft(draft);
+            Map<String, Object> calcMap = buildCalcMapFromDraft(draft);
 
-            // Set summary fields
-            wrapper.weeklyPayment = wrapper.calculations.weeklyPayment;
-            wrapper.numberOfWeeks = wrapper.calculations.numberOfWeeks;
-
-            return wrapper;
+            return new Map<String, Object>{
+                'Id' => draft.Id,
+                'Name' => draft.Draft_Name__c,
+                'CreatedDate' => draft.CreatedDate,
+                'CreatedBy' => draft.CreatedBy?.Name,
+                'isPrimary' => draft.Is_Primary__c == true,
+                'config' => configMap,
+                'calculations' => calcMap
+            };
         } catch (Exception e) {
             throw new AuraHandledException('Error getting primary draft: ' + e.getMessage());
         }
@@ -1392,7 +1392,7 @@ public with sharing class PaymentCalculatorController {
      * Updates Opportunity base fields from draft configuration and calculations.
      * These base fields drive formula fields that auto-calculate dependent values.
      * Only updates Opportunity records (not Leads).
-     *
+     * 
      * @param recordId The Lead or Opportunity ID
      * @param config Configuration map containing settings like settlement percentage, program fee percentage
      * @param calculations Strongly-typed calculation results
@@ -1477,11 +1477,14 @@ public with sharing class PaymentCalculatorController {
 
             // Program Type picklist - "DCG DEBT", "DCG MOD", or "DCG MOD CA" (spaces, all caps)
             // Config uses underscores (DCG_MOD), picklist uses spaces (DCG MOD)
-            // Save exactly what user selected
             Object programTypeObj = config.get('programType');
             System.debug('[updateOpportunityFromDraft] programType from config: ' + programTypeObj);
             if (programTypeObj != null) {
                 String programType = String.valueOf(programTypeObj).toUpperCase();
+                // If No Fee Program is active with DCG_MOD, use DCG_MOD_CA
+                if (noFeeProgram && programType != null && programType == 'DCG_MOD') {
+                    programType = 'DCG_MOD_CA';
+                }
                 // Convert underscores to spaces for picklist value (DCG_MOD -> DCG MOD)
                 String picklistValue = programType.replace('_', ' ');
                 opp.Program_Type__c = picklistValue;
@@ -1567,9 +1570,18 @@ public with sharing class PaymentCalculatorController {
         }
         
         if (hasUpdates) {
-            // Use SYSTEM_MODE to bypass FLS restrictions for system-generated updates
-            // Following Salesforce best practice: Surface errors to users instead of silent catch
-            Database.update(opp, AccessLevel.SYSTEM_MODE);
+            System.debug('[updateOpportunityFromDraft] Updating Opportunity with values...');
+            try {
+                // Use SYSTEM_MODE to bypass FLS restrictions for system-generated updates
+                Database.update(opp, AccessLevel.SYSTEM_MODE);
+                System.debug('[updateOpportunityFromDraft] Opportunity updated successfully');
+            } catch (Exception e) {
+                // Log but don't fail - Opportunity updates are secondary to draft saving
+                System.debug(LoggingLevel.ERROR, '[updateOpportunityFromDraft] Failed to update Opportunity: ' + e.getMessage());
+                System.debug(LoggingLevel.ERROR, '[updateOpportunityFromDraft] Stack trace: ' + e.getStackTraceString());
+            }
+        } else {
+            System.debug('[updateOpportunityFromDraft] No updates to apply');
         }
     }
     
@@ -1790,56 +1802,6 @@ public with sharing class PaymentCalculatorController {
     }
     
     // Inner Classes
-
-    /**
-     * @description Wrapper class for draft configuration data - replaces Map<String, Object>
-     * Following Salesforce best practice: Use strongly-typed wrapper classes instead of generic Maps
-     */
-    public class ConfigWrapper {
-        @AuraEnabled public String programType { get; set; }
-        @AuraEnabled public String paymentFrequency { get; set; }
-        @AuraEnabled public String calculateBy { get; set; }
-        @AuraEnabled public Decimal targetPaymentPercent { get; set; }
-        @AuraEnabled public Decimal targetPaymentAmount { get; set; }
-        @AuraEnabled public Integer setupFeePayments { get; set; }
-        @AuraEnabled public Decimal setupFeeTotal { get; set; }
-        @AuraEnabled public Boolean noFeeProgram { get; set; }
-        @AuraEnabled public Decimal settlementPercent { get; set; }
-        @AuraEnabled public Decimal programFeePercent { get; set; }
-        @AuraEnabled public Decimal bankingFee { get; set; }
-        @AuraEnabled public String firstDraftDate { get; set; }
-        @AuraEnabled public Integer preferredDayOfWeek { get; set; }
-        @AuraEnabled public List<String> selectedProductCodes { get; set; }
-
-        public ConfigWrapper() {
-            this.selectedProductCodes = new List<String>();
-        }
-    }
-
-    /**
-     * @description Wrapper class for draft data returned to LWC - replaces Map<String, Object>
-     * Following Salesforce best practice: Use strongly-typed wrapper classes instead of generic Maps
-     */
-    public class DraftWrapper {
-        @AuraEnabled public Id id { get; set; }
-        @AuraEnabled public String name { get; set; }
-        @AuraEnabled public Datetime createdDate { get; set; }
-        @AuraEnabled public String createdBy { get; set; }
-        @AuraEnabled public Boolean isPrimary { get; set; }
-        @AuraEnabled public Decimal weeklyPayment { get; set; }
-        @AuraEnabled public Integer numberOfWeeks { get; set; }
-        @AuraEnabled public Decimal savingsPercent { get; set; }
-        @AuraEnabled public String syncStatus { get; set; }
-        @AuraEnabled public Datetime invalidatedDate { get; set; }
-        @AuraEnabled public ConfigWrapper config { get; set; }
-        @AuraEnabled public CalculationResult calculations { get; set; }
-
-        public DraftWrapper() {
-            this.config = new ConfigWrapper();
-            this.calculations = new CalculationResult();
-        }
-    }
-
     public class CalculationResult {
         @AuraEnabled public Decimal totalDebt { get; set; }
         @AuraEnabled public Decimal currentPayment { get; set; }

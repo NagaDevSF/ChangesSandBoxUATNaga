@@ -1,5 +1,14 @@
 public class PaymentScheduleItemTriggerHandler {
 
+    // ==================================================================================
+    // DEBUG LOGGING CONSTANTS
+    // ==================================================================================
+    private static final String LOG_PREFIX = '[PaymentScheduleItemTriggerHandler]';
+    private static final String LOG_ENTRY = '▶️';
+    private static final String LOG_EXIT = '◀️';
+    private static final String LOG_WARN = '⚠️';
+    private static final String LOG_DEBUG = '🔧';
+
 	public static final String APPROVAL_BLOCK_MSG = 'You cannot create, modify or delete this record because the related Opportunity is locked for approval.';
 
     // Statuses that should have null Draft_Number__c
@@ -7,9 +16,11 @@ public class PaymentScheduleItemTriggerHandler {
 
     // test coverage provided in CreditorOpportunityTriggerHandlerTest
 	public static void blockDMLWhileRelatedOppIsLocked(List<Payment_Schedule_Item__c> psiList) {
+        System.debug(LOG_PREFIX + ' ' + LOG_ENTRY + ' blockDMLWhileRelatedOppIsLocked | recordCount=' + (psiList != null ? psiList.size() : 0));
 
 		for (Payment_Schedule_Item__c psi : psiList) {
 			if (String.isNotBlank(psi.Related_Opportunity__c) && Approval.isLocked(psi.Related_Opportunity__c)) {
+                System.debug(LOG_PREFIX + ' ' + LOG_WARN + ' Blocking DML - Opportunity locked | oppId=' + psi.Related_Opportunity__c);
 				psi.addError(APPROVAL_BLOCK_MSG);
 			}
 		}
@@ -20,6 +31,7 @@ public class PaymentScheduleItemTriggerHandler {
      * NSF and Cancelled items get null Draft_Number__c, others are numbered sequentially by date.
      */
     public static void recalculateDraftNumbersOnStatusChange(List<Payment_Schedule_Item__c> newList, Map<Id, Payment_Schedule_Item__c> oldMap) {
+        System.debug(LOG_PREFIX + ' ' + LOG_ENTRY + ' recalculateDraftNumbersOnStatusChange | recordCount=' + (newList != null ? newList.size() : 0));
         // Collect Payment Plan IDs where Status changed
         Set<Id> affectedPlanIds = new Set<Id>();
 
@@ -31,8 +43,10 @@ public class PaymentScheduleItemTriggerHandler {
         }
 
         if (affectedPlanIds.isEmpty()) {
+            System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' recalculateDraftNumbersOnStatusChange | No status changes detected');
             return;
         }
+        System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' recalculateDraftNumbersOnStatusChange | affectedPlans=' + affectedPlanIds.size());
 
         // Query all items for affected plans, ordered by Payment_Date__c
         List<Payment_Schedule_Item__c> allItems = [
@@ -80,6 +94,7 @@ public class PaymentScheduleItemTriggerHandler {
 
         // Update records (use Database.update to avoid recursion issues)
         if (!itemsToUpdate.isEmpty()) {
+            System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' recalculateDraftNumbersOnStatusChange | Updating ' + itemsToUpdate.size() + ' items');
             // Disable trigger recursion for this update
             TriggerRecursionControl.isRecalculatingDraftNumbers = true;
             try {
@@ -87,6 +102,7 @@ public class PaymentScheduleItemTriggerHandler {
             } finally {
                 TriggerRecursionControl.isRecalculatingDraftNumbers = false;
             }
+            System.debug(LOG_PREFIX + ' ' + LOG_EXIT + ' recalculateDraftNumbersOnStatusChange | Updated draft numbers');
         }
     }
 }

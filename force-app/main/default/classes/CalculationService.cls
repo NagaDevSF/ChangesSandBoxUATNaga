@@ -13,6 +13,17 @@
 public with sharing class CalculationService {
 
     // ==================================================================================
+    // DEBUG LOGGING CONSTANTS
+    // ==================================================================================
+    private static final String LOG_PREFIX = '[CalculationService]';
+    private static final String LOG_ENTRY = '▶️';
+    private static final String LOG_EXIT = '◀️';
+    private static final String LOG_ERROR = '❌';
+    private static final String LOG_WARN = '⚠️';
+    private static final String LOG_SUCCESS = '✅';
+    private static final String LOG_DEBUG = '🔧';
+
+    // ==================================================================================
     // PUBLIC ACCESSORS - Config values are REQUIRED, no fallbacks
     // ==================================================================================
 
@@ -110,8 +121,11 @@ public with sharing class CalculationService {
         Map<String, Object> config,
         Id recordId
     ) {
+        System.debug(LOG_PREFIX + ' ' + LOG_ENTRY + ' calculateAdvancedPaymentPlan | totalDebt=' + totalDebt + ', currentPayment=' + currentPayment + ', recordId=' + recordId);
+
         // Load required config upfront - will throw if unavailable
         PaymentCalcConfigSvc.ConfigDTO systemConfig = PaymentCalcConfigSvc.getRequiredConfig();
+        System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' Config loaded successfully');
 
         PaymentCalculationResult result = new PaymentCalculationResult();
 
@@ -156,11 +170,15 @@ public with sharing class CalculationService {
 
         // Apply calculation mode
         String calculationMode = (String)config.get('calculationMode');
+        System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' Calculation mode: ' + calculationMode);
         if (calculationMode == 'percentage') {
+            System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' Applying percentage-based calculation');
             result = calculatePercentageBasedPlan(result, config, systemConfig);
         } else if (calculationMode == 'desired_payment') {
+            System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' Applying desired payment calculation');
             result = calculateDesiredPaymentPlan(result, config, systemConfig);
         } else {
+            System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' Applying standard calculation');
             result = calculateStandardPlan(result, config, systemConfig);
         }
 
@@ -179,10 +197,13 @@ public with sharing class CalculationService {
         // Calculate payment schedule
         try {
             result.paymentSchedule = generatePaymentSchedule(result, config, systemConfig);
+            System.debug(LOG_PREFIX + ' ' + LOG_SUCCESS + ' Payment schedule generated with ' + (result.paymentSchedule != null ? result.paymentSchedule.size() : 0) + ' entries');
         } catch (Exception e) {
+            System.debug(LOG_PREFIX + ' ' + LOG_ERROR + ' Payment schedule generation failed: ' + e.getMessage());
             throw new CalculationException('Advanced calculation failed: ' + e.getMessage());
         }
 
+        System.debug(LOG_PREFIX + ' ' + LOG_EXIT + ' calculateAdvancedPaymentPlan | weeklyPayment=' + result.weeklyPayment + ', numberOfWeeks=' + result.numberOfWeeks);
         return result;
     }
 
@@ -771,7 +792,9 @@ public with sharing class CalculationService {
      * @description Calculates settlement amount based on total debt and settlement percentage
      */
     public static Decimal calculateSettlement(Decimal totalDebt, Map<String, Object> config) {
+        System.debug(LOG_PREFIX + ' ' + LOG_ENTRY + ' calculateSettlement | totalDebt=' + totalDebt);
         if (totalDebt == null || totalDebt <= 0) {
+            System.debug(LOG_PREFIX + ' ' + LOG_WARN + ' calculateSettlement | Returning 0 for null/zero debt');
             return 0;
         }
 
@@ -783,7 +806,9 @@ public with sharing class CalculationService {
             settlementRate = (Decimal)config.get('settlementPercentage') / 100;
         }
 
-        return totalDebt * settlementRate;
+        Decimal result = totalDebt * settlementRate;
+        System.debug(LOG_PREFIX + ' ' + LOG_EXIT + ' calculateSettlement | result=' + result + ', rate=' + (settlementRate * 100) + '%');
+        return result;
     }
 
     /**

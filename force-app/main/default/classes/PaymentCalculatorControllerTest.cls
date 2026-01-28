@@ -174,8 +174,9 @@ public class PaymentCalculatorControllerTest {
         PaymentDraft__c d1 = new PaymentDraft__c(
             Opportunity__c = opp.Id,
             Draft_Name__c = 'Draft 1',
-            Configuration_JSON__c = '{"test":1}',
-            Calculations_JSON__c = '{"totalDebt":100}',
+            Program_Type__c = 'DCG_MOD',
+            Estimated_Total_Debt__c = 100,
+            Is_Active__c = true,
             Created_By_Calculator__c = true
         );
         insert d1;
@@ -183,8 +184,9 @@ public class PaymentCalculatorControllerTest {
         PaymentDraft__c d2 = new PaymentDraft__c(
             Opportunity__c = opp.Id,
             Draft_Name__c = 'Draft 2',
-            Configuration_JSON__c = '{"test":2}',
-            Calculations_JSON__c = '{"totalDebt":200}',
+            Program_Type__c = 'DCG_MOD',
+            Estimated_Total_Debt__c = 200,
+            Is_Active__c = true,
             Created_By_Calculator__c = true
         );
         insert d2;
@@ -200,20 +202,22 @@ public class PaymentCalculatorControllerTest {
     static void testPrimaryDraftOperations() {
         Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
 
-        // Create 2 drafts with valid JSON (required for getPrimaryDraft)
+        // Create 2 drafts with native fields (required for getPrimaryDraft)
         PaymentDraft__c d1 = new PaymentDraft__c(
             Opportunity__c = opp.Id,
             Draft_Name__c = 'D1',
-            Configuration_JSON__c = '{"programType":"DCG_MOD"}',
-            Calculations_JSON__c = '{"totalDebt":50000}',
+            Program_Type__c = 'DCG_MOD',
+            Estimated_Total_Debt__c = 50000,
+            Is_Active__c = true,
             Created_By_Calculator__c = true
         );
         insert d1;
         PaymentDraft__c d2 = new PaymentDraft__c(
             Opportunity__c = opp.Id,
             Draft_Name__c = 'D2',
-            Configuration_JSON__c = '{"programType":"DCG_MOD"}',
-            Calculations_JSON__c = '{"totalDebt":50000}',
+            Program_Type__c = 'DCG_MOD',
+            Estimated_Total_Debt__c = 50000,
+            Is_Active__c = true,
             Created_By_Calculator__c = true
         );
         insert d2;
@@ -226,7 +230,7 @@ public class PaymentCalculatorControllerTest {
 
         // Get Primary
         Map<String, Object> primary = PaymentCalculatorController.getPrimaryDraft(opp.Id);
-        System.assertEquals(d1.Id, (Id)primary.get('id'));
+        System.assertEquals(d1.Id, (Id)primary.get('Id'));
 
         // Set another Primary
         PaymentCalculatorController.setPrimaryDraft(d2.Id);
@@ -374,8 +378,9 @@ public class PaymentCalculatorControllerTest {
         PaymentDraft__c draft = new PaymentDraft__c(
             Opportunity__c = opp.Id,
             Draft_Name__c = 'To Deactivate',
-            Configuration_JSON__c = '{}',
-            Calculations_JSON__c = '{}'
+            Program_Type__c = 'DCG_MOD',
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
         );
         insert draft;
 
@@ -467,8 +472,9 @@ public class PaymentCalculatorControllerTest {
         PaymentDraft__c draft = new PaymentDraft__c(
             Opportunity__c = opp.Id,
             Draft_Name__c = 'Items Test',
-            Configuration_JSON__c = '{}',
-            Calculations_JSON__c = '{}'
+            Program_Type__c = 'DCG_MOD',
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
         );
         insert draft;
 
@@ -500,8 +506,9 @@ public class PaymentCalculatorControllerTest {
         PaymentDraft__c draft = new PaymentDraft__c(
             Opportunity__c = opp.Id,
             Draft_Name__c = 'History Test',
-            Configuration_JSON__c = '{}',
-            Calculations_JSON__c = '{}'
+            Program_Type__c = 'DCG_MOD',
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
         );
         insert draft;
 
@@ -586,8 +593,10 @@ public class PaymentCalculatorControllerTest {
         PaymentDraft__c existingDraft = new PaymentDraft__c(
             Opportunity__c = opp.Id,
             Draft_Name__c = 'Original',
-            Configuration_JSON__c = '{"old":true}',
-            Calculations_JSON__c = '{"totalDebt":40000}'
+            Program_Type__c = 'DCG_MOD',
+            Estimated_Total_Debt__c = 40000,
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
         );
         insert existingDraft;
 
@@ -620,8 +629,9 @@ public class PaymentCalculatorControllerTest {
         PaymentDraft__c draft = new PaymentDraft__c(
             Lead__c = lead.Id,
             Draft_Name__c = 'Lead Draft',
-            Configuration_JSON__c = '{"programType":"DCG_MOD"}',
-            Calculations_JSON__c = '{"totalDebt":30000}',
+            Program_Type__c = 'DCG_MOD',
+            Estimated_Total_Debt__c = 30000,
+            Is_Active__c = true,
             Created_By_Calculator__c = true
         );
         insert draft;
@@ -631,7 +641,7 @@ public class PaymentCalculatorControllerTest {
         Test.stopTest();
 
         System.assertEquals(1, drafts.size(), 'Should load 1 draft for Lead');
-        System.assertEquals('Lead Draft', (String)drafts[0].get('name'), 'Should have correct name');
+        System.assertEquals('Lead Draft', (String)drafts[0].get('Name'), 'Should have correct name');
     }
 
     @isTest
@@ -647,8 +657,9 @@ public class PaymentCalculatorControllerTest {
         PaymentDraft__c draft = new PaymentDraft__c(
             Lead__c = lead.Id,
             Draft_Name__c = 'Lead Primary',
-            Configuration_JSON__c = '{"test":true}',
-            Calculations_JSON__c = '{"value":100}',
+            Program_Type__c = 'DCG_MOD',
+            Estimated_Total_Debt__c = 100,
+            Is_Active__c = true,
             Is_Primary__c = true,
             Primary_Key__c = String.valueOf(lead.Id),
             Created_By_Calculator__c = true
@@ -660,7 +671,7 @@ public class PaymentCalculatorControllerTest {
         Test.stopTest();
 
         System.assertNotEquals(null, primary, 'Should return primary draft');
-        System.assertEquals('Lead Primary', (String)primary.get('name'), 'Should return correct draft');
+        System.assertEquals('Lead Primary', (String)primary.get('Name'), 'Should return correct draft');
     }
 
     @isTest
@@ -701,8 +712,9 @@ public class PaymentCalculatorControllerTest {
         PaymentDraft__c draft = new PaymentDraft__c(
             Lead__c = lead.Id,
             Draft_Name__c = 'To Be Primary',
-            Configuration_JSON__c = '{}',
-            Calculations_JSON__c = '{}'
+            Program_Type__c = 'DCG_MOD',
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
         );
         insert draft;
 
@@ -727,8 +739,9 @@ public class PaymentCalculatorControllerTest {
         PaymentDraft__c draft = new PaymentDraft__c(
             Lead__c = lead.Id,
             Draft_Name__c = 'To Deactivate',
-            Configuration_JSON__c = '{}',
-            Calculations_JSON__c = '{}'
+            Program_Type__c = 'DCG_MOD',
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
         );
         insert draft;
 
@@ -1182,8 +1195,9 @@ public class PaymentCalculatorControllerTest {
         PaymentDraft__c draft = new PaymentDraft__c(
             Opportunity__c = opp.Id,
             Draft_Name__c = 'To Reactivate',
-            Configuration_JSON__c = '{}',
-            Calculations_JSON__c = '{}'
+            Program_Type__c = 'DCG_MOD',
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
         );
         insert draft;
 
@@ -1213,20 +1227,23 @@ public class PaymentCalculatorControllerTest {
         PaymentDraft__c d1 = new PaymentDraft__c(
             Opportunity__c = opp.Id,
             Draft_Name__c = 'Active 1',
-            Configuration_JSON__c = '{}',
-            Calculations_JSON__c = '{}'
+            Program_Type__c = 'DCG_MOD',
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
         );
         PaymentDraft__c d2 = new PaymentDraft__c(
             Opportunity__c = opp.Id,
             Draft_Name__c = 'Active 2',
-            Configuration_JSON__c = '{}',
-            Calculations_JSON__c = '{}'
+            Program_Type__c = 'DCG_MOD',
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
         );
         PaymentDraft__c d3 = new PaymentDraft__c(
             Opportunity__c = opp.Id,
             Draft_Name__c = 'To Be Inactive',
-            Configuration_JSON__c = '{}',
-            Calculations_JSON__c = '{}'
+            Program_Type__c = 'DCG_MOD',
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
         );
         insert new List<PaymentDraft__c>{d1, d2, d3};
 
@@ -1243,7 +1260,7 @@ public class PaymentCalculatorControllerTest {
         // Verify all drafts are in results
         Set<String> loadedNames = new Set<String>();
         for (Map<String, Object> draft : loadedDrafts) {
-            loadedNames.add((String)draft.get('name'));
+            loadedNames.add((String)draft.get('Name'));
         }
         System.assert(loadedNames.contains('To Be Inactive'), 'Inactive draft should be in results for sync status');
         System.assert(loadedNames.contains('Active 1'), 'Active 1 should be in results');
@@ -1258,10 +1275,12 @@ public class PaymentCalculatorControllerTest {
         PaymentDraft__c draft = new PaymentDraft__c(
             Opportunity__c = opp.Id,
             Draft_Name__c = 'Primary Draft',
-            Configuration_JSON__c = '{"test":true}',
-            Calculations_JSON__c = '{"value":100}',
+            Program_Type__c = 'DCG_MOD',
+            Estimated_Total_Debt__c = 100,
+            Is_Active__c = true,
             Is_Primary__c = true,
-            Primary_Key__c = String.valueOf(opp.Id)
+            Primary_Key__c = String.valueOf(opp.Id),
+            Created_By_Calculator__c = true
         );
         insert draft;
 
@@ -1323,12 +1342,14 @@ public class PaymentCalculatorControllerTest {
         PaymentDraft__c draft = new PaymentDraft__c(
             Opportunity__c = opp.Id,
             Draft_Name__c = 'Native Fields Test',
-            Configuration_JSON__c = '{"targetPaymentPercent":50}', // Old value in JSON
-            Target_Payment_Percent__c = 65.0, // New native field (should take precedence)
+            Program_Type__c = 'DCG_MOD',
+            Target_Payment_Percent__c = 65.0,
             Calculation_Mode__c = 'DESIRED',
             Preferred_Day_of_Week__c = 5,
             Weekly_Payment__c = 400,
-            Number_of_Weeks__c = 52
+            Number_of_Weeks__c = 52,
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
         );
         insert draft;
 
@@ -1354,11 +1375,13 @@ public class PaymentCalculatorControllerTest {
             Opportunity__c = opp.Id,
             Draft_Name__c = 'Primary Native Fields Test',
             Is_Primary__c = true,
-            Configuration_JSON__c = '{}',
+            Program_Type__c = 'DCG_MOD',
             Target_Payment_Percent__c = 72.0,
             Calculation_Mode__c = 'PERCENT',
             Preferred_Day_of_Week__c = 1,
-            Weekly_Payment__c = 350
+            Weekly_Payment__c = 350,
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
         );
         insert draft;
 
