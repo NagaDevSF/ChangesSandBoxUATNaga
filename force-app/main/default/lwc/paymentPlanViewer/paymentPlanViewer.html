@@ -176,9 +176,10 @@
                         </template>
                     </tbody>
 
-                    <!-- Aggregate Footer Row -->
+                    <!-- Aggregate Footer Rows -->
                     <template lwc:if={hasDisplayItems}>
                         <tfoot class="aggregate-footer">
+                            <!-- Total Row -->
                             <tr class="aggregate-row" role="row">
                                 <td class="td-center" role="gridcell"></td>
                                 <td class="td-center" role="gridcell"></td>
@@ -200,6 +201,73 @@
                                 <td class="td-right aggregate-value" role="gridcell">
                                     <output>{totalSavingsBalanceFormatted}</output>
                                 </td>
+                                <td class="td-center" role="gridcell"></td>
+                            </tr>
+
+                            <!-- Cleared Row -->
+                            <tr class="aggregate-row cleared-row" role="row">
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center aggregate-label" role="gridcell">
+                                    <strong>Cleared</strong>
+                                </td>
+                                <td class="td-right aggregate-value cleared-value" role="gridcell">
+                                    <output>{totalAmountClearedFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value cleared-value" role="gridcell">
+                                    <output>{clearedSetupFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value cleared-value" role="gridcell">
+                                    <output>{clearedProgramFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value cleared-value" role="gridcell">
+                                    <output>{clearedBankingFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value cleared-value" role="gridcell">
+                                    <output>{clearedSavingsBalanceFormatted}</output>
+                                </td>
+                                <td class="td-center" role="gridcell"></td>
+                            </tr>
+
+                            <!-- NSF Row -->
+                            <tr class="aggregate-row nsf-row" role="row">
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center aggregate-label" role="gridcell">
+                                    <strong>NSF</strong>
+                                </td>
+                                <td class="td-right aggregate-value nsf-value" role="gridcell">
+                                    <output>{nsfDraftAmountFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value nsf-value" role="gridcell">
+                                    <output>{nsfSetupFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value nsf-value" role="gridcell">
+                                    <output>{nsfProgramFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value nsf-value" role="gridcell">
+                                    <output>{nsfBankingFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value nsf-value" role="gridcell">
+                                    <output>{nsfSavingsBalanceFormatted}</output>
+                                </td>
+                                <td class="td-center" role="gridcell"></td>
+                            </tr>
+
+                            <!-- Wires Row -->
+                            <tr class="aggregate-row wires-row" role="row">
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center aggregate-label" role="gridcell">
+                                    <strong>Wires</strong>
+                                </td>
+                                <td class="td-right aggregate-value wires-value" role="gridcell">
+                                    <output>{totalWiresReceivedFormatted}</output>
+                                </td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
                                 <td class="td-center" role="gridcell"></td>
                             </tr>
                         </tfoot>

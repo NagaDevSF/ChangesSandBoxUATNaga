@@ -291,20 +291,17 @@ export default class PaymentPlanViewer extends LightningElement {
 
     // ============ AGGREGATE GETTERS (Footer Totals) ============
 
+    // Total row - SUM of all items excluding NSF, plus wires received
     get totalDraftAmount() {
         const items = this.scheduleItems;
         if (!items || items.length === 0) return 0;
-
-        let total = items.reduce((sum, item) => sum + (Number(item.draftAmount) || 0), 0);
-
-        // Add wire fees
-        Object.values(this.wireFeeMap).forEach(wireFees => {
-            wireFees.forEach(fee => {
-                total += Number(fee.amount) || 0;
-            });
-        });
-
-        return total;
+        // Sum draft amounts excluding NSF items
+        const draftSum = items
+            .filter(item => item.status !== 'NSF')
+            .reduce((sum, item) => sum + (Number(item.draftAmount) || 0), 0);
+        // Add wires received from all items
+        const wiresSum = items.reduce((sum, item) => sum + (Number(item.wiresReceived) || 0), 0);
+        return draftSum + wiresSum;
     }
 
     get totalDraftAmountFormatted() {
@@ -314,7 +311,9 @@ export default class PaymentPlanViewer extends LightningElement {
     get totalSetupFee() {
         const items = this.scheduleItems;
         if (!items || items.length === 0) return 0;
-        return items.reduce((sum, item) => sum + (Number(item.setupFee) || 0), 0);
+        return items
+            .filter(item => item.status !== 'NSF')
+            .reduce((sum, item) => sum + (Number(item.setupFee) || 0), 0);
     }
 
     get totalSetupFeeFormatted() {
@@ -324,7 +323,9 @@ export default class PaymentPlanViewer extends LightningElement {
     get totalProgramFee() {
         const items = this.scheduleItems;
         if (!items || items.length === 0) return 0;
-        return items.reduce((sum, item) => sum + (Number(item.programFee) || 0), 0);
+        return items
+            .filter(item => item.status !== 'NSF')
+            .reduce((sum, item) => sum + (Number(item.programFee) || 0), 0);
     }
 
     get totalProgramFeeFormatted() {
@@ -334,7 +335,9 @@ export default class PaymentPlanViewer extends LightningElement {
     get totalBankingFee() {
         const items = this.scheduleItems;
         if (!items || items.length === 0) return 0;
-        return items.reduce((sum, item) => sum + (Number(item.bankingFee) || 0), 0);
+        return items
+            .filter(item => item.status !== 'NSF')
+            .reduce((sum, item) => sum + (Number(item.bankingFee) || 0), 0);
     }
 
     get totalBankingFeeFormatted() {
@@ -344,7 +347,9 @@ export default class PaymentPlanViewer extends LightningElement {
     get totalSavingsBalance() {
         const items = this.scheduleItems;
         if (!items || items.length === 0) return 0;
-        return items.reduce((sum, item) => sum + (Number(item.savingsBalance) || 0), 0);
+        return items
+            .filter(item => item.status !== 'NSF')
+            .reduce((sum, item) => sum + (Number(item.savingsBalance) || 0), 0);
     }
 
     get totalSavingsBalanceFormatted() {
@@ -353,6 +358,138 @@ export default class PaymentPlanViewer extends LightningElement {
 
     get totalRowCount() {
         return this.scheduleItems ? this.scheduleItems.length : 0;
+    }
+
+    // Wires total
+    get totalWiresReceived() {
+        const items = this.scheduleItems;
+        if (!items || items.length === 0) return 0;
+        return items.reduce((sum, item) => sum + (Number(item.wiresReceived) || 0), 0);
+    }
+
+    get totalWiresReceivedFormatted() {
+        return this.formatCurrency(this.totalWiresReceived);
+    }
+
+    // Cleared row - uses rollup field or calculates from Cleared status items
+    get totalAmountCleared() {
+        if (this.paymentPlan?.Total_Amount_Cleared__c != null) {
+            return Number(this.paymentPlan.Total_Amount_Cleared__c) || 0;
+        }
+        return 0;
+    }
+
+    get totalAmountClearedFormatted() {
+        return this.formatCurrency(this.totalAmountCleared);
+    }
+
+    get clearedSetupFee() {
+        const items = this.scheduleItems;
+        if (!items || items.length === 0) return 0;
+        return items
+            .filter(item => item.status === 'Cleared')
+            .reduce((sum, item) => sum + (Number(item.setupFee) || 0), 0);
+    }
+
+    get clearedSetupFeeFormatted() {
+        return this.formatCurrency(this.clearedSetupFee);
+    }
+
+    get clearedProgramFee() {
+        const items = this.scheduleItems;
+        if (!items || items.length === 0) return 0;
+        return items
+            .filter(item => item.status === 'Cleared')
+            .reduce((sum, item) => sum + (Number(item.programFee) || 0), 0);
+    }
+
+    get clearedProgramFeeFormatted() {
+        return this.formatCurrency(this.clearedProgramFee);
+    }
+
+    get clearedBankingFee() {
+        const items = this.scheduleItems;
+        if (!items || items.length === 0) return 0;
+        return items
+            .filter(item => item.status === 'Cleared')
+            .reduce((sum, item) => sum + (Number(item.bankingFee) || 0), 0);
+    }
+
+    get clearedBankingFeeFormatted() {
+        return this.formatCurrency(this.clearedBankingFee);
+    }
+
+    get clearedSavingsBalance() {
+        const items = this.scheduleItems;
+        if (!items || items.length === 0) return 0;
+        return items
+            .filter(item => item.status === 'Cleared')
+            .reduce((sum, item) => sum + (Number(item.savingsBalance) || 0), 0);
+    }
+
+    get clearedSavingsBalanceFormatted() {
+        return this.formatCurrency(this.clearedSavingsBalance);
+    }
+
+    // NSF row - only from items where status === 'NSF'
+    get nsfDraftAmount() {
+        const items = this.scheduleItems;
+        if (!items || items.length === 0) return 0;
+        return items
+            .filter(item => item.status === 'NSF')
+            .reduce((sum, item) => sum + (Number(item.draftAmount) || 0), 0);
+    }
+
+    get nsfDraftAmountFormatted() {
+        return this.formatCurrency(this.nsfDraftAmount);
+    }
+
+    get nsfSetupFee() {
+        const items = this.scheduleItems;
+        if (!items || items.length === 0) return 0;
+        return items
+            .filter(item => item.status === 'NSF')
+            .reduce((sum, item) => sum + (Number(item.setupFee) || 0), 0);
+    }
+
+    get nsfSetupFeeFormatted() {
+        return this.formatCurrency(this.nsfSetupFee);
+    }
+
+    get nsfProgramFee() {
+        const items = this.scheduleItems;
+        if (!items || items.length === 0) return 0;
+        return items
+            .filter(item => item.status === 'NSF')
+            .reduce((sum, item) => sum + (Number(item.programFee) || 0), 0);
+    }
+
+    get nsfProgramFeeFormatted() {
+        return this.formatCurrency(this.nsfProgramFee);
+    }
+
+    get nsfBankingFee() {
+        const items = this.scheduleItems;
+        if (!items || items.length === 0) return 0;
+        return items
+            .filter(item => item.status === 'NSF')
+            .reduce((sum, item) => sum + (Number(item.bankingFee) || 0), 0);
+    }
+
+    get nsfBankingFeeFormatted() {
+        return this.formatCurrency(this.nsfBankingFee);
+    }
+
+    get nsfSavingsBalance() {
+        const items = this.scheduleItems;
+        if (!items || items.length === 0) return 0;
+        return items
+            .filter(item => item.status === 'NSF')
+            .reduce((sum, item) => sum + (Number(item.savingsBalance) || 0), 0);
+    }
+
+    get nsfSavingsBalanceFormatted() {
+        return this.formatCurrency(this.nsfSavingsBalance);
     }
 
     // ============ HELPER METHODS ============

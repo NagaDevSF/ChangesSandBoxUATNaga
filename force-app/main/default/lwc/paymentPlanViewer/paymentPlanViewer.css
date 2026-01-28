@@ -583,6 +583,48 @@
     padding-right: 8px !important;
 }
 
+/* Cleared Row - Green Theme */
+.cleared-row {
+    background: linear-gradient(135deg, #276749 0%, #38a169 50%, #48bb78 100%) !important;
+    border-top: 2px solid #68d391;
+}
+
+.cleared-row td {
+    color: white !important;
+}
+
+.cleared-value {
+    color: #c6f6d5 !important;
+}
+
+/* NSF Row - Red Theme */
+.nsf-row {
+    background: linear-gradient(135deg, #9b2c2c 0%, #c53030 50%, #e53e3e 100%) !important;
+    border-top: 2px solid #fc8181;
+}
+
+.nsf-row td {
+    color: white !important;
+}
+
+.nsf-value {
+    color: #fed7d7 !important;
+}
+
+/* Wires Row - Purple/Indigo Theme */
+.wires-row {
+    background: linear-gradient(135deg, #553c9a 0%, #6b46c1 50%, #805ad5 100%) !important;
+    border-top: 2px solid #b794f4;
+}
+
+.wires-row td {
+    color: white !important;
+}
+
+.wires-value {
+    color: #e9d8fd !important;
+}
+
 /* ============================================
    FOOTER BUTTON BAR
    ============================================ */
