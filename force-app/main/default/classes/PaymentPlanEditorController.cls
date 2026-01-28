@@ -273,6 +273,12 @@ public with sharing class PaymentPlanEditorController {
         @AuraEnabled public Boolean isDeleted { get; set; }
         /** Flag indicating item is frozen (non-Scheduled status) and should not be modified */
         @AuraEnabled public Boolean isFrozen { get; set; }
+        /** Status of the Setup Fee from Payment_Fee__c.Status_Code__c */
+        @AuraEnabled public String setupFeeStatus { get; set; }
+        /** Status of the Program Fee from Payment_Fee__c.Status_Code__c */
+        @AuraEnabled public String programFeeStatus { get; set; }
+        /** Status of the Banking Fee from Payment_Fee__c.Status_Code__c */
+        @AuraEnabled public String bankingFeeStatus { get; set; }
 
         /**
          * @description Default constructor initializing change tracking flags to false
@@ -2918,16 +2924,19 @@ public with sharing class PaymentPlanEditorController {
             Payment_Fee__c bankingFeeRecord = fees.get(PaymentFeeService.FEE_TYPE_BANKING);
             wrapper.bankingFee = (bankingFeeRecord != null && bankingFeeRecord.Amount__c != null)
                 ? bankingFeeRecord.Amount__c : (item.Banking_Fee_Amount__c != null ? item.Banking_Fee_Amount__c : 0);
+            wrapper.bankingFeeStatus = (bankingFeeRecord != null) ? bankingFeeRecord.Status_Code__c : null;
 
             // Program Fee
             Payment_Fee__c programFeeRecord = fees.get(PaymentFeeService.FEE_TYPE_PROGRAM);
             wrapper.programFee = (programFeeRecord != null && programFeeRecord.Amount__c != null)
                 ? programFeeRecord.Amount__c : (item.Program_Fee_Amount__c != null ? item.Program_Fee_Amount__c : 0);
+            wrapper.programFeeStatus = (programFeeRecord != null) ? programFeeRecord.Status_Code__c : null;
 
             // Setup Fee
             Payment_Fee__c setupFeeRecord = fees.get(PaymentFeeService.FEE_TYPE_SETUP);
             wrapper.setupFee = (setupFeeRecord != null && setupFeeRecord.Amount__c != null)
                 ? setupFeeRecord.Amount__c : (item.Setup_Fee_Amount__c != null ? item.Setup_Fee_Amount__c : 0);
+            wrapper.setupFeeStatus = (setupFeeRecord != null) ? setupFeeRecord.Status_Code__c : null;
 
             // Savings/Escrow - read directly from To_Escrow_Amount__c field
             wrapper.savingsBalance = item.To_Escrow_Amount__c != null ? item.To_Escrow_Amount__c : 0;
@@ -2939,6 +2948,10 @@ public with sharing class PaymentPlanEditorController {
             wrapper.setupFee = item.Setup_Fee_Amount__c;
             wrapper.savingsBalance = item.To_Escrow_Amount__c != null ? item.To_Escrow_Amount__c : 0;
             wrapper.toEscrowAmount = item.To_Escrow_Amount__c != null ? item.To_Escrow_Amount__c : 0;
+            // No fee status available when falling back to flat fields
+            wrapper.bankingFeeStatus = null;
+            wrapper.programFeeStatus = null;
+            wrapper.setupFeeStatus = null;
         }
 
         return wrapper;

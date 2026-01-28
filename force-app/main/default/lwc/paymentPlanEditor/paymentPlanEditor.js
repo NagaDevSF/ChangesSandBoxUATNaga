@@ -1583,7 +1583,10 @@ export default class PaymentPlanEditor extends LightningElement {
                 toEscrowAmount: toEscrowAmount,
                 status: itemStatus,
                 statusBadgeClass: this.getStatusBadgeClass(itemStatus),
-                feeStatusDotClass: this.getFeeStatusDotClass(itemStatus),
+                // Individual fee status dots based on Payment_Fee__c.Status_Code__c
+                setupFeeStatusDotClass: this.getFeeStatusDotClass(item.setupFeeStatus),
+                programFeeStatusDotClass: this.getFeeStatusDotClass(item.programFeeStatus),
+                bankingFeeStatusDotClass: this.getFeeStatusDotClass(item.bankingFeeStatus),
                 statusOptionsWithSelection: statusOptionsWithSelection,
                 isRowEditable: isRowEditable,
                 rowClass: this.getRowClass({ ...item, isModified, isNew, status: itemStatus }),
@@ -1598,23 +1601,29 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     /**
-     * Get the CSS class for fee status indicator dot based on item status
-     * @param {String} status - The item status
+     * Get the CSS class for fee status indicator dot based on Payment_Fee__c.Status_Code__c
+     * @param {String} status - The fee status from Payment_Fee__c.Status_Code__c
      * @returns {String} - CSS class for the status dot
      */
     getFeeStatusDotClass(status) {
-        switch (status) {
-            case 'Cleared':
-                return 'status-dot status-dot--cleared';
-            case 'Pending':
-                return 'status-dot status-dot--pending';
-            case 'NSF':
-            case 'Cancelled':
-            case 'Missed':
-                return 'status-dot status-dot--failed';
-            default:
-                return 'status-dot status-dot--none';
+        // If status is null/empty, don't show any dot
+        if (!status) {
+            return 'status-dot status-dot--none';
         }
+
+        // Normalize status to lowercase for case-insensitive comparison
+        const normalizedStatus = status.toLowerCase();
+
+        if (normalizedStatus === 'cleared') {
+            return 'status-dot status-dot--cleared';
+        } else if (normalizedStatus === 'pending') {
+            return 'status-dot status-dot--pending';
+        } else if (normalizedStatus === 'nsf' || normalizedStatus === 'cancelled' || normalizedStatus === 'missed') {
+            return 'status-dot status-dot--failed';
+        }
+
+        // For any other non-null value, show a default dot (you can customize this)
+        return 'status-dot status-dot--cleared';
     }
 
     /**
