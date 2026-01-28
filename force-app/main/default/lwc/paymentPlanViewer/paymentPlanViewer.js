@@ -346,8 +346,10 @@ export default class PaymentPlanViewer extends LightningElement {
     }
 
     get totalSavingsBalance() {
-        if (this.paymentPlan?.Total_Savings_Rollup__c != null) {
-            return Number(this.paymentPlan.Total_Savings_Rollup__c) || 0;
+        // Use Total_To_Escrow_Rollup__c which sums To_Escrow_Amount__c (per-payment savings)
+        // NOT Total_Savings_Rollup__c which sums Savings_Balance__c (running balance)
+        if (this.paymentPlan?.Total_To_Escrow_Rollup__c != null) {
+            return Number(this.paymentPlan.Total_To_Escrow_Rollup__c) || 0;
         }
         const items = this.scheduleItems;
         if (!items || items.length === 0) return 0;
@@ -438,8 +440,10 @@ export default class PaymentPlanViewer extends LightningElement {
     }
 
     get clearedSavingsBalance() {
-        if (this.paymentPlan?.Cleared_Savings_Sum__c != null) {
-            return Number(this.paymentPlan.Cleared_Savings_Sum__c) || 0;
+        // Use Cleared_Escrow_Sum__c which sums To_Escrow_Amount__c for Cleared items
+        // NOT Cleared_Savings_Sum__c which sums Savings_Balance__c (running balance)
+        if (this.paymentPlan?.Cleared_Escrow_Sum__c != null) {
+            return Number(this.paymentPlan.Cleared_Escrow_Sum__c) || 0;
         }
         const items = this.scheduleItems;
         if (!items || items.length === 0) return 0;
@@ -514,9 +518,8 @@ export default class PaymentPlanViewer extends LightningElement {
     }
 
     get nsfSavingsBalance() {
-        if (this.paymentPlan?.NSF_Savings_Sum__c != null) {
-            return Number(this.paymentPlan.NSF_Savings_Sum__c) || 0;
-        }
+        // Calculate from items - no rollup field exists for NSF escrow
+        // (org reached 25 rollup field limit)
         const items = this.scheduleItems;
         if (!items || items.length === 0) return 0;
         return items
