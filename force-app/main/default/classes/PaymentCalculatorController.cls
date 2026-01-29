@@ -403,6 +403,14 @@ public with sharing class PaymentCalculatorController {
      * full version history via Calculation_Version__c field.
      */
     private static void createPaymentDraftItems(Id draftId, CalculationResult calculations) {
+        System.debug(LOG_PREFIX + ' ' + LOG_ENTRY + ' createPaymentDraftItems | draftId=' + draftId);
+        System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' calculations null? ' + (calculations == null));
+        if (calculations != null) {
+            System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' calculations.paymentSchedule null? ' + (calculations.paymentSchedule == null));
+            if (calculations.paymentSchedule != null) {
+                System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' calculations.paymentSchedule.size()=' + calculations.paymentSchedule.size());
+            }
+        }
         // Soft delete: Deactivate existing ACTIVE items for this draft before creating new ones.
         // See method-level comment above for detailed rationale on soft-delete strategy.
         List<Payment_Draft_Item__c> existingActiveItems = [
@@ -422,8 +430,10 @@ public with sharing class PaymentCalculatorController {
 
         // Early exit if no schedule
         if (calculations == null || calculations.paymentSchedule == null || calculations.paymentSchedule.isEmpty()) {
+            System.debug(LOG_PREFIX + ' ' + LOG_WARN + ' createPaymentDraftItems EARLY EXIT - no payment schedule data');
             return;
         }
+        System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' createPaymentDraftItems proceeding with ' + calculations.paymentSchedule.size() + ' schedule items');
 
         // Determine the next version number by finding the max existing version
         Integer nextVersion = 1;
@@ -591,25 +601,47 @@ public with sharing class PaymentCalculatorController {
      */
     private static List<PaymentScheduleItem> deserializePaymentSchedule(Object scheduleObj) {
         List<PaymentScheduleItem> schedule = new List<PaymentScheduleItem>();
+        System.debug(LOG_PREFIX + ' ' + LOG_ENTRY + ' deserializePaymentSchedule');
 
         if (scheduleObj == null) {
+            System.debug(LOG_PREFIX + ' ' + LOG_WARN + ' deserializePaymentSchedule: scheduleObj is NULL');
             return schedule;
         }
+
+        // Log the actual type of scheduleObj
+        String objType = 'unknown';
+        try {
+            objType = String.valueOf(scheduleObj).substring(0, Math.min(200, String.valueOf(scheduleObj).length()));
+        } catch (Exception ex) {
+            objType = 'error getting type';
+        }
+        System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' deserializePaymentSchedule: scheduleObj type preview = ' + objType);
 
         List<Object> scheduleList;
         try {
             scheduleList = (List<Object>) scheduleObj;
+            System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' deserializePaymentSchedule: cast successful, list size = ' + scheduleList.size());
         } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'Failed to cast paymentSchedule to List: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, LOG_PREFIX + ' CAST FAILED for paymentSchedule to List: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, LOG_PREFIX + ' scheduleObj actual type: ' + objType);
             return schedule;
         }
 
+        Integer successCount = 0;
+        Integer failCount = 0;
         for (Object itemObj : scheduleList) {
             PaymentScheduleItem item = deserializeScheduleItem(itemObj);
             if (item != null) {
                 schedule.add(item);
+                successCount++;
+            } else {
+                failCount++;
+                System.debug(LOG_PREFIX + ' ' + LOG_WARN + ' deserializePaymentSchedule: item deserialization returned NULL');
             }
         }
+
+        System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' deserializePaymentSchedule: processed ' + successCount + ' items, ' + failCount + ' failures');
+        System.debug(LOG_PREFIX + ' ' + LOG_EXIT + ' deserializePaymentSchedule: returning ' + schedule.size() + ' items');
 
         return schedule;
     }
@@ -623,20 +655,23 @@ public with sharing class PaymentCalculatorController {
      */
     private static PaymentScheduleItem deserializeScheduleItem(Object itemObj) {
         if (itemObj == null) {
+            System.debug(LOG_PREFIX + ' ' + LOG_WARN + ' deserializeScheduleItem: itemObj is NULL');
             return null;
         }
 
         // If already a PaymentScheduleItem, return as-is
         if (itemObj instanceof PaymentScheduleItem) {
+            System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' deserializeScheduleItem: already PaymentScheduleItem');
             return (PaymentScheduleItem) itemObj;
         }
 
-        // Direct cast to Map - LWC sends data as Map<String, Object>
+        // Use JSON serialize/deserialize to handle LWC proxy objects
         Map<String, Object> itemMap;
-        if (itemObj instanceof Map<String, Object>) {
-            itemMap = (Map<String, Object>) itemObj;
-        } else {
-            System.debug(LOG_PREFIX + ' ' + LOG_WARN + ' deserializeScheduleItem | Unexpected type: ' + getTypeName(itemObj));
+        try {
+            itemMap = (Map<String, Object>) JSON.deserializeUntyped(JSON.serialize(itemObj));
+            System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' deserializeScheduleItem: Map keys = ' + itemMap.keySet());
+        } catch (Exception e) {
+            System.debug(LOG_PREFIX + ' ' + LOG_ERROR + ' deserializeScheduleItem: Failed to convert to Map: ' + e.getMessage());
             return null;
         }
 
@@ -789,7 +824,34 @@ public with sharing class PaymentCalculatorController {
             System.debug(LoggingLevel.DEBUG, 'sObjectType: ' + sObjectType);
 
             // Deserialize calculations to strongly-typed object (for use with createPaymentDraftItems and populateDraftFields)
+            System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' calculationsOptional: ' + (calculationsOptional != null ? 'NOT NULL, keys=' + calculationsOptional.keySet() : 'NULL'));
+            if (calculationsOptional != null && calculationsOptional.containsKey('paymentSchedule')) {
+                Object schedObj = calculationsOptional.get('paymentSchedule');
+                System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' paymentSchedule from LWC: ' + (schedObj != null ? 'NOT NULL, type=' + String.valueOf(schedObj).substring(0, Math.min(100, String.valueOf(schedObj).length())) : 'NULL'));
+                // Log first item details for debugging
+                if (schedObj != null) {
+                    try {
+                        List<Object> tempList = (List<Object>) schedObj;
+                        if (!tempList.isEmpty()) {
+                            Object firstItem = tempList[0];
+                            System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' FIRST ITEM RAW: ' + String.valueOf(firstItem).substring(0, Math.min(300, String.valueOf(firstItem).length())));
+                            if (firstItem instanceof Map<String, Object>) {
+                                Map<String, Object> itemMap = (Map<String, Object>) firstItem;
+                                System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' FIRST ITEM KEYS: ' + itemMap.keySet());
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.debug(LOG_PREFIX + ' ' + LOG_WARN + ' Could not inspect first item: ' + e.getMessage());
+                    }
+                }
+            } else {
+                System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' paymentSchedule key NOT FOUND in calculationsOptional');
+            }
             CalculationResult typedCalculations = deserializeCalculations(calculationsOptional);
+            System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' typedCalculations: ' + (typedCalculations != null ? 'NOT NULL' : 'NULL'));
+            if (typedCalculations != null) {
+                System.debug(LOG_PREFIX + ' ' + LOG_DEBUG + ' typedCalculations.paymentSchedule: ' + (typedCalculations.paymentSchedule != null ? 'NOT NULL, size=' + typedCalculations.paymentSchedule.size() : 'NULL'));
+            }
 
             PaymentDraft__c draft;
             Boolean isUpdate = draftIdToOverwrite != null;
@@ -850,7 +912,12 @@ public with sharing class PaymentCalculatorController {
                 
                 System.debug(LoggingLevel.DEBUG, 'Creating NEW draft');
                 draft = new PaymentDraft__c();
-                draft.Draft_Name__c = String.isNotBlank(draftName) ? draftName : 'Draft ' + String.valueOf(Datetime.now());
+                // Add diagnostic info to draft name for debugging LWC data transmission
+                Integer scheduleCount = (typedCalculations != null && typedCalculations.paymentSchedule != null)
+                    ? typedCalculations.paymentSchedule.size()
+                    : 0;
+                String diagInfo = ' [items=' + scheduleCount + ']';
+                draft.Draft_Name__c = (String.isNotBlank(draftName) ? draftName : 'Draft ' + String.valueOf(Datetime.now())) + diagInfo;
                 draft.Created_By_Calculator__c = true;
 
                 // Auto-set new draft as primary and active
@@ -1175,9 +1242,14 @@ public with sharing class PaymentCalculatorController {
             updatedFields.add('Banking_Fee__c');
         }
         if (draft.Setup_Fee_Term__c != null) {
-            opp.Setup_Fee_Term__c = String.valueOf(draft.Setup_Fee_Term__c);
-            hasUpdates = true;
-            updatedFields.add('Setup_Fee_Term__c');
+            // Only set if value is within valid picklist range (0-10)
+            if (draft.Setup_Fee_Term__c >= 0 && draft.Setup_Fee_Term__c <= 10) {
+                opp.Setup_Fee_Term__c = String.valueOf(draft.Setup_Fee_Term__c);
+                hasUpdates = true;
+                updatedFields.add('Setup_Fee_Term__c');
+            } else {
+                System.debug(LoggingLevel.DEBUG, '[updateOpportunityFromPrimaryDraft] Skipping Setup_Fee_Term__c - value ' + draft.Setup_Fee_Term__c + ' is outside valid range (0-10)');
+            }
         }
         if (draft.No_Fee_Program__c != null) {
             opp.No_Fee_Program__c = draft.No_Fee_Program__c;
@@ -1186,9 +1258,16 @@ public with sharing class PaymentCalculatorController {
         }
         if (String.isNotBlank(draft.Program_Type__c)) {
             // Convert underscores to spaces for picklist value (DCG_MOD -> DCG MOD)
-            opp.Program_Type__c = draft.Program_Type__c.replace('_', ' ');
+            String programTypeValue = draft.Program_Type__c.replace('_', ' ');
+            opp.Program_Type__c = programTypeValue;
             hasUpdates = true;
             updatedFields.add('Program_Type__c');
+
+            // If DCG MOD CA is selected, auto-enable No Fee Program
+            if (draft.Program_Type__c.toUpperCase().contains('DCG_MOD_CA') || programTypeValue.toUpperCase().contains('DCG MOD CA')) {
+                opp.No_Fee_Program__c = true;
+                updatedFields.add('No_Fee_Program__c (auto-set for DCG MOD CA)');
+            }
         }
         if (draft.Settlement_Percentage__c != null) {
             opp.Est_Settlement__c = String.valueOf(draft.Settlement_Percentage__c.intValue()) + '%';
@@ -1453,14 +1532,20 @@ public with sharing class PaymentCalculatorController {
             }
 
             // Setup fee term picklist - convert integer to string
+            // Valid picklist values are 0-10 only
             Object setupFeeTermObj = config.get('setupFeePayments');
             System.debug('[updateOpportunityFromDraft] setupFeePayments from config: ' + setupFeeTermObj);
             if (setupFeeTermObj != null) {
                 Integer setupFeeTerm = (setupFeeTermObj instanceof Integer)
                     ? (Integer)setupFeeTermObj
                     : Integer.valueOf(String.valueOf(setupFeeTermObj));
-                opp.Setup_Fee_Term__c = String.valueOf(setupFeeTerm);
-                hasUpdates = true;
+                // Only set if value is within valid picklist range (0-10)
+                if (setupFeeTerm >= 0 && setupFeeTerm <= 10) {
+                    opp.Setup_Fee_Term__c = String.valueOf(setupFeeTerm);
+                    hasUpdates = true;
+                } else {
+                    System.debug('[updateOpportunityFromDraft] Skipping Setup_Fee_Term__c - value ' + setupFeeTerm + ' is outside valid range (0-10)');
+                }
             }
 
             // No Fee Program checkbox - affects Setup_Fee__c formula ($2500 if true, $1000 if false)
@@ -1481,15 +1566,17 @@ public with sharing class PaymentCalculatorController {
             System.debug('[updateOpportunityFromDraft] programType from config: ' + programTypeObj);
             if (programTypeObj != null) {
                 String programType = String.valueOf(programTypeObj).toUpperCase();
-                // If No Fee Program is active with DCG_MOD, use DCG_MOD_CA
-                if (noFeeProgram && programType != null && programType == 'DCG_MOD') {
-                    programType = 'DCG_MOD_CA';
-                }
                 // Convert underscores to spaces for picklist value (DCG_MOD -> DCG MOD)
                 String picklistValue = programType.replace('_', ' ');
                 opp.Program_Type__c = picklistValue;
                 System.debug('[updateOpportunityFromDraft] Setting Program_Type__c to: ' + picklistValue);
                 hasUpdates = true;
+
+                // If DCG MOD CA is selected, auto-enable No Fee Program
+                if (programType == 'DCG_MOD_CA') {
+                    opp.No_Fee_Program__c = true;
+                    System.debug('[updateOpportunityFromDraft] DCG MOD CA selected - auto-enabling No_Fee_Program__c');
+                }
             }
 
             // Config-dependent picklist validation (optional - gracefully degrades if config unavailable)
@@ -1571,15 +1658,10 @@ public with sharing class PaymentCalculatorController {
         
         if (hasUpdates) {
             System.debug('[updateOpportunityFromDraft] Updating Opportunity with values...');
-            try {
-                // Use SYSTEM_MODE to bypass FLS restrictions for system-generated updates
-                Database.update(opp, AccessLevel.SYSTEM_MODE);
-                System.debug('[updateOpportunityFromDraft] Opportunity updated successfully');
-            } catch (Exception e) {
-                // Log but don't fail - Opportunity updates are secondary to draft saving
-                System.debug(LoggingLevel.ERROR, '[updateOpportunityFromDraft] Failed to update Opportunity: ' + e.getMessage());
-                System.debug(LoggingLevel.ERROR, '[updateOpportunityFromDraft] Stack trace: ' + e.getStackTraceString());
-            }
+            // Use SYSTEM_MODE to bypass FLS restrictions for system-generated updates
+            // Let exceptions propagate so user can see what's failing
+            Database.update(opp, AccessLevel.SYSTEM_MODE);
+            System.debug('[updateOpportunityFromDraft] Opportunity updated successfully');
         } else {
             System.debug('[updateOpportunityFromDraft] No updates to apply');
         }

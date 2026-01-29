@@ -1397,4 +1397,260 @@ public class PaymentCalculatorControllerTest {
         System.assertEquals(1.0, config.get('preferredDayOfWeek'), 'Should return native field value');
     }
 
+    // ========== Tests for JSON Serialize/Deserialize approach in deserializeScheduleItem ==========
+
+    @isTest
+    static void testSaveDraftV2WithNestedObjects() {
+        // Test that JSON serialize/deserialize handles nested objects from LWC
+        Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
+
+        Map<String, Object> config = new Map<String, Object>{'programType' => 'DCG_MOD'};
+
+        // Create payment schedule with nested structure (simulates LWC proxy objects)
+        List<Object> scheduleAsObjects = new List<Object>();
+        for (Integer i = 1; i <= 3; i++) {
+            Map<String, Object> item = new Map<String, Object>{
+                'paymentNumber' => i,
+                'paymentDate' => formatDateISO(Date.today().addDays(i * 7)),
+                'totalPayment' => 500.00,
+                'setupFee' => i == 1 ? 100.00 : 0.00,
+                'bankingFee' => 35.00,
+                'programPayment' => 200.00,
+                'escrowPayment' => 165.00
+            };
+            scheduleAsObjects.add(item);
+        }
+
+        Map<String, Object> calculations = new Map<String, Object>{
+            'totalDebt' => 50000,
+            'weeklyPayment' => 500,
+            'paymentSchedule' => scheduleAsObjects
+        };
+
+        Test.startTest();
+        Id draftId = PaymentCalculatorController.saveDraftV2(opp.Id, 'Nested Objects Test', config, null, calculations);
+        Test.stopTest();
+
+        System.assertNotEquals(null, draftId, 'Draft should be created');
+
+        List<Payment_Draft_Item__c> items = [
+            SELECT Id, Draft_Number__c, Total_Draft__c
+            FROM Payment_Draft_Item__c
+            WHERE Payment_Draft__c = :draftId AND Is_Active__c = true
+            ORDER BY Draft_Number__c
+        ];
+
+        System.assertEquals(3, items.size(), 'Should create 3 payment items from nested objects');
+        System.assertEquals(500.00, items[0].Total_Draft__c, 'Total payment should be correctly deserialized');
+    }
+
+    @isTest
+    static void testSaveDraftV2WithMixedTypes() {
+        // Test that JSON serialize/deserialize handles mixed numeric types (Integer vs Decimal)
+        Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
+
+        Map<String, Object> config = new Map<String, Object>{'programType' => 'DCG_MOD'};
+
+        // Create schedule with Integer values that should convert to Decimal
+        List<Map<String, Object>> schedule = new List<Map<String, Object>>();
+        schedule.add(new Map<String, Object>{
+            'paymentNumber' => 1,       // Integer
+            'paymentDate' => formatDateISO(Date.today().addDays(7)),
+            'totalPayment' => 500,      // Integer (not Decimal)
+            'setupFee' => 100,          // Integer
+            'bankingFee' => 35,         // Integer
+            'programPayment' => 200,    // Integer
+            'escrowPayment' => 165      // Integer
+        });
+
+        Map<String, Object> calculations = new Map<String, Object>{
+            'totalDebt' => 50000,
+            'paymentSchedule' => schedule
+        };
+
+        Test.startTest();
+        Id draftId = PaymentCalculatorController.saveDraftV2(opp.Id, 'Mixed Types Test', config, null, calculations);
+        Test.stopTest();
+
+        System.assertNotEquals(null, draftId, 'Draft should be created');
+
+        List<Payment_Draft_Item__c> items = [
+            SELECT Id, Total_Draft__c, Setup_Fee__c, Banking_Fee__c
+            FROM Payment_Draft_Item__c
+            WHERE Payment_Draft__c = :draftId AND Is_Active__c = true
+        ];
+
+        System.assertEquals(1, items.size(), 'Should create 1 payment item');
+        System.assertEquals(500.00, items[0].Total_Draft__c, 'Integer should convert to Decimal');
+        System.assertEquals(100.00, items[0].Setup_Fee__c, 'Integer should convert to Decimal');
+        System.assertEquals(35.00, items[0].Banking_Fee__c, 'Integer should convert to Decimal');
+    }
+
+    @isTest
+    static void testSaveDraftV2WithNullScheduleItems() {
+        // Test that null items in payment schedule are handled gracefully
+        Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
+
+        Map<String, Object> config = new Map<String, Object>{'programType' => 'DCG_MOD'};
+
+        // Create schedule with a null item mixed in
+        List<Object> schedule = new List<Object>();
+        schedule.add(new Map<String, Object>{
+            'paymentNumber' => 1,
+            'paymentDate' => formatDateISO(Date.today().addDays(7)),
+            'totalPayment' => 500.00
+        });
+        schedule.add(null);  // Null item should be skipped
+        schedule.add(new Map<String, Object>{
+            'paymentNumber' => 2,
+            'paymentDate' => formatDateISO(Date.today().addDays(14)),
+            'totalPayment' => 500.00
+        });
+
+        Map<String, Object> calculations = new Map<String, Object>{
+            'totalDebt' => 50000,
+            'paymentSchedule' => schedule
+        };
+
+        Test.startTest();
+        Id draftId = PaymentCalculatorController.saveDraftV2(opp.Id, 'Null Items Test', config, null, calculations);
+        Test.stopTest();
+
+        System.assertNotEquals(null, draftId, 'Draft should be created');
+
+        List<Payment_Draft_Item__c> items = [
+            SELECT Id, Draft_Number__c
+            FROM Payment_Draft_Item__c
+            WHERE Payment_Draft__c = :draftId AND Is_Active__c = true
+            ORDER BY Draft_Number__c
+        ];
+
+        System.assertEquals(2, items.size(), 'Should create 2 payment items (null item skipped)');
+    }
+
+    @isTest
+    static void testSaveDraftV2WithPartialFields() {
+        // Test that items with only some fields populated work correctly
+        Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
+
+        Map<String, Object> config = new Map<String, Object>{'programType' => 'DCG_MOD'};
+
+        // Create schedule with minimal fields
+        List<Map<String, Object>> schedule = new List<Map<String, Object>>();
+        schedule.add(new Map<String, Object>{
+            'paymentNumber' => 1,
+            'paymentDate' => formatDateISO(Date.today().addDays(7)),
+            'totalPayment' => 500.00
+            // No setupFee, bankingFee, programPayment, escrowPayment
+        });
+
+        Map<String, Object> calculations = new Map<String, Object>{
+            'totalDebt' => 50000,
+            'paymentSchedule' => schedule
+        };
+
+        Test.startTest();
+        Id draftId = PaymentCalculatorController.saveDraftV2(opp.Id, 'Partial Fields Test', config, null, calculations);
+        Test.stopTest();
+
+        System.assertNotEquals(null, draftId, 'Draft should be created');
+
+        List<Payment_Draft_Item__c> items = [
+            SELECT Id, Draft_Number__c, Total_Draft__c, Setup_Fee__c, Banking_Fee__c
+            FROM Payment_Draft_Item__c
+            WHERE Payment_Draft__c = :draftId AND Is_Active__c = true
+        ];
+
+        System.assertEquals(1, items.size(), 'Should create 1 payment item');
+        System.assertEquals(500.00, items[0].Total_Draft__c, 'Total payment should be set');
+        // Null fields should be handled gracefully - either null or 0 depending on field defaults
+    }
+
+    @isTest
+    static void testSaveDraftV2WithStringNumbers() {
+        // Test that string numbers are handled correctly (common from LWC JSON)
+        Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
+
+        Map<String, Object> config = new Map<String, Object>{'programType' => 'DCG_MOD'};
+
+        // Create schedule with string numeric values (simulates JSON parsing behavior)
+        List<Map<String, Object>> schedule = new List<Map<String, Object>>();
+        schedule.add(new Map<String, Object>{
+            'paymentNumber' => '1',        // String instead of Integer
+            'paymentDate' => formatDateISO(Date.today().addDays(7)),
+            'totalPayment' => '500.00',    // String instead of Decimal
+            'setupFee' => '100.00',
+            'bankingFee' => '35.00'
+        });
+
+        Map<String, Object> calculations = new Map<String, Object>{
+            'totalDebt' => 50000,
+            'paymentSchedule' => schedule
+        };
+
+        Test.startTest();
+        Id draftId = PaymentCalculatorController.saveDraftV2(opp.Id, 'String Numbers Test', config, null, calculations);
+        Test.stopTest();
+
+        System.assertNotEquals(null, draftId, 'Draft should be created');
+
+        List<Payment_Draft_Item__c> items = [
+            SELECT Id, Draft_Number__c, Total_Draft__c, Setup_Fee__c, Banking_Fee__c
+            FROM Payment_Draft_Item__c
+            WHERE Payment_Draft__c = :draftId AND Is_Active__c = true
+        ];
+
+        System.assertEquals(1, items.size(), 'Should create 1 payment item');
+        System.assertEquals(1, items[0].Draft_Number__c, 'String "1" should convert to Integer 1');
+        System.assertEquals(500.00, items[0].Total_Draft__c, 'String "500.00" should convert to Decimal');
+        System.assertEquals(100.00, items[0].Setup_Fee__c, 'String should convert to Decimal');
+        System.assertEquals(35.00, items[0].Banking_Fee__c, 'String should convert to Decimal');
+    }
+
+    @isTest
+    static void testSaveDraftV2LargeSchedule() {
+        // Test with a large payment schedule (similar to real-world 48+ payments)
+        Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
+
+        Map<String, Object> config = new Map<String, Object>{'programType' => 'DCG_MOD'};
+
+        // Create 48-item schedule
+        List<Map<String, Object>> schedule = new List<Map<String, Object>>();
+        for (Integer i = 1; i <= 48; i++) {
+            schedule.add(new Map<String, Object>{
+                'paymentNumber' => i,
+                'paymentDate' => formatDateISO(Date.today().addDays(i * 7)),
+                'totalPayment' => 450.00,
+                'setupFee' => i <= 12 ? 50.00 : 0.00,
+                'bankingFee' => 5.00,
+                'programPayment' => 80.00,
+                'escrowPayment' => 315.00
+            });
+        }
+
+        Map<String, Object> calculations = new Map<String, Object>{
+            'totalDebt' => 50000,
+            'weeklyPayment' => 450,
+            'programLength' => 48,
+            'paymentSchedule' => schedule
+        };
+
+        Test.startTest();
+        Id draftId = PaymentCalculatorController.saveDraftV2(opp.Id, 'Large Schedule Test', config, null, calculations);
+        Test.stopTest();
+
+        System.assertNotEquals(null, draftId, 'Draft should be created');
+
+        List<Payment_Draft_Item__c> items = [
+            SELECT Id, Draft_Number__c
+            FROM Payment_Draft_Item__c
+            WHERE Payment_Draft__c = :draftId AND Is_Active__c = true
+            ORDER BY Draft_Number__c
+        ];
+
+        System.assertEquals(48, items.size(), 'Should create all 48 payment items');
+        System.assertEquals(1, items[0].Draft_Number__c, 'First item should be payment 1');
+        System.assertEquals(48, items[47].Draft_Number__c, 'Last item should be payment 48');
+    }
+
 }
