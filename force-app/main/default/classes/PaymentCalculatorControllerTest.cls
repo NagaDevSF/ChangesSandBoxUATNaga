@@ -1653,4 +1653,268 @@ public class PaymentCalculatorControllerTest {
         System.assertEquals(48, items[47].Draft_Number__c, 'Last item should be payment 48');
     }
 
+    // ========== Tests for Program Type and No Fee Program Logic ==========
+
+    /**
+     * Test: DCG_MOD_CA auto-disables No_Fee_Program__c when draft is set as primary
+     * Scenario: Opportunity has No_Fee_Program__c = true, draft with DCG_MOD_CA is set as primary
+     * Expected: Opportunity.No_Fee_Program__c should be set to false
+     */
+    @isTest
+    static void testSetPrimaryDraft_DCG_MOD_CA_AutoDisablesNoFeeProgram() {
+        Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
+
+        // Set No_Fee_Program__c to true initially
+        opp.No_Fee_Program__c = true;
+        opp.Program_Type__c = 'DCG MOD';
+        update opp;
+
+        // Create draft with DCG_MOD_CA
+        PaymentDraft__c draft = new PaymentDraft__c(
+            Opportunity__c = opp.Id,
+            Draft_Name__c = 'DCG MOD CA Test',
+            Program_Type__c = 'DCG_MOD_CA',
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
+        );
+        insert draft;
+
+        Test.startTest();
+        PaymentCalculatorController.setPrimaryDraft(draft.Id);
+        Test.stopTest();
+
+        // Verify No_Fee_Program__c is auto-disabled
+        Opportunity updatedOpp = [SELECT No_Fee_Program__c, Program_Type__c FROM Opportunity WHERE Id = :opp.Id];
+        System.assertEquals(false, updatedOpp.No_Fee_Program__c, 'No_Fee_Program__c should be auto-disabled for DCG MOD CA');
+        System.assertEquals('DCG MOD CA', updatedOpp.Program_Type__c, 'Program_Type__c should be DCG MOD CA');
+    }
+
+    /**
+     * Test: DCG_MOD does NOT auto-disable No_Fee_Program__c
+     * Scenario: Opportunity has No_Fee_Program__c = true, draft with DCG_MOD is set as primary
+     * Expected: Opportunity.No_Fee_Program__c should remain true (not auto-disabled)
+     */
+    @isTest
+    static void testSetPrimaryDraft_DCG_MOD_DoesNotAutoDisableNoFeeProgram() {
+        Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
+
+        // Set No_Fee_Program__c to true initially
+        opp.No_Fee_Program__c = true;
+        opp.Program_Type__c = 'DCG MOD';
+        update opp;
+
+        // Create draft with DCG_MOD (not DCG_MOD_CA)
+        PaymentDraft__c draft = new PaymentDraft__c(
+            Opportunity__c = opp.Id,
+            Draft_Name__c = 'DCG MOD Test',
+            Program_Type__c = 'DCG_MOD',
+            No_Fee_Program__c = true,  // Draft has No Fee Program enabled
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
+        );
+        insert draft;
+
+        Test.startTest();
+        PaymentCalculatorController.setPrimaryDraft(draft.Id);
+        Test.stopTest();
+
+        // Verify No_Fee_Program__c remains true (from draft value, not auto-disabled)
+        Opportunity updatedOpp = [SELECT No_Fee_Program__c, Program_Type__c FROM Opportunity WHERE Id = :opp.Id];
+        System.assertEquals(true, updatedOpp.No_Fee_Program__c, 'No_Fee_Program__c should remain true for DCG MOD');
+        System.assertEquals('DCG MOD', updatedOpp.Program_Type__c, 'Program_Type__c should be DCG MOD');
+    }
+
+    /**
+     * Test: DCG_DEBT does NOT auto-disable No_Fee_Program__c
+     * Scenario: Opportunity has No_Fee_Program__c = true, draft with DCG_DEBT is set as primary
+     * Expected: Opportunity.No_Fee_Program__c should remain true (not auto-disabled)
+     */
+    @isTest
+    static void testSetPrimaryDraft_DCG_DEBT_DoesNotAutoDisableNoFeeProgram() {
+        Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
+
+        // Set No_Fee_Program__c to true initially
+        opp.No_Fee_Program__c = true;
+        opp.Program_Type__c = 'DCG DEBT';
+        update opp;
+
+        // Create draft with DCG_DEBT
+        PaymentDraft__c draft = new PaymentDraft__c(
+            Opportunity__c = opp.Id,
+            Draft_Name__c = 'DCG DEBT Test',
+            Program_Type__c = 'DCG_DEBT',
+            No_Fee_Program__c = true,  // Draft has No Fee Program enabled
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
+        );
+        insert draft;
+
+        Test.startTest();
+        PaymentCalculatorController.setPrimaryDraft(draft.Id);
+        Test.stopTest();
+
+        // Verify No_Fee_Program__c remains true (from draft value, not auto-disabled)
+        Opportunity updatedOpp = [SELECT No_Fee_Program__c, Program_Type__c FROM Opportunity WHERE Id = :opp.Id];
+        System.assertEquals(true, updatedOpp.No_Fee_Program__c, 'No_Fee_Program__c should remain true for DCG DEBT');
+        System.assertEquals('DCG DEBT', updatedOpp.Program_Type__c, 'Program_Type__c should be DCG DEBT');
+    }
+
+    /**
+     * Test: saveDraftV2 with DCG_MOD_CA and setPrimary=true auto-disables No_Fee_Program__c
+     * Scenario: Save draft with DCG_MOD_CA program type and set as primary in one call
+     * Expected: Opportunity.No_Fee_Program__c should be auto-disabled
+     */
+    @isTest
+    static void testSaveDraftV2_DCG_MOD_CA_AutoDisablesNoFeeProgram() {
+        Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
+
+        // Set No_Fee_Program__c to true initially
+        opp.No_Fee_Program__c = true;
+        opp.Program_Type__c = 'DCG MOD';
+        update opp;
+
+        Map<String, Object> config = new Map<String, Object>{
+            'programType' => 'DCG_MOD_CA',
+            'noFeeProgram' => true  // Even if noFeeProgram is true in config, DCG_MOD_CA should override
+        };
+
+        List<Object> schedule = new List<Object>();
+        schedule.add(new Map<String, Object>{
+            'paymentNumber' => 1,
+            'paymentDate' => formatDateISO(Date.today().addDays(7)),
+            'totalPayment' => 500.00,
+            'setupFee' => 100.00,
+            'bankingFee' => 35.00,
+            'programPayment' => 200.00,
+            'escrowPayment' => 165.00
+        });
+
+        Map<String, Object> calculations = new Map<String, Object>{
+            'totalDebt' => 50000,
+            'weeklyPayment' => 500,
+            'programLength' => 48,
+            'paymentSchedule' => schedule
+        };
+
+        Test.startTest();
+        Id draftId = PaymentCalculatorController.saveDraftV2(opp.Id, 'DCG MOD CA Auto Test', config, null, calculations);
+        // Set as primary to trigger the auto-disable
+        PaymentCalculatorController.setPrimaryDraft(draftId);
+        Test.stopTest();
+
+        // Verify No_Fee_Program__c is auto-disabled
+        Opportunity updatedOpp = [SELECT No_Fee_Program__c, Program_Type__c FROM Opportunity WHERE Id = :opp.Id];
+        System.assertEquals(false, updatedOpp.No_Fee_Program__c, 'No_Fee_Program__c should be auto-disabled for DCG MOD CA');
+        System.assertEquals('DCG MOD CA', updatedOpp.Program_Type__c, 'Program_Type__c should be DCG MOD CA');
+    }
+
+    /**
+     * Test: DCG_MOD_CA with No_Fee_Program__c already false - no change needed
+     * Scenario: Opportunity has No_Fee_Program__c = false, draft with DCG_MOD_CA is set as primary
+     * Expected: Opportunity.No_Fee_Program__c should remain false
+     */
+    @isTest
+    static void testSetPrimaryDraft_DCG_MOD_CA_NoFeeProgramAlreadyFalse() {
+        Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
+
+        // Set No_Fee_Program__c to false initially
+        opp.No_Fee_Program__c = false;
+        opp.Program_Type__c = 'DCG MOD';
+        update opp;
+
+        // Create draft with DCG_MOD_CA
+        PaymentDraft__c draft = new PaymentDraft__c(
+            Opportunity__c = opp.Id,
+            Draft_Name__c = 'DCG MOD CA Already False',
+            Program_Type__c = 'DCG_MOD_CA',
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
+        );
+        insert draft;
+
+        Test.startTest();
+        PaymentCalculatorController.setPrimaryDraft(draft.Id);
+        Test.stopTest();
+
+        // Verify No_Fee_Program__c remains false
+        Opportunity updatedOpp = [SELECT No_Fee_Program__c, Program_Type__c FROM Opportunity WHERE Id = :opp.Id];
+        System.assertEquals(false, updatedOpp.No_Fee_Program__c, 'No_Fee_Program__c should remain false');
+        System.assertEquals('DCG MOD CA', updatedOpp.Program_Type__c, 'Program_Type__c should be DCG MOD CA');
+    }
+
+    /**
+     * Test: Verify Program_Type__c conversion from underscore to space format
+     * Scenario: Draft has Program_Type__c = 'DCG_MOD', should convert to 'DCG MOD' on Opportunity
+     * Expected: Opportunity.Program_Type__c should be 'DCG MOD' (with space)
+     */
+    @isTest
+    static void testSetPrimaryDraft_ProgramTypeFormatConversion() {
+        Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
+
+        // Create draft with underscore format
+        PaymentDraft__c draft = new PaymentDraft__c(
+            Opportunity__c = opp.Id,
+            Draft_Name__c = 'Format Conversion Test',
+            Program_Type__c = 'DCG_MOD',  // Underscore format
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
+        );
+        insert draft;
+
+        Test.startTest();
+        PaymentCalculatorController.setPrimaryDraft(draft.Id);
+        Test.stopTest();
+
+        // Verify Program_Type__c is converted to space format
+        Opportunity updatedOpp = [SELECT Program_Type__c FROM Opportunity WHERE Id = :opp.Id];
+        System.assertEquals('DCG MOD', updatedOpp.Program_Type__c, 'Program_Type__c should be converted to space format');
+    }
+
+    /**
+     * Test: Multiple drafts with different program types - only DCG_MOD_CA disables No Fee Program
+     * Scenario: Create multiple drafts, set each as primary in sequence
+     * Expected: Only DCG_MOD_CA should auto-disable No_Fee_Program__c
+     */
+    @isTest
+    static void testSetPrimaryDraft_MultipleProgramTypes() {
+        Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
+
+        // Create DCG_MOD draft
+        PaymentDraft__c draftMod = new PaymentDraft__c(
+            Opportunity__c = opp.Id,
+            Draft_Name__c = 'DCG MOD Draft',
+            Program_Type__c = 'DCG_MOD',
+            No_Fee_Program__c = true,
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
+        );
+        insert draftMod;
+
+        // Create DCG_MOD_CA draft
+        PaymentDraft__c draftModCa = new PaymentDraft__c(
+            Opportunity__c = opp.Id,
+            Draft_Name__c = 'DCG MOD CA Draft',
+            Program_Type__c = 'DCG_MOD_CA',
+            Is_Active__c = true,
+            Created_By_Calculator__c = true
+        );
+        insert draftModCa;
+
+        Test.startTest();
+
+        // Set DCG_MOD as primary first - No_Fee_Program__c should be true (from draft)
+        PaymentCalculatorController.setPrimaryDraft(draftMod.Id);
+        Opportunity oppAfterMod = [SELECT No_Fee_Program__c, Program_Type__c FROM Opportunity WHERE Id = :opp.Id];
+        System.assertEquals(true, oppAfterMod.No_Fee_Program__c, 'No_Fee_Program__c should be true after DCG MOD');
+        System.assertEquals('DCG MOD', oppAfterMod.Program_Type__c, 'Program_Type__c should be DCG MOD');
+
+        // Set DCG_MOD_CA as primary - No_Fee_Program__c should be auto-disabled
+        PaymentCalculatorController.setPrimaryDraft(draftModCa.Id);
+        Opportunity oppAfterModCa = [SELECT No_Fee_Program__c, Program_Type__c FROM Opportunity WHERE Id = :opp.Id];
+        System.assertEquals(false, oppAfterModCa.No_Fee_Program__c, 'No_Fee_Program__c should be auto-disabled after DCG MOD CA');
+        System.assertEquals('DCG MOD CA', oppAfterModCa.Program_Type__c, 'Program_Type__c should be DCG MOD CA');
+
+        Test.stopTest();
+    }
+
 }

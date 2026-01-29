@@ -1263,10 +1263,10 @@ public with sharing class PaymentCalculatorController {
             hasUpdates = true;
             updatedFields.add('Program_Type__c');
 
-            // If DCG MOD CA is selected, auto-enable No Fee Program
+            // If DCG MOD CA is selected, auto-disable No Fee Program
             if (draft.Program_Type__c.toUpperCase().contains('DCG_MOD_CA') || programTypeValue.toUpperCase().contains('DCG MOD CA')) {
-                opp.No_Fee_Program__c = true;
-                updatedFields.add('No_Fee_Program__c (auto-set for DCG MOD CA)');
+                opp.No_Fee_Program__c = false;
+                updatedFields.add('No_Fee_Program__c (auto-disabled for DCG MOD CA)');
             }
         }
         if (draft.Settlement_Percentage__c != null) {
@@ -1572,10 +1572,10 @@ public with sharing class PaymentCalculatorController {
                 System.debug('[updateOpportunityFromDraft] Setting Program_Type__c to: ' + picklistValue);
                 hasUpdates = true;
 
-                // If DCG MOD CA is selected, auto-enable No Fee Program
+                // If DCG MOD CA is selected, auto-disable No Fee Program
                 if (programType == 'DCG_MOD_CA') {
-                    opp.No_Fee_Program__c = true;
-                    System.debug('[updateOpportunityFromDraft] DCG MOD CA selected - auto-enabling No_Fee_Program__c');
+                    opp.No_Fee_Program__c = false;
+                    System.debug('[updateOpportunityFromDraft] DCG MOD CA selected - auto-disabling No_Fee_Program__c');
                 }
             }
 
