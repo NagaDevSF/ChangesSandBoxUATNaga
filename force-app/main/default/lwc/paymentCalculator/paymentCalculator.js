@@ -109,6 +109,7 @@ export default class PaymentCalculator extends LightningElement {
     setupFeePayments = 10;
     setupFeeTotal = 1000;
     noFeeProgram = false;
+    isCaState = false;  // Track if Account's Billing State is CA
 
     // Payment Schedule Settings
     firstDraftDate = '';
@@ -335,14 +336,20 @@ export default class PaymentCalculator extends LightningElement {
             console.log('[PaymentCalculator] Record data loaded for recordId:', this.recordId);
             //const state = data.fields.State?.value;
             const state = getFieldValue(data, OPP_ACCOUNT_STATE);
-            // CA State Special: Auto-enable No-Fee program
-            if (state === 'CA' && !this.selectedDraftId) {
-                console.log('[PaymentCalculator] CA state detected, enabling No-Fee program');
+            // CA State Special: Auto-select DCG MOD CA and disable other program types
+            if (state === 'CA') {
+                console.log('[PaymentCalculator] CA state detected, auto-selecting DCG MOD CA');
+                this.isCaState = true;
+                // Always auto-select DCG MOD CA for California accounts
+                this.programType = 'DCG_MOD_CA';
                 this.noFeeProgram = true;
-                // Setup fee is automatically set from config when No-Fee is enabled
                 this.setupFeeTotal = this._noFeeSetupFee;
                 this.programFeePercent = 0;
-                this.showToast('Info', 'California No-Fee Program automatically applied', 'info', false);
+                this.programSplitRatio = 0.50;
+                this.escrowSplitRatio = 0.50;
+                this.showToast('Info', 'California account detected - DCG MOD CA automatically selected', 'info', false);
+            } else {
+                this.isCaState = false;
             }
         } else if (error) {
             console.error('[PaymentCalculator] Error loading record:', error);
@@ -443,7 +450,10 @@ export default class PaymentCalculator extends LightningElement {
         this.selectedDraftId = draftId || this.selectedDraftId;
 
         // Apply configuration values with nullish coalescing for defaults
-        this.programType = cfg.programType ?? this.programType;
+        // For CA accounts, always use DCG_MOD_CA regardless of draft settings
+        if (!this.isCaState) {
+            this.programType = cfg.programType ?? this.programType;
+        }
         // Normalize paymentFrequency to uppercase (handles 'Weekly'/'Monthly' from saved drafts)
         const freq = cfg.paymentFrequency?.toUpperCase?.() ?? this.paymentFrequency;
         this.paymentFrequency = (freq === 'WEEKLY' || freq === 'MONTHLY') ? freq : this.paymentFrequency;
@@ -452,7 +462,12 @@ export default class PaymentCalculator extends LightningElement {
         this.targetPaymentAmount = cfg.targetPaymentAmount ?? this.targetPaymentAmount;
         this.setupFeePayments = cfg.setupFeePayments ?? this.setupFeePayments;
         this.setupFeeTotal = cfg.setupFeeTotal ?? this.setupFeeTotal;
-        this.noFeeProgram = cfg.noFeeProgram ?? this.noFeeProgram;
+        // For CA accounts, always enable No Fee Program
+        if (this.isCaState) {
+            this.noFeeProgram = true;
+        } else {
+            this.noFeeProgram = cfg.noFeeProgram ?? this.noFeeProgram;
+        }
         this.settlementPercent = cfg.settlementPercent ?? this.settlementPercent;
         this.programFeePercent = cfg.programFeePercent ?? this.programFeePercent;
         this.bankingFee = cfg.bankingFee ?? this.bankingFee;
@@ -648,6 +663,11 @@ export default class PaymentCalculator extends LightningElement {
 
     // Event Handlers
     handleProgramTypeMod() {
+        // Disable DCG MOD selection for California accounts
+        if (this.isCaState) {
+            console.log('[PaymentCalculator] DCG MOD disabled for CA state');
+            return;
+        }
         console.log('[PaymentCalculator] === MOD CARD CLICKED ===');
         console.log('[PaymentCalculator] Previous programType:', this.programType);
         this.programType = 'DCG_MOD';
@@ -661,6 +681,11 @@ export default class PaymentCalculator extends LightningElement {
     }
 
     handleProgramTypeDebt() {
+        // Disable DCG DEBT selection for California accounts
+        if (this.isCaState) {
+            console.log('[PaymentCalculator] DCG DEBT disabled for CA state');
+            return;
+        }
         console.log('[PaymentCalculator] === DEBT CARD CLICKED ===');
         console.log('[PaymentCalculator] Previous programType:', this.programType);
         this.programType = 'DCG_DEBT';
@@ -1079,6 +1104,15 @@ export default class PaymentCalculator extends LightningElement {
     }
 
     async handleSaveDraft() {
+        // Validate payment schedule exists before saving
+        if (!this.paymentSchedule || this.paymentSchedule.length === 0) {
+            this.showToast('Error', 'Cannot save draft: Payment schedule is empty. Please wait for calculation to complete.', 'error', false);
+            console.error('[PaymentCalculator] handleSaveDraft blocked - paymentSchedule is empty');
+            return;
+        }
+        console.log('[PaymentCalculator] handleSaveDraft - paymentSchedule has', this.paymentSchedule.length, 'items');
+        console.log('[PaymentCalculator] handleSaveDraft - first item:', JSON.stringify(this.paymentSchedule[0]));
+
         try {
             this.isLoading = true;
             const config = {
@@ -1114,24 +1148,33 @@ export default class PaymentCalculator extends LightningElement {
                 ? (weeklySavings / this.currentPayment) * 100
                 : 0;
 
+            // Deep clone paymentSchedule to strip any LWC Proxy wrappers that may prevent proper serialization
+            // This ensures the array items are plain JavaScript objects when sent to Apex
+            const cleanPaymentSchedule = JSON.parse(JSON.stringify(this.paymentSchedule || []));
+            console.log('[PaymentCalculator] saveDraftV2 - cleanPaymentSchedule length:', cleanPaymentSchedule.length);
+            console.log('[PaymentCalculator] saveDraftV2 - cleanPaymentSchedule[0]:', JSON.stringify(cleanPaymentSchedule[0]));
+
+            const calculationsToSend = {
+                ...this.calculations,
+                paymentSchedule: cleanPaymentSchedule,
+                weeklyPayment: baseWeeklyPayment,
+                totalDebt: this.totalDebt,
+                currentPayment: this.currentPayment,
+                newWeeklyPayment: baseWeeklyPayment,
+                weeklySavings: weeklySavings,
+                percentSavings: percentSavings,
+                firstDraftDate: this.firstDraftDate
+            };
+            console.log('[PaymentCalculator] saveDraftV2 - calculationsOptional keys:', Object.keys(calculationsToSend));
+            console.log('[PaymentCalculator] saveDraftV2 - paymentSchedule length:', calculationsToSend.paymentSchedule?.length);
+            console.log('[PaymentCalculator] saveDraftV2 - paymentSchedule[0] (sending):', JSON.stringify(calculationsToSend.paymentSchedule?.[0]));
+
             const newId = await saveDraftV2({
                 recordId: this.recordId,
                 draftName: `Draft ${new Date().toLocaleString()}`,
                 config: config,
                 draftIdToOverwrite: null,
-                calculationsOptional: {
-                    ...this.calculations,
-                    paymentSchedule: this.paymentSchedule,
-                    // Use backend's enforced weeklyPayment (includes minimum enforcement)
-                    weeklyPayment: baseWeeklyPayment,
-                    // Summary values that match UI display
-                    totalDebt: this.totalDebt,
-                    currentPayment: this.currentPayment,
-                    newWeeklyPayment: baseWeeklyPayment,
-                    weeklySavings: weeklySavings,
-                    percentSavings: percentSavings,
-                    firstDraftDate: this.firstDraftDate
-                }
+                calculationsOptional: calculationsToSend
             });
 
             this.showToast('Success', 'Draft saved successfully', 'success', false);
@@ -1154,6 +1197,14 @@ export default class PaymentCalculator extends LightningElement {
             this.showToast('Info', 'No draft loaded to update', 'info', false);
             return;
         }
+        // Validate payment schedule exists before updating
+        if (!this.paymentSchedule || this.paymentSchedule.length === 0) {
+            this.showToast('Error', 'Cannot update draft: Payment schedule is empty. Please wait for calculation to complete.', 'error', false);
+            console.error('[PaymentCalculator] handleUpdateDraft blocked - paymentSchedule is empty');
+            return;
+        }
+        console.log('[PaymentCalculator] handleUpdateDraft - paymentSchedule has', this.paymentSchedule.length, 'items');
+
         try {
             this.isLoading = true;
             const config = {
@@ -1189,24 +1240,30 @@ export default class PaymentCalculator extends LightningElement {
                 ? (weeklySavings / this.currentPayment) * 100
                 : 0;
 
+            // Deep clone paymentSchedule to strip any LWC Proxy wrappers that may prevent proper serialization
+            const cleanPaymentSchedule = JSON.parse(JSON.stringify(this.paymentSchedule || []));
+            console.log('[PaymentCalculator] saveDraftV2 UPDATE - cleanPaymentSchedule length:', cleanPaymentSchedule.length);
+
+            const calculationsToSend = {
+                ...this.calculations,
+                paymentSchedule: cleanPaymentSchedule,
+                weeklyPayment: baseWeeklyPayment,
+                totalDebt: this.totalDebt,
+                currentPayment: this.currentPayment,
+                newWeeklyPayment: baseWeeklyPayment,
+                weeklySavings: weeklySavings,
+                percentSavings: percentSavings,
+                firstDraftDate: this.firstDraftDate
+            };
+            console.log('[PaymentCalculator] saveDraftV2 UPDATE - paymentSchedule length:', calculationsToSend.paymentSchedule?.length);
+            console.log('[PaymentCalculator] saveDraftV2 UPDATE - paymentSchedule[0]:', JSON.stringify(calculationsToSend.paymentSchedule?.[0]));
+
             const updatedId = await saveDraftV2({
                 recordId: this.recordId,
                 draftName: `Updated ${new Date().toLocaleString()}`,
                 config: config,
                 draftIdToOverwrite: this.selectedDraftId,
-                calculationsOptional: {
-                    ...this.calculations,
-                    paymentSchedule: this.paymentSchedule,
-                    // Use backend's enforced weeklyPayment (includes minimum enforcement)
-                    weeklyPayment: baseWeeklyPayment,
-                    // Summary values that match UI display
-                    totalDebt: this.totalDebt,
-                    currentPayment: this.currentPayment,
-                    newWeeklyPayment: baseWeeklyPayment,
-                    weeklySavings: weeklySavings,
-                    percentSavings: percentSavings,
-                    firstDraftDate: this.firstDraftDate
-                }
+                calculationsOptional: calculationsToSend
             });
 
             this.showToast('Success', 'Draft updated', 'success', false);
@@ -1313,12 +1370,18 @@ export default class PaymentCalculator extends LightningElement {
     }
 
     get dcgModClass() {
-        const className = this.programType === 'DCG_MOD' ? 'selection-card selected' : 'selection-card';
+        let className = this.programType === 'DCG_MOD' ? 'selection-card selected' : 'selection-card';
+        if (this.isCaState) {
+            className += ' disabled';
+        }
         return className;
     }
 
     get dcgDebtClass() {
-        const className = this.programType === 'DCG_DEBT' ? 'selection-card selected' : 'selection-card';
+        let className = this.programType === 'DCG_DEBT' ? 'selection-card selected' : 'selection-card';
+        if (this.isCaState) {
+            className += ' disabled';
+        }
         return className;
     }
 

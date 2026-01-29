@@ -70,6 +70,14 @@
     background: #f3f2ff;
 }
 
+.selection-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+    background: #f5f5f5;
+    border-color: #e0e0e0;
+}
+
 .card-content {
     display: flex;
     justify-content: space-between;

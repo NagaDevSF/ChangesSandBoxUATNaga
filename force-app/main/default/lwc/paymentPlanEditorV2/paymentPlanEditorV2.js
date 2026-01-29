@@ -31,6 +31,7 @@ export default class PaymentPlanEditorV2 extends LightningElement {
    setupFeePayments = 10;
    setupFeeTotal = 1000;
    noFeeProgram = false;
+   isCaState = false;  // Track if Account's Billing State is CA
 
 
    // Payment Schedule Settings
@@ -204,10 +205,18 @@ export default class PaymentPlanEditorV2 extends LightningElement {
                this.setupFeeTotal = oppSetupFee;
            }
            const state = getFieldValue(data, OPP_ACCOUNT_STATE);
+           // CA State Special: Auto-select DCG MOD CA and disable other program types
            if (state === 'CA') {
+               console.log('[PaymentPlanEditorV2] CA state detected, auto-selecting DCG MOD CA');
+               this.isCaState = true;
+               this.programType = 'DCG_MOD_CA';
                this.noFeeProgram = true;
                this.programFeePercent = 0;
-               this.showToast('Info', 'California No-Fee Program automatically applied', 'info', false);
+               this.programSplitRatio = 0.50;
+               this.escrowSplitRatio = 0.50;
+               this.showToast('Info', 'California account detected - DCG MOD CA automatically selected', 'info', false);
+           } else {
+               this.isCaState = false;
            }
        } else if (error) {
            console.error('[PaymentPlanEditorV2] Error loading record:', error);
@@ -329,6 +338,11 @@ export default class PaymentPlanEditorV2 extends LightningElement {
    // Event Handlers
    // Note: Setup fee is read from Opportunity.Setup_Fee__c field, not changed by program type
    handleProgramTypeMod() {
+       // Disable DCG MOD selection for California accounts
+       if (this.isCaState) {
+           console.log('[PaymentPlanEditorV2] DCG MOD disabled for CA state');
+           return;
+       }
        this.programType = 'DCG_MOD';
        this.programSplitRatio = 0.50;
        this.escrowSplitRatio = 0.50;
@@ -338,6 +352,11 @@ export default class PaymentPlanEditorV2 extends LightningElement {
 
 
    handleProgramTypeDebt() {
+       // Disable DCG DEBT selection for California accounts
+       if (this.isCaState) {
+           console.log('[PaymentPlanEditorV2] DCG DEBT disabled for CA state');
+           return;
+       }
        this.programType = 'DCG_DEBT';
        if (this.noFeeProgram) {
            this.noFeeProgram = false;
@@ -1081,12 +1100,20 @@ export default class PaymentPlanEditorV2 extends LightningElement {
 
 
    get dcgModClass() {
-       return this.programType === 'DCG_MOD' ? 'selection-card selected' : 'selection-card';
+       let className = this.programType === 'DCG_MOD' ? 'selection-card selected' : 'selection-card';
+       if (this.isCaState) {
+           className += ' disabled';
+       }
+       return className;
    }
 
 
    get dcgDebtClass() {
-       return this.programType === 'DCG_DEBT' ? 'selection-card selected' : 'selection-card';
+       let className = this.programType === 'DCG_DEBT' ? 'selection-card selected' : 'selection-card';
+       if (this.isCaState) {
+           className += ' disabled';
+       }
+       return className;
    }
 
 
