@@ -144,11 +144,13 @@ public with sharing class SalesCalculatorService {
      * Apply parameters from UI to payment plan
      */
     private static void applyParameters(PaymentPlan__c plan, Map<String, Object> params) {
-        // Program configuration
-        plan.Program_Type__c = getString(params, 'programType', 'DCG_MOD');
+        // Program configuration - params use underscore format (DCG_MOD), picklist uses space format (DCG MOD)
+        String programTypeParam = getString(params, 'programType', 'DCG_MOD');
+        // Convert underscore to space for picklist field
+        plan.Program_Type__c = programTypeParam.replace('_', ' ');
 
-        // Load CMDT defaults for this program type - fail fast if unavailable
-        PaymentCalcConfigSvc.ConfigDTO programCfg = PaymentCalcConfigSvc.getRequiredConfigForProgram(plan.Program_Type__c);
+        // Load CMDT defaults for this program type - CMDT uses underscore format
+        PaymentCalcConfigSvc.ConfigDTO programCfg = PaymentCalcConfigSvc.getRequiredConfigForProgram(programTypeParam);
         PaymentCalcConfigSvc.ConfigDTO baseCfg = PaymentCalcConfigSvc.getRequiredConfig();
 
         plan.Settlement_Percentage__c = getDecimal(params, 'settlementPercentage', programCfg.settlementPercent);
@@ -338,7 +340,9 @@ public with sharing class SalesCalculatorService {
      * Get program split ratio based on program type - fail fast if config unavailable
      */
     private static Decimal getProgramSplitRatio(String programType) {
-        PaymentCalcConfigSvc.ConfigDTO cfg = PaymentCalcConfigSvc.getRequiredConfigForProgram(programType);
+        // Convert space format (picklist) to underscore format (CMDT)
+        String configKey = programType != null ? programType.replace(' ', '_') : null;
+        PaymentCalcConfigSvc.ConfigDTO cfg = PaymentCalcConfigSvc.getRequiredConfigForProgram(configKey);
         return cfg.programSplitRatio;
     }
     
@@ -439,4 +443,23 @@ public with sharing class SalesCalculatorService {
      * Custom exception for calculation errors
      */
     public class CalculationException extends Exception {}
+
+    /**
+     * @TestVisible method to test the post-insert schedule generation flow
+     * This method performs the same operations as lines 38-47 of calculatePaymentPlan
+     * @param plan The payment plan (must be inserted)
+     * @param calc The calculation result
+     */
+    @TestVisible
+    private static void updatePlanWithSchedule(PaymentPlan__c plan, CalculationResult calc) {
+        // Generate payment schedule items (line 38)
+        List<Payment_Schedule_Item__c> scheduleItems = generatePaymentSchedule(plan, calc);
+
+        // Store schedule in JSON for quick access (lines 41-42)
+        plan.Payment_Schedule_JSON__c = JSON.serialize(scheduleItems);
+        plan.Schedule_Item_Count__c = scheduleItems.size();
+
+        // Update the plan with schedule info (line 45)
+        Database.update(plan, AccessLevel.USER_MODE);
+    }
 }
