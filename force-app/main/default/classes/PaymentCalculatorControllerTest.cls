@@ -1725,25 +1725,27 @@ public class PaymentCalculatorControllerTest {
     }
 
     /**
-     * Test: DCG_DEBT does NOT auto-disable No_Fee_Program__c
-     * Scenario: Opportunity has No_Fee_Program__c = true, draft with DCG_DEBT is set as primary
-     * Expected: Opportunity.No_Fee_Program__c should remain true (not auto-disabled)
+     * Test: DCG_DEBT keeps No_Fee_Program__c as false
+     * Scenario: Draft with DCG_DEBT is set as primary
+     * Expected: Opportunity.No_Fee_Program__c should be false (validation rule prevents true)
+     * Note: Validation rule "Lock_NoFeeProg_considering_ProgramType" prevents No_Fee_Program__c = true
+     *       when Program_Type__c is "DCG MOD CA" or "DCG DEBT"
      */
     @isTest
-    static void testSetPrimaryDraft_DCG_DEBT_DoesNotAutoDisableNoFeeProgram() {
+    static void testSetPrimaryDraft_DCG_DEBT_KeepsNoFeeProgramFalse() {
         Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
 
-        // Set No_Fee_Program__c to true initially
-        opp.No_Fee_Program__c = true;
+        // Set up opportunity with DCG DEBT and No_Fee_Program__c = false (the only valid state)
+        opp.No_Fee_Program__c = false;
         opp.Program_Type__c = 'DCG DEBT';
         update opp;
 
-        // Create draft with DCG_DEBT
+        // Create draft with DCG_DEBT and No_Fee_Program__c = false
         PaymentDraft__c draft = new PaymentDraft__c(
             Opportunity__c = opp.Id,
             Draft_Name__c = 'DCG DEBT Test',
             Program_Type__c = 'DCG_DEBT',
-            No_Fee_Program__c = true,  // Draft has No Fee Program enabled
+            No_Fee_Program__c = false,  // Must be false for DCG DEBT per validation rule
             Is_Active__c = true,
             Created_By_Calculator__c = true
         );
@@ -1753,9 +1755,9 @@ public class PaymentCalculatorControllerTest {
         PaymentCalculatorController.setPrimaryDraft(draft.Id);
         Test.stopTest();
 
-        // Verify No_Fee_Program__c remains true (from draft value, not auto-disabled)
+        // Verify No_Fee_Program__c remains false (required by validation rule for DCG DEBT)
         Opportunity updatedOpp = [SELECT No_Fee_Program__c, Program_Type__c FROM Opportunity WHERE Id = :opp.Id];
-        System.assertEquals(true, updatedOpp.No_Fee_Program__c, 'No_Fee_Program__c should remain true for DCG DEBT');
+        System.assertEquals(false, updatedOpp.No_Fee_Program__c, 'No_Fee_Program__c must be false for DCG DEBT');
         System.assertEquals('DCG DEBT', updatedOpp.Program_Type__c, 'Program_Type__c should be DCG DEBT');
     }
 
