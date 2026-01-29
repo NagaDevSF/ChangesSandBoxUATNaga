@@ -264,19 +264,15 @@ export default class PaymentPlanEditor extends LightningElement {
 
     /**
      * Build label for dropdown: "PP-00052 v1 (Active)"
+     * Uses Version_Status__c from database to show actual status
      */
     buildPlanLabel(wrapper) {
         const name = wrapper.paymentPlan?.Name || 'Plan';
         const version = wrapper.versionNumber || 1;
         const status = wrapper.paymentPlan?.Version_Status__c || wrapper.versionStatus || '';
-        const isActive = wrapper.paymentPlan?.Is_Active__c;
 
         let statusLabel = '';
-        if (isActive) {
-            statusLabel = ' (Active)';
-        } else if (status === 'Draft') {
-            statusLabel = ' (Draft)';
-        } else if (status) {
+        if (status) {
             statusLabel = ` (${status})`;
         }
 
