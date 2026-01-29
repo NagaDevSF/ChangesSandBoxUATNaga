@@ -12,10 +12,10 @@ public class PaymentPlanService {
 			// TODO calling service does an opp query, refactor to pass in the needed data
 			PaymentPlan__c thisPP = SalesCalculatorService.createNewVersion(opp.Id);
 
-			// Set plan as Active when created from contract signing
-			thisPP.Status__c = 'Active';
-			thisPP.Version_Status__c = 'Active';
-			thisPP.Is_Active__c = true;
+			// Set plan as Draft when created from contract signing
+			thisPP.Status__c = 'Draft';
+			thisPP.Version_Status__c = 'Draft';
+			thisPP.Is_Active__c = false;
 
 			// blend in the paymentdraft data into the PaymentPlan__c record
 			PaymentDraft__c thisDraft = primaryDraftMap.get(opp.Id);
