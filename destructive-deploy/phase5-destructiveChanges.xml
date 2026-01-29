@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <!-- Phase 5: Delete LWCs that are blocking other deletions -->
+
+    <!-- LWCs that reference PaymentCalcConfigSvc and other components -->
+    <types>
+        <members>paymentCalculator</members>
+        <members>paymentPlanEditorV2</members>
+        <members>paymentPlanEditor</members>
+        <members>paymentPlanTable</members>
+        <members>paymentPlanViewer</members>
+        <name>LightningComponentBundle</name>
+    </types>
+
+    <version>59.0</version>
+</Package>

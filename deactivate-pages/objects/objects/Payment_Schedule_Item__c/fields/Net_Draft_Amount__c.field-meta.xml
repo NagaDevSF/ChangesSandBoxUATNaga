@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Net_Draft_Amount__c</fullName>
+    <description>Net amount after deducting fees that goes to program/escrow split</description>
+    <externalId>false</externalId>
+    <label>Net Draft Amount</label>
+    <precision>10</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackTrending>false</trackTrending>
+    <type>Currency</type>
+</CustomField>

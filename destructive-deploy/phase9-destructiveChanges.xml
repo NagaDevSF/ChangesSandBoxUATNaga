@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <!-- Phase 9: Delete remaining Apex classes and triggers -->
+
+    <!-- Apex Classes -->
+    <types>
+        <members>PaymentPlanService</members>
+        <members>PaymentPlanServiceTest</members>
+        <members>PaymentPlanVersionService</members>
+        <members>PaymentPlanVersionServiceTest</members>
+        <members>PaymentPlanTriggerHandler</members>
+        <members>PaymentPlanVersionController</members>
+        <members>PaymentPlanVersionControllerTest</members>
+        <members>PaymentScheduleItemTriggerHandler</members>
+        <members>FeeSettlementDetailService</members>
+        <members>FeeSettlementDetailServiceTest</members>
+        <members>SalesCalculatorService</members>
+        <members>SalesCalculatorServiceTest</members>
+        <members>ApprovalService</members>
+        <members>ApprovalServiceTest</members>
+        <members>PaymentCalcConfigException</members>
+        <members>PaymentCalcConfigSvcTest</members>
+        <name>ApexClass</name>
+    </types>
+
+    <!-- Apex Triggers -->
+    <types>
+        <members>PaymentPlanTrigger</members>
+        <members>PaymentScheduleItemTrigger</members>
+        <name>ApexTrigger</name>
+    </types>
+
+    <version>59.0</version>
+</Package>

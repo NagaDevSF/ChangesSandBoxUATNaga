@@ -1,8 +1,6 @@
 /**
- * @description Custom exception class for Settlement Calculator errors.
+ * @description Custom exception class for handling errors in the Settlement Calculator module.
  *              Provides specific error types for different failure scenarios.
- * @author Settlement Calculator Team
- * @date December 2025
  */
 public class SettlementCalculatorException extends Exception {
 

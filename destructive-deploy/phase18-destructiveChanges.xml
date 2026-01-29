@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <!-- Phase 18: Delete deactivated FlexiPages and blocked fields -->
+
+    <!-- FlexiPages (now deactivated) -->
+    <types>
+        <members>Payment_Schedule_Item_Record_Page</members>
+        <members>Fee_Settlement_Detail_Record_Page</members>
+        <name>FlexiPage</name>
+    </types>
+
+    <!-- Blocked field -->
+    <types>
+        <members>Payment_Schedule_Item__c.Wires_received__c</members>
+        <name>CustomField</name>
+    </types>
+
+    <version>59.0</version>
+</Package>

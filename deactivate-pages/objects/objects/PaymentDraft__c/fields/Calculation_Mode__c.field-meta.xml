@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Calculation_Mode__c</fullName>
+    <description>How the payment was calculated - by percent of current payment or desired payment amount</description>
+    <externalId>false</externalId>
+    <label>Calculation Mode</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>PERCENT</fullName>
+                <default>true</default>
+                <label>Percent</label>
+            </value>
+            <value>
+                <fullName>DESIRED</fullName>
+                <default>false</default>
+                <label>Desired Payment</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

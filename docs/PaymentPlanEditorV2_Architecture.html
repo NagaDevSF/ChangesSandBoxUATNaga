@@ -1,0 +1,2527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaymentPlanEditorV2 - Complete Architecture</title>
+    <style>
+        :root {
+            --primary-color: #5B5FCD;
+            --secondary-color: #16325c;
+            --success-color: #22c55e;
+            --warning-color: #eab308;
+            --danger-color: #ef4444;
+            --border-color: #dddbda;
+            --bg-light: #f3f2f2;
+            --bg-code: #1e1e1e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .toc {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .toc h2 {
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .toc ul {
+            list-style: none;
+            columns: 2;
+            column-gap: 40px;
+        }
+
+        .toc li {
+            margin-bottom: 8px;
+        }
+
+        .toc a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .toc a:hover {
+            color: var(--secondary-color);
+            text-decoration: underline;
+        }
+
+        section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        section h2 {
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        section h2 .badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        h3 {
+            color: var(--secondary-color);
+            margin: 25px 0 15px;
+            padding-left: 10px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        h4 {
+            color: #666;
+            margin: 20px 0 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--secondary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background: var(--bg-light);
+        }
+
+        tr:hover {
+            background: #e8e8e8;
+        }
+
+        .code-block {
+            background: var(--bg-code);
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin: 15px 0;
+        }
+
+        .code-block .comment {
+            color: #6a9955;
+        }
+
+        .code-block .keyword {
+            color: #569cd6;
+        }
+
+        .code-block .string {
+            color: #ce9178;
+        }
+
+        .code-block .number {
+            color: #b5cea8;
+        }
+
+        .code-block .function {
+            color: #dcdcaa;
+        }
+
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85em;
+            color: var(--danger-color);
+        }
+
+        .diagram {
+            background: #fafafa;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            white-space: pre;
+            margin: 15px 0;
+        }
+
+        .info-box {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .info-box.note {
+            background: #e7f3ff;
+            border-left: 4px solid #0066cc;
+        }
+
+        .info-box.warning {
+            background: #fff8e6;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .info-box.success {
+            background: #e6f7e6;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .info-box.danger {
+            background: #ffe6e6;
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .flex-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .flex-item {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-badge.existing {
+            background: #e6f7e6;
+            color: #22c55e;
+        }
+
+        .status-badge.new {
+            background: #e7f3ff;
+            color: #0066cc;
+        }
+
+        .status-badge.required {
+            background: #ffe6e6;
+            color: #ef4444;
+        }
+
+        .status-badge.optional {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .arrow {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 4px;
+        }
+
+        ul, ol {
+            margin: 10px 0 10px 25px;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--bg-light);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .card h4 {
+            margin-top: 0;
+            color: var(--secondary-color);
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .toc ul {
+                columns: 1;
+            }
+
+            .flex-container {
+                flex-direction: column;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PaymentPlanEditorV2</h1>
+            <p>Complete Architecture Documentation</p>
+            <p style="font-size: 0.9rem; margin-top: 10px;">Last Updated: January 2025</p>
+        </header>
+
+        <!-- Table of Contents -->
+        <nav class="toc">
+            <h2>Table of Contents</h2>
+            <ul>
+                <li><a href="#overview">1. System Overview</a></li>
+                <li><a href="#file-structure">2. File Structure</a></li>
+                <li><a href="#component-architecture">3. Component Architecture</a></li>
+                <li><a href="#data-model">4. Data Model</a></li>
+                <li><a href="#apex-controllers">5. Apex Controllers</a></li>
+                <li><a href="#data-flow">6. Data Flow</a></li>
+                <li><a href="#lwc-field-mapping">7. LWC Field Mapping</a></li>
+                <li><a href="#calculation-formulas">8. Calculation Formulas</a></li>
+                <li><a href="#state-management">9. State Management</a></li>
+                <li><a href="#ui-components">10. UI Components</a></li>
+                <li><a href="#css-architecture">11. CSS Architecture</a></li>
+                <li><a href="#summary">12. Summary</a></li>
+            </ul>
+        </nav>
+
+        <!-- Section 1: System Overview -->
+        <section id="overview">
+            <h2><span class="badge">1</span> System Overview</h2>
+
+            <p><strong>PaymentPlanEditorV2</strong> is a Lightning Web Component (LWC) that serves as a <strong>Payment Plan Calculator</strong> for Salesforce Opportunities in a debt settlement/modification business context.</p>
+
+            <h3>Purpose</h3>
+            <ul>
+                <li>Calculate payment plans based on client's debt and current payment</li>
+                <li>Preview payment schedules before committing</li>
+                <li>Save calculator settings to Opportunity (NOT create Payment Plan records)</li>
+                <li>Support multiple program types (DCG MOD, DCG DEBT, DCG MOD CA)</li>
+            </ul>
+
+            <h3>Key Characteristics</h3>
+            <div class="grid-2">
+                <div class="card">
+                    <h4>✓ Read-only Calculator</h4>
+                    <p>Does not create PaymentPlan__c records - only previews and saves settings</p>
+                </div>
+                <div class="card">
+                    <h4>✓ Saves to Opportunity</h4>
+                    <p>Stores calculator settings in Opportunity fields for later use</p>
+                </div>
+                <div class="card">
+                    <h4>✓ Real-time Preview</h4>
+                    <p>Shows payment schedule as user adjusts parameters</p>
+                </div>
+                <div class="card">
+                    <h4>✓ Config-driven</h4>
+                    <p>All limits/fees from Custom Metadata Type</p>
+                </div>
+            </div>
+
+            <h3>Program Types Supported</h3>
+            <table>
+                <tr>
+                    <th>Program</th>
+                    <th>Program Split</th>
+                    <th>Escrow Split</th>
+                    <th>No-Fee Available</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><code>DCG_MOD</code></td>
+                    <td>50%</td>
+                    <td>50%</td>
+                    <td>Yes</td>
+                    <td>Modification program</td>
+                </tr>
+                <tr>
+                    <td><code>DCG_DEBT</code></td>
+                    <td>70%</td>
+                    <td>30%</td>
+                    <td>No</td>
+                    <td>Debt settlement program</td>
+                </tr>
+                <tr>
+                    <td><code>DCG_MOD_CA</code></td>
+                    <td>50%</td>
+                    <td>50%</td>
+                    <td>Auto-enabled</td>
+                    <td>California variant (No-Fee automatic)</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Section 2: File Structure -->
+        <section id="file-structure">
+            <h2><span class="badge">2</span> File Structure</h2>
+
+            <div class="code-block">
+force-app/main/default/
+├── lwc/
+│   └── paymentPlanEditorV2/
+│       ├── paymentPlanEditorV2.js           <span class="comment"># Main controller (1237 lines)</span>
+│       ├── paymentPlanEditorV2.html         <span class="comment"># Template (192 lines)</span>
+│       ├── paymentPlanEditorV2.css          <span class="comment"># Styles (429 lines)</span>
+│       └── paymentPlanEditorV2.js-meta.xml  <span class="comment"># Metadata config</span>
+│
+├── classes/
+│   ├── PaymentCalculatorController.cls      <span class="comment"># Calculation engine (~1800 lines)</span>
+│   ├── PaymentPlanEditorController.cls      <span class="comment"># CRUD operations (~3300 lines)</span>
+│   └── PaymentCalcConfigSvc.cls             <span class="comment"># Config service (534 lines)</span>
+│
+└── objects/
+    ├── Opportunity/                          <span class="comment"># Standard object (extended)</span>
+    ├── PaymentPlan__c/                       <span class="comment"># Payment plan records</span>
+    ├── Payment_Schedule_Item__c/             <span class="comment"># Individual payments</span>
+    ├── Payment_Fee__c/                       <span class="comment"># Fee tracking</span>
+    └── Payment_Calc_Config__mdt/             <span class="comment"># Configuration</span>
+            </div>
+
+            <h3>Component Metadata</h3>
+            <table>
+                <tr>
+                    <th>Property</th>
+                    <th>Value</th>
+                </tr>
+                <tr><td>API Version</td><td>60.0</td></tr>
+                <tr><td>Exposed</td><td>Yes</td></tr>
+                <tr><td>Master Label</td><td>Payment Plan Editor V2</td></tr>
+                <tr><td>Targets</td><td>lightning__RecordPage, lightning__AppPage, lightning__HomePage</td></tr>
+                <tr><td>Object</td><td>Opportunity</td></tr>
+                <tr><td>Form Factors</td><td>Large, Small</td></tr>
+            </table>
+        </section>
+
+        <!-- Section 3: Component Architecture -->
+        <section id="component-architecture">
+            <h2><span class="badge">3</span> Component Architecture</h2>
+
+            <h3>Component Hierarchy</h3>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────────────┐
+│                    PaymentPlanEditorV2                               │
+│                    (Parent Component)                                │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌───────────────────────────────────────────────────────────────┐ │
+│  │                    c-summary-stats                             │ │
+│  │                    (Child Component)                           │ │
+│  │  Props: items, weekly-payment, program-length,                 │ │
+│  │         current-payment, total-savings, total-debt,            │ │
+│  │         first-draft-date                                       │ │
+│  └───────────────────────────────────────────────────────────────┘ │
+│                                                                     │
+│  ┌───────────────────────────────────────────────────────────────┐ │
+│  │                    Program Settings Section                    │ │
+│  │  - Program Type Cards (DCG MOD | DCG DEBT | DCG MOD CA)       │ │
+│  │  - No-Fee Program Toggle                                       │ │
+│  │  - Calculate By Toggle (% of Current | Desired Payment)       │ │
+│  │  - Target Payment Slider/Input                                 │ │
+│  │  - Number of Weeks Input (Desired Mode only)                  │ │
+│  │  - Setup Fee Payment Plan Slider                              │ │
+│  │  - First Draft Date Input                                      │ │
+│  │  - Save to Opportunity Button                                  │ │
+│  └───────────────────────────────────────────────────────────────┘ │
+│                                                                     │
+│  ┌───────────────────────────────────────────────────────────────┐ │
+│  │                    c-payment-plan-editor                       │ │
+│  │                    (Child Component)                           │ │
+│  │  Props: record-id                                              │ │
+│  │  Purpose: Display/edit actual Payment Plan records             │ │
+│  └───────────────────────────────────────────────────────────────┘ │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+            </div>
+
+            <h3>Import Statements</h3>
+            <table>
+                <tr>
+                    <th>Import</th>
+                    <th>Source</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>LightningElement, api, wire, track</code></td>
+                    <td>lwc</td>
+                    <td>LWC framework decorators and base class</td>
+                </tr>
+                <tr>
+                    <td><code>getRecord, getFieldValue</code></td>
+                    <td>lightning/uiRecordApi</td>
+                    <td>Wire adapter to read Salesforce records</td>
+                </tr>
+                <tr>
+                    <td><code>ShowToastEvent</code></td>
+                    <td>lightning/platformShowToastEvent</td>
+                    <td>Toast notifications</td>
+                </tr>
+                <tr>
+                    <td><code>calculatePaymentPlan</code></td>
+                    <td>PaymentCalculatorController</td>
+                    <td>Main calculation engine</td>
+                </tr>
+                <tr>
+                    <td><code>updateOpportunityOnly</code></td>
+                    <td>PaymentPlanEditorController</td>
+                    <td>Save settings to Opportunity</td>
+                </tr>
+                <tr>
+                    <td><code>getRequiredConfig</code></td>
+                    <td>PaymentCalcConfigSvc</td>
+                    <td>Load default config from CMDT</td>
+                </tr>
+                <tr>
+                    <td><code>getRequiredConfigForProgram</code></td>
+                    <td>PaymentCalcConfigSvc</td>
+                    <td>Load program-specific config</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Section 4: Data Model -->
+        <section id="data-model">
+            <h2><span class="badge">4</span> Data Model</h2>
+
+            <h3>Entity Relationship Diagram</h3>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                 │
+│  Account (Standard)                                                             │
+│     │                                                                           │
+│     │ 1:N                                                                       │
+│     ▼                                                                           │
+│  Opportunity (Standard) ◄──── PaymentPlanEditorV2 saves calculator settings     │
+│     │                                                                           │
+│     │ 1:N (Lookup)                                                              │
+│     ▼                                                                           │
+│  PaymentPlan__c (Custom) ◄──── Created by c-payment-plan-editor                 │
+│     │                                                                           │
+│     │ 1:N (Master-Detail)                                                       │
+│     ▼                                                                           │
+│  Payment_Schedule_Item__c (Custom)                                              │
+│     │                                                                           │
+│     │ 1:N (Master-Detail)                                                       │
+│     ▼                                                                           │
+│  Payment_Fee__c (Custom)                                                        │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+            </div>
+
+            <h3>Opportunity Fields</h3>
+            <h4>Input Fields (Read by Calculator)</h4>
+            <table>
+                <tr>
+                    <th>Field API Name</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>LWC Property</th>
+                </tr>
+                <tr>
+                    <td><code>Estimated_Total_Debt__c</code></td>
+                    <td>Currency</td>
+                    <td>Total debt amount to settle</td>
+                    <td><code>totalDebt</code></td>
+                </tr>
+                <tr>
+                    <td><code>Estimated_Current_Payment__c</code></td>
+                    <td>Currency</td>
+                    <td>Client's current monthly payment</td>
+                    <td><code>currentPayment</code></td>
+                </tr>
+                <tr>
+                    <td><code>Setup_Fee__c</code></td>
+                    <td>Currency</td>
+                    <td>Setup fee amount</td>
+                    <td><code>setupFeeTotal</code></td>
+                </tr>
+                <tr>
+                    <td><code>Account.BillingState</code></td>
+                    <td>Text</td>
+                    <td>Account state (CA = auto No-Fee)</td>
+                    <td><code>noFeeProgram</code> (if CA)</td>
+                </tr>
+            </table>
+
+            <h4>Output Fields (Written by Calculator)</h4>
+            <table>
+                <tr>
+                    <th>Field API Name</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>LWC Property</th>
+                </tr>
+                <tr>
+                    <td><code>Number_of_Weeks__c</code></td>
+                    <td>Number(4,0)</td>
+                    <td>Program duration in weeks</td>
+                    <td><code>calculations.programLength</code></td>
+                </tr>
+                <tr>
+                    <td><code>Est_weekly_payment__c</code></td>
+                    <td>Currency</td>
+                    <td>Calculated weekly payment</td>
+                    <td><code>calculations.weeklyPayment</code></td>
+                </tr>
+                <tr>
+                    <td><code>First_Draft_Date__c</code></td>
+                    <td>Date</td>
+                    <td>First payment date</td>
+                    <td><code>firstDraftDate</code></td>
+                </tr>
+                <tr>
+                    <td><code>Banking_Fee__c</code></td>
+                    <td>Currency</td>
+                    <td>Per-payment banking fee</td>
+                    <td><code>bankingFee</code></td>
+                </tr>
+                <tr>
+                    <td><code>Setup_Fee_Term__c</code></td>
+                    <td>Text</td>
+                    <td>Number of setup fee payments</td>
+                    <td><code>setupFeePayments</code></td>
+                </tr>
+                <tr>
+                    <td><code>No_Fee_Program__c</code></td>
+                    <td>Checkbox</td>
+                    <td>California No-Fee Program flag</td>
+                    <td><code>noFeeProgram</code></td>
+                </tr>
+                <tr>
+                    <td><code>Program_Type__c</code></td>
+                    <td>Picklist</td>
+                    <td>DCG MOD / DCG DEBT / DCG MOD CA</td>
+                    <td><code>programType</code></td>
+                </tr>
+                <tr>
+                    <td><code>Est_Settlement__c</code></td>
+                    <td>Picklist</td>
+                    <td>Settlement percentage</td>
+                    <td><code>settlementPercent</code></td>
+                </tr>
+                <tr>
+                    <td><code>Program_Fee__c</code></td>
+                    <td>Picklist</td>
+                    <td>Program fee percentage</td>
+                    <td><code>programFeePercent</code></td>
+                </tr>
+            </table>
+
+            <h3>PaymentPlan__c Fields</h3>
+            <table>
+                <tr>
+                    <th>Category</th>
+                    <th>Field API Name</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td rowspan="3">Relationships</td>
+                    <td><code>Opportunity__c</code></td>
+                    <td>Lookup</td>
+                    <td>Parent Opportunity</td>
+                </tr>
+                <tr>
+                    <td><code>Contract__c</code></td>
+                    <td>Lookup</td>
+                    <td>Related Contract</td>
+                </tr>
+                <tr>
+                    <td><code>Previous_Version__c</code></td>
+                    <td>Lookup(Self)</td>
+                    <td>Previous version for versioning</td>
+                </tr>
+                <tr>
+                    <td rowspan="8">Plan Settings</td>
+                    <td><code>Program_Type__c</code></td>
+                    <td>Picklist</td>
+                    <td>DCG_MOD / DCG_DEBT</td>
+                </tr>
+                <tr>
+                    <td><code>Weekly_Payment__c</code></td>
+                    <td>Currency</td>
+                    <td>Weekly payment amount</td>
+                </tr>
+                <tr>
+                    <td><code>Number_of_Payments__c</code></td>
+                    <td>Number</td>
+                    <td>Total payment count</td>
+                </tr>
+                <tr>
+                    <td><code>First_Payment_Date__c</code></td>
+                    <td>Date</td>
+                    <td>First draft date</td>
+                </tr>
+                <tr>
+                    <td><code>Banking_Fee__c</code></td>
+                    <td>Currency</td>
+                    <td>Per-payment banking fee</td>
+                </tr>
+                <tr>
+                    <td><code>Setup_Fee__c</code></td>
+                    <td>Currency</td>
+                    <td>Total setup fee</td>
+                </tr>
+                <tr>
+                    <td><code>Setup_Fee_Payments__c</code></td>
+                    <td>Number</td>
+                    <td>Setup fee payment count</td>
+                </tr>
+                <tr>
+                    <td><code>No_Fee_Program__c</code></td>
+                    <td>Checkbox</td>
+                    <td>No-Fee flag</td>
+                </tr>
+                <tr>
+                    <td rowspan="5">Calculated</td>
+                    <td><code>Total_Debt__c</code></td>
+                    <td>Currency</td>
+                    <td>Original debt amount</td>
+                </tr>
+                <tr>
+                    <td><code>Settlement_Amount__c</code></td>
+                    <td>Currency</td>
+                    <td>Debt × Settlement%</td>
+                </tr>
+                <tr>
+                    <td><code>Program_Fee_Amount__c</code></td>
+                    <td>Currency</td>
+                    <td>Debt × ProgramFee%</td>
+                </tr>
+                <tr>
+                    <td><code>Total_Program_Cost__c</code></td>
+                    <td>Currency</td>
+                    <td>Settlement + ProgramFee</td>
+                </tr>
+                <tr>
+                    <td><code>Settlement_Percentage__c</code></td>
+                    <td>Percent</td>
+                    <td>Settlement %</td>
+                </tr>
+                <tr>
+                    <td rowspan="5">Status</td>
+                    <td><code>Status__c</code></td>
+                    <td>Picklist</td>
+                    <td>Draft / Active / Completed / Cancelled</td>
+                </tr>
+                <tr>
+                    <td><code>Version_Status__c</code></td>
+                    <td>Picklist</td>
+                    <td>Draft / Pending_Review / Active / Archived</td>
+                </tr>
+                <tr>
+                    <td><code>Version_Number__c</code></td>
+                    <td>Number</td>
+                    <td>Version sequence</td>
+                </tr>
+                <tr>
+                    <td><code>Is_Active__c</code></td>
+                    <td>Checkbox</td>
+                    <td>Currently active version</td>
+                </tr>
+                <tr>
+                    <td><code>Version_Notes__c</code></td>
+                    <td>LongText</td>
+                    <td>Version change notes</td>
+                </tr>
+            </table>
+
+            <h3>PaymentPlan__c Rollup Summary Fields</h3>
+            <table>
+                <tr>
+                    <th>Category</th>
+                    <th>Field API Name</th>
+                    <th>Summarized Field</th>
+                    <th>Filter</th>
+                </tr>
+                <tr>
+                    <td rowspan="7">Total (All)</td>
+                    <td><code>Total_Draft_Amount__c</code></td>
+                    <td>Total_Payment__c</td>
+                    <td>None</td>
+                </tr>
+                <tr>
+                    <td><code>Total_Setup_Fee_Rollup__c</code></td>
+                    <td>Setup_Fee_Amount__c</td>
+                    <td>None</td>
+                </tr>
+                <tr>
+                    <td><code>Total_Program_Fee_Rollup__c</code></td>
+                    <td>Program_Fee_Amount__c</td>
+                    <td>None</td>
+                </tr>
+                <tr>
+                    <td><code>Total_Banking_Fee_Rollup__c</code></td>
+                    <td>Banking_Fee_Amount__c</td>
+                    <td>None</td>
+                </tr>
+                <tr>
+                    <td><code>Total_Savings_Rollup__c</code></td>
+                    <td>Savings_Balance__c</td>
+                    <td>None</td>
+                </tr>
+                <tr>
+                    <td><code>Total_To_Escrow_Rollup__c</code></td>
+                    <td>To_Escrow_Amount__c</td>
+                    <td>None</td>
+                </tr>
+                <tr>
+                    <td><code>Schedule_Item_Count_Rollup__c</code></td>
+                    <td>COUNT</td>
+                    <td>None</td>
+                </tr>
+                <tr>
+                    <td rowspan="5">Cleared</td>
+                    <td><code>Cleared_Payment_Sum__c</code></td>
+                    <td>Total_Payment__c</td>
+                    <td>Status = 'Cleared'</td>
+                </tr>
+                <tr>
+                    <td><code>Cleared_Setup_Fee_Sum__c</code></td>
+                    <td>Setup_Fee_Amount__c</td>
+                    <td>Status = 'Cleared'</td>
+                </tr>
+                <tr>
+                    <td><code>Cleared_Program_Fee_Sum__c</code></td>
+                    <td>Program_Fee_Amount__c</td>
+                    <td>Status = 'Cleared'</td>
+                </tr>
+                <tr>
+                    <td><code>Cleared_Banking_Fee_Sum__c</code></td>
+                    <td>Banking_Fee_Amount__c</td>
+                    <td>Status = 'Cleared'</td>
+                </tr>
+                <tr>
+                    <td><code>Cleared_Savings_Sum__c</code></td>
+                    <td>Savings_Balance__c</td>
+                    <td>Status = 'Cleared'</td>
+                </tr>
+                <tr>
+                    <td rowspan="5">NSF</td>
+                    <td><code>NSF_Draft_Amount_Sum__c</code></td>
+                    <td>Total_Payment__c</td>
+                    <td>Status = 'NSF'</td>
+                </tr>
+                <tr>
+                    <td><code>NSF_Setup_Fee_Sum__c</code></td>
+                    <td>Setup_Fee_Amount__c</td>
+                    <td>Status = 'NSF'</td>
+                </tr>
+                <tr>
+                    <td><code>NSF_Program_Fee_Sum__c</code></td>
+                    <td>Program_Fee_Amount__c</td>
+                    <td>Status = 'NSF'</td>
+                </tr>
+                <tr>
+                    <td><code>NSF_Banking_Fee_Sum__c</code></td>
+                    <td>Banking_Fee_Amount__c</td>
+                    <td>Status = 'NSF'</td>
+                </tr>
+                <tr>
+                    <td><code>NSF_Savings_Sum__c</code></td>
+                    <td>Savings_Balance__c</td>
+                    <td>Status = 'NSF'</td>
+                </tr>
+            </table>
+
+            <h3>Payment_Schedule_Item__c Fields</h3>
+            <table>
+                <tr>
+                    <th>Category</th>
+                    <th>Field API Name</th>
+                    <th>Type</th>
+                    <th>LWC Property (paymentSchedule[])</th>
+                </tr>
+                <tr>
+                    <td rowspan="2">Relationships</td>
+                    <td><code>Payment_Plan__c</code></td>
+                    <td>Master-Detail</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td><code>Related_Opportunity__c</code></td>
+                    <td>Lookup</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td rowspan="4">Payment Info</td>
+                    <td><code>Payment_Number__c</code></td>
+                    <td>Number</td>
+                    <td><code>item.paymentNumber</code></td>
+                </tr>
+                <tr>
+                    <td><code>Draft_Number__c</code></td>
+                    <td>Number</td>
+                    <td><code>item.draftNumber</code></td>
+                </tr>
+                <tr>
+                    <td><code>Payment_Date__c</code></td>
+                    <td>Date</td>
+                    <td><code>item.paymentDate</code></td>
+                </tr>
+                <tr>
+                    <td><code>Status__c</code></td>
+                    <td>Picklist</td>
+                    <td><code>item.status</code></td>
+                </tr>
+                <tr>
+                    <td rowspan="11">Amounts</td>
+                    <td><code>Total_Payment__c</code></td>
+                    <td>Currency</td>
+                    <td><code>item.draftAmount / item.totalPayment</code></td>
+                </tr>
+                <tr>
+                    <td><code>Net_Draft_Amount__c</code></td>
+                    <td>Currency</td>
+                    <td><code>item.netDraftAmount</code></td>
+                </tr>
+                <tr>
+                    <td><code>Setup_Fee_Amount__c</code></td>
+                    <td>Currency</td>
+                    <td><code>item.setupFee</code></td>
+                </tr>
+                <tr>
+                    <td><code>Program_Fee_Amount__c</code></td>
+                    <td>Currency</td>
+                    <td><code>item.programFee</code></td>
+                </tr>
+                <tr>
+                    <td><code>Banking_Fee_Amount__c</code></td>
+                    <td>Currency</td>
+                    <td><code>item.bankingFee</code></td>
+                </tr>
+                <tr>
+                    <td><code>Bank2_Fee_Amount__c</code></td>
+                    <td>Currency</td>
+                    <td><code>item.bank2Fee</code></td>
+                </tr>
+                <tr>
+                    <td><code>Retainer_Fee_Amount__c</code></td>
+                    <td>Currency</td>
+                    <td><code>item.retainerFee</code></td>
+                </tr>
+                <tr>
+                    <td><code>To_Escrow_Amount__c</code></td>
+                    <td>Currency</td>
+                    <td><code>item.escrowAmount / item.toEscrow</code></td>
+                </tr>
+                <tr>
+                    <td><code>Savings_Balance__c</code></td>
+                    <td>Currency</td>
+                    <td><code>item.savingsBalance</code></td>
+                </tr>
+                <tr>
+                    <td><code>Escrow_Balance__c</code></td>
+                    <td>Currency</td>
+                    <td><code>item.escrowBalance</code></td>
+                </tr>
+                <tr>
+                    <td><code>Running_Balance__c</code></td>
+                    <td>Currency</td>
+                    <td><code>item.runningBalance</code></td>
+                </tr>
+                <tr>
+                    <td>Formula</td>
+                    <td><code>Cleared_Amount__c</code></td>
+                    <td>Currency</td>
+                    <td>IF(Status='Cleared', Total_Payment, 0)</td>
+                </tr>
+            </table>
+
+            <h3>Payment_Schedule_Item__c Status Values</h3>
+            <table>
+                <tr>
+                    <th>Status</th>
+                    <th>Description</th>
+                    <th>Affects Rollups</th>
+                </tr>
+                <tr>
+                    <td><code>Scheduled</code></td>
+                    <td>Default - Payment is scheduled</td>
+                    <td>Total rollups</td>
+                </tr>
+                <tr>
+                    <td><code>Pending</code></td>
+                    <td>Payment is pending</td>
+                    <td>Total rollups</td>
+                </tr>
+                <tr>
+                    <td><code>Transmitted</code></td>
+                    <td>Sent for processing</td>
+                    <td>Total rollups</td>
+                </tr>
+                <tr>
+                    <td><code>Cleared</code></td>
+                    <td>Payment successful</td>
+                    <td>Total + Cleared rollups</td>
+                </tr>
+                <tr>
+                    <td><code>Paid</code></td>
+                    <td>Payment complete</td>
+                    <td>Total rollups</td>
+                </tr>
+                <tr>
+                    <td><code>NSF</code></td>
+                    <td>Non-sufficient funds</td>
+                    <td>Total + NSF rollups</td>
+                </tr>
+                <tr>
+                    <td><code>Missed</code></td>
+                    <td>Payment missed</td>
+                    <td>Total rollups</td>
+                </tr>
+                <tr>
+                    <td><code>Cancelled</code></td>
+                    <td>Payment cancelled</td>
+                    <td>Total rollups</td>
+                </tr>
+                <tr>
+                    <td><code>Void</code></td>
+                    <td>Payment voided</td>
+                    <td>Total rollups</td>
+                </tr>
+                <tr>
+                    <td><code>Wire</code></td>
+                    <td>Wire transfer</td>
+                    <td>Total rollups</td>
+                </tr>
+                <tr>
+                    <td><code>Sent to EPPS</code></td>
+                    <td>Sent to payment processor</td>
+                    <td>Total rollups</td>
+                </tr>
+                <tr>
+                    <td><code>Failed to EPPS</code></td>
+                    <td>Failed to send to processor</td>
+                    <td>Total rollups</td>
+                </tr>
+            </table>
+
+            <h3>Payment_Fee__c Fields</h3>
+            <table>
+                <tr>
+                    <th>Field API Name</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><code>Name</code></td>
+                    <td>AutoNumber</td>
+                    <td>Format: PF-{000000}</td>
+                </tr>
+                <tr>
+                    <td><code>Payment_Schedule_Item__c</code></td>
+                    <td>Master-Detail</td>
+                    <td>Parent schedule item</td>
+                </tr>
+                <tr>
+                    <td><code>Amount__c</code></td>
+                    <td>Currency(18,2)</td>
+                    <td>Fee amount</td>
+                </tr>
+                <tr>
+                    <td><code>Type__c</code></td>
+                    <td>Picklist (Global)</td>
+                    <td>Fee type</td>
+                </tr>
+                <tr>
+                    <td><code>Fee_Id__c</code></td>
+                    <td>Text(255)</td>
+                    <td>External fee identifier</td>
+                </tr>
+                <tr>
+                    <td><code>Transaction_Id__c</code></td>
+                    <td>Text(255)</td>
+                    <td>External transaction ID</td>
+                </tr>
+                <tr>
+                    <td><code>Status_Code__c</code></td>
+                    <td>Text(255)</td>
+                    <td>Status from external system</td>
+                </tr>
+            </table>
+
+            <h4>Fee Types (Payment_Type Global Value Set)</h4>
+            <table>
+                <tr>
+                    <th>Value</th>
+                    <th>Description</th>
+                </tr>
+                <tr><td>Banking Fee</td><td>Per-payment banking/servicing fee</td></tr>
+                <tr><td>Program Fee</td><td>Program fee portion</td></tr>
+                <tr><td>Setup Fee</td><td>Setup fee portion</td></tr>
+                <tr><td>Payee Fee</td><td>Fee paid to payee</td></tr>
+                <tr><td>Wire Fee</td><td>Outgoing wire transfer fee</td></tr>
+                <tr><td>Wire Received Fee</td><td>Incoming wire receipt fee</td></tr>
+            </table>
+
+            <h3>Payment_Calc_Config__mdt Fields</h3>
+            <table>
+                <tr>
+                    <th>Category</th>
+                    <th>Field API Name</th>
+                    <th>LWC Property</th>
+                    <th>Default Value</th>
+                </tr>
+                <tr>
+                    <td rowspan="7">Core Fees</td>
+                    <td><code>Settlement_Percentage__c</code></td>
+                    <td><code>settlementPercent</code></td>
+                    <td>60</td>
+                </tr>
+                <tr>
+                    <td><code>Program_Fee_Percentage__c</code></td>
+                    <td><code>programFeePercent</code></td>
+                    <td>35</td>
+                </tr>
+                <tr>
+                    <td><code>Banking_Fee__c</code></td>
+                    <td><code>bankingFee</code></td>
+                    <td>35</td>
+                </tr>
+                <tr>
+                    <td><code>Bank2_Fee__c</code></td>
+                    <td><code>bank2Fee</code></td>
+                    <td>0</td>
+                </tr>
+                <tr>
+                    <td><code>Setup_Fee__c</code></td>
+                    <td><code>_defaultSetupFee</code></td>
+                    <td>1000</td>
+                </tr>
+                <tr>
+                    <td><code>No_Fee_Setup_Fee__c</code></td>
+                    <td><code>_noFeeSetupFee</code></td>
+                    <td>0</td>
+                </tr>
+                <tr>
+                    <td><code>Debt_Program_Setup_Fee__c</code></td>
+                    <td>-</td>
+                    <td>500</td>
+                </tr>
+                <tr>
+                    <td rowspan="6">Split Ratios</td>
+                    <td><code>Program_Split_Ratio__c</code></td>
+                    <td><code>programSplitRatio</code></td>
+                    <td>0.50</td>
+                </tr>
+                <tr>
+                    <td><code>Escrow_Split_Ratio__c</code></td>
+                    <td><code>escrowSplitRatio</code></td>
+                    <td>0.50</td>
+                </tr>
+                <tr>
+                    <td><code>Mod_Program_Split_Ratio__c</code></td>
+                    <td>-</td>
+                    <td>0.50</td>
+                </tr>
+                <tr>
+                    <td><code>Mod_Escrow_Split_Ratio__c</code></td>
+                    <td>-</td>
+                    <td>0.50</td>
+                </tr>
+                <tr>
+                    <td><code>Debt_Program_Split_Ratio__c</code></td>
+                    <td>-</td>
+                    <td>0.70</td>
+                </tr>
+                <tr>
+                    <td><code>Debt_Escrow_Split_Ratio__c</code></td>
+                    <td>-</td>
+                    <td>0.30</td>
+                </tr>
+                <tr>
+                    <td rowspan="5">Payment Bounds</td>
+                    <td><code>Min_Weekly_Target_Payment__c</code></td>
+                    <td><code>_minWeeklyTargetPayment</code></td>
+                    <td>75</td>
+                </tr>
+                <tr>
+                    <td><code>Min_Weekly_Target_Payment_DCG_Debt__c</code></td>
+                    <td><code>_minWeeklyTargetPaymentDcgDebt</code></td>
+                    <td>75</td>
+                </tr>
+                <tr>
+                    <td><code>Min_Target_Percent_DCG_Mod__c</code></td>
+                    <td><code>_minTargetPercentDcgMod</code></td>
+                    <td>40</td>
+                </tr>
+                <tr>
+                    <td><code>Min_Target_Percent_DCG_Debt__c</code></td>
+                    <td><code>_minTargetPercentDcgDebt</code></td>
+                    <td>40</td>
+                </tr>
+                <tr>
+                    <td><code>Max_Target_Percent__c</code></td>
+                    <td><code>_maxTargetPercent</code></td>
+                    <td>80</td>
+                </tr>
+                <tr>
+                    <td rowspan="4">Program Duration</td>
+                    <td><code>Min_Program_Weeks__c</code></td>
+                    <td><code>_minProgramWeeks</code></td>
+                    <td>26</td>
+                </tr>
+                <tr>
+                    <td><code>Max_Program_Weeks__c</code></td>
+                    <td><code>_maxProgramWeeks</code></td>
+                    <td>400</td>
+                </tr>
+                <tr>
+                    <td><code>Default_Program_Weeks__c</code></td>
+                    <td>-</td>
+                    <td>104</td>
+                </tr>
+                <tr>
+                    <td><code>Recommended_Min_Weeks__c</code></td>
+                    <td>-</td>
+                    <td>52</td>
+                </tr>
+                <tr>
+                    <td rowspan="3">Setup Fee</td>
+                    <td><code>Setup_Fee_Payments__c</code></td>
+                    <td><code>setupFeePayments</code></td>
+                    <td>10</td>
+                </tr>
+                <tr>
+                    <td><code>Setup_Fee_Min_Payments__c</code></td>
+                    <td><code>_setupFeeMinPayments</code></td>
+                    <td>1</td>
+                </tr>
+                <tr>
+                    <td><code>Setup_Fee_Max_Payments__c</code></td>
+                    <td><code>_setupFeeMaxPayments</code></td>
+                    <td>10</td>
+                </tr>
+                <tr>
+                    <td rowspan="3">Conversion</td>
+                    <td><code>Weekly_To_Monthly_Factor__c</code></td>
+                    <td><code>_weeklyToMonthlyFactor</code></td>
+                    <td>4.333</td>
+                </tr>
+                <tr>
+                    <td><code>Payment_Fallback_Ratio__c</code></td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td><code>First_Payment_Days_Offset__c</code></td>
+                    <td>-</td>
+                    <td>7</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Section 5: Apex Controllers -->
+        <section id="apex-controllers">
+            <h2><span class="badge">5</span> Apex Controllers</h2>
+
+            <h3>PaymentCalcConfigSvc.cls</h3>
+            <div class="info-box note">
+                <strong>Purpose:</strong> Configuration service for loading and validating Payment Calculation Configuration from Custom Metadata Type
+            </div>
+
+            <h4>Methods</h4>
+            <table>
+                <tr>
+                    <th>Method</th>
+                    <th>Parameters</th>
+                    <th>Returns</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><code>getRequiredConfig()</code></td>
+                    <td>None</td>
+                    <td>ConfigDTO</td>
+                    <td>Loads 'Default' config from Payment_Calc_Config__mdt</td>
+                </tr>
+                <tr>
+                    <td><code>getRequiredConfigForProgram(programType)</code></td>
+                    <td>String programType</td>
+                    <td>ConfigDTO</td>
+                    <td>Loads config with program-specific overrides</td>
+                </tr>
+            </table>
+
+            <h3>PaymentCalculatorController.cls</h3>
+            <div class="info-box note">
+                <strong>Purpose:</strong> Main calculation engine for payment plans
+            </div>
+
+            <h4>calculatePaymentPlan Method</h4>
+            <table>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>LWC Source</th>
+                </tr>
+                <tr><td>recordId</td><td>Id</td><td><code>this.recordId</code></td></tr>
+                <tr><td>programType</td><td>String</td><td><code>this.programType</code></td></tr>
+                <tr><td>paymentFrequency</td><td>String</td><td><code>'Weekly' | 'Monthly'</code></td></tr>
+                <tr><td>calculationMode</td><td>String</td><td><code>'percentage' | 'desired_payment'</code></td></tr>
+                <tr><td>targetPaymentPercentage</td><td>Decimal</td><td><code>this.targetPaymentPercent</code></td></tr>
+                <tr><td>targetPaymentAmount</td><td>Decimal</td><td><code>this.targetPaymentAmount</code></td></tr>
+                <tr><td>setupFee</td><td>Decimal</td><td><code>this.setupFeeTotal</code></td></tr>
+                <tr><td>setupFeeTerm</td><td>Integer</td><td><code>this.setupFeePayments</code></td></tr>
+                <tr><td>servicingFee</td><td>Decimal</td><td><code>this.bankingFee</code></td></tr>
+                <tr><td>bank2Fee</td><td>Decimal</td><td><code>this.bank2Fee</code></td></tr>
+                <tr><td>firstDraftDate</td><td>String</td><td><code>this.firstDraftDate</code></td></tr>
+                <tr><td>preferredDayOfWeek</td><td>Integer</td><td><code>this.preferredDayOfWeek</code></td></tr>
+                <tr><td>noFeeProgram</td><td>Boolean</td><td><code>this.noFeeProgram</code></td></tr>
+                <tr><td>additionalProductsWeeklyTotal</td><td>Decimal</td><td><code>0</code></td></tr>
+            </table>
+
+            <h4>CalculationResult (Return Type)</h4>
+            <table>
+                <tr>
+                    <th>Property</th>
+                    <th>LWC Mapping</th>
+                </tr>
+                <tr><td>weeklyPayment</td><td><code>calculations.weeklyPayment</code></td></tr>
+                <tr><td>monthlyPayment</td><td><code>calculations.monthlyPayment</code></td></tr>
+                <tr><td>numberOfWeeks</td><td><code>calculations.programLength</code></td></tr>
+                <tr><td>settlementAmount</td><td><code>calculations.settlementAmount</code></td></tr>
+                <tr><td>programFee</td><td><code>calculations.programFeeAmount</code></td></tr>
+                <tr><td>totalProgram</td><td><code>calculations.totalProgramCost</code></td></tr>
+                <tr><td>totalSavings</td><td><code>calculations.savingsAmount</code></td></tr>
+                <tr><td>savingsPercentage</td><td><code>calculations.savingsPercent</code></td></tr>
+                <tr><td>bankingFeeTotal</td><td><code>calculations.bankingFeeTotal</code></td></tr>
+                <tr><td>programSplitRatio</td><td><code>programSplitRatio</code></td></tr>
+                <tr><td>escrowSplitRatio</td><td><code>escrowSplitRatio</code></td></tr>
+                <tr><td>paymentSchedule[]</td><td><code>paymentSchedule</code> (converted)</td></tr>
+            </table>
+
+            <h3>PaymentPlanEditorController.cls</h3>
+            <div class="info-box note">
+                <strong>Purpose:</strong> CRUD operations for payment plans and saving to Opportunity
+            </div>
+
+            <h4>updateOpportunityOnly Method</h4>
+            <table>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>LWC Source</th>
+                    <th>Opportunity Field</th>
+                </tr>
+                <tr>
+                    <td>recordId</td>
+                    <td>Id</td>
+                    <td><code>this.recordId</code></td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td>numberOfWeeks</td>
+                    <td>Integer</td>
+                    <td><code>calculations.programLength</code></td>
+                    <td><code>Number_of_Weeks__c</code></td>
+                </tr>
+                <tr>
+                    <td>weeklyPayment</td>
+                    <td>Decimal</td>
+                    <td><code>_calculateBaseWeeklyPayment()</code></td>
+                    <td><code>Est_weekly_payment__c</code></td>
+                </tr>
+                <tr>
+                    <td>firstDraftDate</td>
+                    <td>String</td>
+                    <td><code>this.firstDraftDate</code></td>
+                    <td><code>First_Draft_Date__c</code></td>
+                </tr>
+                <tr>
+                    <td>bankingFee</td>
+                    <td>Decimal</td>
+                    <td><code>this.bankingFee</code></td>
+                    <td><code>Banking_Fee__c</code></td>
+                </tr>
+                <tr>
+                    <td>setupFeeTerm</td>
+                    <td>Integer</td>
+                    <td><code>this.setupFeePayments</code></td>
+                    <td><code>Setup_Fee_Term__c</code></td>
+                </tr>
+                <tr>
+                    <td>noFeeProgram</td>
+                    <td>Boolean</td>
+                    <td><code>this.noFeeProgram</code></td>
+                    <td><code>No_Fee_Program__c</code></td>
+                </tr>
+                <tr>
+                    <td>programType</td>
+                    <td>String</td>
+                    <td><code>this.programType</code></td>
+                    <td><code>Program_Type__c</code></td>
+                </tr>
+                <tr>
+                    <td>settlementAmount</td>
+                    <td>Decimal</td>
+                    <td><code>calculations.settlementAmount</code></td>
+                    <td><code>Est_Settlement__c</code></td>
+                </tr>
+                <tr>
+                    <td>programFee</td>
+                    <td>Decimal</td>
+                    <td><code>calculations.programFeeAmount</code></td>
+                    <td><code>Program_Fee__c</code></td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Section 6: Data Flow -->
+        <section id="data-flow">
+            <h2><span class="badge">6</span> Data Flow</h2>
+
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    DATA FLOW                                                 │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                             │
+│  1. INITIALIZATION                                                                          │
+│  ════════════════                                                                           │
+│                                                                                             │
+│     User opens Opportunity Record Page                                                      │
+│                    │                                                                        │
+│                    ▼                                                                        │
+│     connectedCallback()                                                                     │
+│          │                                                                                  │
+│          ├──► setDefaultFirstDraftDate() ──► Set to next Monday                            │
+│          │                                                                                  │
+│          └──► loadConfig() ──► Apex: getRequiredConfig()                                   │
+│                    │                                                                        │
+│                    ▼                                                                        │
+│          Payment_Calc_Config__mdt ──► Store config values in component                     │
+│                                                                                             │
+│  2. OPPORTUNITY DATA                                                                        │
+│  ═══════════════════                                                                        │
+│                                                                                             │
+│     @wire(getRecord) ──► Opportunity Record                                                 │
+│          │                                                                                  │
+│          ├──► totalDebt = Estimated_Total_Debt__c                                          │
+│          ├──► currentPayment = Estimated_Current_Payment__c                                │
+│          ├──► setupFeeTotal = Setup_Fee__c                                                 │
+│          └──► if (Account.BillingState === 'CA') ──► noFeeProgram = true                   │
+│                                                                                             │
+│  3. BOOTSTRAP                                                                               │
+│  ═══════════                                                                                │
+│                                                                                             │
+│     renderedCallback() ──► Check: recordId && configLoaded && !hasBootstrapped             │
+│          │                                                                                  │
+│          └──► bootstrapCalculator() ──► performCalculations()                              │
+│                                                                                             │
+│  4. CALCULATION                                                                             │
+│  ═════════════                                                                              │
+│                                                                                             │
+│     performCalculations()                                                                   │
+│          │                                                                                  │
+│          ├──► _enforcePaymentBounds()                                                      │
+│          │                                                                                  │
+│          └──► Apex: calculatePaymentPlan() ──► CalculationResult                           │
+│                    │                                                                        │
+│                    ├──► this.calculations = { weeklyPayment, programLength, ... }          │
+│                    └──► this.paymentSchedule = convertScheduleForDisplay()                 │
+│                                                                                             │
+│  5. USER INTERACTION                                                                        │
+│  ═══════════════════                                                                        │
+│                                                                                             │
+│     User changes input ──► Event Handler ──► performCalculations() ──► UI Updates         │
+│                                                                                             │
+│  6. SAVE                                                                                    │
+│  ══════                                                                                     │
+│                                                                                             │
+│     handleSave()                                                                            │
+│          │                                                                                  │
+│          ├──► Validate payment bounds                                                      │
+│          │                                                                                  │
+│          └──► Apex: updateOpportunityOnly() ──► Opportunity Record Updated                 │
+│                                                                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+            </div>
+        </section>
+
+        <!-- Section 7: LWC Field Mapping -->
+        <section id="lwc-field-mapping">
+            <h2><span class="badge">7</span> LWC Field Mapping</h2>
+
+            <h3>Component Properties to Database Fields</h3>
+
+            <h4>User Input Properties</h4>
+            <table>
+                <tr>
+                    <th>LWC Property</th>
+                    <th>Type</th>
+                    <th>Default</th>
+                    <th>Database Field (Save)</th>
+                    <th>UI Element</th>
+                </tr>
+                <tr>
+                    <td><code>programType</code></td>
+                    <td>String</td>
+                    <td>'DCG_MOD'</td>
+                    <td><code>Opportunity.Program_Type__c</code></td>
+                    <td>Program Type Cards</td>
+                </tr>
+                <tr>
+                    <td><code>calculateBy</code></td>
+                    <td>String</td>
+                    <td>'PERCENT'</td>
+                    <td>-</td>
+                    <td>Calculate By Toggle</td>
+                </tr>
+                <tr>
+                    <td><code>targetPaymentPercent</code></td>
+                    <td>Number</td>
+                    <td>59</td>
+                    <td>-</td>
+                    <td>Target Payment Slider</td>
+                </tr>
+                <tr>
+                    <td><code>targetPaymentAmount</code></td>
+                    <td>Number</td>
+                    <td>8255.00</td>
+                    <td>-</td>
+                    <td>Desired Payment Input</td>
+                </tr>
+                <tr>
+                    <td><code>setupFeePayments</code></td>
+                    <td>Number</td>
+                    <td>10</td>
+                    <td><code>Opportunity.Setup_Fee_Term__c</code></td>
+                    <td>Setup Fee Slider</td>
+                </tr>
+                <tr>
+                    <td><code>firstDraftDate</code></td>
+                    <td>String</td>
+                    <td>(Next Monday)</td>
+                    <td><code>Opportunity.First_Draft_Date__c</code></td>
+                    <td>Date Input</td>
+                </tr>
+                <tr>
+                    <td><code>noFeeProgram</code></td>
+                    <td>Boolean</td>
+                    <td>false</td>
+                    <td><code>Opportunity.No_Fee_Program__c</code></td>
+                    <td>No-Fee Toggle</td>
+                </tr>
+                <tr>
+                    <td><code>_targetNumberOfWeeks</code></td>
+                    <td>Number</td>
+                    <td>null</td>
+                    <td>-</td>
+                    <td>Number of Weeks Input</td>
+                </tr>
+            </table>
+
+            <h4>Opportunity Wire Fields (Input)</h4>
+            <table>
+                <tr>
+                    <th>Opportunity Field</th>
+                    <th>LWC Property</th>
+                    <th>Usage</th>
+                </tr>
+                <tr>
+                    <td><code>Estimated_Total_Debt__c</code></td>
+                    <td><code>totalDebt</code></td>
+                    <td>Base for settlement & program fee calculation</td>
+                </tr>
+                <tr>
+                    <td><code>Estimated_Current_Payment__c</code></td>
+                    <td><code>currentPayment</code></td>
+                    <td>Base for % of current calculation</td>
+                </tr>
+                <tr>
+                    <td><code>Setup_Fee__c</code></td>
+                    <td><code>setupFeeTotal</code></td>
+                    <td>Total setup fee amount</td>
+                </tr>
+                <tr>
+                    <td><code>Account.BillingState</code></td>
+                    <td><code>noFeeProgram</code> (if CA)</td>
+                    <td>Auto-enable No-Fee for California</td>
+                </tr>
+            </table>
+
+            <h4>Calculation Results Mapping</h4>
+            <table>
+                <tr>
+                    <th>LWC Property</th>
+                    <th>Apex Result Property</th>
+                    <th>Save to Opportunity</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><code>calculations.weeklyPayment</code></td>
+                    <td>weeklyPayment</td>
+                    <td><code>Est_weekly_payment__c</code></td>
+                    <td>Calculated weekly payment</td>
+                </tr>
+                <tr>
+                    <td><code>calculations.monthlyPayment</code></td>
+                    <td>monthlyPayment</td>
+                    <td>-</td>
+                    <td>Monthly equivalent</td>
+                </tr>
+                <tr>
+                    <td><code>calculations.programLength</code></td>
+                    <td>numberOfWeeks</td>
+                    <td><code>Number_of_Weeks__c</code></td>
+                    <td>Program duration in weeks</td>
+                </tr>
+                <tr>
+                    <td><code>calculations.settlementAmount</code></td>
+                    <td>settlementAmount</td>
+                    <td>-</td>
+                    <td>Debt × Settlement%</td>
+                </tr>
+                <tr>
+                    <td><code>calculations.programFeeAmount</code></td>
+                    <td>programFee</td>
+                    <td>-</td>
+                    <td>Debt × ProgramFee%</td>
+                </tr>
+                <tr>
+                    <td><code>calculations.totalProgramCost</code></td>
+                    <td>totalProgram</td>
+                    <td>-</td>
+                    <td>Settlement + ProgramFee</td>
+                </tr>
+                <tr>
+                    <td><code>calculations.savingsAmount</code></td>
+                    <td>totalSavings</td>
+                    <td>-</td>
+                    <td>Debt - Settlement</td>
+                </tr>
+                <tr>
+                    <td><code>calculations.savingsPercent</code></td>
+                    <td>savingsPercentage</td>
+                    <td>-</td>
+                    <td>Savings as percentage</td>
+                </tr>
+                <tr>
+                    <td><code>calculations.bankingFeeTotal</code></td>
+                    <td>bankingFeeTotal</td>
+                    <td>-</td>
+                    <td>BankingFee × Weeks</td>
+                </tr>
+            </table>
+
+            <h4>Payment Schedule Item Mapping</h4>
+            <table>
+                <tr>
+                    <th>LWC Property (item.)</th>
+                    <th>Apex Property</th>
+                    <th>Database Field</th>
+                </tr>
+                <tr>
+                    <td><code>id</code></td>
+                    <td>Id</td>
+                    <td><code>Id</code></td>
+                </tr>
+                <tr>
+                    <td><code>draftNumber</code></td>
+                    <td>weekNumber / paymentNumber</td>
+                    <td><code>Draft_Number__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>paymentDate</code></td>
+                    <td>paymentDate</td>
+                    <td><code>Payment_Date__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>draftAmount / totalPayment</code></td>
+                    <td>paymentAmount / totalPayment</td>
+                    <td><code>Total_Payment__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>setupFee</code></td>
+                    <td>setupFee</td>
+                    <td><code>Setup_Fee_Amount__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>programFee</code></td>
+                    <td>programAmount / programPayment</td>
+                    <td><code>Program_Fee_Amount__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>bankingFee</code></td>
+                    <td>bankingFee</td>
+                    <td><code>Banking_Fee_Amount__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>escrowAmount / savingsBalance</code></td>
+                    <td>escrowAmount / escrowPayment</td>
+                    <td><code>To_Escrow_Amount__c / Savings_Balance__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>runningBalance</code></td>
+                    <td>runningBalance / remainingBalance</td>
+                    <td><code>Running_Balance__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>status</code></td>
+                    <td>-</td>
+                    <td><code>Status__c</code></td>
+                </tr>
+            </table>
+
+            <h4>Config Values Mapping</h4>
+            <table>
+                <tr>
+                    <th>LWC Property</th>
+                    <th>Config DTO Property</th>
+                    <th>CMDT Field</th>
+                </tr>
+                <tr>
+                    <td><code>settlementPercent</code></td>
+                    <td>settlementPercent</td>
+                    <td><code>Settlement_Percentage__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>programFeePercent</code></td>
+                    <td>programFeePercent</td>
+                    <td><code>Program_Fee_Percentage__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>bankingFee</code></td>
+                    <td>bankingFee</td>
+                    <td><code>Banking_Fee__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>bank2Fee</code></td>
+                    <td>bank2Fee</td>
+                    <td><code>Bank2_Fee__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>programSplitRatio</code></td>
+                    <td>programSplitRatio</td>
+                    <td><code>Program_Split_Ratio__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>escrowSplitRatio</code></td>
+                    <td>escrowSplitRatio</td>
+                    <td><code>Escrow_Split_Ratio__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>_minWeeklyTargetPayment</code></td>
+                    <td>minWeeklyTargetPayment</td>
+                    <td><code>Min_Weekly_Target_Payment__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>_minWeeklyTargetPaymentDcgDebt</code></td>
+                    <td>minWeeklyTargetPaymentDcgDebt</td>
+                    <td><code>Min_Weekly_Target_Payment_DCG_Debt__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>_weeklyToMonthlyFactor</code></td>
+                    <td>weeklyToMonthlyFactor</td>
+                    <td><code>Weekly_To_Monthly_Factor__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>_minTargetPercentDcgMod</code></td>
+                    <td>minTargetPercentDcgMod</td>
+                    <td><code>Min_Target_Percent_DCG_Mod__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>_minTargetPercentDcgDebt</code></td>
+                    <td>minTargetPercentDcgDebt</td>
+                    <td><code>Min_Target_Percent_DCG_Debt__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>_maxTargetPercent</code></td>
+                    <td>maxTargetPercent</td>
+                    <td><code>Max_Target_Percent__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>_defaultSetupFee</code></td>
+                    <td>setupFee</td>
+                    <td><code>Setup_Fee__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>_noFeeSetupFee</code></td>
+                    <td>noFeeSetupFee</td>
+                    <td><code>No_Fee_Setup_Fee__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>_setupFeeMinPayments</code></td>
+                    <td>setupFeeMinPayments</td>
+                    <td><code>Setup_Fee_Min_Payments__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>_setupFeeMaxPayments</code></td>
+                    <td>setupFeeMaxPayments</td>
+                    <td><code>Setup_Fee_Max_Payments__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>_minProgramWeeks</code></td>
+                    <td>minProgramWeeks</td>
+                    <td><code>Min_Program_Weeks__c</code></td>
+                </tr>
+                <tr>
+                    <td><code>_maxProgramWeeks</code></td>
+                    <td>maxProgramWeeks</td>
+                    <td><code>Max_Program_Weeks__c</code></td>
+                </tr>
+            </table>
+
+            <h4>Computed Getters to UI Binding</h4>
+            <table>
+                <tr>
+                    <th>Getter</th>
+                    <th>Returns</th>
+                    <th>Used In Template</th>
+                </tr>
+                <tr>
+                    <td><code>isPercentMode</code></td>
+                    <td>Boolean</td>
+                    <td><code>if:true={isPercentMode}</code></td>
+                </tr>
+                <tr>
+                    <td><code>isDesiredMode</code></td>
+                    <td>Boolean</td>
+                    <td><code>if:true={isDesiredMode}</code></td>
+                </tr>
+                <tr>
+                    <td><code>percentMin</code></td>
+                    <td>Number (40)</td>
+                    <td><code>min={percentMin}</code></td>
+                </tr>
+                <tr>
+                    <td><code>percentMax</code></td>
+                    <td>Number (80)</td>
+                    <td><code>max={percentMax}</code></td>
+                </tr>
+                <tr>
+                    <td><code>percentLabels</code></td>
+                    <td>Array [40,50,60,70,80]</td>
+                    <td><code>for:each={percentLabels}</code></td>
+                </tr>
+                <tr>
+                    <td><code>desiredMinLabel</code></td>
+                    <td>String ($X.XX)</td>
+                    <td><code>Min {desiredMinLabel}</code></td>
+                </tr>
+                <tr>
+                    <td><code>desiredMaxLabel</code></td>
+                    <td>String ($X.XX)</td>
+                    <td><code>Max {desiredMaxLabel}</code></td>
+                </tr>
+                <tr>
+                    <td><code>targetPaymentDisplay</code></td>
+                    <td>String (59.0% → $X.XX/week)</td>
+                    <td><code>{targetPaymentDisplay}</code></td>
+                </tr>
+                <tr>
+                    <td><code>setupFeePerPayment</code></td>
+                    <td>String (X.XX)</td>
+                    <td><code>${setupFeePerPayment}/payment</code></td>
+                </tr>
+                <tr>
+                    <td><code>targetNumberOfWeeks</code></td>
+                    <td>Number</td>
+                    <td><code>value={targetNumberOfWeeks}</code></td>
+                </tr>
+                <tr>
+                    <td><code>minProgramWeeks</code></td>
+                    <td>Number</td>
+                    <td><code>min={minProgramWeeks}</code></td>
+                </tr>
+                <tr>
+                    <td><code>maxProgramWeeks</code></td>
+                    <td>Number</td>
+                    <td><code>max={maxProgramWeeks}</code></td>
+                </tr>
+                <tr>
+                    <td><code>summaryWeeklyPayment</code></td>
+                    <td>Number</td>
+                    <td>Passed to <code>c-summary-stats</code></td>
+                </tr>
+                <tr>
+                    <td><code>summaryProgramLength</code></td>
+                    <td>Number</td>
+                    <td>Passed to <code>c-summary-stats</code></td>
+                </tr>
+                <tr>
+                    <td><code>dcgModClass</code></td>
+                    <td>String (CSS class)</td>
+                    <td><code>class={dcgModClass}</code></td>
+                </tr>
+                <tr>
+                    <td><code>dcgDebtClass</code></td>
+                    <td>String (CSS class)</td>
+                    <td><code>class={dcgDebtClass}</code></td>
+                </tr>
+                <tr>
+                    <td><code>dcgModCaClass</code></td>
+                    <td>String (CSS class)</td>
+                    <td><code>class={dcgModCaClass}</code></td>
+                </tr>
+                <tr>
+                    <td><code>percentButtonClass</code></td>
+                    <td>String (CSS class)</td>
+                    <td><code>class={percentButtonClass}</code></td>
+                </tr>
+                <tr>
+                    <td><code>desiredButtonClass</code></td>
+                    <td>String (CSS class)</td>
+                    <td><code>class={desiredButtonClass}</code></td>
+                </tr>
+                <tr>
+                    <td><code>showNoFeeProgram</code></td>
+                    <td>Boolean</td>
+                    <td><code>if:true={showNoFeeProgram}</code></td>
+                </tr>
+                <tr>
+                    <td><code>sliderNumbers</code></td>
+                    <td>Array [1-10]</td>
+                    <td><code>for:each={sliderNumbers}</code></td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Section 8: Calculation Formulas -->
+        <section id="calculation-formulas">
+            <h2><span class="badge">8</span> Calculation Formulas</h2>
+
+            <h3>Settlement & Program Costs</h3>
+            <div class="code-block">
+<span class="comment">// Settlement Amount</span>
+settlementAmount = totalDebt × (settlementPercent / 100)
+                 = $14,000 × (60 / 100)
+                 = <span class="number">$8,400</span>
+
+<span class="comment">// Program Fee</span>
+programFee = totalDebt × (programFeePercent / 100)
+           = $14,000 × (35 / 100)
+           = <span class="number">$4,900</span>
+
+<span class="comment">// Total Program Cost</span>
+totalProgramCost = settlementAmount + programFee
+                 = $8,400 + $4,900
+                 = <span class="number">$13,300</span>
+            </div>
+
+            <h3>Weekly Payment Calculation</h3>
+            <div class="code-block">
+<span class="comment">// PERCENT MODE:</span>
+weeklyPayment = currentPayment × (targetPaymentPercent / 100)
+              = $300 × (59 / 100)
+              = <span class="number">$177</span>
+
+<span class="comment">// DESIRED MODE:</span>
+weeklyPayment = targetPaymentAmount <span class="comment">// (entered by user)</span>
+            </div>
+
+            <h3>Number of Weeks Calculation</h3>
+            <div class="code-block">
+<span class="comment">// Net Per Week (amount going toward debt)</span>
+netPerWeek = weeklyPayment - bankingFee
+           = $177 - $35
+           = <span class="number">$142</span>
+
+<span class="comment">// Number of Weeks</span>
+numberOfWeeks = CEIL(totalProgramCost / netPerWeek)
+              = CEIL($13,300 / $142)
+              = CEIL(93.66)
+              = <span class="number">94 weeks</span>
+            </div>
+
+            <h3>Reverse: Weeks to Payment</h3>
+            <div class="code-block">
+<span class="comment">// When user enters number of weeks directly:</span>
+netPerWeek = totalProgramCost / numberOfWeeks
+           = $13,300 / 100
+           = <span class="number">$133</span>
+
+weeklyPayment = netPerWeek + bankingFee
+              = $133 + $35
+              = <span class="number">$168</span>
+            </div>
+
+            <h3>Payment Bounds</h3>
+            <div class="code-block">
+<span class="comment">// Minimum Weekly Target</span>
+minimumWeeklyTarget = MAX(configMinWeekly, currentPayment × minPercent / 100)
+                    = MAX($75, $300 × 40 / 100)
+                    = MAX($75, $120)
+                    = <span class="number">$120</span>
+
+<span class="comment">// Maximum Weekly Target</span>
+maximumWeeklyTarget = currentPayment × maxPercent / 100
+                    = $300 × 80 / 100
+                    = <span class="number">$240</span>
+            </div>
+
+            <h3>Weeks Bounds</h3>
+            <div class="code-block">
+<span class="comment">// Min Program Weeks (based on 80% payment = max payment = fewer weeks)</span>
+minProgramWeeks = MAX(absoluteMin, weeksAt80Percent)
+                = MAX(26, 65)
+                = <span class="number">65</span>
+
+<span class="comment">// Max Program Weeks (based on 40% payment = min payment = more weeks)</span>
+maxProgramWeeks = MIN(absoluteMax, weeksAt40Percent)
+                = MIN(400, 156)
+                = <span class="number">156</span>
+            </div>
+
+            <h3>Savings Calculation</h3>
+            <div class="code-block">
+<span class="comment">// Total Savings</span>
+totalSavings = totalDebt - settlementAmount
+             = $14,000 - $8,400
+             = <span class="number">$5,600</span>
+
+<span class="comment">// Savings Percent</span>
+savingsPercent = (totalSavings / totalDebt) × 100
+               = ($5,600 / $14,000) × 100
+               = <span class="number">40%</span>
+            </div>
+
+            <h3>No-Fee Program (California)</h3>
+            <div class="info-box warning">
+                <strong>When noFeeProgram = true:</strong>
+                <ul>
+                    <li>programFeePercent = 0 (displayed)</li>
+                    <li>programSplitRatio = 0</li>
+                    <li>escrowSplitRatio = 1.0 (100% goes to escrow)</li>
+                    <li>Duration calculated using baseline 35% for consistency</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 9: State Management -->
+        <section id="state-management">
+            <h2><span class="badge">9</span> State Management</h2>
+
+            <h3>State Categories</h3>
+
+            <div class="grid-2">
+                <div class="card">
+                    <h4>API Properties (External)</h4>
+                    <ul>
+                        <li><code>@api recordId</code> - Opportunity Id</li>
+                        <li><code>@api objectApiName</code> - 'Opportunity'</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>UI State (Internal)</h4>
+                    <ul>
+                        <li><code>isLoading</code> - Spinner state</li>
+                        <li><code>hasBootstrapped</code> - Init flag</li>
+                        <li><code>_calcSeq</code> - Race condition counter</li>
+                        <li><code>recalcTimer</code> - Debounce timer</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>User Input State</h4>
+                    <ul>
+                        <li><code>@track programType</code></li>
+                        <li><code>calculateBy</code></li>
+                        <li><code>targetPaymentPercent</code></li>
+                        <li><code>targetPaymentAmount</code></li>
+                        <li><code>setupFeePayments</code></li>
+                        <li><code>firstDraftDate</code></li>
+                        <li><code>noFeeProgram</code></li>
+                        <li><code>_targetNumberOfWeeks</code></li>
+                        <li><code>_isEditingWeeks</code></li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>Configuration State</h4>
+                    <ul>
+                        <li><code>configLoaded</code></li>
+                        <li><code>configLoadError</code></li>
+                        <li><code>settlementPercent</code></li>
+                        <li><code>programFeePercent</code></li>
+                        <li><code>bankingFee / bank2Fee</code></li>
+                        <li><code>programSplitRatio / escrowSplitRatio</code></li>
+                        <li>All <code>_min*</code> and <code>_max*</code> values</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>Opportunity Data State</h4>
+                    <ul>
+                        <li><code>totalDebt</code></li>
+                        <li><code>currentPayment</code></li>
+                        <li><code>setupFeeTotal</code></li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>Calculation Results State</h4>
+                    <ul>
+                        <li><code>@track calculations</code> (object)</li>
+                        <li><code>@track paymentSchedule</code> (array)</li>
+                        <li><code>@track sliderNumbers</code> (array)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 10: UI Components -->
+        <section id="ui-components">
+            <h2><span class="badge">10</span> UI Components</h2>
+
+            <h3>Template Structure</h3>
+            <div class="diagram">
+&lt;template&gt;
+└── &lt;lightning-card&gt;
+    └── &lt;div class="slds-p-horizontal_medium"&gt;
+        │
+        ├── c-summary-stats (Child Component)
+        │   └── Props: items, weekly-payment, program-length, etc.
+        │
+        └── Program Settings Section
+            ├── Header (Badge "1" + Title)
+            ├── Program Type Cards (DCG MOD | DCG DEBT | DCG MOD CA)
+            ├── No-Fee Program Toggle (DCG MOD only)
+            ├── Calculate By Toggle (% | Desired)
+            ├── Target Payment (Slider or Input based on mode)
+            │   └── Number of Weeks Input (Desired Mode only)
+            ├── Setup Fee Slider
+            ├── First Draft Date Input
+            └── Save to Opportunity Button
+
+└── c-payment-plan-editor (Child Component)
+    └── Props: record-id
+            </div>
+
+            <h3>Event Handlers</h3>
+            <table>
+                <tr>
+                    <th>UI Element</th>
+                    <th>Event</th>
+                    <th>Handler</th>
+                    <th>Action</th>
+                </tr>
+                <tr>
+                    <td>DCG MOD Card</td>
+                    <td>onclick</td>
+                    <td><code>handleProgramTypeMod()</code></td>
+                    <td>Set programType, refresh config</td>
+                </tr>
+                <tr>
+                    <td>DCG DEBT Card</td>
+                    <td>onclick</td>
+                    <td><code>handleProgramTypeDebt()</code></td>
+                    <td>Set programType, disable No-Fee</td>
+                </tr>
+                <tr>
+                    <td>DCG MOD CA Card</td>
+                    <td>onclick</td>
+                    <td><code>handleProgramTypeModCa()</code></td>
+                    <td>Set programType, enable No-Fee</td>
+                </tr>
+                <tr>
+                    <td>No-Fee Toggle</td>
+                    <td>onchange</td>
+                    <td><code>handleNoFeeChange()</code></td>
+                    <td>Toggle noFeeProgram</td>
+                </tr>
+                <tr>
+                    <td>% of Current Button</td>
+                    <td>onclick</td>
+                    <td><code>handleCalculateByPercent()</code></td>
+                    <td>Switch to PERCENT mode</td>
+                </tr>
+                <tr>
+                    <td>Desired Payment Button</td>
+                    <td>onclick</td>
+                    <td><code>handleCalculateByDesired()</code></td>
+                    <td>Switch to DESIRED mode</td>
+                </tr>
+                <tr>
+                    <td>Target % Slider</td>
+                    <td>oninput</td>
+                    <td><code>handleTargetPaymentInput()</code></td>
+                    <td>Debounced recalc while dragging</td>
+                </tr>
+                <tr>
+                    <td>Target % Slider</td>
+                    <td>onchange</td>
+                    <td><code>handleTargetPaymentChange()</code></td>
+                    <td>Immediate recalc on release</td>
+                </tr>
+                <tr>
+                    <td>Desired Payment Input</td>
+                    <td>oninput</td>
+                    <td><code>handleDesiredPaymentInput()</code></td>
+                    <td>Debounced recalc while typing</td>
+                </tr>
+                <tr>
+                    <td>Desired Payment Input</td>
+                    <td>onchange</td>
+                    <td><code>handleDesiredPaymentChange()</code></td>
+                    <td>Validate & recalc on blur</td>
+                </tr>
+                <tr>
+                    <td>Weeks Input</td>
+                    <td>oninput</td>
+                    <td><code>handleNumberOfWeeksInput()</code></td>
+                    <td>Debounced payment calc</td>
+                </tr>
+                <tr>
+                    <td>Weeks Input</td>
+                    <td>onchange</td>
+                    <td><code>handleNumberOfWeeksChange()</code></td>
+                    <td>Clamp & calc payment</td>
+                </tr>
+                <tr>
+                    <td>Weeks ▲ Button</td>
+                    <td>onclick</td>
+                    <td><code>handleWeeksIncrement()</code></td>
+                    <td>Increment weeks by 1</td>
+                </tr>
+                <tr>
+                    <td>Weeks ▼ Button</td>
+                    <td>onclick</td>
+                    <td><code>handleWeeksDecrement()</code></td>
+                    <td>Decrement weeks by 1</td>
+                </tr>
+                <tr>
+                    <td>Setup Fee Slider</td>
+                    <td>onchange</td>
+                    <td><code>handleSetupFeeChange()</code></td>
+                    <td>Update setupFeePayments</td>
+                </tr>
+                <tr>
+                    <td>First Draft Date</td>
+                    <td>onchange</td>
+                    <td><code>handleFirstDraftDateChange()</code></td>
+                    <td>Update firstDraftDate</td>
+                </tr>
+                <tr>
+                    <td>Save Button</td>
+                    <td>onclick</td>
+                    <td><code>handleSave()</code></td>
+                    <td>Validate & save to Opportunity</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Section 11: CSS Architecture -->
+        <section id="css-architecture">
+            <h2><span class="badge">11</span> CSS Architecture</h2>
+
+            <h3>Key CSS Classes</h3>
+            <table>
+                <tr>
+                    <th>Class</th>
+                    <th>Purpose</th>
+                    <th>Key Styles</th>
+                </tr>
+                <tr>
+                    <td><code>:host</code></td>
+                    <td>Component container</td>
+                    <td>display: block; width: 100%</td>
+                </tr>
+                <tr>
+                    <td><code>.section-frame</code></td>
+                    <td>Card container</td>
+                    <td>border: 1px solid #dddbda; border-radius: 8px; box-shadow</td>
+                </tr>
+                <tr>
+                    <td><code>.number-badge</code></td>
+                    <td>Purple circle badge</td>
+                    <td>width: 32px; background: #5B5FCD; border-radius: 50%</td>
+                </tr>
+                <tr>
+                    <td><code>.selection-card</code></td>
+                    <td>Program type card</td>
+                    <td>border: 2px solid; cursor: pointer; transition</td>
+                </tr>
+                <tr>
+                    <td><code>.selection-card.selected</code></td>
+                    <td>Selected card state</td>
+                    <td>border-color: #5B5FCD; background: #f3f2ff</td>
+                </tr>
+                <tr>
+                    <td><code>.toggle-container</code></td>
+                    <td>Calculate By buttons</td>
+                    <td>display: flex; background: #f3f2f2</td>
+                </tr>
+                <tr>
+                    <td><code>.toggle-button.active</code></td>
+                    <td>Active toggle</td>
+                    <td>background: white; box-shadow</td>
+                </tr>
+                <tr>
+                    <td><code>input[type="range"]</code></td>
+                    <td>Slider track</td>
+                    <td>background: linear-gradient(red → yellow → green)</td>
+                </tr>
+                <tr>
+                    <td><code>.weeks-input-row</code></td>
+                    <td>Weeks input row</td>
+                    <td>display: flex; align-items: center; gap: 8px</td>
+                </tr>
+                <tr>
+                    <td><code>.weeks-arrow-btn</code></td>
+                    <td>+/- buttons</td>
+                    <td>width: 32px; border-radius: 4px</td>
+                </tr>
+            </table>
+
+            <h3>Color Palette</h3>
+            <table>
+                <tr>
+                    <th>Variable</th>
+                    <th>Value</th>
+                    <th>Usage</th>
+                </tr>
+                <tr>
+                    <td>Primary</td>
+                    <td><span style="background:#5B5FCD;color:white;padding:2px 8px;border-radius:4px">#5B5FCD</span></td>
+                    <td>Badges, selected states, slider thumbs</td>
+                </tr>
+                <tr>
+                    <td>Secondary</td>
+                    <td><span style="background:#16325c;color:white;padding:2px 8px;border-radius:4px">#16325c</span></td>
+                    <td>Titles, headings</td>
+                </tr>
+                <tr>
+                    <td>Border</td>
+                    <td><span style="background:#dddbda;padding:2px 8px;border-radius:4px">#dddbda</span></td>
+                    <td>Card borders, dividers</td>
+                </tr>
+                <tr>
+                    <td>Background Light</td>
+                    <td><span style="background:#f3f2ff;padding:2px 8px;border-radius:4px">#f3f2ff</span></td>
+                    <td>Selected card background</td>
+                </tr>
+                <tr>
+                    <td>Success</td>
+                    <td><span style="background:#4bca81;color:white;padding:2px 8px;border-radius:4px">#4bca81</span></td>
+                    <td>Slider green zone</td>
+                </tr>
+                <tr>
+                    <td>Warning</td>
+                    <td><span style="background:#ffb75d;padding:2px 8px;border-radius:4px">#ffb75d</span></td>
+                    <td>Slider yellow zone</td>
+                </tr>
+                <tr>
+                    <td>Danger</td>
+                    <td><span style="background:#c23934;color:white;padding:2px 8px;border-radius:4px">#c23934</span></td>
+                    <td>Slider red zone</td>
+                </tr>
+            </table>
+
+            <h3>Responsive Design</h3>
+            <ul>
+                <li>Component uses <code>width: 100%</code> to fill container</li>
+                <li>Flex layouts for horizontal arrangements</li>
+                <li>Cards wrap naturally on smaller screens</li>
+                <li>Input fields have <code>max-width</code> constraints</li>
+            </ul>
+        </section>
+
+        <!-- Section 12: Summary -->
+        <section id="summary">
+            <h2><span class="badge">12</span> Summary</h2>
+
+            <h3>Architecture Overview</h3>
+            <div class="highlight">
+                <p><strong>PaymentPlanEditorV2</strong> is a sophisticated Lightning Web Component that:</p>
+                <ul>
+                    <li>Provides real-time payment plan calculations with debounced user input</li>
+                    <li>Supports three program types with different fee structures</li>
+                    <li>Offers two calculation modes (Percent-based and Desired Payment)</li>
+                    <li>Integrates with Apex controllers for data persistence</li>
+                    <li>Uses Custom Metadata Types for configurable business rules</li>
+                    <li>Maintains data consistency through rollup summary fields</li>
+                </ul>
+            </div>
+
+            <h3>Key Design Decisions</h3>
+            <table>
+                <tr>
+                    <th>Decision</th>
+                    <th>Rationale</th>
+                </tr>
+                <tr>
+                    <td>Custom Metadata for Config</td>
+                    <td>Allows admin changes without code deployment</td>
+                </tr>
+                <tr>
+                    <td>Debounced Input Handling</td>
+                    <td>Prevents excessive recalculations during typing</td>
+                </tr>
+                <tr>
+                    <td>Wire Adapters for Data</td>
+                    <td>Reactive data binding with automatic refresh</td>
+                </tr>
+                <tr>
+                    <td>Sequence Counters</td>
+                    <td>Protects against race conditions in async operations</td>
+                </tr>
+                <tr>
+                    <td>Child Components</td>
+                    <td>Separation of concerns (stats, editor, viewer)</td>
+                </tr>
+                <tr>
+                    <td>Rollup Summary Fields</td>
+                    <td>Database-level aggregation for performance</td>
+                </tr>
+            </table>
+
+            <h3>Data Flow Summary</h3>
+            <pre>
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           PaymentPlanEditorV2 Data Flow                         │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  [User Input] ──► [Debounce] ──► [performCalculations()] ──► [UI Update]       │
+│       │                                   │                                     │
+│       │                                   ▼                                     │
+│       │                          [Apex Controller]                              │
+│       │                                   │                                     │
+│       │                                   ▼                                     │
+│       │                          [Opportunity Record]                           │
+│       │                                   │                                     │
+│       │                                   ▼                                     │
+│       │                          [Trigger Handler]                              │
+│       │                                   │                                     │
+│       │                          ┌───────┴───────┐                              │
+│       │                          ▼               ▼                              │
+│       │                   [PaymentPlan__c]  [Payment_Schedule_Item__c]          │
+│       │                          │               │                              │
+│       │                          │               ▼                              │
+│       │                          │       [Payment_Fee__c]                       │
+│       │                          │               │                              │
+│       │                          ▼               │                              │
+│       │                   [Rollup Fields] ◄──────┘                              │
+│       │                          │                                              │
+│       │                          ▼                                              │
+│       └────────────────► [Wire Refresh] ──► [UI Update]                        │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+            </pre>
+
+            <h3>File Reference</h3>
+            <table>
+                <tr>
+                    <th>File</th>
+                    <th>Path</th>
+                    <th>Lines</th>
+                </tr>
+                <tr>
+                    <td>JavaScript</td>
+                    <td>force-app/main/default/lwc/paymentPlanEditorV2/paymentPlanEditorV2.js</td>
+                    <td>1,237</td>
+                </tr>
+                <tr>
+                    <td>HTML Template</td>
+                    <td>force-app/main/default/lwc/paymentPlanEditorV2/paymentPlanEditorV2.html</td>
+                    <td>192</td>
+                </tr>
+                <tr>
+                    <td>CSS</td>
+                    <td>force-app/main/default/lwc/paymentPlanEditorV2/paymentPlanEditorV2.css</td>
+                    <td>429</td>
+                </tr>
+                <tr>
+                    <td>Meta Config</td>
+                    <td>force-app/main/default/lwc/paymentPlanEditorV2/paymentPlanEditorV2.js-meta.xml</td>
+                    <td>8</td>
+                </tr>
+                <tr>
+                    <td>Apex Controller</td>
+                    <td>force-app/main/default/classes/PaymentPlanEditorController.cls</td>
+                    <td>~500</td>
+                </tr>
+                <tr>
+                    <td>Config Service</td>
+                    <td>force-app/main/default/classes/PaymentCalcConfigSvc.cls</td>
+                    <td>~100</td>
+                </tr>
+            </table>
+        </section>
+
+        <footer>
+            <p>Generated: January 2026 | PaymentPlanEditorV2 Architecture Documentation</p>
+            <p>This document provides a complete reference for the PaymentPlanEditorV2 Lightning Web Component architecture.</p>
+        </footer>
+    </div>
+</body>
+</html>

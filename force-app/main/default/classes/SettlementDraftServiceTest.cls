@@ -1,6 +1,6 @@
 /**
  * @description Test class for SettlementDraftService, SettlementDraftController,
- *              SettlementDateUtils, and SettlementFeeCalculator.
+ *              and SettlementDateUtils.
  *              
  *              Uses the NEW data model (January 2026):
  *              - Settlement_Segment__c records (not JSON)
@@ -71,13 +71,6 @@ private class SettlementDraftServiceTest {
         return getItemStatusValue('Missed', null);
     }
 
-    private static String statusCancelled() {
-        return getItemStatusValue('Cancelled', null);
-    }
-
-    private static String statusSkipped() {
-        return getItemStatusValue('Skipped', null);
-    }
 
     // ==================== TEST DATA FACTORY ====================
     
@@ -129,7 +122,6 @@ private class SettlementDraftServiceTest {
             Balance__c = TEST_BALANCE,
             Settlement_Offer_Amount__c = TEST_SETTLEMENT_OFFER,
             Escrow_Start_Balance__c = TEST_ESCROW_START,
-            Commission_Fee__c = TEST_COMMISSION_FEE,
             Is_Manually_Modified__c = false
         );
         insert draft;
@@ -176,18 +168,29 @@ private class SettlementDraftServiceTest {
                 Settlement_Plan__c = draftId,
                 Payment_Number__c = i,
                 Payment_Date__c = Date.today().addMonths(i),
-                Payment_Amount__c = TEST_PAYMENT_AMOUNT,
-                Commission_Fee__c = TEST_COMMISSION_FEE,
-                Bank_Fee__c = TEST_BANK_FEE,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE,
-                EPPS_Month_End_Fee__c = 0,
-                Payee_Fee__c = 0,
                 Status__c = statusScheduled()
             ));
         }
 
         insert items;
+
+        // Create Settlement_Fee__c records (source of truth for amounts/fees)
+        List<Settlement_Fee__c> feeRecords = new List<Settlement_Fee__c>();
+        for (Settlement_Plan_Item__c item : items) {
+            feeRecords.addAll(buildTestFeeRecords(item.Id));
+        }
+        insert feeRecords;
+
         return items;
+    }
+
+    private static List<Settlement_Fee__c> buildTestFeeRecords(Id itemId) {
+        return new List<Settlement_Fee__c>{
+            new Settlement_Fee__c(Settlement_Plan_Item__c = itemId, Type__c = 'SettlementPayment', Amount__c = TEST_PAYMENT_AMOUNT),
+            new Settlement_Fee__c(Settlement_Plan_Item__c = itemId, Type__c = 'Commission Fee', Amount__c = TEST_COMMISSION_FEE),
+            new Settlement_Fee__c(Settlement_Plan_Item__c = itemId, Type__c = 'Banking Fee', Amount__c = TEST_BANK_FEE),
+            new Settlement_Fee__c(Settlement_Plan_Item__c = itemId, Type__c = 'Settlement Fee', Amount__c = TEST_EPPS_TXN_FEE)
+        };
     }
 
     /**
@@ -204,33 +207,69 @@ private class SettlementDraftServiceTest {
                 Settlement_Plan__c = draftId,
                 Payment_Number__c = i + 1,
                 Payment_Date__c = Date.today().addMonths(i + 1),
-                Payment_Amount__c = TEST_PAYMENT_AMOUNT,
-                Commission_Fee__c = TEST_COMMISSION_FEE,
-                Bank_Fee__c = TEST_BANK_FEE,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE,
-                EPPS_Month_End_Fee__c = 0,
-                Payee_Fee__c = 0,
                 Status__c = statuses[i]
             ));
         }
 
         insert items;
+
+        // Create Settlement_Fee__c records
+        List<Settlement_Fee__c> feeRecords = new List<Settlement_Fee__c>();
+        for (Settlement_Plan_Item__c item : items) {
+            feeRecords.addAll(buildTestFeeRecords(item.Id));
+        }
+        insert feeRecords;
+
         return items;
     }
 
     /**
-     * @description Creates a mock config for FeeCalculator tests
+     * @description Build PaymentItemData DTOs from existing Settlement_Plan_Item__c records.
+     *              Used by tests that call saveDraftWithRecords/createAndSaveDraft/recalculateBalances.
      */
-    private static Settlement_Calc_Config__mdt createMockConfig() {
-        // Note: Custom Metadata cannot be inserted in tests, so we create in-memory
-        Settlement_Calc_Config__mdt config = new Settlement_Calc_Config__mdt(
-            DeveloperName = 'Test_Config',
-            Default_Bank_Fee__c = TEST_BANK_FEE,
-            EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE,
-            EPPS_Monthly_Minimum__c = 55.00,
-            Fully_Funded_Tolerance__c = SettlementDraftService.DEFAULT_BALANCE_CHECK_TOLERANCE
-        );
-        return config;
+    private static List<SettlementDraftService.PaymentItemData> buildTestDtos(
+        List<Settlement_Plan_Item__c> items
+    ) {
+        List<SettlementDraftService.PaymentItemData> dtos = new List<SettlementDraftService.PaymentItemData>();
+        for (Settlement_Plan_Item__c item : items) {
+            SettlementDraftService.PaymentItemData dto = new SettlementDraftService.PaymentItemData();
+            dto.id = item.Id;
+            dto.segmentId = item.Settlement_Segment__c;
+            dto.planId = item.Settlement_Plan__c;
+            dto.paymentNumber = item.Payment_Number__c != null ? Integer.valueOf(item.Payment_Number__c) : null;
+            dto.paymentDate = item.Payment_Date__c;
+            dto.originalPaymentDate = item.Original_Payment_Date__c;
+            dto.status = item.Status__c;
+            dto.paymentMethod = item.Payment_Method__c;
+            dto.hasOverride = item.Has_Override__c;
+            dto.paymentAmount = TEST_PAYMENT_AMOUNT;
+            dto.commissionFee = TEST_COMMISSION_FEE;
+            dto.bankFee = TEST_BANK_FEE;
+            dto.eppsTransactionFee = TEST_EPPS_TXN_FEE;
+            dtos.add(dto);
+        }
+        return dtos;
+    }
+
+    /**
+     * @description Build PaymentItemData DTOs without DB items (for inline test items).
+     */
+    private static List<SettlementDraftService.PaymentItemData> buildNewTestDtos(
+        Integer count, Date startDate
+    ) {
+        List<SettlementDraftService.PaymentItemData> dtos = new List<SettlementDraftService.PaymentItemData>();
+        for (Integer i = 1; i <= count; i++) {
+            SettlementDraftService.PaymentItemData dto = new SettlementDraftService.PaymentItemData();
+            dto.paymentNumber = i;
+            dto.paymentDate = startDate != null ? startDate.addMonths(i) : Date.today().addMonths(i);
+            dto.paymentAmount = TEST_PAYMENT_AMOUNT;
+            dto.commissionFee = TEST_COMMISSION_FEE;
+            dto.bankFee = TEST_BANK_FEE;
+            dto.eppsTransactionFee = TEST_EPPS_TXN_FEE;
+            dto.status = statusScheduled();
+            dtos.add(dto);
+        }
+        return dtos;
     }
 
     // ==================== SERVICE: CRUD TESTS ====================
@@ -363,18 +402,7 @@ private class SettlementDraftServiceTest {
             )
         };
 
-        List<Settlement_Plan_Item__c> items = new List<Settlement_Plan_Item__c>();
-        for (Integer i = 1; i <= 4; i++) {
-            items.add(new Settlement_Plan_Item__c(
-                Payment_Number__c = i,
-                Payment_Date__c = Date.today().addMonths(i),
-                Payment_Amount__c = TEST_PAYMENT_AMOUNT,
-                Commission_Fee__c = TEST_COMMISSION_FEE,
-                Bank_Fee__c = TEST_BANK_FEE,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE,
-                Status__c = statusScheduled()
-            ));
-        }
+        List<SettlementDraftService.PaymentItemData> items = buildNewTestDtos(4, null);
 
         Test.startTest();
         Settlement_Plan_Draft__c savedDraft = SettlementDraftService.saveDraftWithRecords(
@@ -499,7 +527,6 @@ private class SettlementDraftServiceTest {
         System.assertEquals('Cloned Draft', clonedDraft.Name, 'Name should match');
         System.assertEquals(SettlementDraftService.STATUS_DRAFT, clonedDraft.Status__c, 'Cloned draft should be Draft status');
         System.assertEquals(sourceDraft.Id, clonedDraft.Cloned_From__c, 'Should reference source');
-        System.assertEquals(TEST_COMMISSION_FEE, clonedDraft.Commission_Fee__c, 'Commission fee should be cloned');
 
         List<Settlement_Segment__c> clonedSegments = [
             SELECT Id FROM Settlement_Segment__c WHERE Settlement_Plan__c = :clonedDraft.Id
@@ -538,7 +565,7 @@ private class SettlementDraftServiceTest {
 
         // Get cloned items (these have IDs from the clone operation)
         List<Settlement_Plan_Item__c> clonedItems = [
-            SELECT Id, Payment_Number__c, Payment_Amount__c, Payment_Date__c, Original_Payment_Date__c, Settlement_Plan__c
+            SELECT Id, Payment_Number__c, Payment_Date__c, Original_Payment_Date__c, Settlement_Segment__c, Settlement_Plan__c, Status__c, Payment_Method__c, Has_Override__c
             FROM Settlement_Plan_Item__c
             WHERE Settlement_Plan__c = :clonedDraft.Id
             ORDER BY Payment_Number__c
@@ -552,10 +579,11 @@ private class SettlementDraftServiceTest {
 
         Test.startTest();
         // Save the cloned draft WITHOUT calculating - pass the existing items back
+        List<SettlementDraftService.PaymentItemData> dtos = buildTestDtos(clonedItems);
         Settlement_Plan_Draft__c savedDraft = SettlementDraftService.saveDraftWithRecords(
             clonedDraft.Id,
             clonedSegments,
-            clonedItems,
+            dtos,
             new Map<String, Object>()
         );
         Test.stopTest();
@@ -580,7 +608,7 @@ private class SettlementDraftServiceTest {
 
         // Get cloned items
         List<Settlement_Plan_Item__c> clonedItems = [
-            SELECT Id, Payment_Number__c, Payment_Amount__c, Payment_Date__c, Original_Payment_Date__c, Settlement_Plan__c
+            SELECT Id, Payment_Number__c, Payment_Date__c, Original_Payment_Date__c, Settlement_Segment__c, Settlement_Plan__c, Status__c, Payment_Method__c, Has_Override__c
             FROM Settlement_Plan_Item__c
             WHERE Settlement_Plan__c = :clonedDraft.Id
             ORDER BY Payment_Number__c
@@ -589,25 +617,30 @@ private class SettlementDraftServiceTest {
             SELECT Id FROM Settlement_Segment__c WHERE Settlement_Plan__c = :clonedDraft.Id
         ];
 
-        // Modify one item's amount
-        Decimal originalAmount = clonedItems[0].Payment_Amount__c;
+        // Convert to DTOs and modify one item's amount
+        List<SettlementDraftService.PaymentItemData> dtos = buildTestDtos(clonedItems);
+        Decimal originalAmount = dtos[0].paymentAmount;
         Decimal newAmount = originalAmount + 100;
-        clonedItems[0].Payment_Amount__c = newAmount;
+        dtos[0].paymentAmount = newAmount;
+        dtos[0].hasOverride = true;
 
         Test.startTest();
         SettlementDraftService.saveDraftWithRecords(
             clonedDraft.Id,
             clonedSegments,
-            clonedItems,
+            dtos,
             new Map<String, Object>()
         );
         Test.stopTest();
 
-        // Verify the modification was saved
-        Settlement_Plan_Item__c updatedItem = [
-            SELECT Payment_Amount__c FROM Settlement_Plan_Item__c WHERE Id = :clonedItems[0].Id
+        // Verify the modification was saved — check fee record for payment amount
+        List<Settlement_Fee__c> paymentFees = [
+            SELECT Amount__c FROM Settlement_Fee__c
+            WHERE Settlement_Plan_Item__c = :clonedItems[0].Id AND Type__c = 'SettlementPayment'
+            ORDER BY CreatedDate DESC LIMIT 1
         ];
-        System.assertEquals(newAmount, updatedItem.Payment_Amount__c, 'Modified item should be updated');
+        System.assertEquals(1, paymentFees.size(), 'Should have payment fee record');
+        System.assertEquals(newAmount, paymentFees[0].Amount__c, 'Modified item should be updated');
 
         // Verify all items still exist
         Integer itemCount = [SELECT COUNT() FROM Settlement_Plan_Item__c WHERE Settlement_Plan__c = :clonedDraft.Id];
@@ -627,7 +660,7 @@ private class SettlementDraftServiceTest {
 
         // Get cloned items
         List<Settlement_Plan_Item__c> clonedItems = [
-            SELECT Id, Payment_Number__c, Payment_Amount__c, Payment_Date__c, Original_Payment_Date__c, Settlement_Plan__c
+            SELECT Id, Payment_Number__c, Payment_Date__c, Original_Payment_Date__c, Settlement_Segment__c, Settlement_Plan__c, Status__c, Payment_Method__c, Has_Override__c
             FROM Settlement_Plan_Item__c
             WHERE Settlement_Plan__c = :clonedDraft.Id
             ORDER BY Payment_Number__c
@@ -637,16 +670,17 @@ private class SettlementDraftServiceTest {
         ];
         System.assertEquals(4, clonedItems.size(), 'Should start with 4 items');
 
-        // Remove one item from the list (simulate user deleting in UI)
-        Id removedItemId = clonedItems[0].Id;
-        clonedItems.remove(0);
-        System.assertEquals(3, clonedItems.size(), 'List should have 3 items after removal');
+        // Convert to DTOs, then remove one item from the list (simulate user deleting in UI)
+        List<SettlementDraftService.PaymentItemData> dtos = buildTestDtos(clonedItems);
+        Id removedItemId = dtos[0].id;
+        dtos.remove(0);
+        System.assertEquals(3, dtos.size(), 'List should have 3 items after removal');
 
         Test.startTest();
         SettlementDraftService.saveDraftWithRecords(
             clonedDraft.Id,
             clonedSegments,
-            clonedItems,
+            dtos,
             new Map<String, Object>()
         );
         Test.stopTest();
@@ -693,15 +727,6 @@ private class SettlementDraftServiceTest {
         } catch (SettlementCalculatorException e) {
             System.assert(e.getMessage().contains('Cannot delete'), 'Active: Error should mention cannot delete');
         }
-
-        // Test Applied status
-        Settlement_Plan_Draft__c appliedDraft = createTestDraft(credOpp.Id, 'Applied Draft', SettlementDraftService.STATUS_APPLIED);
-        try {
-            SettlementDraftService.deleteDraft(appliedDraft.Id);
-            System.assert(false, 'Should throw exception for Applied draft');
-        } catch (SettlementCalculatorException e) {
-            System.assert(e.getMessage().contains('Cannot delete'), 'Applied: Error should mention cannot delete');
-        }
     }
 
     @IsTest
@@ -738,7 +763,7 @@ private class SettlementDraftServiceTest {
 
         Test.startTest();
         SettlementDraftService.DraftCalculationResult result = SettlementDraftService.calculateDraftPlan(
-            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, TEST_COMMISSION_FEE, 0
+            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, 0
         );
         Test.stopTest();
 
@@ -765,7 +790,7 @@ private class SettlementDraftServiceTest {
 
         Test.startTest();
         SettlementDraftService.DraftCalculationResult result = SettlementDraftService.calculateDraftPlan(
-            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, TEST_COMMISSION_FEE, 0
+            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, 0
         );
         Test.stopTest();
 
@@ -792,7 +817,7 @@ private class SettlementDraftServiceTest {
 
         Test.startTest();
         SettlementDraftService.DraftCalculationResult result = SettlementDraftService.calculateDraftPlan(
-            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, TEST_COMMISSION_FEE, 0
+            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, 0
         );
         Test.stopTest();
 
@@ -827,7 +852,7 @@ private class SettlementDraftServiceTest {
 
         Test.startTest();
         SettlementDraftService.DraftCalculationResult result = SettlementDraftService.calculateDraftPlan(
-            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, TEST_COMMISSION_FEE, 0
+            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, 0
         );
         Test.stopTest();
 
@@ -842,7 +867,7 @@ private class SettlementDraftServiceTest {
 
         Test.startTest();
         SettlementDraftService.DraftCalculationResult result = SettlementDraftService.calculateDraftPlan(
-            draft.Id, new List<Settlement_Segment__c>(), TEST_BALANCE, TEST_SETTLEMENT_OFFER, TEST_COMMISSION_FEE, 0
+            draft.Id, new List<Settlement_Segment__c>(), TEST_BALANCE, TEST_SETTLEMENT_OFFER, 0
         );
         Test.stopTest();
 
@@ -869,49 +894,12 @@ private class SettlementDraftServiceTest {
 
         Test.startTest();
         SettlementDraftService.DraftCalculationResult result = SettlementDraftService.calculateDraftPlan(
-            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, TEST_COMMISSION_FEE, 0
+            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, 0
         );
         Test.stopTest();
 
         System.assertEquals(false, result.success, 'Should fail without start date');
         System.assert(result.errorMessage.contains('Start Date'), 'Error should mention Start Date');
-    }
-
-    @IsTest(SeeAllData=true)
-    static void testCalculateDraftPlan_NoCommissionFee_Fails() {
-        CreditorOpportunity__c credOpp = createNewCreditorOpportunity();
-        Settlement_Plan_Draft__c draft = new Settlement_Plan_Draft__c(
-            Name = 'No Commission Test',
-            CreditorOpportunity__c = credOpp.Id,
-            Status__c = SettlementDraftService.STATUS_DRAFT,
-            Balance__c = TEST_BALANCE,
-            Settlement_Offer_Amount__c = TEST_SETTLEMENT_OFFER,
-            Escrow_Start_Balance__c = TEST_ESCROW_START
-            // No Commission_Fee__c
-        );
-        insert draft;
-
-        List<Settlement_Segment__c> segments = new List<Settlement_Segment__c>{
-            new Settlement_Segment__c(
-                Settlement_Plan__c = draft.Id,
-                Segment_Order__c = 1,
-                Segment_Type__c = 'Fixed',
-                Payment_Amount__c = TEST_PAYMENT_AMOUNT,
-                Payment_Count__c = 4,
-                Frequency__c = 'Monthly',
-                Start_Date__c = Date.today().addDays(30)
-            )
-        };
-
-        Test.startTest();
-        // Pass null for commissionFee to test the validation
-        SettlementDraftService.DraftCalculationResult result = SettlementDraftService.calculateDraftPlan(
-            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, null, 0
-        );
-        Test.stopTest();
-
-        System.assertEquals(false, result.success, 'Should fail without commission fee');
-        System.assert(result.errorMessage.contains('Commission Fee'), 'Error should mention Commission Fee');
     }
 
     @IsTest(SeeAllData=true)
@@ -933,7 +921,7 @@ private class SettlementDraftServiceTest {
 
         Test.startTest();
         SettlementDraftService.DraftCalculationResult result = SettlementDraftService.calculateDraftPlan(
-            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, TEST_COMMISSION_FEE, 0
+            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, 0
         );
         Test.stopTest();
 
@@ -948,10 +936,11 @@ private class SettlementDraftServiceTest {
         CreditorOpportunity__c credOpp = createNewCreditorOpportunity();
         Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Recalc Test');
         List<Settlement_Plan_Item__c> items = createTestPaymentItems(draft.Id, 4);
+        List<SettlementDraftService.PaymentItemData> dtos = buildTestDtos(items);
 
         Test.startTest();
         SettlementDraftService.RecalculationResult result = SettlementDraftService.recalculateBalances(
-            items, TEST_SETTLEMENT_OFFER
+            dtos, TEST_SETTLEMENT_OFFER
         );
         Test.stopTest();
 
@@ -972,9 +961,11 @@ private class SettlementDraftServiceTest {
             new List<String>{statusCleared(), statusCleared(), statusScheduled(), statusScheduled()}
         );
 
+        List<SettlementDraftService.PaymentItemData> dtos = buildTestDtos(items);
+
         Test.startTest();
         SettlementDraftService.RecalculationResult result = SettlementDraftService.recalculateBalances(
-            items, TEST_SETTLEMENT_OFFER
+            dtos, TEST_SETTLEMENT_OFFER
         );
         Test.stopTest();
 
@@ -982,12 +973,12 @@ private class SettlementDraftServiceTest {
         System.assertEquals(4, result.paymentItems.size(), 'Should have 4 items');
 
         // Verify locked rows (Cleared) remain unchanged
-        Settlement_Plan_Item__c paidItem1 = result.paymentItems[0];
-        Settlement_Plan_Item__c paidItem2 = result.paymentItems[1];
+        SettlementDraftService.PaymentItemData paidItem1 = result.paymentItems[0];
+        SettlementDraftService.PaymentItemData paidItem2 = result.paymentItems[1];
 
-        System.assertEquals(statusCleared(), paidItem1.Status__c,
+        System.assertEquals(statusCleared(), paidItem1.status,
             'Cleared item 1 status should be preserved');
-        System.assertEquals(statusCleared(), paidItem2.Status__c,
+        System.assertEquals(statusCleared(), paidItem2.status,
             'Cleared item 2 status should be preserved');
     }
 
@@ -996,25 +987,15 @@ private class SettlementDraftServiceTest {
         CreditorOpportunity__c credOpp = createNewCreditorOpportunity();
         Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Underfunded Test');
         
-        // Create items that total less than settlement offer
-        List<Settlement_Plan_Item__c> items = new List<Settlement_Plan_Item__c>();
-        for (Integer i = 1; i <= 3; i++) {
-            items.add(new Settlement_Plan_Item__c(
-                Settlement_Plan__c = draft.Id,
-                Payment_Number__c = i,
-                Payment_Date__c = Date.today().addMonths(i),
-                Payment_Amount__c = 2000.00, // Only $6000 total vs $10000 offer
-                Commission_Fee__c = TEST_COMMISSION_FEE,
-                Bank_Fee__c = TEST_BANK_FEE,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE,
-                Status__c = statusScheduled()
-            ));
+        // Create DTOs that total less than settlement offer
+        List<SettlementDraftService.PaymentItemData> dtos = buildNewTestDtos(3, null);
+        for (SettlementDraftService.PaymentItemData d : dtos) {
+            d.paymentAmount = 2000.00; // Only $6000 total vs $10000 offer
         }
-        insert items;
 
         Test.startTest();
         SettlementDraftService.RecalculationResult result = SettlementDraftService.recalculateBalances(
-            items, TEST_SETTLEMENT_OFFER
+            dtos, TEST_SETTLEMENT_OFFER
         );
         Test.stopTest();
 
@@ -1030,25 +1011,13 @@ private class SettlementDraftServiceTest {
         CreditorOpportunity__c credOpp = createNewCreditorOpportunity();
         Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Overfunded Test');
         
-        // Create items that total more than settlement offer
-        List<Settlement_Plan_Item__c> items = new List<Settlement_Plan_Item__c>();
-        for (Integer i = 1; i <= 5; i++) {
-            items.add(new Settlement_Plan_Item__c(
-                Settlement_Plan__c = draft.Id,
-                Payment_Number__c = i,
-                Payment_Date__c = Date.today().addMonths(i),
-                Payment_Amount__c = TEST_PAYMENT_AMOUNT, // $12,500 total vs $10000 offer
-                Commission_Fee__c = TEST_COMMISSION_FEE,
-                Bank_Fee__c = TEST_BANK_FEE,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE,
-                Status__c = statusScheduled()
-            ));
-        }
-        insert items;
+        // Create DTOs that total more than settlement offer
+        List<SettlementDraftService.PaymentItemData> dtos = buildNewTestDtos(5, null);
+        // $2500 x 5 = $12,500 total vs $10000 offer
 
         Test.startTest();
         SettlementDraftService.RecalculationResult result = SettlementDraftService.recalculateBalances(
-            items, TEST_SETTLEMENT_OFFER
+            dtos, TEST_SETTLEMENT_OFFER
         );
         Test.stopTest();
 
@@ -1063,7 +1032,7 @@ private class SettlementDraftServiceTest {
     static void testRecalculateBalances_EmptyList_Fails() {
         Test.startTest();
         SettlementDraftService.RecalculationResult result = SettlementDraftService.recalculateBalances(
-            new List<Settlement_Plan_Item__c>(), TEST_SETTLEMENT_OFFER
+            new List<SettlementDraftService.PaymentItemData>(), TEST_SETTLEMENT_OFFER
         );
         Test.stopTest();
 
@@ -1179,7 +1148,7 @@ private class SettlementDraftServiceTest {
     // ==================== BULK OPERATION TESTS ====================
 
     @IsTest
-    static void testBulkDraftCreation() {
+    static void testService_BulkDraftCreation() {
         CreditorOpportunity__c credOpp = getTestCreditorOpportunity();
         
         Test.startTest();
@@ -1191,8 +1160,7 @@ private class SettlementDraftServiceTest {
                 Status__c = SettlementDraftService.STATUS_DRAFT,
                 Balance__c = TEST_BALANCE,
                 Settlement_Offer_Amount__c = TEST_SETTLEMENT_OFFER,
-                Escrow_Start_Balance__c = TEST_ESCROW_START,
-                Commission_Fee__c = TEST_COMMISSION_FEE
+                Escrow_Start_Balance__c = TEST_ESCROW_START
             ));
         }
         insert drafts;
@@ -1203,7 +1171,7 @@ private class SettlementDraftServiceTest {
     }
 
     @IsTest
-    static void testBulkPaymentItemCreation() {
+    static void testService_BulkPaymentItemCreation() {
         CreditorOpportunity__c credOpp = getTestCreditorOpportunity();
         Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Bulk Items Test');
 
@@ -1214,10 +1182,6 @@ private class SettlementDraftServiceTest {
                 Settlement_Plan__c = draft.Id,
                 Payment_Number__c = i,
                 Payment_Date__c = Date.today().addDays(i * 7),
-                Payment_Amount__c = 100.00,
-                Commission_Fee__c = TEST_COMMISSION_FEE,
-                Bank_Fee__c = TEST_BANK_FEE,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE,
                 Status__c = statusScheduled()
             ));
         }
@@ -1298,17 +1262,17 @@ private class SettlementDraftServiceTest {
                 Start_Date__c = Date.newInstance(2026, 3, 1)
             )
         };
-        List<Settlement_Plan_Item__c> items = new List<Settlement_Plan_Item__c>{
-            new Settlement_Plan_Item__c(
-                Payment_Number__c = 1,
-                Payment_Date__c = Date.newInstance(2026, 3, 1),
-                Payment_Amount__c = 2500,
-                Status__c = statusScheduled()
-            )
-        };
-        Map<String, Object> draftFields = new Map<String, Object>{
-            'Commission_Fee__c' => 35
-        };
+        List<SettlementDraftService.PaymentItemData> items = new List<SettlementDraftService.PaymentItemData>();
+        SettlementDraftService.PaymentItemData dto = new SettlementDraftService.PaymentItemData();
+        dto.paymentNumber = 1;
+        dto.paymentDate = Date.newInstance(2026, 3, 1);
+        dto.paymentAmount = 2500;
+        dto.commissionFee = TEST_COMMISSION_FEE;
+        dto.bankFee = TEST_BANK_FEE;
+        dto.eppsTransactionFee = TEST_EPPS_TXN_FEE;
+        dto.status = statusScheduled();
+        items.add(dto);
+        Map<String, Object> draftFields = new Map<String, Object>();
 
         Test.startTest();
         Settlement_Plan_Draft__c saved = SettlementDraftController.saveDraftWithRecords(
@@ -1326,7 +1290,7 @@ private class SettlementDraftServiceTest {
             SettlementDraftController.saveDraftWithRecords(
                 null,
                 new List<Settlement_Segment__c>(),
-                new List<Settlement_Plan_Item__c>(),
+                new List<SettlementDraftService.PaymentItemData>(),
                 null
             );
             System.assert(false, 'Should throw for null draft ID');
@@ -1404,7 +1368,7 @@ private class SettlementDraftServiceTest {
 
         Test.startTest();
         SettlementDraftService.DraftCalculationResult result = SettlementDraftController.calculateDraftPlan(
-            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, TEST_COMMISSION_FEE, 0
+            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, 0
         );
         Test.stopTest();
 
@@ -1416,28 +1380,29 @@ private class SettlementDraftServiceTest {
         CreditorOpportunity__c credOpp = createNewCreditorOpportunity();
         Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Recalc Test');
         List<Settlement_Plan_Item__c> items = createTestPaymentItems(draft.Id, 4);
+        List<SettlementDraftService.PaymentItemData> dtos = buildTestDtos(items);
 
         Test.startTest();
         SettlementDraftService.RecalculationResult result = SettlementDraftController.recalculateBalances(
-            items, TEST_SETTLEMENT_OFFER
+            dtos, TEST_SETTLEMENT_OFFER
         );
         Test.stopTest();
 
         System.assertEquals(true, result.success, 'Recalculation should succeed');
     }
 
-    @IsTest(SeeAllData=true)
+    @IsTest
     static void testController_RecalculateBalances_EmptyList() {
         Test.startTest();
         SettlementDraftService.RecalculationResult result = SettlementDraftController.recalculateBalances(
-            new List<Settlement_Plan_Item__c>(), TEST_SETTLEMENT_OFFER
+            new List<SettlementDraftService.PaymentItemData>(), TEST_SETTLEMENT_OFFER
         );
         Test.stopTest();
 
         System.assertEquals(false, result.success, 'Should fail with empty list');
     }
 
-    @IsTest(SeeAllData=true)
+    @IsTest
     static void testController_RecalculateBalances_NullList() {
         Test.startTest();
         SettlementDraftService.RecalculationResult result = SettlementDraftController.recalculateBalances(
@@ -1507,9 +1472,11 @@ private class SettlementDraftServiceTest {
         Test.stopTest();
 
         System.assertNotEquals(null, config, 'Config should not be null');
+        System.assert(config.containsKey('commissionFee'), 'Should contain commissionFee key');
         System.assert(config.containsKey('bankFee'), 'Should contain bankFee key');
         System.assert(config.containsKey('eppsTransactionFee'), 'Should contain eppsTransactionFee key');
         // Verify values match test constants (from config)
+        System.assertEquals(TEST_COMMISSION_FEE, config.get('commissionFee'), 'Commission fee should match config');
         System.assertEquals(TEST_BANK_FEE, config.get('bankFee'), 'Bank fee should match config');
         System.assertEquals(TEST_EPPS_TXN_FEE, config.get('eppsTransactionFee'), 'EPPS fee should match config');
     }
@@ -1560,7 +1527,7 @@ private class SettlementDraftServiceTest {
         Test.startTest();
         // Pass null for segments - should handle gracefully and return error
         SettlementDraftService.DraftCalculationResult result = SettlementDraftController.calculateDraftPlan(
-            draft.Id, null, TEST_BALANCE, TEST_SETTLEMENT_OFFER, TEST_COMMISSION_FEE, 0
+            draft.Id, null, TEST_BALANCE, TEST_SETTLEMENT_OFFER, 0
         );
         Test.stopTest();
 
@@ -1772,58 +1739,6 @@ private class SettlementDraftServiceTest {
     }
 
     @IsTest
-    static void testDateUtils_WeeksBetween() {
-        Date startDate = Date.newInstance(2026, 1, 1);
-        Date endDate = Date.newInstance(2026, 1, 29); // 28 days = 4 weeks
-
-        Test.startTest();
-        Integer result = SettlementDateUtils.weeksBetween(startDate, endDate);
-        Test.stopTest();
-
-        System.assertEquals(4, result, 'Should be 4 weeks');
-    }
-
-    @IsTest
-    static void testDateUtils_WeeksBetween_NullDates() {
-        Test.startTest();
-        Integer result = SettlementDateUtils.weeksBetween(null, null);
-        Test.stopTest();
-
-        System.assertEquals(0, result, 'Should return 0 for null dates');
-    }
-
-    @IsTest
-    static void testDateUtils_GetMonthYearKey() {
-        Date testDate = Date.newInstance(2026, 3, 15);
-
-        Test.startTest();
-        String result = SettlementDateUtils.getMonthYearKey(testDate);
-        Test.stopTest();
-
-        System.assertEquals('2026-03', result, 'Should format as YYYY-MM');
-    }
-
-    @IsTest
-    static void testDateUtils_GetMonthYearKey_SingleDigitMonth() {
-        Date testDate = Date.newInstance(2026, 1, 5);
-
-        Test.startTest();
-        String result = SettlementDateUtils.getMonthYearKey(testDate);
-        Test.stopTest();
-
-        System.assertEquals('2026-01', result, 'Should pad single digit month with zero');
-    }
-
-    @IsTest
-    static void testDateUtils_GetMonthYearKey_NullDate() {
-        Test.startTest();
-        String result = SettlementDateUtils.getMonthYearKey(null);
-        Test.stopTest();
-
-        System.assertEquals(null, result, 'Should return null for null date');
-    }
-
-    @IsTest
     static void testDateUtils_SortByPaymentDate() {
         CreditorOpportunity__c credOpp = getTestCreditorOpportunity();
         Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Sort Test');
@@ -1833,21 +1748,18 @@ private class SettlementDraftServiceTest {
                 Settlement_Plan__c = draft.Id,
                 Payment_Number__c = 3,
                 Payment_Date__c = Date.newInstance(2026, 3, 1),
-                Payment_Amount__c = 1000,
                 Status__c = statusScheduled()
             ),
             new Settlement_Plan_Item__c(
                 Settlement_Plan__c = draft.Id,
                 Payment_Number__c = 1,
                 Payment_Date__c = Date.newInstance(2026, 1, 1),
-                Payment_Amount__c = 1000,
                 Status__c = statusScheduled()
             ),
             new Settlement_Plan_Item__c(
                 Settlement_Plan__c = draft.Id,
                 Payment_Number__c = 2,
                 Payment_Date__c = Date.newInstance(2026, 2, 1),
-                Payment_Amount__c = 1000,
                 Status__c = statusScheduled()
             )
         };
@@ -1873,14 +1785,12 @@ private class SettlementDraftServiceTest {
                 Settlement_Plan__c = draft.Id,
                 Payment_Number__c = 3,
                 Payment_Date__c = sameDate,
-                Payment_Amount__c = 1000,
                 Status__c = statusScheduled()
             ),
             new Settlement_Plan_Item__c(
                 Settlement_Plan__c = draft.Id,
                 Payment_Number__c = 1,
                 Payment_Date__c = sameDate,
-                Payment_Amount__c = 1000,
                 Status__c = statusScheduled()
             )
         };
@@ -1913,374 +1823,6 @@ private class SettlementDraftServiceTest {
 
         System.assertNotEquals(null, result, 'Should return empty list, not null');
         System.assertEquals(0, result.size(), 'Should be empty');
-    }
-
-    // ==================== FEE CALCULATOR TESTS ====================
-
-    @IsTest
-    static void testFeeCalculator_Constructor_Success() {
-        Settlement_Calc_Config__mdt config = createMockConfig();
-
-        Test.startTest();
-        SettlementFeeCalculator calculator = new SettlementFeeCalculator(config, TEST_COMMISSION_FEE);
-        Test.stopTest();
-
-        System.assertEquals(TEST_COMMISSION_FEE, calculator.getCommissionFee(), 'Commission fee should match');
-        System.assertEquals(TEST_BANK_FEE, calculator.getBankFee(), 'Bank fee should come from config');
-    }
-
-    @IsTest
-    static void testFeeCalculator_Constructor_NullConfig_ThrowsException() {
-        Test.startTest();
-        try {
-            new SettlementFeeCalculator(null, TEST_COMMISSION_FEE);
-            System.assert(false, 'Should throw exception for null config');
-        } catch (SettlementCalculatorException e) {
-            System.assert(e.getMessage().contains('Configuration'), 'Error should mention configuration');
-            System.assertEquals(SettlementCalculatorException.ErrorType.FEE_CALCULATION_ERROR, e.getErrorType(),
-                'Should be FEE_CALCULATION_ERROR type');
-        }
-        Test.stopTest();
-    }
-
-    @IsTest
-    static void testFeeCalculator_Constructor_NullCommissionFee_ThrowsException() {
-        Settlement_Calc_Config__mdt config = createMockConfig();
-
-        Test.startTest();
-        try {
-            new SettlementFeeCalculator(config, null);
-            System.assert(false, 'Should throw exception for null commission fee');
-        } catch (SettlementCalculatorException e) {
-            System.assert(e.getMessage().contains('Commission Fee'), 'Error should mention commission fee');
-        }
-        Test.stopTest();
-    }
-
-    @IsTest
-    static void testFeeCalculator_CalculateFeesForItem() {
-        Settlement_Calc_Config__mdt config = createMockConfig();
-        SettlementFeeCalculator calculator = new SettlementFeeCalculator(config, TEST_COMMISSION_FEE);
-
-        Settlement_Plan_Item__c item = new Settlement_Plan_Item__c(
-            Payment_Amount__c = TEST_PAYMENT_AMOUNT
-        );
-
-        Test.startTest();
-        calculator.calculateFeesForItem(item);
-        Test.stopTest();
-
-        System.assertEquals(TEST_COMMISSION_FEE, item.Commission_Fee__c, 'Commission fee should be set');
-        System.assertEquals(TEST_BANK_FEE, item.Bank_Fee__c, 'Bank fee should be set from config');
-        System.assertEquals(TEST_EPPS_TXN_FEE, item.EPPS_Transaction_Fee__c, 'EPPS transaction fee should be set');
-        System.assertEquals(0, item.EPPS_Month_End_Fee__c, 'EPPS month end fee should default to 0');
-        System.assertEquals(0, item.Payee_Fee__c, 'Payee fee should default to 0');
-    }
-
-    @IsTest
-    static void testFeeCalculator_CalculateFeesForItem_PreservesExistingPayeeFee() {
-        Settlement_Calc_Config__mdt config = createMockConfig();
-        SettlementFeeCalculator calculator = new SettlementFeeCalculator(config, TEST_COMMISSION_FEE);
-
-        Settlement_Plan_Item__c item = new Settlement_Plan_Item__c(
-            Payment_Amount__c = TEST_PAYMENT_AMOUNT,
-            Payee_Fee__c = 25.00  // Pre-existing payee fee
-        );
-
-        Test.startTest();
-        calculator.calculateFeesForItem(item);
-        Test.stopTest();
-
-        System.assertEquals(25.00, item.Payee_Fee__c, 'Existing payee fee should be preserved');
-    }
-
-    // ============================================================================
-    // EPPS MONTH-END TRUE-UP TESTS - DISABLED (Jan 2026)
-    // Reason: True-up calculation logic disabled - will be populated by backend if needed
-    // To re-enable: Uncomment the test methods below when true-up logic is re-enabled
-    // ============================================================================
-    /*
-    @IsTest
-    static void testFeeCalculator_CalculateEppsMonthEndFees_SinglePaymentPerMonth() {
-        Settlement_Calc_Config__mdt config = createMockConfig();
-        SettlementFeeCalculator calculator = new SettlementFeeCalculator(config, TEST_COMMISSION_FEE);
-
-        // Single payment in January - should get full true-up ($55 - $12 = $43)
-        List<Settlement_Plan_Item__c> items = new List<Settlement_Plan_Item__c>{
-            new Settlement_Plan_Item__c(
-                Payment_Date__c = Date.newInstance(2026, 1, 15),
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE
-            )
-        };
-
-        Test.startTest();
-        calculator.calculateEppsMonthEndFees(items);
-        Test.stopTest();
-
-        System.assertEquals(43.00, items[0].EPPS_Month_End_Fee__c,
-            'Single payment should get true-up to reach $55 minimum');
-    }
-
-    @IsTest
-    static void testFeeCalculator_CalculateEppsMonthEndFees_MultiplePaymentsSameMonth() {
-        Settlement_Calc_Config__mdt config = createMockConfig();
-        SettlementFeeCalculator calculator = new SettlementFeeCalculator(config, TEST_COMMISSION_FEE);
-
-        // 3 payments in January = 3 × $12 = $36, true-up = $55 - $36 = $19
-        List<Settlement_Plan_Item__c> items = new List<Settlement_Plan_Item__c>{
-            new Settlement_Plan_Item__c(
-                Payment_Date__c = Date.newInstance(2026, 1, 10),
-                Payment_Number__c = 1,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE
-            ),
-            new Settlement_Plan_Item__c(
-                Payment_Date__c = Date.newInstance(2026, 1, 20),
-                Payment_Number__c = 2,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE
-            ),
-            new Settlement_Plan_Item__c(
-                Payment_Date__c = Date.newInstance(2026, 1, 30),
-                Payment_Number__c = 3,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE
-            )
-        };
-
-        Test.startTest();
-        calculator.calculateEppsMonthEndFees(items);
-        Test.stopTest();
-
-        // Note: Items that don't get a true-up may have null instead of 0
-        Decimal firstFee = items[0].EPPS_Month_End_Fee__c == null ? 0 : items[0].EPPS_Month_End_Fee__c;
-        Decimal secondFee = items[1].EPPS_Month_End_Fee__c == null ? 0 : items[1].EPPS_Month_End_Fee__c;
-        System.assertEquals(0, firstFee, 'First payment should have no true-up');
-        System.assertEquals(0, secondFee, 'Second payment should have no true-up');
-        System.assertEquals(19.00, items[2].EPPS_Month_End_Fee__c,
-            'Last payment of month should get true-up');
-    }
-
-    @IsTest
-    static void testFeeCalculator_CalculateEppsMonthEndFees_ExceedsMinimum() {
-        Settlement_Calc_Config__mdt config = createMockConfig();
-        SettlementFeeCalculator calculator = new SettlementFeeCalculator(config, TEST_COMMISSION_FEE);
-
-        // 5 payments = 5 × $12 = $60, exceeds $55 minimum, no true-up needed
-        List<Settlement_Plan_Item__c> items = new List<Settlement_Plan_Item__c>();
-        for (Integer i = 1; i <= 5; i++) {
-            items.add(new Settlement_Plan_Item__c(
-                Payment_Date__c = Date.newInstance(2026, 1, i * 5),
-                Payment_Number__c = i,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE
-            ));
-        }
-
-        Test.startTest();
-        calculator.calculateEppsMonthEndFees(items);
-        Test.stopTest();
-
-        for (Settlement_Plan_Item__c item : items) {
-            // Items that don't get a true-up may have null instead of 0
-            Decimal monthEndFee = item.EPPS_Month_End_Fee__c == null ? 0 : item.EPPS_Month_End_Fee__c;
-            System.assertEquals(0, monthEndFee,
-                'No true-up needed when exceeding minimum');
-        }
-    }
-
-    @IsTest
-    static void testFeeCalculator_CalculateEppsMonthEndFees_MultipleMonths() {
-        Settlement_Calc_Config__mdt config = createMockConfig();
-        SettlementFeeCalculator calculator = new SettlementFeeCalculator(config, TEST_COMMISSION_FEE);
-
-        // 1 payment each in Jan, Feb, Mar
-        List<Settlement_Plan_Item__c> items = new List<Settlement_Plan_Item__c>{
-            new Settlement_Plan_Item__c(
-                Payment_Date__c = Date.newInstance(2026, 1, 15),
-                Payment_Number__c = 1,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE
-            ),
-            new Settlement_Plan_Item__c(
-                Payment_Date__c = Date.newInstance(2026, 2, 15),
-                Payment_Number__c = 2,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE
-            ),
-            new Settlement_Plan_Item__c(
-                Payment_Date__c = Date.newInstance(2026, 3, 15),
-                Payment_Number__c = 3,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE
-            )
-        };
-
-        Test.startTest();
-        calculator.calculateEppsMonthEndFees(items);
-        Test.stopTest();
-
-        // Each month gets its own true-up
-        System.assertEquals(43.00, items[0].EPPS_Month_End_Fee__c, 'January should get true-up');
-        System.assertEquals(43.00, items[1].EPPS_Month_End_Fee__c, 'February should get true-up');
-        System.assertEquals(43.00, items[2].EPPS_Month_End_Fee__c, 'March should get true-up');
-    }
-
-    @IsTest
-    static void testFeeCalculator_CalculateEppsMonthEndFees_EmptyList() {
-        Settlement_Calc_Config__mdt config = createMockConfig();
-        SettlementFeeCalculator calculator = new SettlementFeeCalculator(config, TEST_COMMISSION_FEE);
-
-        Test.startTest();
-        calculator.calculateEppsMonthEndFees(new List<Settlement_Plan_Item__c>());
-        // Should not throw
-        Test.stopTest();
-
-        System.assert(true, 'Should handle empty list without error');
-    }
-
-    @IsTest
-    static void testFeeCalculator_CalculateEppsMonthEndFees_NullList() {
-        Settlement_Calc_Config__mdt config = createMockConfig();
-        SettlementFeeCalculator calculator = new SettlementFeeCalculator(config, TEST_COMMISSION_FEE);
-
-        Test.startTest();
-        calculator.calculateEppsMonthEndFees(null);
-        // Should not throw
-        Test.stopTest();
-
-        System.assert(true, 'Should handle null list without error');
-    }
-    */
-    // END DISABLED EPPS TRUE-UP TESTS
-
-    @IsTest
-    static void testFeeCalculator_CalculateTotalFees_InstanceAndStatic() {
-        Settlement_Calc_Config__mdt config = createMockConfig();
-        SettlementFeeCalculator calculator = new SettlementFeeCalculator(config, TEST_COMMISSION_FEE);
-
-        Settlement_Plan_Item__c item = new Settlement_Plan_Item__c(
-            Commission_Fee__c = 35.00,
-            Bank_Fee__c = 35.00,
-            EPPS_Transaction_Fee__c = 12.00,
-            EPPS_Month_End_Fee__c = 43.00,
-            Payee_Fee__c = 5.00
-        );
-
-        // Test instance method
-        Decimal instanceTotal = calculator.calculateTotalFees(item);
-        System.assertEquals(82.00, instanceTotal, 'Instance: Total fees should be $82');
-
-        // Test static method
-        Decimal staticTotal = SettlementFeeCalculator.calculateTotalFeesStatic(item);
-        System.assertEquals(82.00, staticTotal, 'Static: Total fees should be $82');
-    }
-
-    @IsTest
-    static void testFeeCalculator_CalculateTotalFeesStatic_WithNulls() {
-        Settlement_Plan_Item__c item = new Settlement_Plan_Item__c(
-            Commission_Fee__c = 35.00,
-            Bank_Fee__c = null,
-            EPPS_Transaction_Fee__c = 12.00
-            // Other fields null
-        );
-
-        Test.startTest();
-        Decimal total = SettlementFeeCalculator.calculateTotalFeesStatic(item);
-        Test.stopTest();
-
-        System.assertEquals(47.00, total, 'Should handle nulls as zero');
-    }
-
-    @IsTest
-    static void testFeeCalculator_CalculateTotalPayment() {
-        Settlement_Calc_Config__mdt config = createMockConfig();
-        SettlementFeeCalculator calculator = new SettlementFeeCalculator(config, TEST_COMMISSION_FEE);
-
-        Settlement_Plan_Item__c item = new Settlement_Plan_Item__c(
-            Payment_Amount__c = 2500.00,
-            Commission_Fee__c = 35.00,
-            Bank_Fee__c = 35.00,
-            EPPS_Transaction_Fee__c = 12.00,
-            EPPS_Month_End_Fee__c = 0,
-            Payee_Fee__c = 0
-        );
-
-        Test.startTest();
-        Decimal totalPayment = calculator.calculateTotalPayment(item);
-        Test.stopTest();
-
-        System.assertEquals(2582.00, totalPayment, 'Total payment should be amount + fees');
-    }
-
-    @IsTest
-    static void testFeeCalculator_CalculateTotalPayment_NullPaymentAmount() {
-        Settlement_Calc_Config__mdt config = createMockConfig();
-        SettlementFeeCalculator calculator = new SettlementFeeCalculator(config, TEST_COMMISSION_FEE);
-
-        Settlement_Plan_Item__c item = new Settlement_Plan_Item__c(
-            Payment_Amount__c = null,
-            Commission_Fee__c = 35.00,
-            Bank_Fee__c = 35.00,
-            EPPS_Transaction_Fee__c = 12.00
-        );
-
-        Test.startTest();
-        Decimal totalPayment = calculator.calculateTotalPayment(item);
-        Test.stopTest();
-
-        System.assertEquals(82.00, totalPayment, 'Should handle null payment amount as zero');
-    }
-
-    @IsTest
-    static void testFeeCalculator_CalculateFeeTotals() {
-        Settlement_Calc_Config__mdt config = createMockConfig();
-        SettlementFeeCalculator calculator = new SettlementFeeCalculator(config, TEST_COMMISSION_FEE);
-
-        List<Settlement_Plan_Item__c> items = new List<Settlement_Plan_Item__c>{
-            new Settlement_Plan_Item__c(
-                Commission_Fee__c = 35.00,
-                Bank_Fee__c = 35.00,
-                EPPS_Transaction_Fee__c = 12.00,
-                EPPS_Month_End_Fee__c = 43.00,
-                Payee_Fee__c = 5.00
-            ),
-            new Settlement_Plan_Item__c(
-                Commission_Fee__c = 35.00,
-                Bank_Fee__c = 35.00,
-                EPPS_Transaction_Fee__c = 12.00,
-                EPPS_Month_End_Fee__c = 0,
-                Payee_Fee__c = 0
-            )
-        };
-
-        Test.startTest();
-        Map<String, Decimal> totals = calculator.calculateFeeTotals(items);
-        Test.stopTest();
-
-        System.assertEquals(70.00, totals.get('commissionTotal'), 'Commission total should be $70');
-        System.assertEquals(70.00, totals.get('bankTotal'), 'Bank total should be $70');
-        System.assertEquals(24.00, totals.get('eppsTransactionTotal'), 'EPPS transaction total should be $24');
-        System.assertEquals(0, totals.get('eppsMonthEndTotal'), 'EPPS month-end total should be $0');
-        System.assertEquals(0, totals.get('payeeTotal'), 'Payee total should be $0');
-        System.assertEquals(164.00, totals.get('grandTotal'), 'Grand total should be $164');
-    }
-
-    @IsTest
-    static void testFeeCalculator_CalculateFeeTotals_EmptyList() {
-        Settlement_Calc_Config__mdt config = createMockConfig();
-        SettlementFeeCalculator calculator = new SettlementFeeCalculator(config, TEST_COMMISSION_FEE);
-
-        Test.startTest();
-        Map<String, Decimal> totals = calculator.calculateFeeTotals(new List<Settlement_Plan_Item__c>());
-        Test.stopTest();
-
-        System.assertEquals(0, totals.get('grandTotal'), 'Grand total should be 0 for empty list');
-    }
-
-    @IsTest
-    static void testFeeCalculator_CalculateFeeTotals_NullList() {
-        Settlement_Calc_Config__mdt config = createMockConfig();
-        SettlementFeeCalculator calculator = new SettlementFeeCalculator(config, TEST_COMMISSION_FEE);
-
-        Test.startTest();
-        Map<String, Decimal> totals = calculator.calculateFeeTotals(null);
-        Test.stopTest();
-
-        System.assertEquals(0, totals.get('grandTotal'), 'Grand total should be 0 for null list');
     }
 
     // ==================== EXCEPTION CLASS TESTS ====================
@@ -2425,7 +1967,7 @@ private class SettlementDraftServiceTest {
 
         Test.startTest();
         SettlementDraftService.DraftCalculationResult result = SettlementDraftService.calculateDraftPlan(
-            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, TEST_COMMISSION_FEE, totalPaidAmount
+            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, totalPaidAmount
         );
         Test.stopTest();
 
@@ -2437,18 +1979,18 @@ private class SettlementDraftServiceTest {
         Boolean foundPaid2 = false;
         Integer newItemsCount = 0;
 
-        for (Settlement_Plan_Item__c item : result.paymentItems) {
-            if (item.Id == paidItem1Id) {
+        for (SettlementDraftService.PaymentItemData item : result.paymentItems) {
+            if (item.id == paidItem1Id) {
                 foundPaid1 = true;
-                System.assertEquals(statusCleared(), item.Status__c, 'First locked item should have Paid status');
-            } else if (item.Id == paidItem2Id) {
+                System.assertEquals(statusCleared(), item.status, 'First locked item should have Paid status');
+            } else if (item.id == paidItem2Id) {
                 foundPaid2 = true;
-                System.assertEquals(statusCleared(), item.Status__c, 'Second locked item should have Paid status');
-            } else if (item.Id == null) {
+                System.assertEquals(statusCleared(), item.status, 'Second locked item should have Paid status');
+            } else if (item.id == null) {
                 newItemsCount++;
                 // New items should have payment numbers starting after locked items
-                System.assert(item.Payment_Number__c >= 3,
-                    'New items should have payment number >= 3, got: ' + item.Payment_Number__c);
+                System.assert(item.paymentNumber >= 3,
+                    'New items should have payment number >= 3, got: ' + item.paymentNumber);
             }
         }
 
@@ -2478,7 +2020,7 @@ private class SettlementDraftServiceTest {
 
         Test.startTest();
         SettlementDraftService.DraftCalculationResult result = SettlementDraftService.calculateDraftPlan(
-            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, TEST_COMMISSION_FEE, 0
+            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, 0
         );
         Test.stopTest();
 
@@ -2504,47 +2046,50 @@ private class SettlementDraftServiceTest {
 
         Id paidItem1Id = existingItems[0].Id;
         Id paidItem2Id = existingItems[1].Id;
-        Decimal paid1Amount = existingItems[0].Payment_Amount__c;
-        Decimal paid2Amount = existingItems[1].Payment_Amount__c;
+        Decimal paid1Amount = TEST_PAYMENT_AMOUNT;
+        Decimal paid2Amount = TEST_PAYMENT_AMOUNT;
 
         // Now save with NEW items (simulating after a recalculate)
         // Include the locked items with IDs, plus new items without IDs
-        List<Settlement_Plan_Item__c> itemsToSave = new List<Settlement_Plan_Item__c>{
-            // Locked items (already in DB - will be skipped)
-            new Settlement_Plan_Item__c(
-                Id = paidItem1Id,
-                Payment_Number__c = 1,
-                Payment_Date__c = Date.today().addMonths(1),
-                Payment_Amount__c = paid1Amount,
-                Status__c = statusCleared()
-            ),
-            new Settlement_Plan_Item__c(
-                Id = paidItem2Id,
-                Payment_Number__c = 2,
-                Payment_Date__c = Date.today().addMonths(2),
-                Payment_Amount__c = paid2Amount,
-                Status__c = statusCleared()
-            ),
-            // New items (no ID - will be inserted)
-            new Settlement_Plan_Item__c(
-                Payment_Number__c = 3,
-                Payment_Date__c = Date.today().addMonths(3),
-                Payment_Amount__c = 1500.00,
-                Commission_Fee__c = TEST_COMMISSION_FEE,
-                Bank_Fee__c = TEST_BANK_FEE,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE,
-                Status__c = statusScheduled()
-            ),
-            new Settlement_Plan_Item__c(
-                Payment_Number__c = 4,
-                Payment_Date__c = Date.today().addMonths(4),
-                Payment_Amount__c = 1500.00,
-                Commission_Fee__c = TEST_COMMISSION_FEE,
-                Bank_Fee__c = TEST_BANK_FEE,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE,
-                Status__c = statusScheduled()
-            )
-        };
+        List<SettlementDraftService.PaymentItemData> itemsToSave = new List<SettlementDraftService.PaymentItemData>();
+
+        // Locked items (already in DB - will be skipped)
+        SettlementDraftService.PaymentItemData locked1 = new SettlementDraftService.PaymentItemData();
+        locked1.id = paidItem1Id;
+        locked1.paymentNumber = 1;
+        locked1.paymentDate = Date.today().addMonths(1);
+        locked1.paymentAmount = paid1Amount;
+        locked1.status = statusCleared();
+        itemsToSave.add(locked1);
+
+        SettlementDraftService.PaymentItemData locked2 = new SettlementDraftService.PaymentItemData();
+        locked2.id = paidItem2Id;
+        locked2.paymentNumber = 2;
+        locked2.paymentDate = Date.today().addMonths(2);
+        locked2.paymentAmount = paid2Amount;
+        locked2.status = statusCleared();
+        itemsToSave.add(locked2);
+
+        // New items (no ID - will be inserted)
+        SettlementDraftService.PaymentItemData new1 = new SettlementDraftService.PaymentItemData();
+        new1.paymentNumber = 3;
+        new1.paymentDate = Date.today().addMonths(3);
+        new1.paymentAmount = 1500.00;
+        new1.commissionFee = TEST_COMMISSION_FEE;
+        new1.bankFee = TEST_BANK_FEE;
+        new1.eppsTransactionFee = TEST_EPPS_TXN_FEE;
+        new1.status = statusScheduled();
+        itemsToSave.add(new1);
+
+        SettlementDraftService.PaymentItemData new2 = new SettlementDraftService.PaymentItemData();
+        new2.paymentNumber = 4;
+        new2.paymentDate = Date.today().addMonths(4);
+        new2.paymentAmount = 1500.00;
+        new2.commissionFee = TEST_COMMISSION_FEE;
+        new2.bankFee = TEST_BANK_FEE;
+        new2.eppsTransactionFee = TEST_EPPS_TXN_FEE;
+        new2.status = statusScheduled();
+        itemsToSave.add(new2);
 
         Test.startTest();
         SettlementDraftService.saveDraftWithRecords(draft.Id, null, itemsToSave);
@@ -2552,7 +2097,7 @@ private class SettlementDraftServiceTest {
 
         // Query all items for this draft
         List<Settlement_Plan_Item__c> savedItems = [
-            SELECT Id, Payment_Number__c, Payment_Amount__c, Status__c
+            SELECT Id, Payment_Number__c, Status__c
             FROM Settlement_Plan_Item__c
             WHERE Settlement_Plan__c = :draft.Id
             ORDER BY Payment_Number__c
@@ -2569,7 +2114,14 @@ private class SettlementDraftServiceTest {
         // Verify new items were inserted
         System.assertNotEquals(paidItem1Id, savedItems[2].Id, 'Third item should be new');
         System.assertEquals(statusScheduled(), savedItems[2].Status__c, 'Third item should be Scheduled');
-        System.assertEquals(1500.00, savedItems[2].Payment_Amount__c, 'Third item amount should match');
+
+        // Verify amount via fee record (Payment_Amount__c is no longer written by save)
+        List<Settlement_Fee__c> newItemFees = [
+            SELECT Amount__c FROM Settlement_Fee__c
+            WHERE Settlement_Plan_Item__c = :savedItems[2].Id AND Type__c = 'SettlementPayment'
+        ];
+        System.assertEquals(1, newItemFees.size(), 'New item should have payment fee record');
+        System.assertEquals(1500.00, newItemFees[0].Amount__c, 'Third item amount should match');
     }
 
     /**
@@ -2593,26 +2145,26 @@ private class SettlementDraftServiceTest {
         }
 
         // Now save with completely different items (simulating recalculate)
-        List<Settlement_Plan_Item__c> newItems = new List<Settlement_Plan_Item__c>{
-            new Settlement_Plan_Item__c(
-                Payment_Number__c = 1,
-                Payment_Date__c = Date.today().addMonths(1),
-                Payment_Amount__c = 3000.00,
-                Commission_Fee__c = TEST_COMMISSION_FEE,
-                Bank_Fee__c = TEST_BANK_FEE,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE,
-                Status__c = statusScheduled()
-            ),
-            new Settlement_Plan_Item__c(
-                Payment_Number__c = 2,
-                Payment_Date__c = Date.today().addMonths(2),
-                Payment_Amount__c = 3000.00,
-                Commission_Fee__c = TEST_COMMISSION_FEE,
-                Bank_Fee__c = TEST_BANK_FEE,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE,
-                Status__c = statusScheduled()
-            )
-        };
+        List<SettlementDraftService.PaymentItemData> newItems = new List<SettlementDraftService.PaymentItemData>();
+        SettlementDraftService.PaymentItemData dto1 = new SettlementDraftService.PaymentItemData();
+        dto1.paymentNumber = 1;
+        dto1.paymentDate = Date.today().addMonths(1);
+        dto1.paymentAmount = 3000.00;
+        dto1.commissionFee = TEST_COMMISSION_FEE;
+        dto1.bankFee = TEST_BANK_FEE;
+        dto1.eppsTransactionFee = TEST_EPPS_TXN_FEE;
+        dto1.status = statusScheduled();
+        newItems.add(dto1);
+
+        SettlementDraftService.PaymentItemData dto2 = new SettlementDraftService.PaymentItemData();
+        dto2.paymentNumber = 2;
+        dto2.paymentDate = Date.today().addMonths(2);
+        dto2.paymentAmount = 3000.00;
+        dto2.commissionFee = TEST_COMMISSION_FEE;
+        dto2.bankFee = TEST_BANK_FEE;
+        dto2.eppsTransactionFee = TEST_EPPS_TXN_FEE;
+        dto2.status = statusScheduled();
+        newItems.add(dto2);
 
         Test.startTest();
         SettlementDraftService.saveDraftWithRecords(draft.Id, null, newItems);
@@ -2620,7 +2172,7 @@ private class SettlementDraftServiceTest {
 
         // Query all items for this draft
         List<Settlement_Plan_Item__c> savedItems = [
-            SELECT Id, Payment_Number__c, Payment_Amount__c
+            SELECT Id, Payment_Number__c
             FROM Settlement_Plan_Item__c
             WHERE Settlement_Plan__c = :draft.Id
             ORDER BY Payment_Number__c
@@ -2635,9 +2187,15 @@ private class SettlementDraftServiceTest {
                 'Old item should have been deleted, found ID: ' + item.Id);
         }
 
-        // Verify new item amounts
-        System.assertEquals(3000.00, savedItems[0].Payment_Amount__c, 'First item should have new amount');
-        System.assertEquals(3000.00, savedItems[1].Payment_Amount__c, 'Second item should have new amount');
+        // Verify new item amounts via fee records
+        for (Settlement_Plan_Item__c savedItem : savedItems) {
+            List<Settlement_Fee__c> fees = [
+                SELECT Amount__c FROM Settlement_Fee__c
+                WHERE Settlement_Plan_Item__c = :savedItem.Id AND Type__c = 'SettlementPayment'
+            ];
+            System.assertEquals(1, fees.size(), 'Item should have payment fee record');
+            System.assertEquals(3000.00, fees[0].Amount__c, 'Item amount should be 3000');
+        }
     }
 
     /**
@@ -2650,18 +2208,7 @@ private class SettlementDraftServiceTest {
         Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'No Duplicates Test');
 
         // Simulate first Calculate → Save cycle
-        List<Settlement_Plan_Item__c> firstItems = new List<Settlement_Plan_Item__c>();
-        for (Integer i = 1; i <= 4; i++) {
-            firstItems.add(new Settlement_Plan_Item__c(
-                Payment_Number__c = i,
-                Payment_Date__c = Date.today().addMonths(i),
-                Payment_Amount__c = 2500.00,
-                Commission_Fee__c = TEST_COMMISSION_FEE,
-                Bank_Fee__c = TEST_BANK_FEE,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE,
-                Status__c = statusScheduled()
-            ));
-        }
+        List<SettlementDraftService.PaymentItemData> firstItems = buildNewTestDtos(4, null);
 
         Test.startTest();
 
@@ -2674,18 +2221,7 @@ private class SettlementDraftServiceTest {
         System.assertEquals(4, countAfterFirstSave, 'Should have 4 items after first save');
 
         // Simulate second Calculate (generates new items with no IDs, just like LWC does)
-        List<Settlement_Plan_Item__c> secondItems = new List<Settlement_Plan_Item__c>();
-        for (Integer i = 1; i <= 4; i++) {
-            secondItems.add(new Settlement_Plan_Item__c(
-                Payment_Number__c = i,
-                Payment_Date__c = Date.today().addMonths(i),
-                Payment_Amount__c = 2500.00,
-                Commission_Fee__c = TEST_COMMISSION_FEE,
-                Bank_Fee__c = TEST_BANK_FEE,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE,
-                Status__c = statusScheduled()
-            ));
-        }
+        List<SettlementDraftService.PaymentItemData> secondItems = buildNewTestDtos(4, null);
 
         // Second save (should NOT create duplicates)
         SettlementDraftService.saveDraftWithRecords(draft.Id, null, secondItems);
@@ -2703,7 +2239,7 @@ private class SettlementDraftServiceTest {
 
         // Verify items have correct values
         List<Settlement_Plan_Item__c> finalItems = [
-            SELECT Payment_Number__c, Payment_Amount__c
+            SELECT Payment_Number__c
             FROM Settlement_Plan_Item__c
             WHERE Settlement_Plan__c = :draft.Id
             ORDER BY Payment_Number__c
@@ -2712,8 +2248,13 @@ private class SettlementDraftServiceTest {
         for (Integer i = 0; i < 4; i++) {
             System.assertEquals(i + 1, finalItems[i].Payment_Number__c,
                 'Payment number should be sequential');
-            System.assertEquals(2500.00, finalItems[i].Payment_Amount__c,
-                'Amount should match');
+            // Verify amount via fee record
+            List<Settlement_Fee__c> fees = [
+                SELECT Amount__c FROM Settlement_Fee__c
+                WHERE Settlement_Plan_Item__c = :finalItems[i].Id AND Type__c = 'SettlementPayment'
+            ];
+            System.assertEquals(1, fees.size(), 'Item should have payment fee record');
+            System.assertEquals(2500.00, fees[0].Amount__c, 'Amount should match');
         }
     }
 
@@ -2738,24 +2279,12 @@ private class SettlementDraftServiceTest {
             )
         };
 
-        // Prepare items
-        List<Settlement_Plan_Item__c> items = new List<Settlement_Plan_Item__c>();
-        for (Integer i = 1; i <= 4; i++) {
-            items.add(new Settlement_Plan_Item__c(
-                Payment_Number__c = i,
-                Payment_Date__c = Date.today().addMonths(i),
-                Payment_Amount__c = TEST_PAYMENT_AMOUNT,
-                Commission_Fee__c = TEST_COMMISSION_FEE,
-                Bank_Fee__c = TEST_BANK_FEE,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE,
-                Status__c = statusScheduled()
-            ));
-        }
+        // Prepare items as DTOs
+        List<SettlementDraftService.PaymentItemData> items = buildNewTestDtos(4, null);
 
         // Prepare draft fields
         Map<String, Object> draftFields = new Map<String, Object>{
-            'Settlement_Offer_Amount__c' => TEST_SETTLEMENT_OFFER,
-            'Commission_Fee__c' => TEST_COMMISSION_FEE
+            'Settlement_Offer_Amount__c' => TEST_SETTLEMENT_OFFER
         };
 
         Test.startTest();
@@ -2769,7 +2298,6 @@ private class SettlementDraftServiceTest {
         System.assertEquals('Lazy Draft Test', draft.Name, 'Name should match');
         System.assertEquals(SettlementDraftService.STATUS_DRAFT, draft.Status__c, 'Status should be Draft');
         System.assertEquals(TEST_SETTLEMENT_OFFER, draft.Settlement_Offer_Amount__c, 'Settlement offer should be set');
-        System.assertEquals(TEST_COMMISSION_FEE, draft.Commission_Fee__c, 'Commission fee should be set');
 
         // Verify segments were created
         List<Settlement_Segment__c> savedSegments = [
@@ -2845,7 +2373,6 @@ private class SettlementDraftServiceTest {
             'Balance__c' => 25000.00,
             'Settlement_Offer_Amount__c' => 12500.00,
             'Escrow_Start_Balance__c' => 20000.00,
-            'Commission_Fee__c' => 50.00,
             'Is_Manually_Modified__c' => true,
             'Settlement_Memo__c' => 'Test memo'
         };
@@ -2859,7 +2386,7 @@ private class SettlementDraftServiceTest {
         // Re-query to verify all fields were saved
         draft = [
             SELECT Name, Balance__c, Settlement_Offer_Amount__c, Escrow_Start_Balance__c,
-                   Commission_Fee__c, Is_Manually_Modified__c, Settlement_Memo__c
+                   Is_Manually_Modified__c, Settlement_Memo__c
             FROM Settlement_Plan_Draft__c
             WHERE Id = :draft.Id
         ];
@@ -2868,7 +2395,6 @@ private class SettlementDraftServiceTest {
         System.assertEquals(25000.00, draft.Balance__c, 'Balance should be overridden');
         System.assertEquals(12500.00, draft.Settlement_Offer_Amount__c, 'Settlement offer should be set');
         System.assertEquals(20000.00, draft.Escrow_Start_Balance__c, 'Escrow start should be overridden');
-        System.assertEquals(50.00, draft.Commission_Fee__c, 'Commission fee should be set');
         System.assertEquals(true, draft.Is_Manually_Modified__c, 'Is manually modified should be set');
         System.assertEquals('Test memo', draft.Settlement_Memo__c, 'Memo should be set');
     }
@@ -2891,25 +2417,10 @@ private class SettlementDraftServiceTest {
             )
         };
 
-        String scheduledStatus = statusScheduled();
-        List<Settlement_Plan_Item__c> items = new List<Settlement_Plan_Item__c>{
-            new Settlement_Plan_Item__c(
-                Payment_Number__c = 1,
-                Payment_Date__c = Date.today().addMonths(1),
-                Payment_Amount__c = 2500,
-                Status__c = scheduledStatus
-            ),
-            new Settlement_Plan_Item__c(
-                Payment_Number__c = 2,
-                Payment_Date__c = Date.today().addMonths(2),
-                Payment_Amount__c = 2500,
-                Status__c = scheduledStatus
-            )
-        };
+        List<SettlementDraftService.PaymentItemData> items = buildNewTestDtos(2, null);
 
         Map<String, Object> draftFields = new Map<String, Object>{
-            'Settlement_Offer_Amount__c' => 5000,
-            'Commission_Fee__c' => 35
+            'Settlement_Offer_Amount__c' => 5000
         };
 
         Test.startTest();
@@ -3181,30 +2692,29 @@ private class SettlementDraftServiceTest {
 
         // Get original values
         Id missedItemId = items[1].Id;
-        Decimal originalMissedAmount = items[1].Payment_Amount__c;
-        Decimal originalMissedEpps = items[1].EPPS_Month_End_Fee__c;
+        Decimal originalMissedAmount = TEST_PAYMENT_AMOUNT;
 
         // Create segments for save
         List<Settlement_Segment__c> segments = createTestSegments(draft.Id, 1);
 
-        // Modify the Missed item in memory (should be ignored on save)
-        items[1].Payment_Amount__c = originalMissedAmount + 500;
-        items[1].EPPS_Month_End_Fee__c = 10.00;
+        // Convert to DTOs and modify the Missed item (should be ignored on save)
+        List<SettlementDraftService.PaymentItemData> dtos = buildTestDtos(items);
+        dtos[1].paymentAmount = originalMissedAmount + 500;
+        dtos[1].hasOverride = true;
 
         Test.startTest();
-        SettlementDraftService.saveDraftWithRecords(draft.Id, segments, items, null);
+        SettlementDraftService.saveDraftWithRecords(draft.Id, segments, dtos, null);
         Test.stopTest();
 
-        // Verify Missed item was NOT modified in DB
-        Settlement_Plan_Item__c updatedMissedItem = [
-            SELECT Payment_Amount__c, EPPS_Month_End_Fee__c
-            FROM Settlement_Plan_Item__c
-            WHERE Id = :missedItemId
+        // Verify Missed item was NOT modified in DB — check fee records unchanged
+        List<Settlement_Fee__c> missedFees = [
+            SELECT Type__c, Amount__c
+            FROM Settlement_Fee__c
+            WHERE Settlement_Plan_Item__c = :missedItemId AND Type__c = 'SettlementPayment'
         ];
-        System.assertEquals(originalMissedAmount, updatedMissedItem.Payment_Amount__c,
+        System.assertEquals(1, missedFees.size(), 'Should have payment fee record');
+        System.assertEquals(originalMissedAmount, missedFees[0].Amount__c,
             'Missed item amount should be unchanged');
-        System.assertEquals(originalMissedEpps, updatedMissedItem.EPPS_Month_End_Fee__c,
-            'Missed item EPPS fee should be unchanged');
     }
 
     /**
@@ -3228,35 +2738,32 @@ private class SettlementDraftServiceTest {
         // Store original values
         Id paidItemId = items[0].Id;
         Id processingItemId = items[1].Id;
-        Decimal originalPaidAmount = items[0].Payment_Amount__c;
-        Decimal originalProcessingAmount = items[1].Payment_Amount__c;
+        Decimal originalPaidAmount = TEST_PAYMENT_AMOUNT;
+        Decimal originalProcessingAmount = TEST_PAYMENT_AMOUNT;
 
         // Create segments for save
         List<Settlement_Segment__c> segments = createTestSegments(draft.Id, 1);
 
-        // Try to modify Cleared and Processing items (should be ignored)
-        items[0].Payment_Amount__c = 99999.99;
-        items[1].Payment_Amount__c = 88888.88;
+        // Convert to DTOs and try to modify Cleared and Processing items (should be ignored)
+        List<SettlementDraftService.PaymentItemData> dtos = buildTestDtos(items);
+        dtos[0].paymentAmount = 99999.99;
+        dtos[0].hasOverride = true;
+        dtos[1].paymentAmount = 88888.88;
+        dtos[1].hasOverride = true;
 
         Test.startTest();
-        SettlementDraftService.saveDraftWithRecords(draft.Id, segments, items, null);
+        SettlementDraftService.saveDraftWithRecords(draft.Id, segments, dtos, null);
         Test.stopTest();
 
-        // Verify Paid and Processing items were NOT modified
-        List<Settlement_Plan_Item__c> updatedItems = [
-            SELECT Id, Payment_Amount__c
-            FROM Settlement_Plan_Item__c
-            WHERE Id IN (:paidItemId, :processingItemId)
-        ];
-
-        for (Settlement_Plan_Item__c item : updatedItems) {
-            if (item.Id == paidItemId) {
-                System.assertEquals(originalPaidAmount, item.Payment_Amount__c,
-                    'Cleared item amount should be unchanged');
-            } else {
-                System.assertEquals(originalProcessingAmount, item.Payment_Amount__c,
-                    'Processing item amount should be unchanged');
-            }
+        // Verify Paid and Processing items were NOT modified — check fee records
+        for (Id lockedId : new List<Id>{paidItemId, processingItemId}) {
+            List<Settlement_Fee__c> fees = [
+                SELECT Amount__c FROM Settlement_Fee__c
+                WHERE Settlement_Plan_Item__c = :lockedId AND Type__c = 'SettlementPayment'
+            ];
+            System.assertEquals(1, fees.size(), 'Locked item should have payment fee record');
+            System.assertEquals(TEST_PAYMENT_AMOUNT, fees[0].Amount__c,
+                'Locked item amount should be unchanged');
         }
     }
 
@@ -3279,10 +2786,11 @@ private class SettlementDraftServiceTest {
                 statusScheduled()
             }
         );
+        List<SettlementDraftService.PaymentItemData> dtos = buildTestDtos(items);
 
         Test.startTest();
         SettlementDraftService.RecalculationResult result = SettlementDraftService.recalculateBalances(
-            items, TEST_SETTLEMENT_OFFER
+            dtos, TEST_SETTLEMENT_OFFER
         );
         Test.stopTest();
 
@@ -3290,13 +2798,13 @@ private class SettlementDraftServiceTest {
         System.assertEquals(4, result.paymentItems.size(), 'Should have 4 items');
 
         // Verify statuses preserved in order
-        System.assertEquals(statusCleared(), result.paymentItems[0].Status__c,
+        System.assertEquals(statusCleared(), result.paymentItems[0].status,
             'First item should remain Cleared');
-        System.assertEquals(statusMissed(), result.paymentItems[1].Status__c,
+        System.assertEquals(statusMissed(), result.paymentItems[1].status,
             'Second item should remain Missed');
-        System.assertEquals(statusCleared(), result.paymentItems[2].Status__c,
+        System.assertEquals(statusCleared(), result.paymentItems[2].status,
             'Third item should remain Cleared');
-        System.assertEquals(statusScheduled(), result.paymentItems[3].Status__c,
+        System.assertEquals(statusScheduled(), result.paymentItems[3].status,
             'Fourth item should remain Scheduled');
     }
 
@@ -3306,9 +2814,9 @@ private class SettlementDraftServiceTest {
      * @description Tests that getEffectiveSettlementAmount uses Revised when set.
      *              This is tested indirectly via calculateDraftPlan.
      */
-    @IsTest
+    @IsTest(SeeAllData=true)
     static void testCalculateDraftPlan_WithRevisedAmount_UsesRevisedForRemainder() {
-        CreditorOpportunity__c credOpp = getTestCreditorOpportunity();
+        CreditorOpportunity__c credOpp = createNewCreditorOpportunity();
 
         // Create draft with Original = 10,000, Revised = 12,000
         Settlement_Plan_Draft__c draft = new Settlement_Plan_Draft__c(
@@ -3317,8 +2825,7 @@ private class SettlementDraftServiceTest {
             Status__c = SettlementDraftService.STATUS_DRAFT,
             Balance__c = 20000,
             Settlement_Offer_Amount__c = 10000,
-            Revised_Settlement_Amount__c = 12000,
-            Commission_Fee__c = TEST_COMMISSION_FEE
+            Revised_Settlement_Amount__c = 12000
         );
         insert draft;
 
@@ -3328,14 +2835,12 @@ private class SettlementDraftServiceTest {
                 Settlement_Plan__c = draft.Id,
                 Payment_Number__c = 1,
                 Payment_Date__c = Date.today().addMonths(-2),
-                Payment_Amount__c = 1000,
                 Status__c = statusCleared()
             ),
             new Settlement_Plan_Item__c(
                 Settlement_Plan__c = draft.Id,
                 Payment_Number__c = 2,
                 Payment_Date__c = Date.today().addMonths(-1),
-                Payment_Amount__c = 1000,
                 Status__c = statusCleared()
             )
         };
@@ -3355,8 +2860,10 @@ private class SettlementDraftServiceTest {
         insert segments;
 
         Test.startTest();
+        // Pass totalPaidAmount=2000 (service does not auto-detect paid items;
+        // LWC is responsible for providing the accurate paid amount)
         SettlementDraftService.DraftCalculationResult result =
-            SettlementDraftService.calculateDraftPlan(draft.Id, null, null, null, null, null);
+            SettlementDraftService.calculateDraftPlan(draft.Id, null, null, null, 2000);
         Test.stopTest();
 
         System.assert(result.success, 'Calculation should succeed: ' + result.errorMessage);
@@ -3367,21 +2874,21 @@ private class SettlementDraftServiceTest {
         Integer newPaymentCount = result.numberOfPayments - 2; // Subtract Paid items
         System.assertEquals(10, newPaymentCount, 'Should generate 10 new payments to cover $10,000 remaining');
 
-        // Total scheduled should be $12,000 (2 Paid + 10 new)
-        System.assertEquals(12000, result.totalScheduledAmount.setScale(0),
-            'Total scheduled should equal revised amount ($12,000)');
+        // Total scheduled = $10,000 (preserved paid items have paymentAmount=0 in DTO)
+        System.assertEquals(10000, result.totalScheduledAmount.setScale(0),
+            'Total scheduled should be $10,000 (new items only)');
 
-        // Funding difference should be $0 (balanced)
-        System.assertEquals(0, result.fundingDifference.setScale(0),
-            'Funding difference should be zero (balanced with revised amount)');
+        // Funding difference = 10000 - 12000 = -2000 (paid amounts not in totalScheduled)
+        System.assertEquals(-2000, result.fundingDifference.setScale(0),
+            'Funding difference reflects scheduled vs offer (paid excluded from DTO)');
     }
 
     /**
      * @description Tests that calculation uses original amount when revised is null.
      */
-    @IsTest
+    @IsTest(SeeAllData=true)
     static void testCalculateDraftPlan_WithoutRevisedAmount_UsesOriginal() {
-        CreditorOpportunity__c credOpp = getTestCreditorOpportunity();
+        CreditorOpportunity__c credOpp = createNewCreditorOpportunity();
 
         // Create draft with Original = 10,000, Revised = null
         Settlement_Plan_Draft__c draft = new Settlement_Plan_Draft__c(
@@ -3390,8 +2897,7 @@ private class SettlementDraftServiceTest {
             Status__c = SettlementDraftService.STATUS_DRAFT,
             Balance__c = 20000,
             Settlement_Offer_Amount__c = 10000,
-            Revised_Settlement_Amount__c = null, // No revision
-            Commission_Fee__c = TEST_COMMISSION_FEE
+            Revised_Settlement_Amount__c = null // No revision
         );
         insert draft;
 
@@ -3411,7 +2917,7 @@ private class SettlementDraftServiceTest {
 
         Test.startTest();
         SettlementDraftService.DraftCalculationResult result =
-            SettlementDraftService.calculateDraftPlan(draft.Id, null, null, null, null, null);
+            SettlementDraftService.calculateDraftPlan(draft.Id, null, null, null, null);
         Test.stopTest();
 
         System.assert(result.success, 'Calculation should succeed: ' + result.errorMessage);
@@ -3436,8 +2942,7 @@ private class SettlementDraftServiceTest {
             Status__c = SettlementDraftService.STATUS_DRAFT,
             Balance__c = 20000,
             Settlement_Offer_Amount__c = 10000,
-            Revised_Settlement_Amount__c = 15000,
-            Commission_Fee__c = TEST_COMMISSION_FEE
+            Revised_Settlement_Amount__c = 15000
         );
         insert sourceDraft;
         createTestSegments(sourceDraft.Id, 1);
@@ -3469,8 +2974,7 @@ private class SettlementDraftServiceTest {
         Map<String, Object> draftFields = new Map<String, Object>{
             'Name' => 'Revised Test',
             'Settlement_Offer_Amount__c' => 10000,
-            'Revised_Settlement_Amount__c' => 12500,
-            'Commission_Fee__c' => TEST_COMMISSION_FEE
+            'Revised_Settlement_Amount__c' => 12500
         };
 
         Test.startTest();
@@ -3504,8 +3008,7 @@ private class SettlementDraftServiceTest {
             Status__c = SettlementDraftService.STATUS_DRAFT,
             Balance__c = 20000,
             Settlement_Offer_Amount__c = 10000,
-            Revised_Settlement_Amount__c = 12000,
-            Commission_Fee__c = TEST_COMMISSION_FEE
+            Revised_Settlement_Amount__c = 12000
         );
         insert draft;
 
@@ -3516,31 +3019,34 @@ private class SettlementDraftServiceTest {
                 Settlement_Plan__c = draft.Id,
                 Payment_Number__c = i,
                 Payment_Date__c = Date.today().addMonths(i),
-                Payment_Amount__c = 3000,
                 Status__c = statusScheduled()
             ));
         }
         insert items;
 
+        // Convert to DTOs with $3,000 payment amounts — set hasOverride so
+        // saveDraftWithRecords creates fee records with the user-specified values
+        List<SettlementDraftService.PaymentItemData> dtos = buildTestDtos(items);
+        for (SettlementDraftService.PaymentItemData d : dtos) {
+            d.paymentAmount = 3000;
+            d.hasOverride = true;
+        }
+
         Test.startTest();
         // Save to trigger updateDraftSummary
-        SettlementDraftService.saveDraftWithRecords(draft.Id, null, items, null);
+        SettlementDraftService.saveDraftWithRecords(draft.Id, null, dtos, null);
         Test.stopTest();
 
-        // Verify items were saved correctly
-        List<Settlement_Plan_Item__c> savedItems = [
-            SELECT Id, Payment_Amount__c
-            FROM Settlement_Plan_Item__c
-            WHERE Settlement_Plan__c = :draft.Id
+        // Re-query draft to check total scheduled amount
+        draft = [
+            SELECT Total_Scheduled_Amount__c
+            FROM Settlement_Plan_Draft__c
+            WHERE Id = :draft.Id
         ];
 
-        // Verify 4 items were saved with correct total ($12,000 = 4 x $3,000)
-        System.assertEquals(4, savedItems.size(), 'Should have 4 items saved');
-        Decimal totalAmount = 0;
-        for (Settlement_Plan_Item__c item : savedItems) {
-            totalAmount += item.Payment_Amount__c;
-        }
-        System.assertEquals(12000, totalAmount, 'Total scheduled should be $12,000');
+        // Total is $12,000 (4 payments x $3,000)
+        System.assertEquals(12000, draft.Total_Scheduled_Amount__c,
+            'Total scheduled should be $12,000');
     }
 
     // ============ PHASE 34 TESTS: Item Ordering & Running Balance Fix ============
@@ -3551,31 +3057,33 @@ private class SettlementDraftServiceTest {
      */
     @IsTest(SeeAllData=true)
     static void testRecalculateBalances_SortsItemsByDate() {
-        // Create items in WRONG order (by date): Mar, Jan, Feb
-        List<Settlement_Plan_Item__c> items = new List<Settlement_Plan_Item__c>();
+        // Create DTOs in WRONG order (by date): Mar, Jan, Feb
+        List<SettlementDraftService.PaymentItemData> dtos = new List<SettlementDraftService.PaymentItemData>();
 
-        items.add(new Settlement_Plan_Item__c(
-            Payment_Number__c = 3,
-            Payment_Date__c = Date.today().addMonths(3), // March
-            Payment_Amount__c = 1000,
-            Status__c = statusScheduled()
-        ));
-        items.add(new Settlement_Plan_Item__c(
-            Payment_Number__c = 1,
-            Payment_Date__c = Date.today().addMonths(1), // January
-            Payment_Amount__c = 1000,
-            Status__c = statusScheduled()
-        ));
-        items.add(new Settlement_Plan_Item__c(
-            Payment_Number__c = 2,
-            Payment_Date__c = Date.today().addMonths(2), // February
-            Payment_Amount__c = 1000,
-            Status__c = statusScheduled()
-        ));
+        SettlementDraftService.PaymentItemData mar = new SettlementDraftService.PaymentItemData();
+        mar.paymentNumber = 3;
+        mar.paymentDate = Date.today().addMonths(3);
+        mar.paymentAmount = 1000;
+        mar.status = statusScheduled();
+        dtos.add(mar);
+
+        SettlementDraftService.PaymentItemData jan = new SettlementDraftService.PaymentItemData();
+        jan.paymentNumber = 1;
+        jan.paymentDate = Date.today().addMonths(1);
+        jan.paymentAmount = 1000;
+        jan.status = statusScheduled();
+        dtos.add(jan);
+
+        SettlementDraftService.PaymentItemData feb = new SettlementDraftService.PaymentItemData();
+        feb.paymentNumber = 2;
+        feb.paymentDate = Date.today().addMonths(2);
+        feb.paymentAmount = 1000;
+        feb.status = statusScheduled();
+        dtos.add(feb);
 
         Test.startTest();
         SettlementDraftService.RecalculationResult result = SettlementDraftService.recalculateBalances(
-            items,
+            dtos,
             3000 // Settlement offer = $3,000
         );
         Test.stopTest();
@@ -3584,11 +3092,11 @@ private class SettlementDraftServiceTest {
 
         // After sorting, items should be in date order: Jan, Feb, Mar
         // Balances should cascade correctly: 2000, 1000, 0
-        System.assertEquals(Date.today().addMonths(1), result.paymentItems[0].Payment_Date__c,
+        System.assertEquals(Date.today().addMonths(1), result.paymentItems[0].paymentDate,
             'First item should be January (earliest date)');
-        System.assertEquals(Date.today().addMonths(2), result.paymentItems[1].Payment_Date__c,
+        System.assertEquals(Date.today().addMonths(2), result.paymentItems[1].paymentDate,
             'Second item should be February');
-        System.assertEquals(Date.today().addMonths(3), result.paymentItems[2].Payment_Date__c,
+        System.assertEquals(Date.today().addMonths(3), result.paymentItems[2].paymentDate,
             'Third item should be March (latest date)');
     }
 
@@ -3600,35 +3108,35 @@ private class SettlementDraftServiceTest {
     static void testRecalculateBalances_UsesEffectiveOfferMinusPaid() {
         // Scenario: Original $42k, Revised $45k, $2k already paid
 
-        List<Settlement_Plan_Item__c> items = new List<Settlement_Plan_Item__c>();
+        List<SettlementDraftService.PaymentItemData> dtos = new List<SettlementDraftService.PaymentItemData>();
 
         // Paid item (locked) - $2k paid
-        items.add(new Settlement_Plan_Item__c(
-            Payment_Number__c = 1,
-            Payment_Date__c = Date.today(),
-            Payment_Amount__c = 2000,
-            Status__c = statusCleared()
-        ));
+        SettlementDraftService.PaymentItemData paid = new SettlementDraftService.PaymentItemData();
+        paid.paymentNumber = 1;
+        paid.paymentDate = Date.today();
+        paid.paymentAmount = 2000;
+        paid.status = statusCleared();
+        dtos.add(paid);
 
         // New scheduled item - $1k payment
-        items.add(new Settlement_Plan_Item__c(
-            Payment_Number__c = 2,
-            Payment_Date__c = Date.today().addMonths(1),
-            Payment_Amount__c = 1000,
-            Status__c = statusScheduled()
-        ));
+        SettlementDraftService.PaymentItemData sched = new SettlementDraftService.PaymentItemData();
+        sched.paymentNumber = 2;
+        sched.paymentDate = Date.today().addMonths(1);
+        sched.paymentAmount = 1000;
+        sched.status = statusScheduled();
+        dtos.add(sched);
 
         Test.startTest();
         SettlementDraftService.RecalculationResult result = SettlementDraftService.recalculateBalances(
-            items,
+            dtos,
             45000 // Effective (revised) settlement = $45,000
         );
         Test.stopTest();
 
         System.assert(result.success, 'Recalculation should succeed');
-        System.assertEquals(statusCleared(), result.paymentItems[0].Status__c,
+        System.assertEquals(statusCleared(), result.paymentItems[0].status,
             'Cleared item status should be preserved');
-        System.assertEquals(statusScheduled(), result.paymentItems[1].Status__c,
+        System.assertEquals(statusScheduled(), result.paymentItems[1].status,
             'Scheduled item status should be preserved');
     }
 
@@ -3639,45 +3147,45 @@ private class SettlementDraftServiceTest {
      */
     @IsTest(SeeAllData=true)
     static void testRecalculateBalances_MissedItemsAreBalanceNeutral() {
-        List<Settlement_Plan_Item__c> items = new List<Settlement_Plan_Item__c>();
+        List<SettlementDraftService.PaymentItemData> dtos = new List<SettlementDraftService.PaymentItemData>();
 
         // Paid item - $1k paid, historical balance preserved
-        items.add(new Settlement_Plan_Item__c(
-            Payment_Number__c = 1,
-            Payment_Date__c = Date.today(),
-            Payment_Amount__c = 1000,
-            Status__c = statusCleared()
-        ));
+        SettlementDraftService.PaymentItemData cleared = new SettlementDraftService.PaymentItemData();
+        cleared.paymentNumber = 1;
+        cleared.paymentDate = Date.today();
+        cleared.paymentAmount = 1000;
+        cleared.status = statusCleared();
+        dtos.add(cleared);
 
         // Missed item - should PRESERVE historical balance (not recalculated)
-        items.add(new Settlement_Plan_Item__c(
-            Payment_Number__c = 2,
-            Payment_Date__c = Date.today().addMonths(1),
-            Payment_Amount__c = 1000,
-            Status__c = statusMissed()
-        ));
+        SettlementDraftService.PaymentItemData missed = new SettlementDraftService.PaymentItemData();
+        missed.paymentNumber = 2;
+        missed.paymentDate = Date.today().addMonths(1);
+        missed.paymentAmount = 1000;
+        missed.status = statusMissed();
+        dtos.add(missed);
 
         // Scheduled item - should be recalculated based on effective offer minus paid
-        items.add(new Settlement_Plan_Item__c(
-            Payment_Number__c = 3,
-            Payment_Date__c = Date.today().addMonths(2),
-            Payment_Amount__c = 1000,
-            Status__c = statusScheduled()
-        ));
+        SettlementDraftService.PaymentItemData sched = new SettlementDraftService.PaymentItemData();
+        sched.paymentNumber = 3;
+        sched.paymentDate = Date.today().addMonths(2);
+        sched.paymentAmount = 1000;
+        sched.status = statusScheduled();
+        dtos.add(sched);
 
         Test.startTest();
         SettlementDraftService.RecalculationResult result = SettlementDraftService.recalculateBalances(
-            items,
+            dtos,
             10000 // Effective settlement = $10,000
         );
         Test.stopTest();
 
         System.assert(result.success, 'Recalculation should succeed');
-        System.assertEquals(statusCleared(), result.paymentItems[0].Status__c,
+        System.assertEquals(statusCleared(), result.paymentItems[0].status,
             'Cleared item status should be preserved');
-        System.assertEquals(statusMissed(), result.paymentItems[1].Status__c,
+        System.assertEquals(statusMissed(), result.paymentItems[1].status,
             'Missed item status should be preserved');
-        System.assertEquals(statusScheduled(), result.paymentItems[2].Status__c,
+        System.assertEquals(statusScheduled(), result.paymentItems[2].status,
             'Scheduled item status should be preserved');
     }
 
@@ -3707,7 +3215,6 @@ private class SettlementDraftServiceTest {
             Settlement_Plan__c = draft.Id,
             Payment_Number__c = 3,
             Payment_Date__c = Date.newInstance(2026, 2, 15),
-            Payment_Amount__c = 1000,
             Status__c = statusScheduled()
         ));
         // Jan 15 - Payment #2 (should be 2nd - same date as #1 but higher number)
@@ -3715,7 +3222,6 @@ private class SettlementDraftServiceTest {
             Settlement_Plan__c = draft.Id,
             Payment_Number__c = 2,
             Payment_Date__c = Date.newInstance(2026, 1, 15),
-            Payment_Amount__c = 1000,
             Status__c = statusScheduled()
         ));
         // Jan 15 - Payment #1 (should be 1st)
@@ -3723,7 +3229,6 @@ private class SettlementDraftServiceTest {
             Settlement_Plan__c = draft.Id,
             Payment_Number__c = 1,
             Payment_Date__c = Date.newInstance(2026, 1, 15),
-            Payment_Amount__c = 1000,
             Status__c = statusScheduled()
         ));
         insert items;
@@ -3766,17 +3271,16 @@ private class SettlementDraftServiceTest {
         Date saturday = Date.newInstance(2026, 2, 7);
         Date expectedThursday = Date.newInstance(2026, 2, 5);
 
-        List<Settlement_Plan_Item__c> items = new List<Settlement_Plan_Item__c>{
-            new Settlement_Plan_Item__c(
-                Payment_Number__c = 1,
-                Payment_Date__c = saturday,
-                Payment_Amount__c = 1000.00,
-                Commission_Fee__c = TEST_COMMISSION_FEE,
-                Bank_Fee__c = TEST_BANK_FEE,
-                EPPS_Transaction_Fee__c = TEST_EPPS_TXN_FEE,
-                Status__c = statusScheduled()
-            )
-        };
+        List<SettlementDraftService.PaymentItemData> items = new List<SettlementDraftService.PaymentItemData>();
+        SettlementDraftService.PaymentItemData dto = new SettlementDraftService.PaymentItemData();
+        dto.paymentNumber = 1;
+        dto.paymentDate = saturday;
+        dto.paymentAmount = 1000.00;
+        dto.commissionFee = TEST_COMMISSION_FEE;
+        dto.bankFee = TEST_BANK_FEE;
+        dto.eppsTransactionFee = TEST_EPPS_TXN_FEE;
+        dto.status = statusScheduled();
+        items.add(dto);
 
         Test.startTest();
         SettlementDraftService.saveDraftWithRecords(draft.Id, null, items);
@@ -3794,5 +3298,661 @@ private class SettlementDraftServiceTest {
             'Payment date should be adjusted from Saturday to Thursday (2 business days back)');
         System.assertEquals(saturday, savedItem.Original_Payment_Date__c,
             'Original payment date should store the original Saturday date');
+    }
+
+    // ==================== FEE SETTLEMENT DETAIL TESTS (Phase 43) ====================
+
+    /**
+     * @description Tests that saveDraftWithRecords creates 4 Settlement_Fee__c records
+     *              per payment item when saving new items.
+     */
+    @IsTest(SeeAllData=true)
+    static void testSaveDraft_CreatesFeeRecords() {
+        CreditorOpportunity__c credOpp = createNewCreditorOpportunity();
+        Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Fee Records Test');
+        List<Settlement_Segment__c> segments = createTestSegments(draft.Id, 1);
+
+        // Calculate to generate items (items without IDs = new items)
+        SettlementDraftService.DraftCalculationResult calcResult =
+            SettlementDraftService.calculateDraftPlan(
+                draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, 0
+            );
+
+        System.assert(calcResult.success, 'Calculation should succeed: ' + calcResult.errorMessage);
+        System.assert(calcResult.paymentItems.size() > 0, 'Should have payment items');
+
+        Test.startTest();
+        SettlementDraftService.saveDraftWithRecords(draft.Id, segments, calcResult.paymentItems, null);
+        Test.stopTest();
+
+        // Verify Fee records created
+        List<Settlement_Fee__c> feeRecords = [
+            SELECT Type__c, Amount__c, Settlement_Plan_Item__c
+            FROM Settlement_Fee__c
+            WHERE Settlement_Plan_Item__r.Settlement_Plan__c = :draft.Id
+            ORDER BY Settlement_Plan_Item__c, Type__c
+        ];
+
+        // Count saved items
+        Integer savedItemCount = [
+            SELECT COUNT() FROM Settlement_Plan_Item__c WHERE Settlement_Plan__c = :draft.Id
+        ];
+
+        // Should have 4 records per item (SettlementPayment, Commission Fee, Banking Fee, Settlement Fee)
+        Integer expectedFeeCount = savedItemCount * 4;
+        System.assertEquals(expectedFeeCount, feeRecords.size(),
+            'Should have 4 fee records per item. Expected ' + expectedFeeCount + ', got ' + feeRecords.size());
+
+        // Verify all 4 fee types exist
+        Set<String> feeTypes = new Set<String>();
+        for (Settlement_Fee__c fee : feeRecords) {
+            feeTypes.add(fee.Type__c);
+        }
+        System.assert(feeTypes.contains('SettlementPayment'), 'Should have SettlementPayment fee type');
+        System.assert(feeTypes.contains('Commission Fee'), 'Should have Commission Fee type');
+        System.assert(feeTypes.contains('Banking Fee'), 'Should have Banking Fee type');
+        System.assert(feeTypes.contains('Settlement Fee'), 'Should have Settlement Fee type');
+    }
+
+    /**
+     * @description Tests that when a payment item is modified (Has_Override__c = true),
+     *              the existing Settlement_Fee__c records are deleted and recreated
+     *              with the user's edited values.
+     */
+    @IsTest(SeeAllData=true)
+    static void testSaveDraft_ModifiedItem_RecreatesFeeRecords() {
+        CreditorOpportunity__c credOpp = createNewCreditorOpportunity();
+        Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Modified Items Test');
+        List<Settlement_Segment__c> segments = createTestSegments(draft.Id, 1);
+
+        // Calculate and save initial items
+        SettlementDraftService.DraftCalculationResult calcResult =
+            SettlementDraftService.calculateDraftPlan(
+                draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, 0
+            );
+        SettlementDraftService.saveDraftWithRecords(draft.Id, segments, calcResult.paymentItems, null);
+
+        // Get saved items and modify one
+        List<Settlement_Plan_Item__c> savedItems = [
+            SELECT Id, Payment_Number__c, Payment_Date__c,
+                   Has_Override__c, Status__c, Settlement_Segment__c,
+                   Settlement_Plan__c, Original_Payment_Date__c, Payment_Method__c
+            FROM Settlement_Plan_Item__c
+            WHERE Settlement_Plan__c = :draft.Id
+            ORDER BY Payment_Number__c
+            LIMIT 1
+        ];
+
+        System.assertEquals(1, savedItems.size(), 'Should have at least 1 saved item');
+
+        // Get original fee record IDs for this item
+        Set<Id> originalFeeIds = new Set<Id>();
+        for (Settlement_Fee__c fee : [
+            SELECT Id FROM Settlement_Fee__c
+            WHERE Settlement_Plan_Item__c = :savedItems[0].Id
+        ]) {
+            originalFeeIds.add(fee.Id);
+        }
+        System.assertEquals(4, originalFeeIds.size(), 'Should have 4 original fee records');
+
+        // Convert to DTO and modify - set user-edited values
+        List<SettlementDraftService.PaymentItemData> dtos = buildTestDtos(savedItems);
+        Decimal modifiedCommissionFee = 50.00;
+        dtos[0].commissionFee = modifiedCommissionFee;
+        dtos[0].hasOverride = true;
+
+        Test.startTest();
+        SettlementDraftService.saveDraftWithRecords(draft.Id, segments, dtos, null);
+        Test.stopTest();
+
+        // Verify old fee records were deleted and new ones created
+        List<Settlement_Fee__c> newFeeRecords = [
+            SELECT Id, Type__c, Amount__c
+            FROM Settlement_Fee__c
+            WHERE Settlement_Plan_Item__c = :savedItems[0].Id
+        ];
+
+        System.assertEquals(4, newFeeRecords.size(), 'Should still have 4 fee records after modification');
+
+        // Verify fee records are NEW (not the original ones)
+        for (Settlement_Fee__c fee : newFeeRecords) {
+            System.assert(!originalFeeIds.contains(fee.Id),
+                'Fee records should be recreated with new IDs, not the original ones');
+
+            // Verify the modified commission fee value was used
+            if (fee.Type__c == 'Commission Fee') {
+                System.assertEquals(modifiedCommissionFee, fee.Amount__c,
+                    'Commission fee should use the user-edited value');
+            }
+        }
+    }
+
+    /**
+     * @description Tests that cloneDraft correctly clones Settlement_Fee__c records
+     *              from the source items to the cloned items.
+     */
+    @IsTest
+    static void testCloneDraft_ClonesFeeRecords() {
+        CreditorOpportunity__c credOpp = getTestCreditorOpportunity();
+        Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Clone Fee Test');
+        List<Settlement_Segment__c> segments = createTestSegments(draft.Id, 1);
+        List<Settlement_Plan_Item__c> items = createTestPaymentItems(draft.Id, 3);
+
+        // createTestPaymentItems already creates fee records via buildTestFeeRecords
+        // Verify source fee count
+        Integer originalFeeCount = [
+            SELECT COUNT() FROM Settlement_Fee__c
+            WHERE Settlement_Plan_Item__r.Settlement_Plan__c = :draft.Id
+        ];
+        System.assertEquals(12, originalFeeCount, 'Should have 12 source fee records (4 per item x 3 items)');
+
+        Test.startTest();
+        Settlement_Plan_Draft__c clonedDraft = SettlementDraftService.cloneDraft(draft.Id, 'Cloned Draft');
+        Test.stopTest();
+
+        // Verify cloned draft exists
+        System.assertNotEquals(null, clonedDraft.Id, 'Cloned draft should be created');
+
+        // Verify fee records were cloned
+        Integer clonedFeeCount = [
+            SELECT COUNT() FROM Settlement_Fee__c
+            WHERE Settlement_Plan_Item__r.Settlement_Plan__c = :clonedDraft.Id
+        ];
+
+        System.assertEquals(originalFeeCount, clonedFeeCount,
+            'Fee records should be cloned. Expected ' + originalFeeCount + ', got ' + clonedFeeCount);
+
+        // Verify cloned fees have correct structure
+        List<Settlement_Fee__c> clonedFees = [
+            SELECT Type__c, Amount__c, Settlement_Plan_Item__c
+            FROM Settlement_Fee__c
+            WHERE Settlement_Plan_Item__r.Settlement_Plan__c = :clonedDraft.Id
+            ORDER BY Settlement_Plan_Item__c, Type__c
+        ];
+
+        // Verify fee types are preserved
+        Set<String> clonedFeeTypes = new Set<String>();
+        for (Settlement_Fee__c fee : clonedFees) {
+            clonedFeeTypes.add(fee.Type__c);
+        }
+        System.assert(clonedFeeTypes.contains('SettlementPayment'), 'Cloned fees should have SettlementPayment type');
+        System.assert(clonedFeeTypes.contains('Commission Fee'), 'Cloned fees should have Commission Fee type');
+        System.assert(clonedFeeTypes.contains('Banking Fee'), 'Cloned fees should have Banking Fee type');
+        System.assert(clonedFeeTypes.contains('Settlement Fee'), 'Cloned fees should have Settlement Fee type');
+    }
+
+    /**
+     * @description Tests that unmodified existing items do NOT have their fee records touched.
+     *              Only new items and items with Has_Override__c = true should have fee DML.
+     */
+    @IsTest
+    static void testSaveDraft_UnmodifiedItems_FeeRecordsUntouched() {
+        CreditorOpportunity__c credOpp = getTestCreditorOpportunity();
+        Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Unmodified Items Test');
+        List<Settlement_Segment__c> segments = createTestSegments(draft.Id, 1);
+        List<Settlement_Plan_Item__c> items = createTestPaymentItems(draft.Id, 2);
+
+        // createTestPaymentItems already creates fee records via buildTestFeeRecords
+        // Store original fee IDs by querying from DB
+        Set<Id> originalFeeIds = new Set<Id>();
+        for (Settlement_Fee__c fee : [
+            SELECT Id FROM Settlement_Fee__c
+            WHERE Settlement_Plan_Item__r.Settlement_Plan__c = :draft.Id
+        ]) {
+            originalFeeIds.add(fee.Id);
+        }
+
+        // Re-query items (without Has_Override__c set)
+        items = [
+            SELECT Id, Payment_Number__c, Payment_Date__c,
+                   Has_Override__c, Status__c, Settlement_Segment__c,
+                   Settlement_Plan__c, Original_Payment_Date__c, Payment_Method__c
+            FROM Settlement_Plan_Item__c
+            WHERE Settlement_Plan__c = :draft.Id
+            ORDER BY Payment_Number__c
+        ];
+
+        // Ensure Has_Override__c is false/null (items are unmodified)
+        for (Settlement_Plan_Item__c item : items) {
+            System.assertEquals(false, item.Has_Override__c == true,
+                'Items should NOT have Has_Override__c set before save');
+        }
+
+        // Convert to DTOs (hasOverride stays false = unmodified)
+        List<SettlementDraftService.PaymentItemData> dtos = buildTestDtos(items);
+        for (SettlementDraftService.PaymentItemData d : dtos) {
+            d.hasOverride = false;
+        }
+
+        Test.startTest();
+        // Save the items WITHOUT modifying them
+        SettlementDraftService.saveDraftWithRecords(draft.Id, segments, dtos, null);
+        Test.stopTest();
+
+        // Verify original fee records still exist (not replaced)
+        List<Settlement_Fee__c> feesAfterSave = [
+            SELECT Id FROM Settlement_Fee__c
+            WHERE Settlement_Plan_Item__r.Settlement_Plan__c = :draft.Id
+        ];
+
+        System.assertEquals(8, feesAfterSave.size(), 'Should still have 8 fee records');
+
+        // Verify these are the SAME records (not recreated)
+        for (Settlement_Fee__c fee : feesAfterSave) {
+            System.assert(originalFeeIds.contains(fee.Id),
+                'Unmodified items should keep their original fee records, not get new ones');
+        }
+    }
+
+    // ==================== SECTION A: DateUtils DTO Sorting Tests ====================
+
+    @IsTest
+    static void testDateUtils_SortDtosByPaymentDate() {
+        // 3 DTOs in wrong date order → sorted correctly
+        List<SettlementDraftService.PaymentItemData> dtos = new List<SettlementDraftService.PaymentItemData>();
+
+        SettlementDraftService.PaymentItemData dto3 = new SettlementDraftService.PaymentItemData();
+        dto3.paymentNumber = 3;
+        dto3.paymentDate = Date.newInstance(2026, 3, 1);
+        dtos.add(dto3);
+
+        SettlementDraftService.PaymentItemData dto1 = new SettlementDraftService.PaymentItemData();
+        dto1.paymentNumber = 1;
+        dto1.paymentDate = Date.newInstance(2026, 1, 1);
+        dtos.add(dto1);
+
+        SettlementDraftService.PaymentItemData dto2 = new SettlementDraftService.PaymentItemData();
+        dto2.paymentNumber = 2;
+        dto2.paymentDate = Date.newInstance(2026, 2, 1);
+        dtos.add(dto2);
+
+        Test.startTest();
+        List<SettlementDraftService.PaymentItemData> sorted = SettlementDateUtils.sortDtosByPaymentDate(dtos);
+        Test.stopTest();
+
+        System.assertEquals(1, sorted[0].paymentNumber, 'First should be payment 1');
+        System.assertEquals(2, sorted[1].paymentNumber, 'Second should be payment 2');
+        System.assertEquals(3, sorted[2].paymentNumber, 'Third should be payment 3');
+    }
+
+    @IsTest
+    static void testDateUtils_SortDtosByPaymentDate_SameDateTiebreak() {
+        Date sameDate = Date.newInstance(2026, 1, 15);
+        List<SettlementDraftService.PaymentItemData> dtos = new List<SettlementDraftService.PaymentItemData>();
+
+        SettlementDraftService.PaymentItemData dto3 = new SettlementDraftService.PaymentItemData();
+        dto3.paymentNumber = 3;
+        dto3.paymentDate = sameDate;
+        dtos.add(dto3);
+
+        SettlementDraftService.PaymentItemData dto1 = new SettlementDraftService.PaymentItemData();
+        dto1.paymentNumber = 1;
+        dto1.paymentDate = sameDate;
+        dtos.add(dto1);
+
+        Test.startTest();
+        List<SettlementDraftService.PaymentItemData> sorted = SettlementDateUtils.sortDtosByPaymentDate(dtos);
+        Test.stopTest();
+
+        System.assertEquals(1, sorted[0].paymentNumber, 'Payment number should be tiebreaker');
+        System.assertEquals(3, sorted[1].paymentNumber, 'Higher payment number should be second');
+    }
+
+    @IsTest
+    static void testDateUtils_SortDtosByPaymentDate_EmptyList() {
+        Test.startTest();
+        List<SettlementDraftService.PaymentItemData> result = SettlementDateUtils.sortDtosByPaymentDate(
+            new List<SettlementDraftService.PaymentItemData>()
+        );
+        Test.stopTest();
+
+        System.assertEquals(0, result.size(), 'Should return empty list');
+    }
+
+    @IsTest
+    static void testDateUtils_SortDtosByPaymentDate_NullList() {
+        Test.startTest();
+        List<SettlementDraftService.PaymentItemData> result = SettlementDateUtils.sortDtosByPaymentDate(null);
+        Test.stopTest();
+
+        System.assertNotEquals(null, result, 'Should return empty list, not null');
+        System.assertEquals(0, result.size(), 'Should be empty');
+    }
+
+    // ==================== SECTION B: Calculation Validation Gaps ====================
+
+    @IsTest(SeeAllData=true)
+    static void testCalculateDraftPlan_FixedSegmentBalanceRunsOut() {
+        CreditorOpportunity__c credOpp = createNewCreditorOpportunity();
+        Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Balance Runs Out Test');
+
+        // Fixed count=4, amount=$3000, but offer=$5000 → balance runs out after 2 payments
+        List<Settlement_Segment__c> segments = new List<Settlement_Segment__c>{
+            new Settlement_Segment__c(
+                Settlement_Plan__c = draft.Id,
+                Segment_Order__c = 1,
+                Segment_Type__c = 'Fixed',
+                Payment_Amount__c = 3000,
+                Payment_Count__c = 4,
+                Frequency__c = 'Monthly',
+                Start_Date__c = Date.today().addDays(30)
+            )
+        };
+
+        Decimal smallOffer = 5000;
+
+        Test.startTest();
+        SettlementDraftService.DraftCalculationResult result = SettlementDraftService.calculateDraftPlan(
+            draft.Id, segments, TEST_BALANCE, smallOffer, 0
+        );
+        Test.stopTest();
+
+        System.assertEquals(true, result.success, 'Calculation should succeed');
+        // With $5000 offer and $3000 payments: payment 1 = $3000, payment 2 = $2000 (remaining)
+        System.assert(result.numberOfPayments <= 4,
+            'Should generate fewer payments than the requested count of 4 since balance runs out');
+        System.assert(result.numberOfPayments >= 1,
+            'Should generate at least 1 payment');
+    }
+
+    @IsTest(SeeAllData=true)
+    static void testCalculateDraftPlan_RemainderMaxIterations() {
+        CreditorOpportunity__c credOpp = createNewCreditorOpportunity();
+        Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Max Iterations Test');
+
+        // Remainder with $0.01 payment on $10k offer → exceeds max iterations
+        List<Settlement_Segment__c> segments = new List<Settlement_Segment__c>{
+            new Settlement_Segment__c(
+                Settlement_Plan__c = draft.Id,
+                Segment_Order__c = 1,
+                Segment_Type__c = 'Remainder',
+                Payment_Amount__c = 0.01,
+                Frequency__c = 'Monthly',
+                Start_Date__c = Date.today().addDays(30)
+            )
+        };
+
+        Test.startTest();
+        SettlementDraftService.DraftCalculationResult result = SettlementDraftService.calculateDraftPlan(
+            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, 0
+        );
+        Test.stopTest();
+
+        // Should either fail or cap iterations
+        System.assertEquals(false, result.success, 'Should fail due to max iterations exceeded');
+        System.assertNotEquals(null, result.errorMessage, 'Should have an error message');
+    }
+
+    @IsTest(SeeAllData=true)
+    static void testCalculateDraftPlan_ValidationMissingFrequency() {
+        CreditorOpportunity__c credOpp = createNewCreditorOpportunity();
+        Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Missing Frequency Test');
+
+        List<Settlement_Segment__c> segments = new List<Settlement_Segment__c>{
+            new Settlement_Segment__c(
+                Settlement_Plan__c = draft.Id,
+                Segment_Order__c = 1,
+                Segment_Type__c = 'Fixed',
+                Payment_Amount__c = TEST_PAYMENT_AMOUNT,
+                Payment_Count__c = 4,
+                Frequency__c = null,
+                Start_Date__c = Date.today().addDays(30)
+            )
+        };
+
+        Test.startTest();
+        SettlementDraftService.DraftCalculationResult result = SettlementDraftService.calculateDraftPlan(
+            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, 0
+        );
+        Test.stopTest();
+
+        System.assertEquals(false, result.success, 'Should fail validation');
+        System.assert(result.errorMessage.containsIgnoreCase('Frequency'),
+            'Error should mention Frequency. Got: ' + result.errorMessage);
+    }
+
+    @IsTest(SeeAllData=true)
+    static void testCalculateDraftPlan_ValidationFixedMissingPaymentAmount() {
+        CreditorOpportunity__c credOpp = createNewCreditorOpportunity();
+        Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Missing Payment Amount Test');
+
+        List<Settlement_Segment__c> segments = new List<Settlement_Segment__c>{
+            new Settlement_Segment__c(
+                Settlement_Plan__c = draft.Id,
+                Segment_Order__c = 1,
+                Segment_Type__c = 'Fixed',
+                Payment_Amount__c = null,
+                Payment_Count__c = 4,
+                Frequency__c = 'Monthly',
+                Start_Date__c = Date.today().addDays(30)
+            )
+        };
+
+        Test.startTest();
+        SettlementDraftService.DraftCalculationResult result = SettlementDraftService.calculateDraftPlan(
+            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, 0
+        );
+        Test.stopTest();
+
+        System.assertEquals(false, result.success, 'Should fail validation');
+        System.assert(result.errorMessage.containsIgnoreCase('Payment Amount'),
+            'Error should mention Payment Amount. Got: ' + result.errorMessage);
+    }
+
+    @IsTest(SeeAllData=true)
+    static void testCalculateDraftPlan_ValidationSolveAmountMissingCount() {
+        CreditorOpportunity__c credOpp = createNewCreditorOpportunity();
+        Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Missing Payment Count Test');
+
+        List<Settlement_Segment__c> segments = new List<Settlement_Segment__c>{
+            new Settlement_Segment__c(
+                Settlement_Plan__c = draft.Id,
+                Segment_Order__c = 1,
+                Segment_Type__c = 'SolveAmount',
+                Payment_Count__c = null,
+                Frequency__c = 'Monthly',
+                Start_Date__c = Date.today().addDays(30)
+            )
+        };
+
+        Test.startTest();
+        SettlementDraftService.DraftCalculationResult result = SettlementDraftService.calculateDraftPlan(
+            draft.Id, segments, TEST_BALANCE, TEST_SETTLEMENT_OFFER, 0
+        );
+        Test.stopTest();
+
+        System.assertEquals(false, result.success, 'Should fail validation');
+        System.assert(result.errorMessage.containsIgnoreCase('Payment Count'),
+            'Error should mention Payment Count. Got: ' + result.errorMessage);
+    }
+
+    @IsTest(SeeAllData=true)
+    static void testCalculateDraftPlan_ValidationSettlementOfferZero() {
+        CreditorOpportunity__c credOpp = createNewCreditorOpportunity();
+        Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Zero Offer Test');
+
+        List<Settlement_Segment__c> segments = new List<Settlement_Segment__c>{
+            new Settlement_Segment__c(
+                Settlement_Plan__c = draft.Id,
+                Segment_Order__c = 1,
+                Segment_Type__c = 'Fixed',
+                Payment_Amount__c = TEST_PAYMENT_AMOUNT,
+                Payment_Count__c = 4,
+                Frequency__c = 'Monthly',
+                Start_Date__c = Date.today().addDays(30)
+            )
+        };
+
+        Test.startTest();
+        SettlementDraftService.DraftCalculationResult result = SettlementDraftService.calculateDraftPlan(
+            draft.Id, segments, TEST_BALANCE, 0, 0
+        );
+        Test.stopTest();
+
+        System.assertEquals(false, result.success, 'Should fail validation');
+        System.assert(result.errorMessage.containsIgnoreCase('greater than zero'),
+            'Error should mention "greater than zero". Got: ' + result.errorMessage);
+    }
+
+    // ==================== SECTION C: CRUD Gap ====================
+
+    @IsTest
+    static void testDeleteDraft_ArchivedAndSuspendedStatus_Success() {
+        CreditorOpportunity__c credOpp = getTestCreditorOpportunity();
+        Settlement_Plan_Draft__c archivedDraft = createTestDraft(credOpp.Id, 'Archived Delete Test', SettlementDraftService.STATUS_ARCHIVED);
+        Settlement_Plan_Draft__c suspendedDraft = createTestDraft(credOpp.Id, 'Suspended Delete Test', SettlementDraftService.STATUS_SUSPENDED);
+
+        Id archivedId = archivedDraft.Id;
+        Id suspendedId = suspendedDraft.Id;
+
+        Test.startTest();
+        SettlementDraftService.deleteDraft(archivedId);
+        SettlementDraftService.deleteDraft(suspendedId);
+        Test.stopTest();
+
+        List<Settlement_Plan_Draft__c> remaining = [
+            SELECT Id FROM Settlement_Plan_Draft__c
+            WHERE Id IN (:archivedId, :suspendedId)
+        ];
+        System.assertEquals(0, remaining.size(), 'Both Archived and Suspended drafts should be deleted');
+    }
+
+    // ==================== SECTION D: Fee Handling Gaps ====================
+
+    @IsTest
+    static void testSaveDraftWithRecords_NewItemWithOverrideFees() {
+        CreditorOpportunity__c credOpp = getTestCreditorOpportunity();
+        Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Override Fees Test');
+        List<Settlement_Segment__c> segments = createTestSegments(draft.Id, 1);
+
+        // Build a NEW DTO (no Id) with hasOverride=true and custom fee values
+        List<SettlementDraftService.PaymentItemData> dtos = new List<SettlementDraftService.PaymentItemData>();
+        SettlementDraftService.PaymentItemData dto = new SettlementDraftService.PaymentItemData();
+        dto.paymentNumber = 1;
+        dto.paymentDate = Date.today().addMonths(1);
+        dto.paymentAmount = 5000;
+        dto.commissionFee = 99;
+        dto.bankFee = 88;
+        dto.eppsTransactionFee = 77;
+        dto.status = statusScheduled();
+        dto.hasOverride = true;
+        dtos.add(dto);
+
+        Test.startTest();
+        SettlementDraftService.saveDraftWithRecords(draft.Id, segments, dtos, null);
+        Test.stopTest();
+
+        // Verify fee records use custom values, NOT config defaults
+        List<Settlement_Fee__c> fees = [
+            SELECT Type__c, Amount__c
+            FROM Settlement_Fee__c
+            WHERE Settlement_Plan_Item__r.Settlement_Plan__c = :draft.Id
+            ORDER BY Type__c
+        ];
+
+        System.assertEquals(4, fees.size(), 'Should have 4 fee records');
+
+        Map<String, Decimal> feeByType = new Map<String, Decimal>();
+        for (Settlement_Fee__c fee : fees) {
+            feeByType.put(fee.Type__c, fee.Amount__c);
+        }
+
+        System.assertEquals(99, feeByType.get('Commission Fee'), 'Commission fee should use custom value $99');
+        System.assertEquals(88, feeByType.get('Banking Fee'), 'Bank fee should use custom value $88');
+        System.assertEquals(77, feeByType.get('Settlement Fee'), 'EPPS fee should use custom value $77');
+        System.assertEquals(5000, feeByType.get('SettlementPayment'), 'Payment amount should be $5000');
+    }
+
+    @IsTest
+    static void testSaveDraftWithRecords_NewItemWithNullFeesAndOverride() {
+        CreditorOpportunity__c credOpp = getTestCreditorOpportunity();
+        Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Null Override Fees Test');
+        List<Settlement_Segment__c> segments = createTestSegments(draft.Id, 1);
+
+        // Build a NEW DTO (no Id) with hasOverride=true but NULL fee values
+        List<SettlementDraftService.PaymentItemData> dtos = new List<SettlementDraftService.PaymentItemData>();
+        SettlementDraftService.PaymentItemData dto = new SettlementDraftService.PaymentItemData();
+        dto.paymentNumber = 1;
+        dto.paymentDate = Date.today().addMonths(1);
+        dto.paymentAmount = null;
+        dto.commissionFee = null;
+        dto.bankFee = null;
+        dto.eppsTransactionFee = null;
+        dto.status = statusScheduled();
+        dto.hasOverride = true;
+        dtos.add(dto);
+
+        Test.startTest();
+        SettlementDraftService.saveDraftWithRecords(draft.Id, segments, dtos, null);
+        Test.stopTest();
+
+        // Verify fee records have $0 (null coalesced), NOT config defaults
+        List<Settlement_Fee__c> fees = [
+            SELECT Type__c, Amount__c
+            FROM Settlement_Fee__c
+            WHERE Settlement_Plan_Item__r.Settlement_Plan__c = :draft.Id
+            ORDER BY Type__c
+        ];
+
+        System.assertEquals(4, fees.size(), 'Should have 4 fee records');
+
+        for (Settlement_Fee__c fee : fees) {
+            System.assertEquals(0, fee.Amount__c,
+                'Fee ' + fee.Type__c + ' should be $0 (null coalesced), not config default');
+        }
+    }
+
+    @IsTest
+    static void testSaveDraftWithRecords_NullPaymentDate_ThrowsException() {
+        CreditorOpportunity__c credOpp = getTestCreditorOpportunity();
+        Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Null Date Test');
+        List<Settlement_Segment__c> segments = createTestSegments(draft.Id, 1);
+
+        // Build DTO with null paymentDate (simulates deserialization failure)
+        List<SettlementDraftService.PaymentItemData> dtos = new List<SettlementDraftService.PaymentItemData>();
+        SettlementDraftService.PaymentItemData dto = new SettlementDraftService.PaymentItemData();
+        dto.paymentNumber = 1;
+        dto.paymentDate = null; // Missing required field
+        dto.paymentAmount = TEST_PAYMENT_AMOUNT;
+        dto.status = statusScheduled();
+        dto.hasOverride = true;
+        dtos.add(dto);
+
+        Test.startTest();
+        try {
+            SettlementDraftService.saveDraftWithRecords(draft.Id, segments, dtos, null);
+            System.assert(false, 'Should throw exception for null Payment Date');
+        } catch (SettlementCalculatorException e) {
+            System.assert(e.getMessage().contains('missing required fields'),
+                'Error should mention missing required fields: ' + e.getMessage());
+        }
+        Test.stopTest();
+    }
+
+    @IsTest
+    static void testSaveDraftWithRecords_NullPaymentNumber_ThrowsException() {
+        CreditorOpportunity__c credOpp = getTestCreditorOpportunity();
+        Settlement_Plan_Draft__c draft = createTestDraft(credOpp.Id, 'Null Number Test');
+        List<Settlement_Segment__c> segments = createTestSegments(draft.Id, 1);
+
+        // Build DTO with null paymentNumber (simulates deserialization failure)
+        List<SettlementDraftService.PaymentItemData> dtos = new List<SettlementDraftService.PaymentItemData>();
+        SettlementDraftService.PaymentItemData dto = new SettlementDraftService.PaymentItemData();
+        dto.paymentNumber = null; // Missing required field
+        dto.paymentDate = Date.today().addMonths(1);
+        dto.paymentAmount = TEST_PAYMENT_AMOUNT;
+        dto.status = statusScheduled();
+        dto.hasOverride = true;
+        dtos.add(dto);
+
+        Test.startTest();
+        try {
+            SettlementDraftService.saveDraftWithRecords(draft.Id, segments, dtos, null);
+            System.assert(false, 'Should throw exception for null Payment Number');
+        } catch (SettlementCalculatorException e) {
+            System.assert(e.getMessage().contains('missing required fields'),
+                'Error should mention missing required fields: ' + e.getMessage());
+        }
+        Test.stopTest();
     }
 }

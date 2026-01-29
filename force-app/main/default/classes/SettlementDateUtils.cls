@@ -2,16 +2,15 @@
  * @description Utility class for date calculations in Settlement Calculator.
  *              Handles business day adjustments, frequency-based date advancement,
  *              and holiday awareness using Salesforce BusinessHours.
- * @author Settlement Calculator Team
- * @date December 2025
  * @lastModified January 2026 - Refactored to use BusinessHours
  *
  * ============================================================================
  * ASSUMPTIONS DOCUMENTED IN THIS FILE:
  * ============================================================================
- * D1 & D2: Weekend and holiday payments move to PREVIOUS business day using 
- *          Salesforce BusinessHours.isWithin() which automatically handles both 
+ * D1 & D2: Weekend and holiday payments move back 2 BUSINESS DAYS using
+ *          Salesforce BusinessHours.isWithin() which automatically handles both
  *          weekends AND holidays linked to the "Payment Business Hours" record.
+ *          If the original date is already a business day, it returns unchanged.
  * D3: Date spacing uses ORIGINAL date (not adjusted) to prevent drift
  * D4: Semi-Monthly uses 1st/15th pattern (not +15 days)
  * D7: Unknown frequency defaults to Monthly
@@ -27,11 +26,6 @@ public with sharing class SettlementDateUtils {
     public static final String FREQ_BIWEEKLY = 'Bi-Weekly';
     public static final String FREQ_SEMIMONTHLY = 'Semi-Monthly';
     public static final String FREQ_MONTHLY = 'Monthly';
-
-    // Date rule constants
-    public static final String DATE_RULE_PREVIOUS = 'Previous';
-    public static final String DATE_RULE_NEXT = 'Next';
-    public static final String DATE_RULE_NONE = 'None';
 
     // Business Hours configuration
     private static final String PAYMENT_BUSINESS_HOURS_NAME = 'Payment Business Hours';
@@ -87,22 +81,12 @@ public with sharing class SettlementDateUtils {
     }
 
     /**
-     * @description Reset the BusinessHours cache (useful for testing)
-     */
-    @TestVisible
-    private static void resetBusinessHoursCache() {
-        paymentBusinessHoursId = null;
-        businessHoursLoaded = false;
-    }
-
-    /**
      * @description Advance a date based on frequency
      * @param currentDate The current date
      * @param frequency The frequency (Weekly, Bi-Weekly, Semi-Monthly, Monthly)
-     * @param paymentNumber The payment number (used for Semi-Monthly)
      * @return The next date based on frequency
      */
-    public static Date advanceDate(Date currentDate, String frequency, Integer paymentNumber) {
+    public static Date advanceDate(Date currentDate, String frequency) {
         if (currentDate == null) {
             throw new SettlementCalculatorException(
                 SettlementCalculatorException.ErrorType.DATE_CALCULATION_ERROR,
@@ -165,112 +149,58 @@ public with sharing class SettlementDateUtils {
     private static final Integer MAX_BUSINESS_DAY_SEARCH = 30;
 
     /**
-     * @description Apply business day adjustment based on date rule
-     *              Default behavior is "Previous Business Day"
-     *              Uses BusinessHours.isWithin() which automatically handles
-     *              both weekends AND holidays linked to the Business Hours record.
-     * @param originalDate The original payment date
-     * @param dateRule The date rule (Previous, Next, None)
-     * @return The adjusted business day date
-     */
-    public static Date applyDateRule(Date originalDate, String dateRule) {
-        if (originalDate == null) {
-            return null;
-        }
-
-        // If date rule is None, return original date
-        if (dateRule == DATE_RULE_NONE) {
-            return originalDate;
-        }
-
-        Date adjustedDate = originalDate;
-        Integer direction = (dateRule == DATE_RULE_NEXT) ? 1 : -1;
-        Integer iterations = 0;
-
-        // Keep moving until we find a business day
-        // isBusinessDay() uses BusinessHours.isWithin() which automatically
-        // handles both weekends AND holidays linked to the Business Hours record
-        while (!isBusinessDay(adjustedDate)) {
-            adjustedDate = adjustedDate.addDays(direction);
-            iterations++;
-            // Circuit breaker to prevent infinite loops
-            if (iterations >= MAX_BUSINESS_DAY_SEARCH) {
-                throw new SettlementCalculatorException(
-                    SettlementCalculatorException.ErrorType.CALCULATION_ERROR,
-                    'Unable to find business day within ' + MAX_BUSINESS_DAY_SEARCH + ' days of ' + originalDate
-                );
-            }
-        }
-
-        return adjustedDate;
-    }
-
-    /**
-     * @description Apply "Previous Business Day" rule specifically for payment dates
-     *              If date falls on weekend or holiday, moves to previous business day.
-     *              Uses BusinessHours.isWithin() which automatically handles both 
+     * @description Apply "Previous Business Day" rule specifically for payment dates.
+     *              If date falls on weekend or holiday, moves back 2 BUSINESS DAYS.
+     *              If date is already a business day, returns unchanged.
+     *              Uses BusinessHours.isWithin() which automatically handles both
      *              weekends AND holidays linked to the Business Hours record.
      *
-     * ASSUMPTION D1 & D2: Weekend and holiday payments move to PREVIOUS business day
-     * - Saturday -> Friday (or earlier if Friday is holiday)
-     * - Sunday -> Friday (or earlier if Friday is holiday)
-     * - Holiday -> Previous business day
+     * ASSUMPTION D1 & D2: Weekend and holiday payments move back 2 BUSINESS DAYS
+     * - Saturday -> Thursday (skip Friday, count 2 business days back)
+     * - Sunday -> Thursday (skip Friday, count 2 business days back)
+     * - Holiday -> 2 business days before the holiday
+     * - Business day -> Returns unchanged
      * - This is intentional, NOT a bug
      *
      * @param originalDate The original payment date
-     * @return The adjusted date (previous business day if needed)
+     * @return The adjusted date (2 business days prior if non-business day, unchanged if business day)
      * @throws SettlementCalculatorException if no business day found within 30 days
      */
     public static Date applyPreviousBusinessDayRule(Date originalDate) {
         if (originalDate == null) {
             return null;
         }
-        
+
+        // If already a business day, return unchanged
+        if (isBusinessDay(originalDate)) {
+            return originalDate;
+        }
+
+        // Not a business day - count back 2 business days
         Date adjustedDate = originalDate;
+        Integer businessDayCount = 0;
         Integer iterations = 0;
-        
-        // Keep moving back until we find a business day
+
         // isBusinessDay() uses BusinessHours.isWithin() which automatically
         // handles both weekends AND holidays linked to the Business Hours record
-        while (!isBusinessDay(adjustedDate)) {
+        while (businessDayCount < 2) {
             adjustedDate = adjustedDate.addDays(-1);
             iterations++;
+
+            if (isBusinessDay(adjustedDate)) {
+                businessDayCount++;
+            }
+
             // Circuit breaker to prevent infinite loops
             if (iterations >= MAX_BUSINESS_DAY_SEARCH) {
                 throw new SettlementCalculatorException(
                     SettlementCalculatorException.ErrorType.CALCULATION_ERROR,
-                    'Unable to find business day within ' + MAX_BUSINESS_DAY_SEARCH + ' days of ' + originalDate
+                    'Unable to find 2 business days within ' + MAX_BUSINESS_DAY_SEARCH + ' days of ' + originalDate
                 );
             }
         }
-        
+
         return adjustedDate;
-    }
-
-    /**
-     * @description Calculate the number of weeks between two dates
-     * @param startDate Start date
-     * @param endDate End date
-     * @return Number of weeks
-     */
-    public static Integer weeksBetween(Date startDate, Date endDate) {
-        if (startDate == null || endDate == null) {
-            return 0;
-        }
-        return startDate.daysBetween(endDate) / 7;
-    }
-
-    /**
-     * @description Get the month-year key for a date (for EPPS fee grouping)
-     * @param paymentDate The payment date
-     * @return String key in format "YYYY-MM"
-     */
-    public static String getMonthYearKey(Date paymentDate) {
-        if (paymentDate == null) {
-            return null;
-        }
-        return String.valueOf(paymentDate.year()) + '-' +
-               String.valueOf(paymentDate.month()).leftPad(2, '0');
     }
 
     /**
@@ -333,10 +263,58 @@ public with sharing class SettlementDateUtils {
         private Integer compareByPaymentNumber(PaymentItemSortWrapper otherWrapper) {
             Decimal thisNum = this.item.Payment_Number__c != null ? this.item.Payment_Number__c : 0;
             Decimal otherNum = otherWrapper.item.Payment_Number__c != null ? otherWrapper.item.Payment_Number__c : 0;
-            
+
             if (thisNum < otherNum) return -1;
             if (thisNum > otherNum) return 1;
             return 0;
+        }
+    }
+
+    /**
+     * @description Sort PaymentItemData DTOs by payment date, then payment number.
+     */
+    public static List<SettlementDraftService.PaymentItemData> sortDtosByPaymentDate(
+        List<SettlementDraftService.PaymentItemData> items
+    ) {
+        if (items == null || items.isEmpty()) {
+            return items != null ? items : new List<SettlementDraftService.PaymentItemData>();
+        }
+
+        List<DtoSortWrapper> wrappers = new List<DtoSortWrapper>();
+        for (SettlementDraftService.PaymentItemData item : items) {
+            wrappers.add(new DtoSortWrapper(item));
+        }
+        wrappers.sort();
+
+        List<SettlementDraftService.PaymentItemData> sorted = new List<SettlementDraftService.PaymentItemData>();
+        for (DtoSortWrapper w : wrappers) {
+            sorted.add(w.item);
+        }
+        return sorted;
+    }
+
+    private class DtoSortWrapper implements Comparable {
+        public SettlementDraftService.PaymentItemData item;
+
+        public DtoSortWrapper(SettlementDraftService.PaymentItemData item) {
+            this.item = item;
+        }
+
+        public Integer compareTo(Object other) {
+            DtoSortWrapper otherWrapper = (DtoSortWrapper) other;
+            Date thisDate = this.item.paymentDate;
+            Date otherDate = otherWrapper.item.paymentDate;
+
+            if (thisDate == null && otherDate == null) return 0;
+            if (thisDate == null) return 1;
+            if (otherDate == null) return -1;
+            if (thisDate < otherDate) return -1;
+            if (thisDate > otherDate) return 1;
+
+            // Tiebreak by payment number
+            Integer thisNum = this.item.paymentNumber != null ? this.item.paymentNumber : 0;
+            Integer otherNum = otherWrapper.item.paymentNumber != null ? otherWrapper.item.paymentNumber : 0;
+            return thisNum - otherNum;
         }
     }
 }

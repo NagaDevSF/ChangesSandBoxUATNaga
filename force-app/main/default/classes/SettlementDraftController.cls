@@ -84,7 +84,8 @@ public with sharing class SettlementDraftController {
                        Name,
                        Settlement_Status__c,
                        Amount__c,
-                       Escrow_Start_Balance__c
+                       Escrow_Start_Balance__c,
+                       Account_Bank_Information__c
                 FROM CreditorOpportunity__c
                 WHERE Id = :creditorOpportunityId
                 LIMIT 1
@@ -107,7 +108,7 @@ public with sharing class SettlementDraftController {
     public static Settlement_Plan_Draft__c saveDraftWithRecords(
         Id draftId,
         List<Settlement_Segment__c> segments,
-        List<Settlement_Plan_Item__c> items,
+        List<SettlementDraftService.PaymentItemData> items,
         Map<String, Object> draftFields
     ) {
         try {
@@ -120,7 +121,7 @@ public with sharing class SettlementDraftController {
                 segments = new List<Settlement_Segment__c>();
             }
             if (items == null) {
-                items = new List<Settlement_Plan_Item__c>();
+                items = new List<SettlementDraftService.PaymentItemData>();
             }
             if (draftFields == null) {
                 draftFields = new Map<String, Object>();
@@ -152,7 +153,7 @@ public with sharing class SettlementDraftController {
         Id creditorOpportunityId,
         String draftName,
         List<Settlement_Segment__c> segments,
-        List<Settlement_Plan_Item__c> items,
+        List<SettlementDraftService.PaymentItemData> items,
         Map<String, Object> draftFields
     ) {
         try {
@@ -161,7 +162,7 @@ public with sharing class SettlementDraftController {
                 segments = new List<Settlement_Segment__c>();
             }
             if (items == null) {
-                items = new List<Settlement_Plan_Item__c>();
+                items = new List<SettlementDraftService.PaymentItemData>();
             }
             if (draftFields == null) {
                 draftFields = new Map<String, Object>();
@@ -215,7 +216,6 @@ public with sharing class SettlementDraftController {
      * @param segments List of segments
      * @param balance The balance amount
      * @param settlementOffer The settlement offer amount
-     * @param commissionFee Commission fee per payment (from UI input)
      * @param totalPaidAmount Total paid amount from UI (Cleared + Processing)
      * @return DraftCalculationResult with calculated items
      */
@@ -225,7 +225,6 @@ public with sharing class SettlementDraftController {
         List<Settlement_Segment__c> segments,
         Decimal balance,
         Decimal settlementOffer,
-        Decimal commissionFee,
         Decimal totalPaidAmount
     ) {
         // Handle null parameter - platform may pass null for empty array
@@ -234,7 +233,7 @@ public with sharing class SettlementDraftController {
         }
 
         return SettlementDraftService.calculateDraftPlan(
-            draftId, segments, balance, settlementOffer, commissionFee, totalPaidAmount
+            draftId, segments, balance, settlementOffer, totalPaidAmount
         );
     }
 
@@ -246,7 +245,7 @@ public with sharing class SettlementDraftController {
      */
     @AuraEnabled
     public static SettlementDraftService.RecalculationResult recalculateBalances(
-        List<Settlement_Plan_Item__c> items,
+        List<SettlementDraftService.PaymentItemData> items,
         Decimal settlementOffer
     ) {
         if (items == null || items.isEmpty()) {
@@ -295,17 +294,19 @@ public with sharing class SettlementDraftController {
 
     /**
      * @description Get fee configuration values for Add Row
-     *              Returns bank fee and EPPS transaction fee from config.
+     *              Returns commission fee, bank fee and EPPS transaction fee from config.
      *              Used by LWC to populate fees when adding manual rows.
-     * @return Map with bankFee and eppsTransactionFee values
+     * @return Map with commissionFee, bankFee and eppsTransactionFee values
      */
     @AuraEnabled(cacheable=true)
     public static Map<String, Decimal> getFeeConfig() {
         try {
             Settlement_Calc_Config__mdt config = SettlementDraftService.getConfig();
             return new Map<String, Decimal>{
+                'commissionFee' => config.Default_Commission_Fee__c,
                 'bankFee' => config.Default_Bank_Fee__c,
-                'eppsTransactionFee' => config.EPPS_Transaction_Fee__c
+                'eppsTransactionFee' => config.EPPS_Transaction_Fee__c,
+                'fullyFundedTolerance' => config.Fully_Funded_Tolerance__c
             };
         } catch (Exception e) {
             throw createAuraException('Error loading fee config: ' + e.getMessage());

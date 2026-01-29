@@ -1,6 +1,21 @@
+/**
+ * ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+ * Class Name      : OpportunityTriggerHandler
+ * Author          : Shell Black (Scott Fawcett)
+ * Created Date    : Jan 27, 2026
+ * Last Modified By: <YourName>
+ * Last Modified On: Jan 27, 2026
+ * Description     : This class is the handler class for the Opportunity trigger
+ *  
+ * Change History  :
+ *  Date          │   Author     │   Change
+ * ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+ *  Jan 27, 2026  │ Scott Fawcett │ Initial version
+ * ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+ */
 public class OpportunityTriggerHandler {
-	
-    public static final String PAYMENT_DRAFT_SYNC_STATUS_OUT_OF_SYNC = 'Out of Sync';
+
+	public static final String PAYMENT_DRAFT_SYNC_STATUS_OUT_OF_SYNC = 'Out of Sync';
 	public static final String OPP_STAGE_SIGNED = 'Contract Signed';
 
 	public static void checkOppMovingToSignatureStage(List<Opportunity> oppList, Map<Id, Opportunity> oldMap) {
@@ -17,11 +32,49 @@ public class OpportunityTriggerHandler {
 			}
 		}
 
-		if (!oppSignedList.isEmpty()) {
+		//  Get a list of accounts related to the optys		
+		Map<Id, Account> theAccountMap = new Map<Id, Account>([SELECT Id, Account_Holder_Name__c, Account_Holder_Last_Name__c,
+											Acct_Street_Address__c, City__c, State1__c, Zip_Code__c, EPPS_ID__c,
+											Acct_Phone__c, Email__c, Date_of_Birth__c, EPPS_Cardholder_Sequence__c,
+											BillingStreet, BillingState, BillingCity, BillingPostalCode
+											FROM Account WHERE Id IN: accountIds]);
+
+		if (!oppList.isEmpty()) {
 			 PaymentPlanService.buildPaymentScheduleItems(oppSignedList);
+
+			//  If it is moving to signed, we need to add a cardholder to EPPS.
+			//  Build AddCardHolder Wrappers for each Opty moving to signed for any account that is not established in EPPS.
+			List<EPPSHelperMethods.Cardholder_Wrapper> theCardholderWrappers = new	List<EPPSHelperMethods.Cardholder_Wrapper>();
+			for (Opportunity opt: oppSignedList) {
+				
+				// temporary condition, we only want to send if the opp is marked as Integrate to EPPS
+				if (opt.Integrate_with_EPPS__c) {
+					Account theAccount = theAccountMap.get(opt.AccountId);
+				
+					if (String.isBlank(theAccount.EPPS_ID__c)) {
+						EPPSHelperMethods.Cardholder_Wrapper theWrapper = new
+						EPPSHelperMethods.Cardholder_Wrapper(EPPSHelperMethods.EPPSOperation.EPPS_ADD_CARDHOLDER,
+															theAccount.Id,
+															theAccount.EPPS_Cardholder_Sequence__c,
+															theAccount.Account_Holder_Name__c,
+															theAccount.Account_Holder_Last_Name__c,
+															theAccount.BillingStreet,
+															theAccount.BillingCity,
+															theAccount.BillingState,
+															theAccount.BillingPostalCode,
+															theAccount.Acct_Phone__c,
+															theAccount.Email__c);
+				
+						theCardholderWrappers.add(theWrapper);		
+					}
+				}
+			}
+			if (!theCardholderWrappers.isEmpty()) {
+				ChunkCardholderWrappers (theCardholderWrappers);
+			}
 		}
 	}
-    
+
 	public static void triggerPlatformEventForLWC(List<Opportunity> oppList, Map<Id, Opportunity> oldMap) {
 
 		Map<Id, OpportunityUpdate__e> eventsMap = new Map<Id, OpportunityUpdate__e>();
@@ -71,5 +124,46 @@ public class OpportunityTriggerHandler {
 			update pdList;
 			EventBus.publish(eventsMap.values());
 		}
+	}
+
+	public static void ChunkCardholderWrappers (List<EPPSHelperMethods.Cardholder_Wrapper> theCardholderWrapperList) {
+		
+		// TODO need to add coverage to support the split to work around gov limits
+		if (theCardholderWrapperList.isEmpty() == false) {
+			System.enqueueJob(new EPPSManageCardHolderQueueable(theCardholderWrapperList));
+		}
+		/*if (theCardholderWrapperList.isEmpty() == false) {
+			if (theCardholderWrapperList.size() <= 50) {
+				System.enqueueJob(new EPPSManageCardHolderQueueable(theCardholderWrapperList));
+
+			} else {
+
+				integer counter = theCardholderWrapperList.size();
+
+				List<EPPSHelperMethods.Cardholder_Wrapper> wrapper0 = new List<EPPSHelperMethods.Cardholder_Wrapper>();
+				List<EPPSHelperMethods.Cardholder_Wrapper> wrapper1 = new List<EPPSHelperMethods.Cardholder_Wrapper>();
+				List<EPPSHelperMethods.Cardholder_Wrapper> wrapper2 = new List<EPPSHelperMethods.Cardholder_Wrapper>();
+				List<EPPSHelperMethods.Cardholder_Wrapper> wrapper3 = new List<EPPSHelperMethods.Cardholder_Wrapper>();
+				List<EPPSHelperMethods.Cardholder_Wrapper> wrapper4 = new List<EPPSHelperMethods.Cardholder_Wrapper>();
+
+				for(Integer i = 0; i < counter; i++) {
+					
+					switch on Math.mod(i,5) {
+						when 0{wrapper0.add(theCardholderWrapperList[i]);}
+						when 1{wrapper1.add(theCardholderWrapperList[i]);}
+						when 2{wrapper2.add(theCardholderWrapperList[i]);}
+						when 3{wrapper3.add(theCardholderWrapperList[i]);}	
+						when 4{wrapper4.add(theCardholderWrapperList[i]);}	
+					}
+
+				}
+
+				System.enqueueJob(new EPPSManageCardHolderQueueable(wrapper0));
+				System.enqueueJob(new EPPSManageCardHolderQueueable(wrapper1));
+				System.enqueueJob(new EPPSManageCardHolderQueueable(wrapper2));
+				System.enqueueJob(new EPPSManageCardHolderQueueable(wrapper3));
+				System.enqueueJob(new EPPSManageCardHolderQueueable(wrapper4));
+			}
+		}*/
 	}
 }

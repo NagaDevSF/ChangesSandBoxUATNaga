@@ -32,7 +32,6 @@ public with sharing class SettlementDraftService {
     public static final String STATUS_DRAFT = 'Draft';
     public static final String STATUS_ACTIVE = 'Active';
     public static final String STATUS_SUSPENDED = 'Suspended';
-    public static final String STATUS_APPLIED = 'Applied';
     public static final String STATUS_ARCHIVED = 'Archived';
 
     // Item status resolution (picklist-driven)
@@ -121,10 +120,6 @@ public with sharing class SettlementDraftService {
         return false;
     }
 
-    // Tolerance constants (fallback when config is null)
-    public static final Decimal DEFAULT_FULLY_FUNDED_TOLERANCE = 0.01;
-    public static final Decimal DEFAULT_BALANCE_CHECK_TOLERANCE = 0.10;
-
     // Valid segment types
     private static final Set<String> VALID_SEGMENT_TYPES = new Set<String>{'Fixed', 'Remainder', 'SolveAmount'};
 
@@ -152,11 +147,13 @@ public with sharing class SettlementDraftService {
         @AuraEnabled public Settlement_Plan_Draft__c draft;
         @AuraEnabled public List<Settlement_Segment__c> segments;
         @AuraEnabled public List<Settlement_Plan_Item__c> paymentItems;
+        @AuraEnabled public List<Settlement_Fee__c> feeRecords;
         @AuraEnabled public CreditorOpportunity__c creditorOpportunity;
 
         public DraftWrapper() {
             this.segments = new List<Settlement_Segment__c>();
             this.paymentItems = new List<Settlement_Plan_Item__c>();
+            this.feeRecords = new List<Settlement_Fee__c>();
         }
     }
 
@@ -166,22 +163,19 @@ public with sharing class SettlementDraftService {
     public class DraftCalculationResult {
         @AuraEnabled public Boolean success;
         @AuraEnabled public String errorMessage;
-        @AuraEnabled public List<Settlement_Plan_Item__c> paymentItems;
+        @AuraEnabled public List<PaymentItemData> paymentItems;
         @AuraEnabled public Decimal totalScheduledAmount;
         @AuraEnabled public Decimal fundingDifference;
         @AuraEnabled public Integer numberOfPayments;
-        @AuraEnabled public Integer escrowShortageCount;
         @AuraEnabled public Date firstPaymentDate;
         @AuraEnabled public Date finalPaymentDate;
-        @AuraEnabled public Integer settlementTermWeeks;
 
         public DraftCalculationResult() {
             this.success = false;
-            this.paymentItems = new List<Settlement_Plan_Item__c>();
+            this.paymentItems = new List<PaymentItemData>();
             this.totalScheduledAmount = 0;
             this.fundingDifference = 0;
             this.numberOfPayments = 0;
-            this.escrowShortageCount = 0;
         }
     }
 
@@ -191,7 +185,7 @@ public with sharing class SettlementDraftService {
     public class RecalculationResult {
         @AuraEnabled public Boolean success;
         @AuraEnabled public String errorMessage;
-        @AuraEnabled public List<Settlement_Plan_Item__c> paymentItems;
+        @AuraEnabled public List<PaymentItemData> paymentItems;
         @AuraEnabled public Decimal totalScheduledAmount;
         @AuraEnabled public Decimal fundingDifference;
         @AuraEnabled public Boolean isBalanced;
@@ -199,7 +193,7 @@ public with sharing class SettlementDraftService {
 
         public RecalculationResult() {
             this.success = false;
-            this.paymentItems = new List<Settlement_Plan_Item__c>();
+            this.paymentItems = new List<PaymentItemData>();
             this.totalScheduledAmount = 0;
             this.fundingDifference = 0;
             this.isBalanced = false;
@@ -223,6 +217,113 @@ public with sharing class SettlementDraftService {
         }
     }
 
+    /**
+     * @description DTO for passing payment item data between LWC and Apex.
+     *              Replaces using Settlement_Plan_Item__c SObject fields as transport.
+     *              Contains both scheduling fields and fee/amount fields.
+     */
+    public class PaymentItemData {
+        @AuraEnabled public Id id {get; set;}
+        @AuraEnabled public Id segmentId {get; set;}
+        @AuraEnabled public Id planId {get; set;}
+        @AuraEnabled public Integer paymentNumber {get; set;}
+        @AuraEnabled public Date paymentDate {get; set;}
+        @AuraEnabled public Date originalPaymentDate {get; set;}
+        @AuraEnabled public String status {get; set;}
+        @AuraEnabled public String paymentMethod {get; set;}
+        @AuraEnabled public Boolean hasOverride {get; set;}
+        // Fee/amount data (source of truth: Settlement_Fee__c records)
+        @AuraEnabled public Decimal paymentAmount {get; set;}
+        @AuraEnabled public Decimal commissionFee {get; set;}
+        @AuraEnabled public Decimal bankFee {get; set;}
+        @AuraEnabled public Decimal eppsTransactionFee {get; set;}
+    }
+
+    /**
+     * @description Build Settlement_Plan_Item__c from DTO (ACTIVE fields only, no fee fields).
+     */
+    private static Settlement_Plan_Item__c buildItemFromDto(PaymentItemData dto, Id draftId) {
+        Settlement_Plan_Item__c item = new Settlement_Plan_Item__c();
+        if (dto.id != null) {
+            item.Id = dto.id;
+        } else {
+            item.Settlement_Plan__c = draftId;
+        }
+        item.Settlement_Segment__c = dto.segmentId;
+        item.Payment_Number__c = dto.paymentNumber;
+        item.Payment_Date__c = dto.paymentDate;
+        item.Original_Payment_Date__c = dto.originalPaymentDate;
+        item.Status__c = dto.status;
+        item.Payment_Method__c = dto.paymentMethod;
+        // One-way latch: once true, stays true (Phase 51 fix — hasOverride now
+        // driven by transient hasPendingFeeChanges, so only set when user actually edits fees)
+        if (dto.hasOverride == true) {
+            item.Has_Override__c = true;
+        }
+        return item;
+    }
+
+    /**
+     * @description Convert a queried Settlement_Plan_Item__c to PaymentItemData.
+     *              Used for preserved (non-Scheduled) items in calculateDraftPlan.
+     *              Fee/amount fields default to 0 — actual values live in Settlement_Fee__c.
+     */
+    private static PaymentItemData buildDtoFromItem(Settlement_Plan_Item__c item) {
+        PaymentItemData dto = new PaymentItemData();
+        dto.id = item.Id;
+        dto.segmentId = item.Settlement_Segment__c;
+        dto.planId = item.Settlement_Plan__c;
+        dto.paymentNumber = item.Payment_Number__c != null ? Integer.valueOf(item.Payment_Number__c) : null;
+        dto.paymentDate = item.Payment_Date__c;
+        dto.originalPaymentDate = item.Original_Payment_Date__c;
+        dto.status = item.Status__c;
+        dto.paymentMethod = item.Payment_Method__c;
+        dto.hasOverride = item.Has_Override__c;
+        dto.paymentAmount = 0;
+        dto.commissionFee = 0;
+        dto.bankFee = 0;
+        dto.eppsTransactionFee = 0;
+        return dto;
+    }
+
+    /**
+     * @description Build FeeData from PaymentItemData for fee record creation.
+     */
+    private static FeeData buildFeeDataFromDto(PaymentItemData dto) {
+        FeeData fd = new FeeData();
+        fd.paymentAmount = dto.paymentAmount != null ? dto.paymentAmount : 0;
+        fd.commissionFee = dto.commissionFee != null ? dto.commissionFee : 0;
+        fd.bankFee = dto.bankFee != null ? dto.bankFee : 0;
+        fd.eppsFee = dto.eppsTransactionFee != null ? dto.eppsTransactionFee : 0;
+        fd.isModified = dto.hasOverride == true;
+        fd.isNew = dto.id == null;
+        return fd;
+    }
+
+    /**
+     * @description Internal data class to hold fee/amount data extracted from items
+     *              Used during save to pass data to Fee record creation.
+     *              Phase 44: Items don't store amounts/fees - Settlement_Fee__c records do.
+     */
+    private class FeeData {
+        public Id itemId;
+        public Decimal paymentAmount;
+        public Decimal commissionFee;
+        public Decimal bankFee;
+        public Decimal eppsFee;
+        public Boolean isNew;
+        public Boolean isModified;
+
+        public FeeData() {
+            this.paymentAmount = 0;
+            this.commissionFee = 0;
+            this.bankFee = 0;
+            this.eppsFee = 0;
+            this.isNew = false;
+            this.isModified = false;
+        }
+    }
+
     // ============ CONFIGURATION METHODS ============
 
     /**
@@ -233,6 +334,7 @@ public with sharing class SettlementDraftService {
         if (configCache == null) {
             List<Settlement_Calc_Config__mdt> configs = [
                 SELECT
+                    Default_Commission_Fee__c,
                     Default_Bank_Fee__c,
                     EPPS_Transaction_Fee__c,
                     EPPS_Monthly_Minimum__c,
@@ -280,8 +382,9 @@ public with sharing class SettlementDraftService {
 
         List<Settlement_Plan_Draft__c> drafts = [
             SELECT Id, Name, CreditorOpportunity__c, Status__c, Balance__c,
-                   Settlement_Offer_Amount__c, Revised_Settlement_Amount__c, Escrow_Start_Balance__c, Commission_Fee__c,
-                   Number_of_Payments__c, Is_Manually_Modified__c, Applied_Date__c, Cloned_From__c
+                   Settlement_Offer_Amount__c, Revised_Settlement_Amount__c, Escrow_Start_Balance__c,
+                   Total_Scheduled_Amount__c, Number_of_Payments__c,
+                   Is_Manually_Modified__c, Applied_Date__c, Cloned_From__c
             FROM Settlement_Plan_Draft__c
             WHERE Id = :draftId
             LIMIT 1
@@ -328,8 +431,9 @@ public with sharing class SettlementDraftService {
 
         List<Settlement_Plan_Draft__c> drafts = [
             SELECT Id, Name, CreditorOpportunity__c, Status__c, Balance__c,
-                   Settlement_Offer_Amount__c, Revised_Settlement_Amount__c, Escrow_Start_Balance__c, Commission_Fee__c,
-                   Number_of_Payments__c, Is_Manually_Modified__c, Applied_Date__c, Cloned_From__c,
+                   Settlement_Offer_Amount__c, Revised_Settlement_Amount__c, Escrow_Start_Balance__c,
+                   Total_Scheduled_Amount__c, Number_of_Payments__c,
+                   Is_Manually_Modified__c, Applied_Date__c, Cloned_From__c,
                    CreatedDate, LastModifiedDate
             FROM Settlement_Plan_Draft__c
             WHERE Id = :draftId
@@ -423,6 +527,9 @@ public with sharing class SettlementDraftService {
                    Settlement_Offer_Amount__c,
                    Revised_Settlement_Amount__c,
                    Escrow_Start_Balance__c,
+                   Total_Paid_Amount__c,
+                   Total_Scheduled_Amount__c,
+                   Current_Balance__c,
                    Number_of_Payments__c,
                    Is_Manually_Modified__c,
                    Applied_Date__c,
@@ -457,7 +564,9 @@ public with sharing class SettlementDraftService {
                    Settlement_Offer_Amount__c,
                    Revised_Settlement_Amount__c,
                    Escrow_Start_Balance__c,
-                   Commission_Fee__c,
+                   Total_Paid_Amount__c,
+                   Total_Scheduled_Amount__c,
+                   Current_Balance__c,
                    Number_of_Payments__c,
                    Is_Manually_Modified__c,
                    Applied_Date__c,
@@ -502,6 +611,8 @@ public with sharing class SettlementDraftService {
         ];
 
         // Query related payment items
+        // Phase 44: Item only stores dates, status, segment - NO amounts/fees
+        // All amount/fee data comes from Settlement_Fee__c children
         wrapper.paymentItems = [
             SELECT Id,
                    Name,
@@ -510,28 +621,33 @@ public with sharing class SettlementDraftService {
                    Payment_Number__c,
                    Payment_Date__c,
                    Original_Payment_Date__c,
-                   Payment_Amount__c,
                    Actual_Payment_Date__c,
-                   Actual_Payment_Amount__c,
-                   Commission_Fee__c,
-                   Bank_Fee__c,
-                   Payee_Fee__c,
-                   EPPS_Transaction_Fee__c,
-                   EPPS_Month_End_Fee__c,
-                   Total_EPPS_Fee__c,
-                   Escrow_Balance__c,
                    Status__c,
                    Payment_Method__c,
                    Confirmation_Number__c,
                    Skip_Payment__c,
                    Skip_Reason__c,
                    Has_Override__c,
-                   Notes__c,
-                   Is_Escrow_Shortage__c
+                   Notes__c
             FROM Settlement_Plan_Item__c
             WHERE Settlement_Plan__c = :draftId
             ORDER BY Payment_Date__c ASC, Payment_Number__c ASC
         ];
+
+        // Query Settlement_Fee__c records for all items
+        // This is the source of truth for fee data (Phase 44)
+        if (!wrapper.paymentItems.isEmpty()) {
+            Set<Id> itemIds = new Set<Id>();
+            for (Settlement_Plan_Item__c item : wrapper.paymentItems) {
+                itemIds.add(item.Id);
+            }
+            wrapper.feeRecords = [
+                SELECT Id, Settlement_Plan_Item__c, Type__c, Amount__c
+                FROM Settlement_Fee__c
+                WHERE Settlement_Plan_Item__c IN :itemIds
+                ORDER BY Settlement_Plan_Item__c, Type__c
+            ];
+        }
 
         // Load CreditorOpportunity
         if (wrapper.draft.CreditorOpportunity__c != null) {
@@ -662,7 +778,7 @@ public with sharing class SettlementDraftService {
     public static Settlement_Plan_Draft__c saveDraftWithRecords(
         Id draftId,
         List<Settlement_Segment__c> segments,
-        List<Settlement_Plan_Item__c> items,
+        List<PaymentItemData> items,
         Map<String, Object> draftFields
     ) {
         // Validate draft exists and can be edited
@@ -732,9 +848,9 @@ public with sharing class SettlementDraftService {
             // 3. Build set of incoming item IDs
             Set<Id> incomingItemIds = new Set<Id>();
             if (items != null) {
-                for (Settlement_Plan_Item__c item : items) {
-                    if (item.Id != null) {
-                        incomingItemIds.add(item.Id);
+                for (PaymentItemData dto : items) {
+                    if (dto.id != null) {
+                        incomingItemIds.add(dto.id);
                     }
                 }
             }
@@ -756,34 +872,91 @@ public with sharing class SettlementDraftService {
 
             // 6. Prepare items for save
             List<Settlement_Plan_Item__c> itemsToUpsert = new List<Settlement_Plan_Item__c>();
+            List<FeeData> feeDataList = new List<FeeData>();
 
             if (items != null && !items.isEmpty()) {
-                for (Settlement_Plan_Item__c item : items) {
-                    // Skip historical items entirely (any non-Scheduled item already in DB)
-                    if (item.Id != null && historicalItemIds.contains(item.Id)) {
+                for (PaymentItemData dto : items) {
+                    // Skip historical items (non-Scheduled items already in DB)
+                    if (dto.id != null && historicalItemIds.contains(dto.id)) {
                         continue;
                     }
 
-                    // Full upsert for Scheduled and new items
-                    if (item.Id == null) {
-                        item.Settlement_Plan__c = draftId;
+                    // Build Settlement_Plan_Item__c from DTO (ACTIVE fields only)
+                    Settlement_Plan_Item__c item = buildItemFromDto(dto, draftId);
+
+                    // Validate required fields before upsert
+                    if (item.Payment_Date__c == null || item.Payment_Number__c == null) {
+                        throw new SettlementCalculatorException(
+                            SettlementCalculatorException.ErrorType.CALCULATION_ERROR,
+                            'Payment item is missing required fields. Payment Date: ' + dto.paymentDate
+                            + ', Payment Number: ' + dto.paymentNumber
+                            + ', DTO index: ' + itemsToUpsert.size()
+                            + '. Please recalculate and try again.'
+                        );
                     }
+
+                    // Apply business day rule for manual edits
+                    if (item.Payment_Date__c != null) {
+                        Date originalDate = item.Payment_Date__c;
+                        Date adjustedDate = SettlementDateUtils.applyPreviousBusinessDayRule(originalDate);
+                        if (originalDate != adjustedDate) {
+                            item.Payment_Date__c = adjustedDate;
+                            if (item.Original_Payment_Date__c == null) {
+                                item.Original_Payment_Date__c = originalDate;
+                            }
+                        }
+                    }
+
+                    // Build FeeData from DTO
+                    FeeData fd = buildFeeDataFromDto(dto);
+                    feeDataList.add(fd);
+
                     itemsToUpsert.add(item);
                 }
             }
 
-            // 7. Execute DML
+            // 7. Execute DML for items (without amounts/fees - those go to Fee records)
             if (!itemsToUpsert.isEmpty()) {
                 upsert itemsToUpsert;
-            }
 
-            // Update draft summary fields
-            updateDraftSummary(draftId);
+                // 8. Handle Settlement_Fee__c records using extracted data
+                Settlement_Calc_Config__mdt config = getConfig();
+
+                List<FeeData> newItemFees = new List<FeeData>();
+                List<FeeData> modifiedItemFees = new List<FeeData>();
+                Set<Id> modifiedItemIds = new Set<Id>();
+
+                for (Integer i = 0; i < itemsToUpsert.size(); i++) {
+                    Settlement_Plan_Item__c item = itemsToUpsert[i];
+                    FeeData fd = feeDataList[i];
+                    fd.itemId = item.Id; // Now has ID after upsert
+
+                    if (fd.isNew) {
+                        newItemFees.add(fd);
+                    } else if (fd.isModified) {
+                        modifiedItemFees.add(fd);
+                        modifiedItemIds.add(item.Id);
+                    }
+                    // Else: existing item, not modified → leave Fee records alone
+                }
+
+                // For NEW items: Create Fee records from extracted data + config defaults
+                if (!newItemFees.isEmpty()) {
+                    createFeeRecordsFromFeeData(newItemFees, config);
+                }
+
+                // For MODIFIED items: Delete existing Fee records, create from extracted data
+                if (!modifiedItemFees.isEmpty()) {
+                    delete [SELECT Id FROM Settlement_Fee__c WHERE Settlement_Plan_Item__c IN :modifiedItemIds];
+                    createFeeRecordsFromFeeData(modifiedItemFees, null);
+                }
+            }
 
             // Re-query and return updated draft
             return [
                 SELECT Id, Name, Status__c, Settlement_Offer_Amount__c, Revised_Settlement_Amount__c, Balance__c,
-                       Escrow_Start_Balance__c, Commission_Fee__c, Number_of_Payments__c,
+                       Escrow_Start_Balance__c, Total_Paid_Amount__c, Total_Scheduled_Amount__c,
+                       Current_Balance__c, Number_of_Payments__c,
                        Is_Manually_Modified__c, CreatedBy.Name
                 FROM Settlement_Plan_Draft__c
                 WHERE Id = :draftId
@@ -805,79 +978,85 @@ public with sharing class SettlementDraftService {
     public static Settlement_Plan_Draft__c saveDraftWithRecords(
         Id draftId,
         List<Settlement_Segment__c> segments,
-        List<Settlement_Plan_Item__c> items
+        List<PaymentItemData> items
     ) {
         return saveDraftWithRecords(draftId, segments, items, null);
     }
 
+    // ============ FEE RECORD METHODS (Phase 44) ============
+
     /**
-     * @description Update draft summary fields from related items.
-     *              Note: Most summary fields (First_Payment_Date__c, Final_Payment_Date__c,
-     *              Settlement_Term_Weeks__c, Funding_Difference__c, Total_Scheduled_Amount__c)
-     *              are formula or rollup summary fields that auto-calculate.
-     *              This method only updates editable fields like Next_Payment_Date__c.
+     * @description Create Settlement_Fee__c records from extracted FeeData.
+     *              Phase 44: Items don't store amounts/fees - all data comes from FeeData.
+     * @param feeDataList List of FeeData with extracted amounts/fees
+     * @param config Optional config for default fees (used for new items, null for modified items)
      */
-    private static void updateDraftSummary(Id draftId) {
-        // Query draft
-        List<Settlement_Plan_Draft__c> drafts = [
-            SELECT Id, Settlement_Offer_Amount__c, Revised_Settlement_Amount__c
-            FROM Settlement_Plan_Draft__c
-            WHERE Id = :draftId
-            LIMIT 1
-        ];
+    private static void createFeeRecordsFromFeeData(
+        List<FeeData> feeDataList,
+        Settlement_Calc_Config__mdt config
+    ) {
+        if (feeDataList == null || feeDataList.isEmpty()) return;
 
-        if (drafts.isEmpty()) return;
-
-        Settlement_Plan_Draft__c draft = drafts[0];
-
-        // Get items for next payment calculation (ordered by date)
-        List<Settlement_Plan_Item__c> items = [
-            SELECT Payment_Date__c, Payment_Amount__c, Status__c
-            FROM Settlement_Plan_Item__c
-            WHERE Settlement_Plan__c = :draftId
-            ORDER BY Payment_Date__c ASC
-        ];
-
-        // Find next scheduled payment (first Scheduled item with date >= today)
-        Settlement_Plan_Item__c nextPayment = null;
-        Date today = Date.today();
-
-        for (Settlement_Plan_Item__c item : items) {
-            if (item.Payment_Date__c != null &&
-                nextPayment == null &&
-                isScheduledStatus(item.Status__c) &&
-                item.Payment_Date__c >= today) {
-                nextPayment = item;
-                break;
-            }
+        // Get config defaults for new items (modified items use their own values)
+        Decimal configCommission = 0;
+        Decimal configBank = 0;
+        Decimal configEpps = 0;
+        if (config != null) {
+            configCommission = config.Default_Commission_Fee__c != null ? config.Default_Commission_Fee__c : 0;
+            configBank = config.Default_Bank_Fee__c != null ? config.Default_Bank_Fee__c : 0;
+            configEpps = config.EPPS_Transaction_Fee__c != null ? config.EPPS_Transaction_Fee__c : 0;
         }
 
-        // Only update editable fields - formula/rollup fields auto-calculate
-        // Use dynamic field access to avoid compile errors if fields are formula/rollup
-        Boolean hasUpdates = false;
-        Map<String, Schema.SObjectField> fieldMap = Schema.SObjectType.Settlement_Plan_Draft__c.fields.getMap();
+        List<Settlement_Fee__c> feeRecords = new List<Settlement_Fee__c>();
 
-        // Dynamically check and update Next_Payment_Date__c if it's editable
-        if (fieldMap.containsKey('next_payment_date__c')) {
-            Schema.DescribeFieldResult fieldDescribe = fieldMap.get('next_payment_date__c').getDescribe();
-            if (fieldDescribe.isUpdateable() && !fieldDescribe.isCalculated()) {
-                draft.put('Next_Payment_Date__c', nextPayment?.Payment_Date__c);
-                hasUpdates = true;
-            }
+        for (FeeData fd : feeDataList) {
+            // User edits (isModified) take priority over config defaults, even on new items
+            Boolean useUserValues = fd.isModified || !fd.isNew;
+            Decimal commission = useUserValues ? fd.commissionFee : configCommission;
+            Decimal bank = useUserValues ? fd.bankFee : configBank;
+            Decimal epps = useUserValues ? fd.eppsFee : configEpps;
+
+            feeRecords.addAll(buildFeeRecords(fd.itemId, fd.paymentAmount, commission, bank, epps));
         }
 
-        // Dynamically check and update Next_Payment_Amount__c if it's editable
-        if (fieldMap.containsKey('next_payment_amount__c')) {
-            Schema.DescribeFieldResult fieldDescribe = fieldMap.get('next_payment_amount__c').getDescribe();
-            if (fieldDescribe.isUpdateable() && !fieldDescribe.isCalculated()) {
-                draft.put('Next_Payment_Amount__c', nextPayment?.Payment_Amount__c);
-                hasUpdates = true;
-            }
+        if (!feeRecords.isEmpty()) {
+            insert feeRecords;
         }
+    }
 
-        if (hasUpdates) {
-            update draft;
-        }
+
+    /**
+     * @description Build 4 Settlement_Fee__c records for a single item
+     */
+    private static List<Settlement_Fee__c> buildFeeRecords(
+        Id itemId,
+        Decimal paymentAmount,
+        Decimal commissionFee,
+        Decimal bankFee,
+        Decimal eppsFee
+    ) {
+        return new List<Settlement_Fee__c>{
+            new Settlement_Fee__c(
+                Settlement_Plan_Item__c = itemId,
+                Type__c = 'SettlementPayment',
+                Amount__c = paymentAmount
+            ),
+            new Settlement_Fee__c(
+                Settlement_Plan_Item__c = itemId,
+                Type__c = 'Commission Fee',
+                Amount__c = commissionFee
+            ),
+            new Settlement_Fee__c(
+                Settlement_Plan_Item__c = itemId,
+                Type__c = 'Banking Fee',
+                Amount__c = bankFee
+            ),
+            new Settlement_Fee__c(
+                Settlement_Plan_Item__c = itemId,
+                Type__c = 'Settlement Fee',
+                Amount__c = eppsFee
+            )
+        };
     }
 
     /**
@@ -1016,10 +1195,40 @@ public with sharing class SettlementDraftService {
                 clonedItems.add(clonedItem);
             }
             insert clonedItems;
-        }
 
-        // Update summary fields
-        updateDraftSummary(clone.Id);
+            // Clone Settlement_Fee__c records (same dynamic approach as items)
+            Map<Id, Id> oldItemIdToNewId = new Map<Id, Id>();
+            for (Integer i = 0; i < sourceItems.size(); i++) {
+                oldItemIdToNewId.put(sourceItems[i].Id, clonedItems[i].Id);
+            }
+
+            List<String> feeFields = getCloneableFieldNames(
+                Schema.SObjectType.Settlement_Fee__c,
+                new Set<String>{'Id', 'Settlement_Plan_Item__c'}
+            );
+            String feeSelect = 'Id, Settlement_Plan_Item__c';
+            if (!feeFields.isEmpty()) {
+                feeSelect += ', ' + String.join(feeFields, ', ');
+            }
+
+            Set<Id> sourceItemIds = oldItemIdToNewId.keySet();
+            List<Settlement_Fee__c> sourceFees = Database.query(
+                'SELECT ' + feeSelect +
+                ' FROM Settlement_Fee__c WHERE Settlement_Plan_Item__c IN :sourceItemIds ORDER BY Id ASC'
+            );
+
+            List<Settlement_Fee__c> clonedFees = new List<Settlement_Fee__c>();
+            for (Settlement_Fee__c fee : sourceFees) {
+                Settlement_Fee__c clonedFee = new Settlement_Fee__c();
+                copyFieldValues(fee, clonedFee, feeFields);
+                clonedFee.Settlement_Plan_Item__c = oldItemIdToNewId.get(fee.Settlement_Plan_Item__c);
+                clonedFees.add(clonedFee);
+            }
+
+            if (!clonedFees.isEmpty()) {
+                insert clonedFees;
+            }
+        }
 
         return clone;
     }
@@ -1035,18 +1244,11 @@ public with sharing class SettlementDraftService {
         // Validate draft exists
         Settlement_Plan_Draft__c draft = getDraftById(draftId, 'deletion');
 
-        // Cannot delete Active or Applied drafts (custom messages for each)
+        // Cannot delete Active drafts
         if (draft.Status__c == STATUS_ACTIVE) {
             throw new SettlementCalculatorException(
                 SettlementCalculatorException.ErrorType.CALCULATION_ERROR,
                 'Cannot delete an Active draft. Archive it first or activate a different draft.'
-            );
-        }
-
-        if (draft.Status__c == STATUS_APPLIED) {
-            throw new SettlementCalculatorException(
-                SettlementCalculatorException.ErrorType.CALCULATION_ERROR,
-                'Cannot delete an Applied draft. It represents historical data.'
             );
         }
 
@@ -1073,7 +1275,6 @@ public with sharing class SettlementDraftService {
      * @param segments List of segment records to calculate from
      * @param balance The balance amount
      * @param settlementOffer The settlement offer amount
-     * @param commissionFee Commission fee per payment (passed from UI)
      * @param totalPaidAmount Total paid amount from UI (Cleared + Processing)
      * @return DraftCalculationResult with calculated items
      */
@@ -1082,7 +1283,6 @@ public with sharing class SettlementDraftService {
         List<Settlement_Segment__c> segments,
         Decimal balance,
         Decimal settlementOffer,
-        Decimal commissionFee,
         Decimal totalPaidAmount
     ) {
         DraftCalculationResult result = new DraftCalculationResult();
@@ -1090,12 +1290,9 @@ public with sharing class SettlementDraftService {
         try {
             // Load configuration
             Settlement_Calc_Config__mdt config = getConfig();
-            Decimal tolerance = config.Fully_Funded_Tolerance__c != null ?
-                config.Fully_Funded_Tolerance__c : DEFAULT_FULLY_FUNDED_TOLERANCE;
+            Decimal tolerance = config.Fully_Funded_Tolerance__c;
 
             Id credOppId = null;
-            // Use commission fee passed from UI (takes precedence)
-            Decimal commissionOverride = commissionFee;
 
             // If draftId provided, load draft + segments only (lightweight query)
             // Payment items are queried separately for locked items handling below
@@ -1108,11 +1305,6 @@ public with sharing class SettlementDraftService {
                     }
                     if (settlementOffer == null) settlementOffer = getEffectiveSettlementAmount(wrapper.draft);
                     credOppId = wrapper.draft.CreditorOpportunity__c;
-
-                    // Only use DB commission fee if not passed from UI
-                    if (commissionOverride == null) {
-                        commissionOverride = wrapper.draft.Commission_Fee__c;
-                    }
                 }
             }
 
@@ -1124,12 +1316,6 @@ public with sharing class SettlementDraftService {
             // Validate settlement offer
             if (settlementOffer == null || settlementOffer <= 0) {
                 result.errorMessage = 'Settlement Offer must be greater than zero.';
-                return result;
-            }
-
-            // Validate commission fee
-            if (commissionOverride == null) {
-                result.errorMessage = 'Commission Fee is required. Please enter a value on the Settlement Plan.';
                 return result;
             }
 
@@ -1158,12 +1344,10 @@ public with sharing class SettlementDraftService {
                 ];
 
                 // Preserve all non-Scheduled items
+                // Phase 44: Item only stores dates/status - no amounts/fees
                 preservedItems = [
                     SELECT Id, Name, Settlement_Plan__c, Settlement_Segment__c,
                            Payment_Number__c, Payment_Date__c, Original_Payment_Date__c,
-                           Payment_Amount__c, Commission_Fee__c, Bank_Fee__c, Payee_Fee__c,
-                           EPPS_Transaction_Fee__c, EPPS_Month_End_Fee__c, Total_EPPS_Fee__c,
-                           Escrow_Balance__c,
                            Status__c, Payment_Method__c, Has_Override__c, Notes__c, Is_Escrow_Shortage__c
                     FROM Settlement_Plan_Item__c
                     WHERE Settlement_Plan__c = :draftId
@@ -1189,15 +1373,10 @@ public with sharing class SettlementDraftService {
             Integer paymentNumber = 1;
             Date currentDate = null;
 
-            // Calculate remaining based on effective offer minus local/DB paid amounts
+            // Calculate remaining based on effective offer minus paid amounts
+            // Phase 44: LWC calculates totalPaidAmount from Fee records and passes it
+            // No fallback query - LWC is responsible for providing accurate paid amount
             Decimal paidAmount = totalPaidAmount != null ? totalPaidAmount : 0;
-            if (totalPaidAmount == null) {
-                for (Settlement_Plan_Item__c item : preservedItems) {
-                    if (isPaidStatus(item.Status__c)) {
-                        paidAmount += item.Payment_Amount__c != null ? item.Payment_Amount__c : 0;
-                    }
-                }
-            }
             Decimal remainingBalance = effectiveOffer - paidAmount;
 
             if (!preservedItems.isEmpty()) {
@@ -1221,12 +1400,15 @@ public with sharing class SettlementDraftService {
                 }
             }
 
-            // Generate payment items from segments
-            List<Settlement_Plan_Item__c> paymentItems = new List<Settlement_Plan_Item__c>();
-            Integer maxPayments = Integer.valueOf(config.Max_Payments__c);
+            // Convert preserved SObject items to DTOs
+            List<PaymentItemData> preservedDtos = new List<PaymentItemData>();
+            for (Settlement_Plan_Item__c item : preservedItems) {
+                preservedDtos.add(buildDtoFromItem(item));
+            }
 
-            // Initialize fee calculator with commission fee from Settlement Plan (user-entered)
-            SettlementFeeCalculator feeCalc = new SettlementFeeCalculator(config, commissionOverride);
+            // Generate payment items from segments
+            List<PaymentItemData> paymentItems = new List<PaymentItemData>();
+            Integer maxPayments = Integer.valueOf(config.Max_Payments__c);
 
             for (Settlement_Segment__c segment : segments) {
                 // Determine start date
@@ -1245,18 +1427,18 @@ public with sharing class SettlementDraftService {
                 }
 
                 // Generate items based on segment type
-                List<Settlement_Plan_Item__c> segmentItems = generateItemsForSegment(
-                    segment, currentDate, paymentNumber, remainingBalance, config, feeCalc, draftId
+                List<PaymentItemData> segmentItems = generateItemsForSegment(
+                    segment, currentDate, paymentNumber, remainingBalance, config, draftId
                 );
 
-                for (Settlement_Plan_Item__c item : segmentItems) {
+                for (PaymentItemData item : segmentItems) {
                     paymentItems.add(item);
-                    remainingBalance -= item.Payment_Amount__c;
+                    remainingBalance -= item.paymentAmount;
                     paymentNumber++;
 
                     // Update current date for next segment
-                    Date itemDate = item.Original_Payment_Date__c != null ?
-                        item.Original_Payment_Date__c : item.Payment_Date__c;
+                    Date itemDate = item.originalPaymentDate != null ?
+                        item.originalPaymentDate : item.paymentDate;
                     currentDate = SettlementDateUtils.advanceDate(itemDate, segment.Frequency__c);
 
                     // Check max payments
@@ -1272,15 +1454,12 @@ public with sharing class SettlementDraftService {
                 }
             }
 
-            // EPPS month-end fees no longer calculated - disabled
-            // SettlementFeeCalculator.calculateEppsMonthEndFeesStatic(paymentItems, config);
-
             // ============ MERGE PRESERVED + NEW ITEMS ============
             // Combine preserved items (from DB) with newly calculated items
-            List<Settlement_Plan_Item__c> allItems = new List<Settlement_Plan_Item__c>();
+            List<PaymentItemData> allItems = new List<PaymentItemData>();
 
             // Add preserved items first (they keep their IDs for upsert/skip on save)
-            allItems.addAll(preservedItems);
+            allItems.addAll(preservedDtos);
 
             // Add newly generated items (they have no IDs, will be inserted on save)
             allItems.addAll(paymentItems);
@@ -1294,14 +1473,10 @@ public with sharing class SettlementDraftService {
             result.totalScheduledAmount = totalScheduled.setScale(2, System.RoundingMode.HALF_UP);
             result.fundingDifference = (totalScheduled - effectiveOffer).setScale(2, System.RoundingMode.HALF_UP);
             result.numberOfPayments = allItems.size();
-            result.escrowShortageCount = 0; // Escrow shortage tracking removed
 
             if (!allItems.isEmpty()) {
-                result.firstPaymentDate = allItems[0].Payment_Date__c;
-                result.finalPaymentDate = allItems[allItems.size() - 1].Payment_Date__c;
-                result.settlementTermWeeks = SettlementDateUtils.weeksBetween(
-                    result.firstPaymentDate, result.finalPaymentDate
-                );
+                result.firstPaymentDate = allItems[0].paymentDate;
+                result.finalPaymentDate = allItems[allItems.size() - 1].paymentDate;
             }
 
         } catch (SettlementCalculatorException e) {
@@ -1350,21 +1525,19 @@ public with sharing class SettlementDraftService {
     /**
      * @description Generate payment items for a single segment
      */
-    private static List<Settlement_Plan_Item__c> generateItemsForSegment(
+    private static List<PaymentItemData> generateItemsForSegment(
         Settlement_Segment__c segment,
         Date startDate,
         Integer startPaymentNumber,
         Decimal remainingBalance,
         Settlement_Calc_Config__mdt config,
-        SettlementFeeCalculator feeCalc,
         Id planId
     ) {
-        List<Settlement_Plan_Item__c> items = new List<Settlement_Plan_Item__c>();
+        List<PaymentItemData> items = new List<PaymentItemData>();
         Date currentDate = startDate;
         Integer paymentNumber = startPaymentNumber;
         Decimal runningBalance = remainingBalance;
-        Decimal tolerance = config.Fully_Funded_Tolerance__c != null ?
-            config.Fully_Funded_Tolerance__c : DEFAULT_FULLY_FUNDED_TOLERANCE;
+        Decimal tolerance = config.Fully_Funded_Tolerance__c;
 
         switch on segment.Segment_Type__c {
             when 'Fixed' {
@@ -1377,9 +1550,8 @@ public with sharing class SettlementDraftService {
                     Decimal paymentAmount = Math.min(amount, runningBalance);
                     if (paymentAmount <= 0) break;
 
-                    Settlement_Plan_Item__c item = createPaymentItem(
-                        segment.Id, paymentNumber, currentDate, paymentAmount,
-                        runningBalance, feeCalc, planId
+                    PaymentItemData item = createPaymentItem(
+                        segment.Id, paymentNumber, currentDate, paymentAmount, planId
                     );
 
                     items.add(item);
@@ -1400,9 +1572,8 @@ public with sharing class SettlementDraftService {
                     Decimal paymentAmount = Math.min(amount, runningBalance);
                     if (paymentAmount <= 0) break;
 
-                    Settlement_Plan_Item__c item = createPaymentItem(
-                        segment.Id, paymentNumber, currentDate, paymentAmount,
-                        runningBalance, feeCalc, planId
+                    PaymentItemData item = createPaymentItem(
+                        segment.Id, paymentNumber, currentDate, paymentAmount, planId
                     );
 
                     items.add(item);
@@ -1438,9 +1609,8 @@ public with sharing class SettlementDraftService {
 
                     if (paymentAmount <= 0) break;
 
-                    Settlement_Plan_Item__c item = createPaymentItem(
-                        segment.Id, paymentNumber, currentDate, paymentAmount,
-                        runningBalance, feeCalc, planId
+                    PaymentItemData item = createPaymentItem(
+                        segment.Id, paymentNumber, currentDate, paymentAmount, planId
                     );
 
                     items.add(item);
@@ -1458,90 +1628,27 @@ public with sharing class SettlementDraftService {
     }
 
     /**
-     * @description Create a single payment item with fees calculated by the fee calculator
+     * @description Create a single payment item DTO with core fields.
+     *              Fee records will be created separately on save.
      */
-    private static Settlement_Plan_Item__c createPaymentItem(
+    private static PaymentItemData createPaymentItem(
         Id segmentId,
         Integer paymentNumber,
         Date originalDate,
         Decimal paymentAmount,
-        Decimal balanceBefore,
-        SettlementFeeCalculator feeCalc,
         Id planId
     ) {
         Date adjustedDate = SettlementDateUtils.applyPreviousBusinessDayRule(originalDate);
 
-        Settlement_Plan_Item__c item = new Settlement_Plan_Item__c(
-            Settlement_Plan__c = planId,
-            Settlement_Segment__c = segmentId,
-            Payment_Number__c = paymentNumber,
-            Payment_Date__c = adjustedDate,
-            Original_Payment_Date__c = originalDate != adjustedDate ? originalDate : null,
-            Payment_Amount__c = paymentAmount.setScale(2, System.RoundingMode.HALF_UP),
-            Status__c = getScheduledStatus()
-        );
-
-        // Calculate fees using centralized fee calculator
-        // This ensures consistent fee defaults and preserves any existing Payee_Fee
-        feeCalc.calculateFeesForItem(item);
-
-        return item;
-    }
-
-    /**
-     * @description Running balance recalculation has been retired (save & fetch architecture).
-     * @param items List of payment items
-     * @param effectiveOffer The effective settlement amount (unused)
-     */
-    private static void recalculateRunningBalances(
-        List<Settlement_Plan_Item__c> items,
-        Decimal effectiveOffer
-    ) {
-        if (items == null || items.isEmpty()) {
-            return;
-        }
-        // Running balance calculation has been retired (save & fetch architecture).
-        // We still sort items by date for consistent ordering.
-        sortItemsByDate(items);
-        return;
-    }
-
-    /**
-     * @description Sort payment items by Payment_Date__c ASC, then Payment_Number__c ASC
-     *              Simple bubble sort since Apex SObjects don't implement Comparable
-     * @param items List to sort in place
-     */
-    private static void sortItemsByDate(List<Settlement_Plan_Item__c> items) {
-        Integer n = items.size();
-        for (Integer i = 0; i < n - 1; i++) {
-            for (Integer j = 0; j < n - i - 1; j++) {
-                Settlement_Plan_Item__c a = items[j];
-                Settlement_Plan_Item__c b = items[j + 1];
-
-                Boolean shouldSwap = false;
-
-                // Handle nulls - null dates sort to end
-                if (a.Payment_Date__c == null && b.Payment_Date__c != null) {
-                    shouldSwap = true;
-                } else if (a.Payment_Date__c != null && b.Payment_Date__c != null) {
-                    if (a.Payment_Date__c > b.Payment_Date__c) {
-                        shouldSwap = true;
-                    } else if (a.Payment_Date__c == b.Payment_Date__c) {
-                        // Same date - sort by Payment_Number__c
-                        Decimal numA = a.Payment_Number__c != null ? a.Payment_Number__c : 999999;
-                        Decimal numB = b.Payment_Number__c != null ? b.Payment_Number__c : 999999;
-                        if (numA > numB) {
-                            shouldSwap = true;
-                        }
-                    }
-                }
-
-                if (shouldSwap) {
-                    items[j] = b;
-                    items[j + 1] = a;
-                }
-            }
-        }
+        PaymentItemData dto = new PaymentItemData();
+        dto.planId = planId;
+        dto.segmentId = segmentId;
+        dto.paymentNumber = paymentNumber;
+        dto.paymentDate = adjustedDate;
+        dto.originalPaymentDate = originalDate != adjustedDate ? originalDate : null;
+        dto.paymentAmount = paymentAmount.setScale(2, System.RoundingMode.HALF_UP);
+        dto.status = getScheduledStatus();
+        return dto;
     }
 
     /**
@@ -1549,10 +1656,10 @@ public with sharing class SettlementDraftService {
      * @param items List of payment items
      * @return Total scheduled amount
      */
-    private static Decimal calculateTotalScheduled(List<Settlement_Plan_Item__c> items) {
+    private static Decimal calculateTotalScheduled(List<PaymentItemData> items) {
         Decimal total = 0;
-        for (Settlement_Plan_Item__c item : items) {
-            total += item.Payment_Amount__c != null ? item.Payment_Amount__c : 0;
+        for (PaymentItemData item : items) {
+            total += item.paymentAmount != null ? item.paymentAmount : 0;
         }
         return total;
     }
@@ -1565,7 +1672,7 @@ public with sharing class SettlementDraftService {
      * @return RecalculationResult with updated items + summary
      */
     public static RecalculationResult recalculateBalances(
-        List<Settlement_Plan_Item__c> items,
+        List<PaymentItemData> items,
         Decimal settlementOffer
     ) {
         RecalculationResult result = new RecalculationResult();
@@ -1576,27 +1683,15 @@ public with sharing class SettlementDraftService {
                 return result;
             }
 
-            // Load config for EPPS recalculation
             Settlement_Calc_Config__mdt config = getConfig();
 
-            // Recalculate running balances (handles locked rows internally)
-            recalculateRunningBalances(items, settlementOffer);
-
-            // EPPS month-end fees no longer calculated - disabled
-            // List<Settlement_Plan_Item__c> itemsForEpps = new List<Settlement_Plan_Item__c>();
-            // for (Settlement_Plan_Item__c item : items) {
-            //     if (!UI_LOCKED_STATUSES.contains(item.Status__c)) {
-            //         itemsForEpps.add(item);
-            //     }
-            // }
-            // if (!itemsForEpps.isEmpty()) {
-            //     SettlementFeeCalculator.calculateEppsMonthEndFeesStatic(itemsForEpps, config);
-            // }
+            // Sort items by date for consistent ordering
+            items = SettlementDateUtils.sortDtosByPaymentDate(items);
 
             // Build result
             Decimal totalScheduled = calculateTotalScheduled(items);
             Decimal fundingDiff = totalScheduled - (settlementOffer != null ? settlementOffer : 0);
-            Decimal tolerance = config.Fully_Funded_Tolerance__c != null ? config.Fully_Funded_Tolerance__c : DEFAULT_BALANCE_CHECK_TOLERANCE;
+            Decimal tolerance = config.Fully_Funded_Tolerance__c;
 
             result.success = true;
             result.paymentItems = items;
@@ -1630,14 +1725,14 @@ public with sharing class SettlementDraftService {
      * @param draftName Name for the new draft
      * @param segments List of segments to save
      * @param items List of payment items to save
-     * @param draftFields Map of draft field values (Settlement_Offer_Amount__c, Commission_Fee__c, etc.)
+     * @param draftFields Map of draft field values (Settlement_Offer_Amount__c, etc.)
      * @return The created draft with all data
      */
     public static Settlement_Plan_Draft__c createAndSaveDraft(
         Id creditorOpportunityId,
         String draftName,
         List<Settlement_Segment__c> segments,
-        List<Settlement_Plan_Item__c> items,
+        List<PaymentItemData> items,
         Map<String, Object> draftFields
     ) {
         if (creditorOpportunityId == null) {
@@ -1693,10 +1788,6 @@ public with sharing class SettlementDraftService {
         if (draftFields.containsKey('Escrow_Start_Balance__c')) {
             draft.Escrow_Start_Balance__c = draftFields.get('Escrow_Start_Balance__c') != null ?
                 Decimal.valueOf(String.valueOf(draftFields.get('Escrow_Start_Balance__c'))) : null;
-        }
-        if (draftFields.containsKey('Commission_Fee__c')) {
-            draft.Commission_Fee__c = draftFields.get('Commission_Fee__c') != null ?
-                Decimal.valueOf(String.valueOf(draftFields.get('Commission_Fee__c'))) : null;
         }
         if (draftFields.containsKey('Is_Manually_Modified__c')) {
             draft.Is_Manually_Modified__c = Boolean.valueOf(draftFields.get('Is_Manually_Modified__c'));

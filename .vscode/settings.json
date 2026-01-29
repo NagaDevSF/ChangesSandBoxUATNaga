@@ -6,5 +6,5 @@
     "**/.sfdx": true
   },
   "xml.preferences.showSchemaDocumentationType": "none",
-  "salesforce.einsteinForDevelopers.enable": true
+  "salesforce.einsteinForDevelopers.enable": false
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <!-- Phase 26: Delete deactivated FlexiPage -->
+
+    <types>
+        <members>Payment_Schedule_Item_Record_Page</members>
+        <name>FlexiPage</name>
+    </types>
+
+    <version>59.0</version>
+</Package>

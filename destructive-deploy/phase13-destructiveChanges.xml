@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <!-- Phase 13: Delete lookup fields on OTHER objects that reference our target objects -->
+
+    <types>
+        <!-- Lookup fields on other objects pointing to Payment_Schedule_Item__c -->
+        <members>Wired_Payment__c.Payment_Schedule_Item__c</members>
+        <members>Integration_Log__c.Payment_Schedule_Item__c</members>
+        <members>Payment_Fee__c.Payment_Schedule_Item__c</members>
+        <name>CustomField</name>
+    </types>
+
+    <!-- Delete the programConfiguration LWC that references PaymentPlan__c -->
+    <types>
+        <members>programConfiguration</members>
+        <name>LightningComponentBundle</name>
+    </types>
+
+    <version>59.0</version>
+</Package>
