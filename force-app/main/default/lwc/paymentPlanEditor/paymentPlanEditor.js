@@ -533,10 +533,10 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     /**
-     * Show Suspend button only when plan is not a Draft
+     * Show Suspend button only for Active plans
      */
     get showSuspendButton() {
-        return !this.isDraft;
+        return this.paymentPlan?.Version_Status__c === 'Active';
     }
 
     // Checkbox functionality removed - was not working
@@ -1294,6 +1294,12 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     async handleSuspend() {
+        // Show confirmation dialog
+        const confirmed = await this.confirmSuspend();
+        if (!confirmed) {
+            return;
+        }
+
         this.isLoading = true;
         try {
             const result = await suspendPaymentPlan({ planId: this.selectedPlanId });
@@ -1325,6 +1331,21 @@ export default class PaymentPlanEditor extends LightningElement {
         } finally {
             this.isLoading = false;
         }
+    }
+
+    /**
+     * Show confirmation dialog for suspend action
+     * @returns {Promise<boolean>} true if user confirms, false otherwise
+     */
+    confirmSuspend() {
+        return new Promise((resolve) => {
+            // eslint-disable-next-line no-alert
+            const result = window.confirm(
+                'Do you really want to suspend this plan?\n\n' +
+                'This will create a new version with all Scheduled items marked as Cancelled.'
+            );
+            resolve(result);
+        });
     }
 
     async handleActivate() {
