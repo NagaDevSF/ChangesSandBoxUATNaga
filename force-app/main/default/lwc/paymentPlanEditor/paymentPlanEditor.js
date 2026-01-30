@@ -318,6 +318,22 @@ export default class PaymentPlanEditor extends LightningElement {
         return `v${version} - ${status}`;
     }
 
+    get createdByName() {
+        return this.paymentPlan?.CreatedBy?.Name || '';
+    }
+
+    get activatedByName() {
+        return this.paymentPlan?.LastModifiedBy?.Name || '';
+    }
+
+    get hasCreatedBy() {
+        return !!this.createdByName;
+    }
+
+    get hasActivatedBy() {
+        return !!this.activatedByName;
+    }
+
     // Active tab label shows the selected version name
     get activeTabLabel() {
         if (!this.paymentPlan) return 'Active';

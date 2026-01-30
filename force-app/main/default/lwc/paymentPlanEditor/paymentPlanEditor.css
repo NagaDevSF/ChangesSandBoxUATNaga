@@ -138,6 +138,40 @@
     margin-left: 12px;
 }
 
+/* User Info Row */
+.user-info-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    justify-content: flex-end;
+    margin-right: 16px;
+}
+
+.user-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.user-badge lightning-icon {
+    --lwc-colorTextIconDefault: rgba(255, 255, 255, 0.9);
+}
+
+.activated-by {
+    background: rgba(72, 187, 120, 0.3);
+}
+
+.created-by {
+    background: rgba(66, 153, 225, 0.3);
+}
+
 /* ============================================
    PLAN SELECTOR (Dropdown)
    ============================================ */

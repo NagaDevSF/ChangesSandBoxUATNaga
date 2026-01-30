@@ -38,6 +38,20 @@
                     <span class="plan-name">{planName}</span>
                     <mark class="version-badge">{versionInfo}</mark>
                 </h1>
+                <div class="user-info-row">
+                    <template lwc:if={hasActivatedBy}>
+                        <span class="user-badge activated-by">
+                            <lightning-icon icon-name="utility:check" size="xx-small" alternative-text="Activated"></lightning-icon>
+                            Activated by: {activatedByName}
+                        </span>
+                    </template>
+                    <template lwc:if={hasCreatedBy}>
+                        <span class="user-badge created-by">
+                            <lightning-icon icon-name="utility:user" size="xx-small" alternative-text="Created"></lightning-icon>
+                            Created by: {createdByName}
+                        </span>
+                    </template>
+                </div>
                 <nav class="header-actions" aria-label="Viewer actions">
                     <button type="button" class="icon-btn refresh-btn" onclick={handleRefresh} title="Refresh data" aria-label="Refresh data">
                         <span aria-hidden="true">&#8635;</span>

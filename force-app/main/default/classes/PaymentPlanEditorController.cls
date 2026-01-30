@@ -214,6 +214,10 @@ public with sharing class PaymentPlanEditorController {
         @AuraEnabled public String versionStatus { get; set; }
         /** True if this is the most recent version for the Opportunity */
         @AuraEnabled public Boolean isLatestVersion { get; set; }
+        /** Full name of the user who created this plan */
+        @AuraEnabled public String createdByName { get; set; }
+        /** Full name of the user who last modified (activated) this plan */
+        @AuraEnabled public String lastModifiedByName { get; set; }
 
         /**
          * @description Default constructor initializing empty schedule items list
@@ -377,7 +381,8 @@ public with sharing class PaymentPlanEditorController {
                        Cleared_Payment_Sum__c, Cleared_Setup_Fee_Sum__c, Cleared_Program_Fee_Sum__c,
                        Cleared_Banking_Fee_Sum__c, Cleared_Savings_Sum__c, Cleared_Escrow_Sum__c,
                        NSF_Draft_Amount_Sum__c, NSF_Setup_Fee_Sum__c, NSF_Program_Fee_Sum__c,
-                       NSF_Banking_Fee_Sum__c, NSF_Savings_Sum__c
+                       NSF_Banking_Fee_Sum__c, NSF_Savings_Sum__c,
+                       CreatedBy.Name, LastModifiedBy.Name
                 FROM PaymentPlan__c
                 WHERE Opportunity__c = :opportunityId
                   AND Is_Active__c = true
@@ -439,7 +444,8 @@ public with sharing class PaymentPlanEditorController {
                        Cleared_Payment_Sum__c, Cleared_Setup_Fee_Sum__c, Cleared_Program_Fee_Sum__c,
                        Cleared_Banking_Fee_Sum__c, Cleared_Savings_Sum__c, Cleared_Escrow_Sum__c,
                        NSF_Draft_Amount_Sum__c, NSF_Setup_Fee_Sum__c, NSF_Program_Fee_Sum__c,
-                       NSF_Banking_Fee_Sum__c, NSF_Savings_Sum__c
+                       NSF_Banking_Fee_Sum__c, NSF_Savings_Sum__c,
+                       CreatedBy.Name, LastModifiedBy.Name
                 FROM PaymentPlan__c
                 WHERE Opportunity__c = :opportunityId
                   AND Is_Active__c = true
@@ -525,7 +531,8 @@ public with sharing class PaymentPlanEditorController {
 
             List<PaymentPlan__c> plans = [
                 SELECT Id, Name, Version_Number__c, Version_Status__c, Is_Active__c,
-                       CreatedDate, LastModifiedDate, Status__c
+                       CreatedDate, LastModifiedDate, Status__c,
+                       CreatedBy.Name, LastModifiedBy.Name
                 FROM PaymentPlan__c
                 WHERE Opportunity__c = :opportunityId
                 ORDER BY Version_Number__c DESC
@@ -545,6 +552,8 @@ public with sharing class PaymentPlanEditorController {
                 wrapper.versionNumber = plan.Version_Number__c != null ? plan.Version_Number__c.intValue() : 1;
                 wrapper.versionStatus = plan.Version_Status__c;
                 wrapper.isLatestVersion = (plan.Version_Number__c == latestVersion);
+                wrapper.createdByName = plan.CreatedBy?.Name;
+                wrapper.lastModifiedByName = plan.LastModifiedBy?.Name;
                 wrappers.add(wrapper);
                 System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Version ' + wrapper.versionNumber + ' (' + wrapper.versionStatus + ') - IsLatest: ' + wrapper.isLatestVersion);
             }
@@ -720,7 +729,8 @@ public with sharing class PaymentPlanEditorController {
                        Cleared_Payment_Sum__c, Cleared_Setup_Fee_Sum__c, Cleared_Program_Fee_Sum__c,
                        Cleared_Banking_Fee_Sum__c, Cleared_Savings_Sum__c, Cleared_Escrow_Sum__c,
                        NSF_Draft_Amount_Sum__c, NSF_Setup_Fee_Sum__c, NSF_Program_Fee_Sum__c,
-                       NSF_Banking_Fee_Sum__c, NSF_Savings_Sum__c
+                       NSF_Banking_Fee_Sum__c, NSF_Savings_Sum__c,
+                       CreatedBy.Name, LastModifiedBy.Name
                 FROM PaymentPlan__c
                 WHERE Id = :planId
                 LIMIT 1
@@ -2472,6 +2482,23 @@ public with sharing class PaymentPlanEditorController {
                 System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Archived ' + otherPlans.size() + ' plan(s) and set Status to Draft');
             }
 
+            // Re-query the newPlan to get the user relationship fields
+            newPlan = [
+                SELECT Id, Name, Opportunity__c, Contract__c, Program_Type__c,
+                       Total_Debt__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
+                       Total_Program_Cost__c, Weekly_Payment__c, Monthly_Payment__c,
+                       Number_of_Payments__c, First_Payment_Date__c, Status__c,
+                       Version_Number__c, Version_Status__c, Is_Active__c,
+                       Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
+                       Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
+                       Calculation_Timestamp__c, Previous_Version__c, Source__c,
+                       Version_Type__c, Version_Notes__c, Schedule_Item_Count__c,
+                       CreatedBy.Name, LastModifiedBy.Name
+                FROM PaymentPlan__c
+                WHERE Id = :newPlan.Id
+                LIMIT 1
+            ];
+
             System.debug(LoggingLevel.DEBUG, LOG_SUCCESS + ' | ' + methodName + ' | Plan suspended successfully');
             System.debug(LoggingLevel.DEBUG, LOG_EXIT + ' | ' + CLASS_NAME + '.' + methodName + ' | SUCCESS');
             // Return the new plan with schedule items
@@ -2860,6 +2887,8 @@ public with sharing class PaymentPlanEditorController {
         wrapper.versionNumber = plan.Version_Number__c != null ? plan.Version_Number__c.intValue() : 1;
         wrapper.versionStatus = plan.Version_Status__c;
         wrapper.isLatestVersion = true;
+        wrapper.createdByName = plan.CreatedBy?.Name;
+        wrapper.lastModifiedByName = plan.LastModifiedBy?.Name;
 
         System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Building wrapper for version ' + wrapper.versionNumber + ' (' + wrapper.versionStatus + ')');
 
