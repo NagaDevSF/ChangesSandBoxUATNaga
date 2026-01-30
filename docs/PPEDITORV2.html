@@ -1938,7 +1938,8 @@ lastPayment = basePayment + (remainingBalance MOD remainingCount)
                     <tr style="background: var(--warning-light);"><td>Scheduled</td><td>Cancelled</td></tr>
                 </tbody>
             </table>
-            <div class="info-box warning"><span class="icon">&#9888;</span><p><strong>Button Visibility:</strong> Suspend only appears when plan is NOT a Draft.</p></div>
+            <div class="info-box warning"><span class="icon">&#9888;</span><p><strong>Button Visibility:</strong> Suspend button only appears for <strong>Active</strong> plans. It is hidden for Draft and Archived plans.</p></div>
+            <div class="info-box info"><span class="icon">&#8505;</span><p><strong>Confirmation Required:</strong> When clicking Suspend, a confirmation dialog appears: <em>"Do you really want to suspend this plan? This will create a new version with all Scheduled items marked as Cancelled."</em> User must confirm to proceed.</p></div>
         </section>
 
         <!-- Section 20 -->
@@ -1989,8 +1990,10 @@ lastPayment = basePayment + (remainingBalance MOD remainingCount)
             <h3>Workflow 3: Suspending a Plan</h3>
             <div class="workflow-box">
                 <div class="steps">
-                    <div class="step"><div class="step-content"><h4>Click "Suspend"</h4><p>All Scheduled items become Cancelled.</p></div></div>
-                    <div class="step"><div class="step-content"><h4>Activate</h4><p>Make suspended state official.</p></div></div>
+                    <div class="step"><div class="step-content"><h4>Select Active Plan</h4><p>Suspend button only appears for Active plans.</p></div></div>
+                    <div class="step"><div class="step-content"><h4>Click "Suspend"</h4><p>Confirmation dialog appears asking if you really want to suspend.</p></div></div>
+                    <div class="step"><div class="step-content"><h4>Confirm Action</h4><p>Click OK to proceed. All Scheduled items become Cancelled.</p></div></div>
+                    <div class="step"><div class="step-content"><h4>New Version Created</h4><p>A new version is created with cancelled items.</p></div></div>
                 </div>
             </div>
         </section>
