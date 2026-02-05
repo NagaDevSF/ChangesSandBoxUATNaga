@@ -187,7 +187,9 @@ public with sharing class PaymentPlanEditorController {
         'Total_Payment__c, Net_Draft_Amount__c, Retainer_Fee_Amount__c, ' +
         'Setup_Fee_Amount__c, Program_Fee_Amount__c, Banking_Fee_Amount__c, ' +
         'Bank2_Fee_Amount__c, Additional_Products_Amount__c, Status__c, ' +
-        'Savings_Balance__c, To_Escrow_Amount__c';
+        'Savings_Balance__c, To_Escrow_Amount__c, ' +
+        'EPPS_EFT_Status__c, EPPS_EFT_Transaction_Id__c, EPPS_NSF_Return_Code__c, ' +
+        'EPPS_Returned_Date__c, EPPS_Settlement_Date__c, EPPS_Status_Date__c';
 
     // ==================================================================================
     // WRAPPER CLASSES - Data Transfer Objects for LWC Communication
@@ -277,6 +279,18 @@ public with sharing class PaymentPlanEditorController {
         @AuraEnabled public Boolean isDeleted { get; set; }
         /** Flag indicating item is frozen (non-Scheduled status) and should not be modified */
         @AuraEnabled public Boolean isFrozen { get; set; }
+        /** EPPS EFT Status for this payment */
+        @AuraEnabled public String eppsEftStatus { get; set; }
+        /** EPPS EFT Transaction Id for this payment */
+        @AuraEnabled public String eppsEftTransactionId { get; set; }
+        /** EPPS NSF Return Code for this payment */
+        @AuraEnabled public String eppsNsfReturnCode { get; set; }
+        /** EPPS Returned Date for this payment */
+        @AuraEnabled public DateTime eppsReturnedDate { get; set; }
+        /** EPPS Settlement Date for this payment */
+        @AuraEnabled public DateTime eppsSettlementDate { get; set; }
+        /** EPPS Status Date for this payment */
+        @AuraEnabled public DateTime eppsStatusDate { get; set; }
         /** Status of the Setup Fee from Payment_Fee__c.Status_Code__c */
         @AuraEnabled public String setupFeeStatus { get; set; }
         /** Status of the Program Fee from Payment_Fee__c.Status_Code__c */
@@ -659,7 +673,9 @@ public with sharing class PaymentPlanEditorController {
                        Total_Payment__c, Net_Draft_Amount__c, Retainer_Fee_Amount__c,
                        Setup_Fee_Amount__c, Program_Fee_Amount__c, Banking_Fee_Amount__c,
                        Bank2_Fee_Amount__c, Additional_Products_Amount__c, Status__c,
-                       Savings_Balance__c, To_Escrow_Amount__c
+                       Savings_Balance__c, To_Escrow_Amount__c,
+                       EPPS_EFT_Status__c, EPPS_EFT_Transaction_Id__c, EPPS_NSF_Return_Code__c,
+                       EPPS_Returned_Date__c, EPPS_Settlement_Date__c, EPPS_Status_Date__c
                 FROM Payment_Schedule_Item__c
                 WHERE Payment_Plan__c = :currentPlanId
                 ORDER BY Payment_Number__c ASC
@@ -824,7 +840,9 @@ public with sharing class PaymentPlanEditorController {
                        Payment_Date__c, Total_Payment__c, Net_Draft_Amount__c,
                        Setup_Fee_Amount__c, Program_Fee_Amount__c, Banking_Fee_Amount__c,
                        Bank2_Fee_Amount__c, Additional_Products_Amount__c, Status__c,
-                       Savings_Balance__c, To_Escrow_Amount__c, Retainer_Fee_Amount__c
+                       Savings_Balance__c, To_Escrow_Amount__c, Retainer_Fee_Amount__c,
+                       EPPS_EFT_Status__c, EPPS_EFT_Transaction_Id__c, EPPS_NSF_Return_Code__c,
+                       EPPS_Returned_Date__c, EPPS_Settlement_Date__c, EPPS_Status_Date__c
                 FROM Payment_Schedule_Item__c
                 WHERE Payment_Plan__c = :previousPlanId
                 ORDER BY Payment_Number__c ASC
@@ -1121,9 +1139,9 @@ public with sharing class PaymentPlanEditorController {
                 LIMIT 1
             ];
 
-            // Get default banking fee from plan
+            // Get default banking fees from plan
             List<PaymentPlan__c> plans = [
-                SELECT Banking_Fee__c
+                SELECT Banking_Fee__c, Bank2_Fee__c
                 FROM PaymentPlan__c
                 WHERE Id = :planId
                 LIMIT 1
@@ -1147,6 +1165,7 @@ public with sharing class PaymentPlanEditorController {
             }
 
             Decimal defaultBankingFee = plan.Banking_Fee__c != null ? plan.Banking_Fee__c : DEFAULT_BANKING_FEE;
+            Decimal defaultBank2Fee = plan.Bank2_Fee__c != null ? plan.Bank2_Fee__c : 0;
 
             // Calculate the correct Draft_Number__c by counting existing non-NSF/Cancelled items
             // Draft numbers skip NSF and Cancelled statuses to match LWC display logic
@@ -1170,7 +1189,7 @@ public with sharing class PaymentPlanEditorController {
             newItem.Setup_Fee_Amount__c = 0;
             newItem.Program_Fee_Amount__c = 0;
             newItem.Banking_Fee_Amount__c = defaultBankingFee;
-            newItem.Bank2_Fee_Amount__c = 0;
+            newItem.Bank2_Fee_Amount__c = defaultBank2Fee;
             newItem.Status__c = STATUS_SCHEDULED;
             insert newItem;
             System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted new item: ' + newItem.Id + ' | Row: ' + nextNumber + ' | Date: ' + nextDate);
@@ -1273,7 +1292,8 @@ public with sharing class PaymentPlanEditorController {
 
             // Get current plan to find Opportunity and version number
             List<PaymentPlan__c> currentPlans = [
-                SELECT Id, Name, Opportunity__c, Version_Number__c, Program_Type__c
+                SELECT Id, Name, Opportunity__c, Version_Number__c, Program_Type__c,
+                       Banking_Fee__c, Bank2_Fee__c
                 FROM PaymentPlan__c
                 WHERE Id = :planId
                 LIMIT 1
@@ -1338,7 +1358,7 @@ public with sharing class PaymentPlanEditorController {
                 throw new AuraHandledException(VALIDATION_SYMBOL + errorMsg);
             }
 
-            // Get Banking Fee from CMDT config
+            // Get config for split ratios (banking fee comes from existing plan, fallback to config)
             // Normalize program type: Opportunity stores "DCG DEBT" (spaces), CMDT expects "DCG_DEBT" (underscores)
             String programType = opp.Program_Type__c != null ? opp.Program_Type__c : currentPlan.Program_Type__c;
             String normalizedProgramType = programType != null ? programType.replace(' ', '_').toUpperCase() : 'DCG_MOD';
@@ -1354,9 +1374,10 @@ public with sharing class PaymentPlanEditorController {
                 config = PaymentCalcConfigSvc.getRequiredConfig();
             }
 
-            Decimal bankingFee = config.bankingFee != null ? config.bankingFee : 15.00;
-            Decimal bank2Fee = config.bank2Fee != null ? config.bank2Fee : 0;
-            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Config - BankingFee: ' + bankingFee + ' | Bank2Fee: ' + bank2Fee + ' | SplitRatio: ' + config.programSplitRatio);
+            // Get Banking Fee from EXISTING PLAN first, fallback to CMDT config if not set
+            Decimal bankingFee = currentPlan.Banking_Fee__c != null ? currentPlan.Banking_Fee__c : (config.bankingFee != null ? config.bankingFee : 15.00);
+            Decimal bank2Fee = currentPlan.Bank2_Fee__c != null ? currentPlan.Bank2_Fee__c : (config.bank2Fee != null ? config.bank2Fee : 0);
+            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | BankingFee: ' + bankingFee + ' (from ' + (currentPlan.Banking_Fee__c != null ? 'existing plan' : 'config') + ') | Bank2Fee: ' + bank2Fee + ' | SplitRatio: ' + config.programSplitRatio);
 
             // Calculate new version number
             Decimal newVersionNumber = currentPlan.Version_Number__c != null ?
@@ -1406,7 +1427,9 @@ public with sharing class PaymentPlanEditorController {
                 SELECT Id, Payment_Number__c, Draft_Number__c, Payment_Date__c,
                        Total_Payment__c, Setup_Fee_Amount__c, Program_Fee_Amount__c,
                        Banking_Fee_Amount__c, Bank2_Fee_Amount__c, Additional_Products_Amount__c,
-                       Retainer_Fee_Amount__c, To_Escrow_Amount__c, Savings_Balance__c, Status__c
+                       Retainer_Fee_Amount__c, To_Escrow_Amount__c, Savings_Balance__c, Status__c,
+                       EPPS_EFT_Status__c, EPPS_EFT_Transaction_Id__c, EPPS_NSF_Return_Code__c,
+                       EPPS_Returned_Date__c, EPPS_Settlement_Date__c, EPPS_Status_Date__c
                 FROM Payment_Schedule_Item__c
                 WHERE Payment_Plan__c = :planId
                 ORDER BY Payment_Number__c ASC
@@ -1606,7 +1629,9 @@ public with sharing class PaymentPlanEditorController {
                 SELECT Id, Payment_Number__c, Draft_Number__c, Payment_Date__c,
                        Total_Payment__c, Setup_Fee_Amount__c, Program_Fee_Amount__c,
                        Banking_Fee_Amount__c, Bank2_Fee_Amount__c, Additional_Products_Amount__c,
-                       Retainer_Fee_Amount__c, To_Escrow_Amount__c, Savings_Balance__c, Status__c
+                       Retainer_Fee_Amount__c, To_Escrow_Amount__c, Savings_Balance__c, Status__c,
+                       EPPS_EFT_Status__c, EPPS_EFT_Transaction_Id__c, EPPS_NSF_Return_Code__c,
+                       EPPS_Returned_Date__c, EPPS_Settlement_Date__c, EPPS_Status_Date__c
                 FROM Payment_Schedule_Item__c
                 WHERE Payment_Plan__c = :planId
                 ORDER BY Payment_Number__c ASC
@@ -2338,6 +2363,13 @@ public with sharing class PaymentPlanEditorController {
         cloned.To_Escrow_Amount__c = original.To_Escrow_Amount__c;
         cloned.Savings_Balance__c = original.Savings_Balance__c;
         cloned.Status__c = original.Status__c;
+        // EPPS fields - preserve transaction data from processed payments
+        cloned.EPPS_EFT_Status__c = original.EPPS_EFT_Status__c;
+        cloned.EPPS_EFT_Transaction_Id__c = original.EPPS_EFT_Transaction_Id__c;
+        cloned.EPPS_NSF_Return_Code__c = original.EPPS_NSF_Return_Code__c;
+        cloned.EPPS_Returned_Date__c = original.EPPS_Returned_Date__c;
+        cloned.EPPS_Settlement_Date__c = original.EPPS_Settlement_Date__c;
+        cloned.EPPS_Status_Date__c = original.EPPS_Status_Date__c;
         return cloned;
     }
 
@@ -2418,7 +2450,9 @@ public with sharing class PaymentPlanEditorController {
                        Total_Payment__c, Retainer_Fee_Amount__c, Setup_Fee_Amount__c,
                        Program_Fee_Amount__c, Banking_Fee_Amount__c, Bank2_Fee_Amount__c,
                        Additional_Products_Amount__c, Status__c, Savings_Balance__c,
-                       To_Escrow_Amount__c
+                       To_Escrow_Amount__c,
+                       EPPS_EFT_Status__c, EPPS_EFT_Transaction_Id__c, EPPS_NSF_Return_Code__c,
+                       EPPS_Returned_Date__c, EPPS_Settlement_Date__c, EPPS_Status_Date__c
                 FROM Payment_Schedule_Item__c
                 WHERE Payment_Plan__c = :planId
                 ORDER BY Payment_Number__c ASC
@@ -2737,6 +2771,14 @@ public with sharing class PaymentPlanEditorController {
                 newItem.Savings_Balance__c = item.savingsBalance != null ? item.savingsBalance : 0;
                 newItem.To_Escrow_Amount__c = item.toEscrowAmount != null ? item.toEscrowAmount : 0;
 
+                // Preserve EPPS fields from processed payments
+                newItem.EPPS_EFT_Status__c = item.eppsEftStatus;
+                newItem.EPPS_EFT_Transaction_Id__c = item.eppsEftTransactionId;
+                newItem.EPPS_NSF_Return_Code__c = item.eppsNsfReturnCode;
+                newItem.EPPS_Returned_Date__c = item.eppsReturnedDate;
+                newItem.EPPS_Settlement_Date__c = item.eppsSettlementDate;
+                newItem.EPPS_Status_Date__c = item.eppsStatusDate;
+
                 newItems.add(newItem);
                 itemWrappers.add(item);
             }
@@ -2898,7 +2940,9 @@ public with sharing class PaymentPlanEditorController {
                        Total_Payment__c, Net_Draft_Amount__c, Retainer_Fee_Amount__c,
                        Setup_Fee_Amount__c, Program_Fee_Amount__c, Banking_Fee_Amount__c,
                        Bank2_Fee_Amount__c, Additional_Products_Amount__c, Status__c,
-                       Savings_Balance__c, To_Escrow_Amount__c
+                       Savings_Balance__c, To_Escrow_Amount__c,
+                       EPPS_EFT_Status__c, EPPS_EFT_Transaction_Id__c, EPPS_NSF_Return_Code__c,
+                       EPPS_Returned_Date__c, EPPS_Settlement_Date__c, EPPS_Status_Date__c
                 FROM Payment_Schedule_Item__c
                 WHERE Payment_Plan__c = :plan.Id
                 ORDER BY Payment_Number__c ASC
@@ -2992,6 +3036,14 @@ public with sharing class PaymentPlanEditorController {
             wrapper.setupFeeStatus = null;
         }
 
+        // EPPS fields - always map from the schedule item record
+        wrapper.eppsEftStatus = item.EPPS_EFT_Status__c;
+        wrapper.eppsEftTransactionId = item.EPPS_EFT_Transaction_Id__c;
+        wrapper.eppsNsfReturnCode = item.EPPS_NSF_Return_Code__c;
+        wrapper.eppsReturnedDate = item.EPPS_Returned_Date__c;
+        wrapper.eppsSettlementDate = item.EPPS_Settlement_Date__c;
+        wrapper.eppsStatusDate = item.EPPS_Status_Date__c;
+
         return wrapper;
     }
 
@@ -3011,6 +3063,13 @@ public with sharing class PaymentPlanEditorController {
         record.Savings_Balance__c = wrapper.savingsBalance;
         record.To_Escrow_Amount__c = wrapper.toEscrowAmount;
         record.Status__c = wrapper.status;
+        // EPPS fields
+        record.EPPS_EFT_Status__c = wrapper.eppsEftStatus;
+        record.EPPS_EFT_Transaction_Id__c = wrapper.eppsEftTransactionId;
+        record.EPPS_NSF_Return_Code__c = wrapper.eppsNsfReturnCode;
+        record.EPPS_Returned_Date__c = wrapper.eppsReturnedDate;
+        record.EPPS_Settlement_Date__c = wrapper.eppsSettlementDate;
+        record.EPPS_Status_Date__c = wrapper.eppsStatusDate;
     }
 
     /**
