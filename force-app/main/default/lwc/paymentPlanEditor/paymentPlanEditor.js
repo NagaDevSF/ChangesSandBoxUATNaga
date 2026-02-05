@@ -12,6 +12,7 @@ import activatePaymentPlan from '@salesforce/apex/PaymentPlanEditorController.ac
 import getWireFeesByPlanId from '@salesforce/apex/PaymentPlanEditorController.getWireFeesByPlanId';
 import saveWireFee from '@salesforce/apex/PaymentPlanEditorController.saveWireFee';
 import deleteWireFee from '@salesforce/apex/PaymentPlanEditorController.deleteWireFee';
+import updateWireFee from '@salesforce/apex/PaymentPlanEditorController.updateWireFee';
 import getStatusPicklistValues from '@salesforce/apex/PaymentPlanEditorController.getStatusPicklistValues';
 
 // Default fallback if dynamic fetch fails
@@ -419,6 +420,7 @@ export default class PaymentPlanEditor extends LightningElement {
                     ...fee,
                     feeTypeFormatted: fee.feeType,
                     amountFormatted: this.formatCurrency(fee.amount || 0),
+                    amountEdit: fee.amount != null ? fee.amount.toFixed(2) : '0.00',
                     wireRowClass: `wire-sub-row ${wireStatusClass}`
                 })),
                 hasWireFees: wireFees.length > 0,
@@ -1530,6 +1532,60 @@ export default class PaymentPlanEditor extends LightningElement {
         } catch (error) {
             const errorMessage = this.reduceErrors(error);
             this.showToast('Error', errorMessage, 'error');
+        }
+    }
+
+    /**
+     * Handle wire fee amount change (inline edit)
+     */
+    handleWireFeeAmountFieldChange(event) {
+        const feeId = event.target.dataset.feeId;
+        const scheduleItemId = event.target.dataset.scheduleItemId;
+        const rawValue = event.target.value;
+
+        if (!feeId || !scheduleItemId) {
+            return;
+        }
+
+        // Update the wireFeeMap with the new value (for UI reactivity)
+        const cleanValue = rawValue.replace(/[^0-9.-]/g, '');
+        const numericValue = parseFloat(cleanValue) || 0;
+
+        if (this.wireFeeMap[scheduleItemId]) {
+            this.wireFeeMap = {
+                ...this.wireFeeMap,
+                [scheduleItemId]: this.wireFeeMap[scheduleItemId].map(fee => {
+                    if (fee.id === feeId) {
+                        return { ...fee, amount: numericValue };
+                    }
+                    return fee;
+                })
+            };
+        }
+    }
+
+    /**
+     * Handle wire fee amount blur (save to server)
+     */
+    async handleWireFeeAmountBlur(event) {
+        const feeId = event.target.dataset.feeId;
+        const rawValue = event.target.value;
+
+        if (!feeId) {
+            return;
+        }
+
+        const cleanValue = rawValue.replace(/[^0-9.-]/g, '');
+        const numericValue = parseFloat(cleanValue) || 0;
+
+        try {
+            await updateWireFee({ feeId: feeId, amount: numericValue });
+            // Silently saved - no toast for inline edits
+        } catch (error) {
+            const errorMessage = this.reduceErrors(error);
+            this.showToast('Error', 'Failed to update wire fee: ' + errorMessage, 'error');
+            // Refresh to get the original value back
+            this.loadWireFees(this.selectedPlanId);
         }
     }
 

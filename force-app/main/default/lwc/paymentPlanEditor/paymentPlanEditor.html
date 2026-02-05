@@ -431,7 +431,20 @@
                                         </td>
                                         <!-- Amount (under Draft column) -->
                                         <td class="td-right td-currency" role="gridcell">
-                                            <data class="wire-amount">{fee.amountFormatted}</data>
+                                            <template lwc:if={canEdit}>
+                                                <input type="text"
+                                                       inputmode="decimal"
+                                                       value={fee.amountEdit}
+                                                       class="edit-input edit-input-currency"
+                                                       data-fee-id={fee.id}
+                                                       data-schedule-item-id={fee.scheduleItemId}
+                                                       oninput={handleWireFeeAmountFieldChange}
+                                                       onblur={handleWireFeeAmountBlur}
+                                                       aria-label="Wire fee amount">
+                                            </template>
+                                            <template lwc:else>
+                                                <data class="wire-amount">{fee.amountFormatted}</data>
+                                            </template>
                                         </td>
                                         <!-- Empty cells for Setup, Program, Banking -->
                                         <td class="td-center" role="gridcell"></td>

@@ -1001,6 +1001,36 @@ public with sharing class PaymentPlanEditorController {
     }
 
     /**
+     * @description Update a wire fee record's amount
+     * @param feeId The Payment_Fee__c record ID to update
+     * @param amount The new amount
+     */
+    @AuraEnabled
+    public static void updateWireFee(String feeId, Decimal amount) {
+        String methodName = 'updateWireFee';
+        System.debug(LoggingLevel.DEBUG, LOG_ENTRY + ' | ' + CLASS_NAME + '.' + methodName);
+        System.debug(LoggingLevel.DEBUG, LOG_PARAM + ' | feeId: ' + feeId + ' | amount: ' + amount);
+
+        try {
+            if (String.isBlank(feeId)) {
+                throw new AuraHandledException('Fee ID is required');
+            }
+
+            Payment_Fee__c fee = [SELECT Id, Amount__c FROM Payment_Fee__c WHERE Id = :feeId LIMIT 1];
+            fee.Amount__c = amount;
+            update fee;
+
+            System.debug(LoggingLevel.DEBUG, LOG_SUCCESS + ' | ' + methodName + ' | Updated wire fee: ' + feeId + ' with amount: ' + amount);
+            System.debug(LoggingLevel.DEBUG, LOG_EXIT + ' | ' + CLASS_NAME + '.' + methodName + ' | SUCCESS');
+
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, LOG_ERROR + ' | ' + methodName + ' | Exception: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, LOG_ERROR + ' | ' + methodName + ' | Stack Trace: ' + e.getStackTraceString());
+            throw new AuraHandledException(ERROR_SYMBOL + 'Error updating wire fee: ' + e.getMessage());
+        }
+    }
+
+    /**
      * @description Save changes to schedule items (updates, inserts, deletes)
      * @param planId The Payment Plan ID
      * @param items List of ScheduleItemWrapper objects from LWC
