@@ -1167,9 +1167,11 @@ export default class PaymentPlanEditor extends LightningElement {
                         paymentDate: item.paymentDate,
                         // For frozen items, preserve exact values without modification
                         draftAmount: item.draftAmount || 0,
+                        retainerFee: item.retainerFee || 0,
                         setupFee: item.setupFee || 0,
                         programFee: item.programFee || 0,
                         bankingFee: item.bankingFee || 0,
+                        banking2Fee: item.banking2Fee || 0,
                         savingsBalance: item.savingsBalance || 0,
                         toEscrowAmount: item.toEscrowAmount || 0,
                         // CRITICAL: Never default non-Scheduled status to 'Scheduled'
@@ -1180,7 +1182,14 @@ export default class PaymentPlanEditor extends LightningElement {
                         isNew: !isFrozenItem,
                         isDeleted: false,
                         // Flag to tell backend this item is frozen and should not be modified
-                        isFrozen: isFrozenItem
+                        isFrozen: isFrozenItem,
+                        // EPPS fields - preserve from frozen/processed items
+                        eppsEftStatus: item.eppsEftStatus || null,
+                        eppsEftTransactionId: item.eppsEftTransactionId || null,
+                        eppsNsfReturnCode: item.eppsNsfReturnCode || null,
+                        eppsReturnedDate: item.eppsReturnedDate || null,
+                        eppsSettlementDate: item.eppsSettlementDate || null,
+                        eppsStatusDate: item.eppsStatusDate || null
                     };
                 });
 
