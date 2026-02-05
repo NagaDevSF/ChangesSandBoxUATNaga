@@ -179,17 +179,25 @@ public with sharing class PaymentPlanEditorController {
         'NSF_Banking_Fee_Sum__c, NSF_Savings_Sum__c';
 
     /**
-     * Standard fields to query for Payment_Schedule_Item__c records.
-     * Includes all payment amounts, fees, and status information.
+     * @description Dynamically builds the field list for Payment_Schedule_Item__c queries
+     * using Schema describe. Includes all accessible fields so new custom fields are
+     * automatically picked up without code changes.
+     * @return Comma-separated field names for use in SOQL queries
      */
-    private static final String SCHEDULE_ITEM_QUERY_FIELDS =
-        'Id, Payment_Number__c, Draft_Number__c, Payment_Date__c, ' +
-        'Total_Payment__c, Net_Draft_Amount__c, Retainer_Fee_Amount__c, ' +
-        'Setup_Fee_Amount__c, Program_Fee_Amount__c, Banking_Fee_Amount__c, ' +
-        'Bank2_Fee_Amount__c, Additional_Products_Amount__c, Status__c, ' +
-        'Savings_Balance__c, To_Escrow_Amount__c, ' +
-        'EPPS_EFT_Status__c, EPPS_EFT_Transaction_Id__c, EPPS_NSF_Return_Code__c, ' +
-        'EPPS_Returned_Date__c, EPPS_Settlement_Date__c, EPPS_Status_Date__c';
+    private static String getScheduleItemQueryFields() {
+        Map<String, Schema.SObjectField> fieldMap =
+            Schema.SObjectType.Payment_Schedule_Item__c.fields.getMap();
+        List<String> fieldNames = new List<String>();
+        fieldNames.add('Id');
+        for (String fieldName : fieldMap.keySet()) {
+            if (fieldName == 'id') continue; // Already added
+            Schema.DescribeFieldResult fd = fieldMap.get(fieldName).getDescribe();
+            if (!fd.isAccessible()) continue; // Skip fields user can't read
+            fieldNames.add(fieldName);
+        }
+        fieldNames.sort();
+        return String.join(fieldNames, ', ');
+    }
 
     // ==================================================================================
     // WRAPPER CLASSES - Data Transfer Objects for LWC Communication
@@ -668,19 +676,10 @@ public with sharing class PaymentPlanEditorController {
             System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted new plan: ' + newPlan.Id);
 
             // Clone schedule items
-            List<Payment_Schedule_Item__c> currentItems = [
-                SELECT Id, Payment_Number__c, Draft_Number__c, Payment_Date__c,
-                       Total_Payment__c, Net_Draft_Amount__c, Retainer_Fee_Amount__c,
-                       Setup_Fee_Amount__c, Program_Fee_Amount__c, Banking_Fee_Amount__c,
-                       Bank2_Fee_Amount__c, Additional_Products_Amount__c, Status__c,
-                       Savings_Balance__c, To_Escrow_Amount__c,
-                       EPPS_EFT_Status__c, EPPS_EFT_Transaction_Id__c, EPPS_NSF_Return_Code__c,
-                       EPPS_Returned_Date__c, EPPS_Settlement_Date__c, EPPS_Status_Date__c
-                FROM Payment_Schedule_Item__c
-                WHERE Payment_Plan__c = :currentPlanId
-                ORDER BY Payment_Number__c ASC
-                LIMIT :MAX_QUERY_LIMIT
-            ];
+            String fields = getScheduleItemQueryFields();
+            String query = 'SELECT ' + fields +
+                ' FROM Payment_Schedule_Item__c WHERE Payment_Plan__c = :currentPlanId ORDER BY Payment_Number__c ASC LIMIT ' + MAX_QUERY_LIMIT;
+            List<Payment_Schedule_Item__c> currentItems = Database.query(query);
 
             System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + currentItems.size() + ' schedule items to clone');
 
@@ -835,19 +834,10 @@ public with sharing class PaymentPlanEditorController {
             System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Previous plan: ' + previousPlans[0].Name + ' (Id: ' + previousPlanId + ')');
 
             // Get schedule items from previous version
-            List<Payment_Schedule_Item__c> previousItems = [
-                SELECT Id, Payment_Plan__c, Payment_Number__c, Draft_Number__c,
-                       Payment_Date__c, Total_Payment__c, Net_Draft_Amount__c,
-                       Setup_Fee_Amount__c, Program_Fee_Amount__c, Banking_Fee_Amount__c,
-                       Bank2_Fee_Amount__c, Additional_Products_Amount__c, Status__c,
-                       Savings_Balance__c, To_Escrow_Amount__c, Retainer_Fee_Amount__c,
-                       EPPS_EFT_Status__c, EPPS_EFT_Transaction_Id__c, EPPS_NSF_Return_Code__c,
-                       EPPS_Returned_Date__c, EPPS_Settlement_Date__c, EPPS_Status_Date__c
-                FROM Payment_Schedule_Item__c
-                WHERE Payment_Plan__c = :previousPlanId
-                ORDER BY Payment_Number__c ASC
-                LIMIT :MAX_QUERY_LIMIT
-            ];
+            String fields = getScheduleItemQueryFields();
+            String query = 'SELECT ' + fields +
+                ' FROM Payment_Schedule_Item__c WHERE Payment_Plan__c = :previousPlanId ORDER BY Payment_Number__c ASC LIMIT ' + MAX_QUERY_LIMIT;
+            List<Payment_Schedule_Item__c> previousItems = Database.query(query);
 
             System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + previousItems.size() + ' schedule items from previous version');
 
@@ -1423,18 +1413,10 @@ public with sharing class PaymentPlanEditorController {
             System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted new plan: ' + newPlan.Id + ' | Weekly: ' + newPlan.Weekly_Payment__c + ' | Payments: ' + newPlan.Number_of_Payments__c);
 
             // Query existing schedule items from current plan for status-based redistribution
-            List<Payment_Schedule_Item__c> existingItems = [
-                SELECT Id, Payment_Number__c, Draft_Number__c, Payment_Date__c,
-                       Total_Payment__c, Setup_Fee_Amount__c, Program_Fee_Amount__c,
-                       Banking_Fee_Amount__c, Bank2_Fee_Amount__c, Additional_Products_Amount__c,
-                       Retainer_Fee_Amount__c, To_Escrow_Amount__c, Savings_Balance__c, Status__c,
-                       EPPS_EFT_Status__c, EPPS_EFT_Transaction_Id__c, EPPS_NSF_Return_Code__c,
-                       EPPS_Returned_Date__c, EPPS_Settlement_Date__c, EPPS_Status_Date__c
-                FROM Payment_Schedule_Item__c
-                WHERE Payment_Plan__c = :planId
-                ORDER BY Payment_Number__c ASC
-                LIMIT :MAX_QUERY_LIMIT
-            ];
+            String fields = getScheduleItemQueryFields();
+            String query = 'SELECT ' + fields +
+                ' FROM Payment_Schedule_Item__c WHERE Payment_Plan__c = :planId ORDER BY Payment_Number__c ASC LIMIT ' + MAX_QUERY_LIMIT;
+            List<Payment_Schedule_Item__c> existingItems = Database.query(query);
             System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + existingItems.size() + ' existing schedule items');
 
             // Count items by status for logging
@@ -1625,18 +1607,10 @@ public with sharing class PaymentPlanEditorController {
             System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Total Program Fee (from Opp): ' + totalProgramFee + ' (' + programFeePercentage + '% of ' + totalDebt + ')');
 
             // Get existing schedule items
-            List<Payment_Schedule_Item__c> existingItems = [
-                SELECT Id, Payment_Number__c, Draft_Number__c, Payment_Date__c,
-                       Total_Payment__c, Setup_Fee_Amount__c, Program_Fee_Amount__c,
-                       Banking_Fee_Amount__c, Bank2_Fee_Amount__c, Additional_Products_Amount__c,
-                       Retainer_Fee_Amount__c, To_Escrow_Amount__c, Savings_Balance__c, Status__c,
-                       EPPS_EFT_Status__c, EPPS_EFT_Transaction_Id__c, EPPS_NSF_Return_Code__c,
-                       EPPS_Returned_Date__c, EPPS_Settlement_Date__c, EPPS_Status_Date__c
-                FROM Payment_Schedule_Item__c
-                WHERE Payment_Plan__c = :planId
-                ORDER BY Payment_Number__c ASC
-                LIMIT :MAX_QUERY_LIMIT
-            ];
+            String fields = getScheduleItemQueryFields();
+            String query = 'SELECT ' + fields +
+                ' FROM Payment_Schedule_Item__c WHERE Payment_Plan__c = :planId ORDER BY Payment_Number__c ASC LIMIT ' + MAX_QUERY_LIMIT;
+            List<Payment_Schedule_Item__c> existingItems = Database.query(query);
             System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + existingItems.size() + ' existing schedule items');
 
             // Separate items by status and calculate paid amounts
@@ -2339,8 +2313,53 @@ public with sharing class PaymentPlanEditorController {
     }
 
     /**
-     * @description Clone a schedule item for a new payment plan
-     * Preserves all field values but assigns to new plan
+     * @description Discovers all createable, non-formula fields on an SObject,
+     * excluding specified fields. Used for dynamic record-to-record cloning so
+     * that new custom fields are automatically picked up without code changes.
+     * @param describeResult The SObject describe result
+     * @param excludeFields Set of field API names to exclude (case-insensitive)
+     * @return Sorted list of field API names eligible for cloning
+     */
+    private static List<String> getCloneableFieldNames(
+        Schema.DescribeSObjectResult describeResult,
+        Set<String> excludeFields
+    ) {
+        Set<String> excludeLower = new Set<String>();
+        if (excludeFields != null) {
+            for (String f : excludeFields) {
+                excludeLower.add(f.toLowerCase());
+            }
+        }
+        Map<String, Schema.SObjectField> fieldMap = describeResult.fields.getMap();
+        List<String> fieldNames = new List<String>();
+        for (String fieldName : fieldMap.keySet()) {
+            if (excludeLower.contains(fieldName)) continue;
+            Schema.DescribeFieldResult fd = fieldMap.get(fieldName).getDescribe();
+            if (fd.isCalculated()) continue;  // Skip formula fields
+            if (!fd.isCreateable()) continue; // Skip read-only system fields
+            fieldNames.add(fieldName);
+        }
+        fieldNames.sort();
+        return fieldNames;
+    }
+
+    /**
+     * @description Copies field values from one SObject to another for the given field names.
+     * @param source Source SObject to copy from
+     * @param target Target SObject to copy to
+     * @param fieldNames List of field API names to copy
+     */
+    private static void copyFieldValues(SObject source, SObject target, List<String> fieldNames) {
+        if (source == null || target == null || fieldNames == null) return;
+        for (String fieldName : fieldNames) {
+            target.put(fieldName, source.get(fieldName));
+        }
+    }
+
+    /**
+     * @description Clone a schedule item for a new payment plan using dynamic field discovery.
+     * Preserves all createable field values but assigns to new plan.
+     * New custom fields added to Payment_Schedule_Item__c are automatically included.
      * @param original Original item to clone
      * @param newPlanId New payment plan ID
      * @return Cloned item with new plan assignment
@@ -2351,25 +2370,11 @@ public with sharing class PaymentPlanEditorController {
     ) {
         Payment_Schedule_Item__c cloned = new Payment_Schedule_Item__c();
         cloned.Payment_Plan__c = newPlanId;
-        cloned.Payment_Number__c = original.Payment_Number__c;
-        cloned.Draft_Number__c = original.Draft_Number__c;
-        cloned.Payment_Date__c = original.Payment_Date__c;
-        cloned.Total_Payment__c = original.Total_Payment__c;
-        cloned.Setup_Fee_Amount__c = original.Setup_Fee_Amount__c;
-        cloned.Program_Fee_Amount__c = original.Program_Fee_Amount__c;
-        cloned.Banking_Fee_Amount__c = original.Banking_Fee_Amount__c;
-        cloned.Bank2_Fee_Amount__c = original.Bank2_Fee_Amount__c;
-        cloned.Retainer_Fee_Amount__c = original.Retainer_Fee_Amount__c;
-        cloned.To_Escrow_Amount__c = original.To_Escrow_Amount__c;
-        cloned.Savings_Balance__c = original.Savings_Balance__c;
-        cloned.Status__c = original.Status__c;
-        // EPPS fields - preserve transaction data from processed payments
-        cloned.EPPS_EFT_Status__c = original.EPPS_EFT_Status__c;
-        cloned.EPPS_EFT_Transaction_Id__c = original.EPPS_EFT_Transaction_Id__c;
-        cloned.EPPS_NSF_Return_Code__c = original.EPPS_NSF_Return_Code__c;
-        cloned.EPPS_Returned_Date__c = original.EPPS_Returned_Date__c;
-        cloned.EPPS_Settlement_Date__c = original.EPPS_Settlement_Date__c;
-        cloned.EPPS_Status_Date__c = original.EPPS_Status_Date__c;
+        List<String> fieldNames = getCloneableFieldNames(
+            Schema.SObjectType.Payment_Schedule_Item__c,
+            new Set<String>{'Id', 'Payment_Plan__c'}
+        );
+        copyFieldValues(original, cloned, fieldNames);
         return cloned;
     }
 
@@ -2445,19 +2450,10 @@ public with sharing class PaymentPlanEditorController {
             System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Created suspension plan: ' + newPlan.Id);
 
             // Get all schedule items from the current plan
-            List<Payment_Schedule_Item__c> currentItems = [
-                SELECT Id, Payment_Number__c, Draft_Number__c, Payment_Date__c,
-                       Total_Payment__c, Retainer_Fee_Amount__c, Setup_Fee_Amount__c,
-                       Program_Fee_Amount__c, Banking_Fee_Amount__c, Bank2_Fee_Amount__c,
-                       Additional_Products_Amount__c, Status__c, Savings_Balance__c,
-                       To_Escrow_Amount__c,
-                       EPPS_EFT_Status__c, EPPS_EFT_Transaction_Id__c, EPPS_NSF_Return_Code__c,
-                       EPPS_Returned_Date__c, EPPS_Settlement_Date__c, EPPS_Status_Date__c
-                FROM Payment_Schedule_Item__c
-                WHERE Payment_Plan__c = :planId
-                ORDER BY Payment_Number__c ASC
-                LIMIT :MAX_QUERY_LIMIT
-            ];
+            String fields = getScheduleItemQueryFields();
+            String query = 'SELECT ' + fields +
+                ' FROM Payment_Schedule_Item__c WHERE Payment_Plan__c = :planId ORDER BY Payment_Number__c ASC LIMIT ' + MAX_QUERY_LIMIT;
+            List<Payment_Schedule_Item__c> currentItems = Database.query(query);
             System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + currentItems.size() + ' schedule items to process');
 
             // Clone items to new plan, changing Scheduled to Cancelled
@@ -2935,19 +2931,11 @@ public with sharing class PaymentPlanEditorController {
         System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Building wrapper for version ' + wrapper.versionNumber + ' (' + wrapper.versionStatus + ')');
 
         if (includeItems) {
-            List<Payment_Schedule_Item__c> items = [
-                SELECT Id, Name, Payment_Number__c, Draft_Number__c, Payment_Date__c,
-                       Total_Payment__c, Net_Draft_Amount__c, Retainer_Fee_Amount__c,
-                       Setup_Fee_Amount__c, Program_Fee_Amount__c, Banking_Fee_Amount__c,
-                       Bank2_Fee_Amount__c, Additional_Products_Amount__c, Status__c,
-                       Savings_Balance__c, To_Escrow_Amount__c,
-                       EPPS_EFT_Status__c, EPPS_EFT_Transaction_Id__c, EPPS_NSF_Return_Code__c,
-                       EPPS_Returned_Date__c, EPPS_Settlement_Date__c, EPPS_Status_Date__c
-                FROM Payment_Schedule_Item__c
-                WHERE Payment_Plan__c = :plan.Id
-                ORDER BY Payment_Number__c ASC
-                LIMIT :MAX_QUERY_LIMIT
-            ];
+            Id planId = plan.Id;
+            String fields = getScheduleItemQueryFields();
+            String query = 'SELECT ' + fields +
+                ' FROM Payment_Schedule_Item__c WHERE Payment_Plan__c = :planId ORDER BY Payment_Number__c ASC LIMIT ' + MAX_QUERY_LIMIT;
+            List<Payment_Schedule_Item__c> items = Database.query(query);
 
             System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + items.size() + ' schedule items');
 
