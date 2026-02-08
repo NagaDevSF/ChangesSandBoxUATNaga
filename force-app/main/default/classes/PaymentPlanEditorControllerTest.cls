@@ -655,32 +655,33 @@ private class PaymentPlanEditorControllerTest {
     static void testGetActivePaymentPlansMultiplePlans() {
         Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
 
-        // Create additional active payment plans
-        List<PaymentPlan__c> newPlans = new List<PaymentPlan__c>();
-        for (Integer i = 2; i <= 4; i++) {
-            PaymentPlan__c plan = new PaymentPlan__c(
-                Opportunity__c = opp.Id,
-                Program_Type__c = 'DCG MOD',
-                Total_Debt__c = 50000,
-                Weekly_Payment__c = 500 + (i * 10),
-                First_Payment_Date__c = Date.today().addDays(i * 7),
-                Status__c = 'Active',
-                Version_Number__c = i,
-                Version_Status__c = 'Active',
-                Is_Active__c = true,
-                Banking_Fee__c = 15
-            );
-            newPlans.add(plan);
-        }
-        insert newPlans;
-
+        // Verify the single active plan from @TestSetup is returned
         Test.startTest();
         List<PaymentPlanEditorController.PaymentPlanWrapper> results =
             PaymentPlanEditorController.getActivePaymentPlans(opp.Id);
         Test.stopTest();
 
-        System.assertEquals(1, results.size(), 'Should return 1 consolidated wrapper');
-        System.assertEquals(4, results[0].scheduleItems.size(), 'Should have 4 schedule items (one per plan)');
+        System.assertEquals(1, results.size(), 'Should return 1 wrapper for the active plan');
+
+        // Verify inserting a second active plan is blocked by trigger validation
+        try {
+            insert new PaymentPlan__c(
+                Opportunity__c = opp.Id,
+                Program_Type__c = 'DCG MOD',
+                Total_Debt__c = 50000,
+                Weekly_Payment__c = 510,
+                First_Payment_Date__c = Date.today().addDays(14),
+                Status__c = 'Active',
+                Version_Number__c = 2,
+                Version_Status__c = 'Active',
+                Is_Active__c = true,
+                Banking_Fee__c = 15
+            );
+            System.assert(false, 'Should have thrown DmlException for duplicate active plan');
+        } catch (DmlException e) {
+            System.assert(e.getMessage().contains(PaymentPlanTriggerHandler.DUPLICATE_ACTIVE_MSG),
+                'Error should contain duplicate active message: ' + e.getMessage());
+        }
     }
 
     @IsTest
