@@ -31,7 +31,7 @@
                 <label>Cancelled</label>
             </value>
             <value>
-                <fullName>Suspended</fullName>
+                <fullName>SUSPENDED</fullName>
                 <default>false</default>
                 <label>Suspended</label>
             </value>

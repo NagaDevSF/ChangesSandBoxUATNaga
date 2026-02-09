@@ -539,14 +539,14 @@ export default class PaymentPlanEditor extends LightningElement {
      * Show Suspend button only for Active plans that are not already Suspended
      */
     get showSuspendButton() {
-        return this.paymentPlan?.Version_Status__c === 'Active' && this.paymentPlan?.Status__c !== 'Suspended';
+        return this.paymentPlan?.Version_Status__c === 'Active' && this.paymentPlan?.Status__c?.toLowerCase() !== 'suspended';
     }
 
     /**
      * Show Reactivate button only for Suspended plans
      */
     get showReactivateButton() {
-        return this.paymentPlan?.Status__c === 'Suspended';
+        return this.paymentPlan?.Status__c?.toLowerCase() === 'suspended';
     }
 
     // Checkbox functionality removed - was not working

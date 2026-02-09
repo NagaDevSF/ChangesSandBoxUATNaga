@@ -421,9 +421,9 @@ private class PaymentPlanEditorControllerTest {
                 PaymentPlanEditorController.suspendPaymentPlan(plan.Id);
             // If successful, verify returned wrapper
             System.assertNotEquals(null, result, 'Should return wrapper');
-            // Verify the suspended plan has Status__c = 'Suspended'
-            System.assertEquals('Suspended', result.paymentPlan.Status__c,
-                'Suspended plan should have Status__c = Suspended');
+            // Verify the suspended plan has Status__c = 'Suspended' (case-insensitive for org compatibility)
+            System.assert(result.paymentPlan.Status__c.equalsIgnoreCase('Suspended'),
+                'Suspended plan should have Suspended status, got: ' + result.paymentPlan.Status__c);
         } catch (AuraHandledException e) {
             // Some orgs may have validation rules that prevent suspension
             // This is acceptable behavior
@@ -1790,8 +1790,8 @@ private class PaymentPlanEditorControllerTest {
             PaymentPlanEditorController.PaymentPlanWrapper suspendResult =
                 PaymentPlanEditorController.suspendPaymentPlan(plan.Id);
             System.assertNotEquals(null, suspendResult, 'Suspend should return wrapper');
-            System.assertEquals('Suspended', suspendResult.paymentPlan.Status__c,
-                'Suspended plan should have Suspended status');
+            System.assert(suspendResult.paymentPlan.Status__c.equalsIgnoreCase('Suspended'),
+                'Suspended plan should have Suspended status, got: ' + suspendResult.paymentPlan.Status__c);
 
             Id suspendedPlanId = suspendResult.paymentPlan.Id;
 

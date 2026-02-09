@@ -2701,7 +2701,7 @@ public with sharing class PaymentPlanEditorController {
             PaymentPlan__c suspendedPlan = suspendedPlans[0];
 
             // Validate the plan is actually suspended
-            if (suspendedPlan.Status__c != STATUS_SUSPENDED) {
+            if (!STATUS_SUSPENDED.equalsIgnoreCase(suspendedPlan.Status__c)) {
                 System.debug(LoggingLevel.WARN, LOG_WARN + ' | ' + methodName + ' | Plan is not suspended: ' + suspendedPlan.Status__c);
                 throw new AuraHandledException(VALIDATION_SYMBOL + 'Only suspended plans can be reactivated.');
             }
