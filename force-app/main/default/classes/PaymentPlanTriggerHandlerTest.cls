@@ -26,7 +26,7 @@ private class PaymentPlanTriggerHandlerTest {
         Test.stopTest();
 
         List<PaymentPlan__c> plans = [SELECT Id FROM PaymentPlan__c WHERE Opportunity__c = :opp.Id AND Status__c = 'Active'];
-        System.assertEquals(1, plans.size(), 'Should allow first active plan');
+        Assert.areEqual(1, plans.size(), 'Should allow first active plan');
     }
 
     @isTest
@@ -47,9 +47,9 @@ private class PaymentPlanTriggerHandlerTest {
                 Version_Number__c = 2,
                 Status__c = 'Active'
             );
-            System.assert(false, 'Should have thrown DmlException');
+            Assert.fail('Should have thrown DmlException');
         } catch (DmlException e) {
-            System.assert(e.getMessage().contains(PaymentPlanTriggerHandler.DUPLICATE_ACTIVE_MSG),
+            Assert.isTrue(e.getMessage().contains(PaymentPlanTriggerHandler.DUPLICATE_ACTIVE_MSG),
                 'Error should contain duplicate active message: ' + e.getMessage());
         }
         Test.stopTest();
@@ -75,7 +75,7 @@ private class PaymentPlanTriggerHandlerTest {
         Test.stopTest();
 
         List<PaymentPlan__c> plans = [SELECT Id FROM PaymentPlan__c WHERE Opportunity__c = :opp.Id];
-        System.assertEquals(2, plans.size(), 'Should allow inserting a Draft plan alongside an Active one');
+        Assert.areEqual(2, plans.size(), 'Should allow inserting a Draft plan alongside an Active one');
     }
 
     // ==================================================================================
@@ -99,7 +99,7 @@ private class PaymentPlanTriggerHandlerTest {
         Test.stopTest();
 
         PaymentPlan__c updated = [SELECT Status__c FROM PaymentPlan__c WHERE Id = :plan.Id];
-        System.assertEquals('Active', updated.Status__c, 'Should allow activating when no other active plan exists');
+        Assert.areEqual('Active', updated.Status__c, 'Should allow activating when no other active plan exists');
     }
 
     @isTest
@@ -123,9 +123,9 @@ private class PaymentPlanTriggerHandlerTest {
         try {
             draftPlan.Status__c = 'Active';
             update draftPlan;
-            System.assert(false, 'Should have thrown DmlException');
+            Assert.fail('Should have thrown DmlException');
         } catch (DmlException e) {
-            System.assert(e.getMessage().contains(PaymentPlanTriggerHandler.DUPLICATE_ACTIVE_MSG),
+            Assert.isTrue(e.getMessage().contains(PaymentPlanTriggerHandler.DUPLICATE_ACTIVE_MSG),
                 'Error should contain duplicate active message: ' + e.getMessage());
         }
         Test.stopTest();
@@ -148,7 +148,7 @@ private class PaymentPlanTriggerHandlerTest {
         Test.stopTest();
 
         PaymentPlan__c updated = [SELECT Weekly_Payment__c FROM PaymentPlan__c WHERE Id = :plan.Id];
-        System.assertEquals(200, updated.Weekly_Payment__c, 'Should allow updating non-status fields on an active plan');
+        Assert.areEqual(200, updated.Weekly_Payment__c, 'Should allow updating non-status fields on an active plan');
     }
 
     // ==================================================================================
@@ -169,7 +169,7 @@ private class PaymentPlanTriggerHandlerTest {
         Test.stopTest();
 
         List<PaymentPlan__c> activePlans = [SELECT Id FROM PaymentPlan__c WHERE Status__c = 'Active'];
-        System.assertEquals(2, activePlans.size(), 'Should allow active plans on different Opportunities');
+        Assert.areEqual(2, activePlans.size(), 'Should allow active plans on different Opportunities');
     }
 
     // ==================================================================================
@@ -200,12 +200,12 @@ private class PaymentPlanTriggerHandlerTest {
                 successCount++;
             } else {
                 failCount++;
-                System.assert(sr.getErrors()[0].getMessage().contains(PaymentPlanTriggerHandler.DUPLICATE_ACTIVE_MSG),
+                Assert.isTrue(sr.getErrors()[0].getMessage().contains(PaymentPlanTriggerHandler.DUPLICATE_ACTIVE_MSG),
                     'Failed record should have duplicate active message');
             }
         }
-        System.assertEquals(1, successCount, 'Only the first record should succeed');
-        System.assertEquals(4, failCount, 'Remaining 4 records should fail');
+        Assert.areEqual(1, successCount, 'Only the first record should succeed');
+        Assert.areEqual(4, failCount, 'Remaining 4 records should fail');
     }
 
     @isTest
@@ -236,11 +236,186 @@ private class PaymentPlanTriggerHandlerTest {
                 successCount++;
             } else {
                 failCount++;
-                System.assert(sr.getErrors()[0].getMessage().contains(PaymentPlanTriggerHandler.DUPLICATE_ACTIVE_MSG),
+                Assert.isTrue(sr.getErrors()[0].getMessage().contains(PaymentPlanTriggerHandler.DUPLICATE_ACTIVE_MSG),
                     'Failed record should have duplicate active message');
             }
         }
-        System.assertEquals(1, successCount, 'Only the first record should succeed');
-        System.assertEquals(2, failCount, 'Remaining 2 records should fail');
+        Assert.areEqual(1, successCount, 'Only the first record should succeed');
+        Assert.areEqual(2, failCount, 'Remaining 2 records should fail');
+    }
+
+    // ==================================================================================
+    // blockDMLWhileRelatedOppIsLocked — INSERT scenario
+    // ==================================================================================
+
+    @isTest
+    static void insertPlan_unlockedOpp_shouldSucceed() {
+        Opportunity opp = [SELECT Id FROM Opportunity WHERE Name = 'PPTrigger Opp 1' LIMIT 1];
+
+        Test.startTest();
+        PaymentPlan__c plan = new PaymentPlan__c(
+            Opportunity__c = opp.Id,
+            Version_Number__c = 1,
+            Status__c = 'Draft'
+        );
+        insert plan;
+        Test.stopTest();
+
+        List<PaymentPlan__c> plans = [SELECT Id FROM PaymentPlan__c WHERE Id = :plan.Id];
+        Assert.areEqual(1, plans.size(), 'Should allow insert when Opportunity is not locked');
+    }
+
+    @isTest
+    static void insertPlan_lockedOpp_shouldFail() {
+        Opportunity opp = [SELECT Id FROM Opportunity WHERE Name = 'PPTrigger Opp 1' LIMIT 1];
+
+        Approval.lock(opp.Id);
+
+        Test.startTest();
+        try {
+            insert new PaymentPlan__c(
+                Opportunity__c = opp.Id,
+                Version_Number__c = 1,
+                Status__c = 'Draft'
+            );
+            Assert.fail('Should have thrown DmlException for locked Opportunity');
+        } catch (DmlException e) {
+            Assert.isTrue(e.getMessage().contains(PaymentPlanTriggerHandler.APPROVAL_BLOCK_MSG),
+                'Error should contain approval block message: ' + e.getMessage());
+        }
+        Test.stopTest();
+
+        Approval.unlock(opp.Id);
+    }
+
+    // ==================================================================================
+    // blockDMLWhileRelatedOppIsLocked — UPDATE scenario
+    // ==================================================================================
+
+    @isTest
+    static void updatePlan_lockedOpp_shouldFail() {
+        Opportunity opp = [SELECT Id FROM Opportunity WHERE Name = 'PPTrigger Opp 1' LIMIT 1];
+
+        PaymentPlan__c plan = new PaymentPlan__c(
+            Opportunity__c = opp.Id,
+            Version_Number__c = 1,
+            Status__c = 'Draft'
+        );
+        insert plan;
+
+        Approval.lock(opp.Id);
+
+        Test.startTest();
+        try {
+            plan.Weekly_Payment__c = 500;
+            update plan;
+            Assert.fail('Should have thrown DmlException for locked Opportunity');
+        } catch (DmlException e) {
+            Assert.isTrue(e.getMessage().contains(PaymentPlanTriggerHandler.APPROVAL_BLOCK_MSG),
+                'Error should contain approval block message: ' + e.getMessage());
+        }
+        Test.stopTest();
+
+        Approval.unlock(opp.Id);
+    }
+
+    // ==================================================================================
+    // blockDMLWhileRelatedOppIsLocked — DELETE scenario
+    // ==================================================================================
+
+    @isTest
+    static void deletePlan_unlockedOpp_shouldSucceed() {
+        Opportunity opp = [SELECT Id FROM Opportunity WHERE Name = 'PPTrigger Opp 1' LIMIT 1];
+
+        PaymentPlan__c plan = new PaymentPlan__c(
+            Opportunity__c = opp.Id,
+            Version_Number__c = 1,
+            Status__c = 'Draft'
+        );
+        insert plan;
+
+        Test.startTest();
+        delete plan;
+        Test.stopTest();
+
+        List<PaymentPlan__c> plans = [SELECT Id FROM PaymentPlan__c WHERE Id = :plan.Id];
+        Assert.areEqual(0, plans.size(), 'Should allow delete when Opportunity is not locked');
+    }
+
+    @isTest
+    static void deletePlan_lockedOpp_shouldFail() {
+        Opportunity opp = [SELECT Id FROM Opportunity WHERE Name = 'PPTrigger Opp 1' LIMIT 1];
+
+        PaymentPlan__c plan = new PaymentPlan__c(
+            Opportunity__c = opp.Id,
+            Version_Number__c = 1,
+            Status__c = 'Draft'
+        );
+        insert plan;
+
+        Approval.lock(opp.Id);
+
+        Test.startTest();
+        try {
+            delete plan;
+            Assert.fail('Should have thrown DmlException for locked Opportunity');
+        } catch (DmlException e) {
+            Assert.isTrue(e.getMessage().contains(PaymentPlanTriggerHandler.APPROVAL_BLOCK_MSG),
+                'Error should contain approval block message: ' + e.getMessage());
+        }
+        Test.stopTest();
+
+        Approval.unlock(opp.Id);
+    }
+
+    // ==================================================================================
+    // blockDMLWhileRelatedOppIsLocked — BULK scenario
+    // ==================================================================================
+
+    @isTest
+    static void bulkInsert_mixedLockedAndUnlocked_partialSuccess() {
+        Opportunity opp1 = [SELECT Id FROM Opportunity WHERE Name = 'PPTrigger Opp 1' LIMIT 1];
+        Opportunity opp2 = [SELECT Id FROM Opportunity WHERE Name = 'PPTrigger Opp 2' LIMIT 1];
+
+        Approval.lock(opp1.Id);
+
+        Test.startTest();
+        List<PaymentPlan__c> plans = new List<PaymentPlan__c>{
+            new PaymentPlan__c(Opportunity__c = opp1.Id, Version_Number__c = 1, Status__c = 'Draft'),
+            new PaymentPlan__c(Opportunity__c = opp2.Id, Version_Number__c = 1, Status__c = 'Draft')
+        };
+        Database.SaveResult[] results = Database.insert(plans, false);
+        Test.stopTest();
+
+        Assert.isFalse(results[0].isSuccess(), 'Insert on locked Opportunity should fail');
+        Assert.isTrue(results[0].getErrors()[0].getMessage().contains(PaymentPlanTriggerHandler.APPROVAL_BLOCK_MSG),
+            'Error should contain approval block message');
+        Assert.isTrue(results[1].isSuccess(), 'Insert on unlocked Opportunity should succeed');
+
+        Approval.unlock(opp1.Id);
+    }
+
+    // ==================================================================================
+    // Edge case — null Opportunity
+    // ==================================================================================
+
+    @isTest
+    static void insertPlan_nullOpportunity_shouldSkipValidation() {
+        Test.startTest();
+        try {
+            PaymentPlan__c plan = new PaymentPlan__c(
+                Version_Number__c = 1,
+                Status__c = 'Active'
+            );
+            insert plan;
+        } catch (DmlException e) {
+            // If Opportunity__c is required by validation rules, the insert may fail
+            // but it should NOT fail due to our trigger handler logic
+            Assert.isFalse(e.getMessage().contains(PaymentPlanTriggerHandler.DUPLICATE_ACTIVE_MSG),
+                'Null Opportunity should not trigger duplicate active check');
+            Assert.isFalse(e.getMessage().contains(PaymentPlanTriggerHandler.APPROVAL_BLOCK_MSG),
+                'Null Opportunity should not trigger approval lock check');
+        }
+        Test.stopTest();
     }
 }
