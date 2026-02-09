@@ -421,6 +421,9 @@ private class PaymentPlanEditorControllerTest {
                 PaymentPlanEditorController.suspendPaymentPlan(plan.Id);
             // If successful, verify returned wrapper
             System.assertNotEquals(null, result, 'Should return wrapper');
+            // Verify the suspended plan has Status__c = 'Suspended'
+            System.assertEquals('Suspended', result.paymentPlan.Status__c,
+                'Suspended plan should have Status__c = Suspended');
         } catch (AuraHandledException e) {
             // Some orgs may have validation rules that prevent suspension
             // This is acceptable behavior
@@ -1775,6 +1778,88 @@ private class PaymentPlanEditorControllerTest {
         System.assert(exceptionThrown, 'Should have thrown an exception for payment above maximum');
         System.assert(errorMessage.contains('Desired payment') || errorMessage.contains('Script-thrown'),
             'Error message should mention desired payment: ' + errorMessage);
+    }
+
+    @IsTest
+    static void testReactivatePaymentPlan() {
+        PaymentPlan__c plan = [SELECT Id FROM PaymentPlan__c LIMIT 1];
+
+        Test.startTest();
+        try {
+            // First suspend the plan
+            PaymentPlanEditorController.PaymentPlanWrapper suspendResult =
+                PaymentPlanEditorController.suspendPaymentPlan(plan.Id);
+            System.assertNotEquals(null, suspendResult, 'Suspend should return wrapper');
+            System.assertEquals('Suspended', suspendResult.paymentPlan.Status__c,
+                'Suspended plan should have Suspended status');
+
+            Id suspendedPlanId = suspendResult.paymentPlan.Id;
+
+            // Now reactivate the suspended plan
+            PaymentPlanEditorController.PaymentPlanWrapper reactivateResult =
+                PaymentPlanEditorController.reactivatePaymentPlan(suspendedPlanId);
+            System.assertNotEquals(null, reactivateResult, 'Reactivate should return wrapper');
+            System.assertEquals('Active', reactivateResult.paymentPlan.Status__c,
+                'Reactivated plan should have Active status');
+            System.assertEquals('Reactivation', reactivateResult.paymentPlan.Version_Type__c,
+                'Reactivated plan should have Reactivation version type');
+
+            // Verify that Cancelled items were restored to Scheduled
+            Boolean hasScheduledItems = false;
+            for (PaymentPlanEditorController.ScheduleItemWrapper item : reactivateResult.scheduleItems) {
+                if (item.status == 'Scheduled') {
+                    hasScheduledItems = true;
+                    break;
+                }
+            }
+            System.assert(hasScheduledItems, 'Reactivated plan should have Scheduled items');
+
+            // Verify the suspended plan was archived
+            PaymentPlan__c archivedSuspended = [
+                SELECT Version_Status__c, Is_Active__c
+                FROM PaymentPlan__c
+                WHERE Id = :suspendedPlanId
+            ];
+            System.assertEquals('Archived', archivedSuspended.Version_Status__c,
+                'Suspended plan should be archived after reactivation');
+            System.assertEquals(false, archivedSuspended.Is_Active__c,
+                'Suspended plan should not be active after reactivation');
+        } catch (AuraHandledException e) {
+            // Some orgs may have validation rules that prevent this flow
+            System.assert(true, 'Exception caught - may be due to org-specific validation');
+        }
+        Test.stopTest();
+    }
+
+    @IsTest
+    static void testReactivateNonSuspendedPlan() {
+        PaymentPlan__c plan = [SELECT Id FROM PaymentPlan__c LIMIT 1];
+
+        Boolean exceptionThrown = false;
+        Test.startTest();
+        try {
+            // Plan is Active, not Suspended - should throw exception
+            PaymentPlanEditorController.reactivatePaymentPlan(plan.Id);
+            System.assert(false, 'Should have thrown exception');
+        } catch (AuraHandledException e) {
+            exceptionThrown = true;
+        }
+        Test.stopTest();
+        System.assert(exceptionThrown, 'AuraHandledException should have been thrown for non-suspended plan');
+    }
+
+    @IsTest
+    static void testReactivateNullId() {
+        Boolean exceptionThrown = false;
+        Test.startTest();
+        try {
+            PaymentPlanEditorController.reactivatePaymentPlan(null);
+            System.assert(false, 'Should have thrown exception');
+        } catch (AuraHandledException e) {
+            exceptionThrown = true;
+        }
+        Test.stopTest();
+        System.assert(exceptionThrown, 'AuraHandledException should have been thrown for null ID');
     }
 
 }

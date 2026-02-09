@@ -9,6 +9,7 @@ import recalculatePaymentPlan from '@salesforce/apex/PaymentPlanEditorController
 import recalculateRemainingBalance from '@salesforce/apex/PaymentPlanEditorController.recalculateRemainingBalance';
 import suspendPaymentPlan from '@salesforce/apex/PaymentPlanEditorController.suspendPaymentPlan';
 import activatePaymentPlan from '@salesforce/apex/PaymentPlanEditorController.activatePaymentPlan';
+import reactivatePaymentPlan from '@salesforce/apex/PaymentPlanEditorController.reactivatePaymentPlan';
 import getWireFeesByPlanId from '@salesforce/apex/PaymentPlanEditorController.getWireFeesByPlanId';
 import saveWireFee from '@salesforce/apex/PaymentPlanEditorController.saveWireFee';
 import deleteWireFee from '@salesforce/apex/PaymentPlanEditorController.deleteWireFee';
@@ -535,10 +536,17 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     /**
-     * Show Suspend button only for Active plans
+     * Show Suspend button only for Active plans that are not already Suspended
      */
     get showSuspendButton() {
-        return this.paymentPlan?.Version_Status__c === 'Active';
+        return this.paymentPlan?.Version_Status__c === 'Active' && this.paymentPlan?.Status__c !== 'Suspended';
+    }
+
+    /**
+     * Show Reactivate button only for Suspended plans
+     */
+    get showReactivateButton() {
+        return this.paymentPlan?.Status__c === 'Suspended';
     }
 
     // Checkbox functionality removed - was not working
@@ -1354,6 +1362,57 @@ export default class PaymentPlanEditor extends LightningElement {
             const result = window.confirm(
                 'Do you really want to suspend this plan?\n\n' +
                 'This will create a new version with all Scheduled items marked as Cancelled.'
+            );
+            resolve(result);
+        });
+    }
+
+    async handleReactivate() {
+        const confirmed = await this.confirmReactivate();
+        if (!confirmed) {
+            return;
+        }
+
+        this.isLoading = true;
+        try {
+            const result = await reactivatePaymentPlan({ suspendedPlanId: this.selectedPlanId });
+
+            if (result) {
+                const newPlanId = result.paymentPlan.Id;
+
+                // Update local state with new reactivated plan
+                this.selectedPlanId = newPlanId;
+                this.paymentPlan = result.paymentPlan;
+                this.scheduleItems = this.processItems(result.scheduleItems || []);
+                this.originalItems = this.deepCloneItems(this.scheduleItems);
+
+                // Reset edit mode state
+                this.pendingItems = [];
+                this.hasPendingChanges = false;
+                this.isEditMode = false;
+                this.activeTab = 'Active';
+
+                // Refresh plans list and select the new plan
+                await this.refreshPlans(newPlanId);
+
+                // Trigger confetti celebration
+                this.triggerConfetti();
+
+                this.showToast('Success', 'Payment plan reactivated! Cancelled items restored to Scheduled.', 'success');
+            }
+        } catch (error) {
+            this.showToast('Error', this.reduceErrors(error), 'error');
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    confirmReactivate() {
+        return new Promise((resolve) => {
+            // eslint-disable-next-line no-alert
+            const result = window.confirm(
+                'Do you want to reactivate this plan?\n\n' +
+                'This will create a new version from the pre-suspension plan with Cancelled items restored to Scheduled.'
             );
             resolve(result);
         });

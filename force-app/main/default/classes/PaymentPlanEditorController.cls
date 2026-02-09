@@ -102,6 +102,10 @@ public with sharing class PaymentPlanEditorController {
     private static final String VERSION_TYPE_REVISION = 'Revision';
     /** Version type for plan suspensions */
     private static final String VERSION_TYPE_SUSPENSION = 'Suspension';
+    /** Version type for plan reactivations */
+    private static final String VERSION_TYPE_REACTIVATION = 'Reactivation';
+    /** Status for suspended plans */
+    private static final String STATUS_SUSPENDED = 'Suspended';
 
     // ==================================================================================
     // CONSTANTS - DEFAULT VALUES FOR CALCULATIONS
@@ -2491,7 +2495,7 @@ public with sharing class PaymentPlanEditorController {
             PaymentPlan__c newPlan = currentPlan.clone(false, true, false, false);
             newPlan.Version_Number__c = maxVersion + 1;
             newPlan.Version_Status__c = VERSION_STATUS_ACTIVE;
-            newPlan.Status__c = 'Active';  // Set Status__c to Active for suspended plan
+            newPlan.Status__c = STATUS_SUSPENDED;  // Set Status__c to Suspended for suspended plan
             newPlan.Is_Active__c = true;
             newPlan.Version_Type__c = VERSION_TYPE_SUSPENSION;
             newPlan.Source__c = SOURCE_UI;
@@ -2650,6 +2654,195 @@ public with sharing class PaymentPlanEditorController {
             System.debug(LoggingLevel.ERROR, LOG_ERROR + ' | ' + methodName + ' | Exception: ' + e.getMessage());
             System.debug(LoggingLevel.ERROR, LOG_ERROR + ' | ' + methodName + ' | Stack Trace: ' + e.getStackTraceString());
             throw new AuraHandledException(ERROR_SYMBOL + 'Error activating payment plan: ' + e.getMessage());
+        }
+    }
+
+    /**
+     * @description Reactivate a suspended payment plan
+     * Finds the previous (pre-suspension) version, clones it as a new Active version,
+     * and restores Cancelled items back to Scheduled.
+     * @param suspendedPlanId The suspended Payment Plan ID
+     * @return Updated PaymentPlanWrapper
+     */
+    @AuraEnabled
+    public static PaymentPlanWrapper reactivatePaymentPlan(Id suspendedPlanId) {
+        String methodName = 'reactivatePaymentPlan';
+        System.debug(LoggingLevel.DEBUG, LOG_ENTRY + ' | ' + CLASS_NAME + '.' + methodName);
+        System.debug(LoggingLevel.DEBUG, LOG_PARAM + ' | suspendedPlanId: ' + suspendedPlanId);
+
+        Savepoint sp = Database.setSavepoint();
+        try {
+            if (suspendedPlanId == null) {
+                System.debug(LoggingLevel.WARN, LOG_WARN + ' | ' + methodName + ' | suspendedPlanId is null');
+                throw new AuraHandledException(VALIDATION_SYMBOL + 'Plan ID is required.');
+            }
+
+            // Get the suspended plan
+            List<PaymentPlan__c> suspendedPlans = [
+                SELECT Id, Name, Opportunity__c, Version_Number__c, Version_Status__c,
+                       Is_Active__c, Version_Type__c, Source__c, Version_Notes__c,
+                       Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
+                       Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
+                       Calculation_Timestamp__c, Schedule_Item_Count__c, Status__c,
+                       Weekly_Payment__c, Monthly_Payment__c, Number_of_Payments__c,
+                       Total_Debt__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
+                       Total_Program_Cost__c, Settlement_Amount__c, Program_Fee_Amount__c,
+                       First_Payment_Date__c, Program_Type__c, Contract__c
+                FROM PaymentPlan__c
+                WHERE Id = :suspendedPlanId
+                LIMIT 1
+            ];
+
+            if (suspendedPlans.isEmpty()) {
+                System.debug(LoggingLevel.WARN, LOG_WARN + ' | ' + methodName + ' | Payment Plan not found: ' + suspendedPlanId);
+                throw new AuraHandledException(NOT_FOUND_SYMBOL + 'Payment Plan not found. It may have been deleted.');
+            }
+
+            PaymentPlan__c suspendedPlan = suspendedPlans[0];
+
+            // Validate the plan is actually suspended
+            if (suspendedPlan.Status__c != STATUS_SUSPENDED) {
+                System.debug(LoggingLevel.WARN, LOG_WARN + ' | ' + methodName + ' | Plan is not suspended: ' + suspendedPlan.Status__c);
+                throw new AuraHandledException(VALIDATION_SYMBOL + 'Only suspended plans can be reactivated.');
+            }
+
+            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Reactivating plan: ' + suspendedPlan.Name + ' | Version: ' + suspendedPlan.Version_Number__c);
+
+            // Find the previous version (highest version number less than the suspended version, same Opportunity)
+            List<PaymentPlan__c> previousPlans = [
+                SELECT Id, Name, Opportunity__c, Version_Number__c, Version_Status__c,
+                       Is_Active__c, Version_Type__c, Source__c, Version_Notes__c,
+                       Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
+                       Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
+                       Calculation_Timestamp__c, Schedule_Item_Count__c, Status__c,
+                       Weekly_Payment__c, Monthly_Payment__c, Number_of_Payments__c,
+                       Total_Debt__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
+                       Total_Program_Cost__c, Settlement_Amount__c, Program_Fee_Amount__c,
+                       First_Payment_Date__c, Program_Type__c, Contract__c
+                FROM PaymentPlan__c
+                WHERE Opportunity__c = :suspendedPlan.Opportunity__c
+                  AND Version_Number__c < :suspendedPlan.Version_Number__c
+                ORDER BY Version_Number__c DESC
+                LIMIT 1
+            ];
+
+            if (previousPlans.isEmpty()) {
+                System.debug(LoggingLevel.WARN, LOG_WARN + ' | ' + methodName + ' | No previous version found');
+                throw new AuraHandledException(VALIDATION_SYMBOL + 'No previous version found to reactivate from.');
+            }
+
+            PaymentPlan__c previousPlan = previousPlans[0];
+            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Previous version: ' + previousPlan.Name + ' | Version: ' + previousPlan.Version_Number__c);
+
+            // Get the next version number
+            Integer maxVersion = 0;
+            List<AggregateResult> maxVersionResult = [
+                SELECT MAX(Version_Number__c) maxVer
+                FROM PaymentPlan__c
+                WHERE Opportunity__c = :suspendedPlan.Opportunity__c
+            ];
+            if (maxVersionResult.size() > 0 && maxVersionResult[0].get('maxVer') != null) {
+                maxVersion = Integer.valueOf(maxVersionResult[0].get('maxVer'));
+            }
+            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Max existing version: ' + maxVersion + ' | New version: ' + (maxVersion + 1));
+
+            // Archive all existing plans for this Opportunity
+            List<PaymentPlan__c> allPlans = [
+                SELECT Id, Version_Status__c, Is_Active__c, Status__c
+                FROM PaymentPlan__c
+                WHERE Opportunity__c = :suspendedPlan.Opportunity__c
+                LIMIT :MAX_QUERY_LIMIT
+            ];
+            System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + allPlans.size() + ' plan(s) to archive');
+
+            for (PaymentPlan__c p : allPlans) {
+                p.Version_Status__c = VERSION_STATUS_ARCHIVED;
+                p.Status__c = 'Draft';
+                p.Is_Active__c = false;
+            }
+
+            if (!allPlans.isEmpty()) {
+                update allPlans;
+                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Archived ' + allPlans.size() + ' plan(s)');
+            }
+
+            // Clone the PREVIOUS version (not the suspended one) as the new active plan
+            PaymentPlan__c newPlan = previousPlan.clone(false, true, false, false);
+            newPlan.Version_Number__c = maxVersion + 1;
+            newPlan.Version_Status__c = VERSION_STATUS_ACTIVE;
+            newPlan.Status__c = 'Active';
+            newPlan.Is_Active__c = true;
+            newPlan.Version_Type__c = VERSION_TYPE_REACTIVATION;
+            newPlan.Source__c = SOURCE_UI;
+            newPlan.Version_Notes__c = 'Plan reactivated on ' + DateTime.now().format() + '. Cancelled items restored to Scheduled.';
+            newPlan.Calculation_Timestamp__c = DateTime.now();
+            insert newPlan;
+            System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Created reactivation plan: ' + newPlan.Id);
+
+            // Get schedule items from the previous version (not the suspended one)
+            Id previousPlanId = previousPlan.Id;
+            String fields = getScheduleItemQueryFields();
+            String query = 'SELECT ' + fields +
+                ' FROM Payment_Schedule_Item__c WHERE Payment_Plan__c = :previousPlanId ORDER BY Payment_Number__c ASC LIMIT ' + MAX_QUERY_LIMIT;
+            List<Payment_Schedule_Item__c> previousItems = Database.query(query);
+            System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + previousItems.size() + ' schedule items from previous version');
+
+            // Clone items to new plan, restoring Cancelled to Scheduled
+            List<Payment_Schedule_Item__c> newItems = new List<Payment_Schedule_Item__c>();
+            Integer restoredCount = 0;
+            for (Payment_Schedule_Item__c item : previousItems) {
+                Payment_Schedule_Item__c newItem = item.clone(false, true, false, false);
+                newItem.Payment_Plan__c = newPlan.Id;
+
+                // Restore Cancelled status back to Scheduled
+                if (item.Status__c == STATUS_CANCELLED) {
+                    newItem.Status__c = STATUS_SCHEDULED;
+                    restoredCount++;
+                }
+
+                newItems.add(newItem);
+            }
+            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Restored ' + restoredCount + ' cancelled items to Scheduled');
+
+            if (!newItems.isEmpty()) {
+                recalculateDraftNumbers(newItems);
+                insert newItems;
+                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted ' + newItems.size() + ' schedule items');
+
+                createFeeRecordsForScheduleItems(newItems);
+                carryOverWireFees(previousItems, newItems);
+            }
+
+            // Update the new plan's item count
+            newPlan.Schedule_Item_Count__c = newItems.size();
+            update newPlan;
+
+            // Re-query the newPlan to get the user relationship fields
+            newPlan = [
+                SELECT Id, Name, Opportunity__c, Contract__c, Program_Type__c,
+                       Total_Debt__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
+                       Total_Program_Cost__c, Weekly_Payment__c, Monthly_Payment__c,
+                       Number_of_Payments__c, First_Payment_Date__c, Status__c,
+                       Version_Number__c, Version_Status__c, Is_Active__c,
+                       Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
+                       Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
+                       Calculation_Timestamp__c, Previous_Version__c, Source__c,
+                       Version_Type__c, Version_Notes__c, Schedule_Item_Count__c,
+                       CreatedBy.Name, LastModifiedBy.Name
+                FROM PaymentPlan__c
+                WHERE Id = :newPlan.Id
+                LIMIT 1
+            ];
+
+            System.debug(LoggingLevel.DEBUG, LOG_SUCCESS + ' | ' + methodName + ' | Plan reactivated successfully');
+            System.debug(LoggingLevel.DEBUG, LOG_EXIT + ' | ' + CLASS_NAME + '.' + methodName + ' | SUCCESS');
+            return buildPaymentPlanWrapper(newPlan, true);
+
+        } catch (Exception e) {
+            Database.rollback(sp);
+            System.debug(LoggingLevel.ERROR, LOG_ERROR + ' | ' + methodName + ' | Exception: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, LOG_ERROR + ' | ' + methodName + ' | Stack Trace: ' + e.getStackTraceString());
+            throw new AuraHandledException(ERROR_SYMBOL + 'Error reactivating payment plan: ' + e.getMessage());
         }
     }
 
