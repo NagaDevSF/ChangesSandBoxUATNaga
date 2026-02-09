@@ -2466,6 +2466,27 @@ public with sharing class PaymentPlanEditorController {
             }
             System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Max existing version: ' + maxVersion + ' | New version: ' + (maxVersion + 1));
 
+            // Archive all other plans for this Opportunity BEFORE inserting the new active plan
+            // to avoid the duplicate active Payment Plan trigger validation
+            List<PaymentPlan__c> otherPlans = [
+                SELECT Id, Version_Status__c, Is_Active__c, Status__c
+                FROM PaymentPlan__c
+                WHERE Opportunity__c = :currentPlan.Opportunity__c
+                LIMIT :MAX_QUERY_LIMIT
+            ];
+            System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + otherPlans.size() + ' other plan(s) to archive');
+
+            for (PaymentPlan__c otherPlan : otherPlans) {
+                otherPlan.Version_Status__c = VERSION_STATUS_ARCHIVED;
+                otherPlan.Status__c = 'Draft';  // Set Status__c to Draft for archived plans
+                otherPlan.Is_Active__c = false;
+            }
+
+            if (!otherPlans.isEmpty()) {
+                update otherPlans;
+                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Archived ' + otherPlans.size() + ' plan(s) and set Status to Draft');
+            }
+
             // Create new plan as a clone with incremented version
             PaymentPlan__c newPlan = currentPlan.clone(false, true, false, false);
             newPlan.Version_Number__c = maxVersion + 1;
@@ -2520,27 +2541,6 @@ public with sharing class PaymentPlanEditorController {
             // Update the new plan's item count
             newPlan.Schedule_Item_Count__c = newItems.size();
             update newPlan;
-
-            // Archive all other plans for this Opportunity (including the original)
-            List<PaymentPlan__c> otherPlans = [
-                SELECT Id, Version_Status__c, Is_Active__c, Status__c
-                FROM PaymentPlan__c
-                WHERE Opportunity__c = :currentPlan.Opportunity__c
-                AND Id != :newPlan.Id
-                LIMIT :MAX_QUERY_LIMIT
-            ];
-            System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + otherPlans.size() + ' other plan(s) to archive');
-
-            for (PaymentPlan__c otherPlan : otherPlans) {
-                otherPlan.Version_Status__c = VERSION_STATUS_ARCHIVED;
-                otherPlan.Status__c = 'Draft';  // Set Status__c to Draft for archived plans
-                otherPlan.Is_Active__c = false;
-            }
-
-            if (!otherPlans.isEmpty()) {
-                update otherPlans;
-                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Archived ' + otherPlans.size() + ' plan(s) and set Status to Draft');
-            }
 
             // Re-query the newPlan to get the user relationship fields
             newPlan = [
