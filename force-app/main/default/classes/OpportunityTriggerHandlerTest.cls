@@ -7,7 +7,7 @@
  * Last Modified On: Jan 27, 2026
  * Description     : This class provides full coverage for OpportunityTriggerHandler and EPPSManageCardHolderQueueable
  *                   and partial coverage for EPPSIntegrationMethodsEnhanced and EPPSHelperMethods
- *  
+ *
  * Change History  :
  *  Date          │   Author     │   Change
  * ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
@@ -22,21 +22,31 @@ private class OpportunityTriggerHandlerTest {
 
         Account testAcc = TestDataFactory.makeAccount('Test for Platform Event');
 		Opportunity testOpp = TestDataFactory.makeOpp(testAcc.Id, 'Test for Platform Event');
-        // Create creditors and link to opportunity
+        testOpp.Fronter__c = UserInfo.getUserId();
+        testOpp.Closer__c = UserInfo.getUserId();
+        testOpp.Program_Type__c = 'DCG DEBT';
+        testOpp.Case_Manager__c = UserInfo.getUserId();
+        testOpp.First_Draft_Date__c = Date.today();
+        testOpp.Amount = 50000;
+        update testOpp;
 
+        // Create creditors and link to opportunity
         List<Account> cs = TestDataFactory.makeCreditorsAsAccount(3, 'Calc Cred');
         TestDataFactory.linkCredsToOpp(testOpp.Id, cs, 10000, 100, 3);
     }
 
 	 private static Opportunity getOpp() {
-        return [SELECT Id FROM Opportunity LIMIT 1];
+        return [SELECT Id, AccountId, Account.EPPS_Cardholder_Sequence__c FROM Opportunity LIMIT 1];
     }
 
-	@isTest
-	static void testOppStageSigned() {
-		
+	@IsTest
+	static void testUpdateCardHolder_SOAPFault() {
+
 		Opportunity opp = getOpp();
-					
+
+		Account updateAcct = new Account(Id = opp.AccountId, EPPS_Id__c = opp.Account.EPPS_Cardholder_Sequence__c);
+		update updateAcct;
+
 		PaymentDraft__c d1 = new PaymentDraft__c(
             Opportunity__c = opp.Id,
             Draft_Name__c = 'D1',
@@ -44,7 +54,258 @@ private class OpportunityTriggerHandlerTest {
 			Program_Fee_Percentage__c = 10,
 			Setup_Fee__c = 35,
 			Banking_Fee__c = 50,
+            Configuration_JSON__c = '{"programType":"DCG_MOD"}',
+            Calculations_JSON__c = '{"totalDebt":50000}',
+			Is_Primary__c = true
+        );
 
+        insert d1;
+		Test.setMock(
+			HttpCalloutMock.class,
+			new EPPSAddCardHolderMock(EPPSAddCardHolderMock.Mode.SOAP_FAULT)
+		);
+
+		Test.startTest();
+		opp.StageName = OpportunityTriggerHandler.OPP_STAGE_SIGNED;
+		opp.Integrate_with_EPPS__c = true;
+
+		update opp;
+
+		Test.stopTest();
+	}
+
+	@isTest
+	static void testOppStageSignedUpdateCardHolder() {
+
+		Opportunity opp = getOpp();
+
+		Account updateAcct = new Account(Id = opp.AccountId, EPPS_Id__c = opp.Account.EPPS_Cardholder_Sequence__c);
+		update updateAcct;
+
+		PaymentDraft__c d1 = new PaymentDraft__c(
+            Opportunity__c = opp.Id,
+            Draft_Name__c = 'D1',
+			Settlement_Percentage__c = 10,
+			Program_Fee_Percentage__c = 10,
+			Setup_Fee__c = 35,
+			Banking_Fee__c = 50,
+            Configuration_JSON__c = '{"programType":"DCG_MOD"}',
+            Calculations_JSON__c = '{"totalDebt":50000}',
+			Is_Primary__c = true
+        );
+
+        insert d1;
+
+		Test.setMock(HttpCalloutMock.class,new EPPSAddCardHolderMock(EPPSAddCardHolderMock.Mode.SUCCESS));
+
+		Test.startTest();
+		opp.Integrate_with_EPPS__c = true; // temporary control
+		opp.StageName = OpportunityTriggerHandler.OPP_STAGE_SIGNED;
+
+		update opp;
+
+		Test.stopTest();
+	}
+
+	@IsTest
+	static void testUpdateCardHolder_MissingResult() {
+
+		Opportunity opp = getOpp();
+
+		Account updateAcct = new Account(Id = opp.AccountId, EPPS_Id__c = opp.Account.EPPS_Cardholder_Sequence__c);
+		update updateAcct;
+
+		PaymentDraft__c d1 = new PaymentDraft__c(
+            Opportunity__c = opp.Id,
+            Draft_Name__c = 'D1',
+			Settlement_Percentage__c = 10,
+			Program_Fee_Percentage__c = 10,
+			Setup_Fee__c = 35,
+			Banking_Fee__c = 50,
+            Configuration_JSON__c = '{"programType":"DCG_MOD"}',
+            Calculations_JSON__c = '{"totalDebt":50000}',
+			Is_Primary__c = true
+        );
+
+        insert d1;
+
+		Test.setMock(
+			HttpCalloutMock.class,
+			new EPPSAddCardHolderMock(EPPSAddCardHolderMock.Mode.MISSING_RESULT)
+		);
+
+		Test.startTest();
+		opp.StageName = OpportunityTriggerHandler.OPP_STAGE_SIGNED;
+		opp.Integrate_with_EPPS__c = true;
+		update opp;
+		Test.stopTest();
+	}
+
+	@IsTest
+	static void testUpdateCardHolder_ParseException() {
+
+		Opportunity opp = getOpp();
+
+		Account updateAcct = new Account(Id = opp.AccountId, EPPS_Id__c = opp.Account.EPPS_Cardholder_Sequence__c);
+		update updateAcct;
+
+		PaymentDraft__c d1 = new PaymentDraft__c(
+            Opportunity__c = opp.Id,
+            Draft_Name__c = 'D1',
+			Settlement_Percentage__c = 10,
+			Program_Fee_Percentage__c = 10,
+			Setup_Fee__c = 35,
+			Banking_Fee__c = 50,
+            Configuration_JSON__c = '{"programType":"DCG_MOD"}',
+            Calculations_JSON__c = '{"totalDebt":50000}',
+			Is_Primary__c = true
+        );
+
+        insert d1;
+		Test.setMock(
+			HttpCalloutMock.class,
+			new EPPSAddCardHolderMock(EPPSAddCardHolderMock.Mode.BAD_XML)
+		);
+
+		Test.startTest();
+		opp.StageName = OpportunityTriggerHandler.OPP_STAGE_SIGNED;
+		opp.Integrate_with_EPPS__c = true;
+		update opp;
+		Test.stopTest();
+	}
+
+	@isTest
+	static void testOppStageSignedBadXml() {
+
+		Opportunity opp = getOpp();
+
+		PaymentDraft__c d1 = new PaymentDraft__c(
+            Opportunity__c = opp.Id,
+            Draft_Name__c = 'D1',
+			Settlement_Percentage__c = 10,
+			Program_Fee_Percentage__c = 10,
+			Setup_Fee__c = 35,
+			Banking_Fee__c = 50,
+            Configuration_JSON__c = '{"programType":"DCG_MOD"}',
+            Calculations_JSON__c = '{"totalDebt":50000}',
+			Is_Primary__c = true
+        );
+
+        insert d1;
+
+		Test.setMock(HttpCalloutMock.class, new EPPSAddCardHolderMock(EPPSAddCardHolderMock.Mode.BAD_XML));
+
+		Test.startTest();
+		opp.Integrate_with_EPPS__c = true; // temporary control
+		opp.StageName = OpportunityTriggerHandler.OPP_STAGE_SIGNED;
+
+		update opp;
+
+		Test.stopTest();
+	}
+
+	@isTest
+	static void testOppStageSignedSoapFault() {
+
+		Opportunity opp = getOpp();
+
+		PaymentDraft__c d1 = new PaymentDraft__c(
+            Opportunity__c = opp.Id,
+            Draft_Name__c = 'D1',
+			Settlement_Percentage__c = 10,
+			Program_Fee_Percentage__c = 10,
+			Setup_Fee__c = 35,
+			Banking_Fee__c = 50,
+            Configuration_JSON__c = '{"programType":"DCG_MOD"}',
+            Calculations_JSON__c = '{"totalDebt":50000}',
+			Is_Primary__c = true
+        );
+
+        insert d1;
+
+		Test.setMock(HttpCalloutMock.class, new EPPSAddCardHolderMock(EPPSAddCardHolderMock.Mode.SOAP_FAULT));
+
+		Test.startTest();
+		opp.Integrate_with_EPPS__c = true; // temporary control
+		opp.StageName = OpportunityTriggerHandler.OPP_STAGE_SIGNED;
+
+		update opp;
+
+		Test.stopTest();
+	}
+
+	@isTest
+	static void testOppStageSignedTryCatchFault() {
+
+		Opportunity opp = getOpp();
+
+		PaymentDraft__c d1 = new PaymentDraft__c(
+            Opportunity__c = opp.Id,
+            Draft_Name__c = 'D1',
+			Settlement_Percentage__c = 10,
+			Program_Fee_Percentage__c = 10,
+			Setup_Fee__c = 35,
+			Banking_Fee__c = 50,
+            Configuration_JSON__c = '{"programType":"DCG_MOD"}',
+            Calculations_JSON__c = '{"totalDebt":50000}',
+			Is_Primary__c = true
+        );
+
+        insert d1;
+
+		Test.setMock(HttpCalloutMock.class, new EPPSAddCardHolderMock(EPPSAddCardHolderMock.Mode.THROW_EXCEPTION));
+
+		Test.startTest();
+		opp.Integrate_with_EPPS__c = true; // temporary control
+		opp.StageName = OpportunityTriggerHandler.OPP_STAGE_SIGNED;
+
+		update opp;
+
+		Test.stopTest();
+	}
+
+	@isTest
+	static void testOppStageSignedNon200() {
+
+		Opportunity opp = getOpp();
+
+		PaymentDraft__c d1 = new PaymentDraft__c(
+            Opportunity__c = opp.Id,
+            Draft_Name__c = 'D1',
+			Settlement_Percentage__c = 10,
+			Program_Fee_Percentage__c = 10,
+			Setup_Fee__c = 35,
+			Banking_Fee__c = 50,
+            Configuration_JSON__c = '{"programType":"DCG_MOD"}',
+            Calculations_JSON__c = '{"totalDebt":50000}',
+			Is_Primary__c = true
+        );
+
+        insert d1;
+
+		Test.setMock(HttpCalloutMock.class,new EPPSAddCardHolderMock(EPPSAddCardHolderMock.Mode.HTTP_ERROR));
+
+		Test.startTest();
+		opp.Integrate_with_EPPS__c = true; // temporary control
+		opp.StageName = OpportunityTriggerHandler.OPP_STAGE_SIGNED;
+
+		update opp;
+
+		Test.stopTest();
+	}
+
+	@isTest
+	static void testOppStageSigned() {
+
+		Opportunity opp = getOpp();
+
+		PaymentDraft__c d1 = new PaymentDraft__c(
+            Opportunity__c = opp.Id,
+            Draft_Name__c = 'D1',
+			Settlement_Percentage__c = 10,
+			Program_Fee_Percentage__c = 10,
+			Setup_Fee__c = 35,
+			Banking_Fee__c = 50,
             Configuration_JSON__c = '{"programType":"DCG_MOD"}',
             Calculations_JSON__c = '{"totalDebt":50000}',
 			Is_Primary__c = true
@@ -67,7 +328,7 @@ private class OpportunityTriggerHandlerTest {
 	static void testOppStageSignedFault() {
 
 		Opportunity opp = getOpp();
-					
+
 		PaymentDraft__c d1 = new PaymentDraft__c(
             Opportunity__c = opp.Id,
             Draft_Name__c = 'D1',
@@ -75,7 +336,6 @@ private class OpportunityTriggerHandlerTest {
 			Program_Fee_Percentage__c = 10,
 			Setup_Fee__c = 35,
 			Banking_Fee__c = 50,
-
             Configuration_JSON__c = '{"programType":"DCG_MOD"}',
             Calculations_JSON__c = '{"totalDebt":50000}',
 			Is_Primary__c = true
