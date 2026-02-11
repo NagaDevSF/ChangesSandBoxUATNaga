@@ -350,7 +350,7 @@
 .col-currency { width: 80px; min-width: 70px; }
 .col-currency-sm { width: 70px; min-width: 60px; }
 .col-status { width: 70px; min-width: 70px; }
-.col-wire { width: 45px; min-width: 40px; }
+.col-wire { width: 55px; min-width: 50px; }
 .col-action { width: 30px; min-width: 30px; }
 
 /* Table Body - Modern Rich Rows */
@@ -432,7 +432,7 @@
 .th-currency { width: 80px; min-width: 70px; }
 .th-currency-sm { width: 70px; min-width: 60px; }
 .th-status { width: 70px; min-width: 70px; }
-.th-wire { width: 45px; min-width: 40px; }
+.th-wire { width: 55px; min-width: 50px; }
 .th-action { width: 30px; min-width: 30px; }
 
 /* Legacy cell alignments (for backwards compatibility) - scoped for specificity */
@@ -598,6 +598,11 @@
 
 .wire-btn lightning-icon {
     --slds-c-icon-color-foreground-default: white;
+}
+
+/* More Actions Menu - compact styling for table cells */
+.td-center lightning-button-menu {
+    display: inline-block;
 }
 
 /* Wire Modal Styling */

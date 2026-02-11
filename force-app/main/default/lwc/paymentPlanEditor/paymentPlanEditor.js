@@ -15,6 +15,7 @@ import saveWireFee from '@salesforce/apex/PaymentPlanEditorController.saveWireFe
 import deleteWireFee from '@salesforce/apex/PaymentPlanEditorController.deleteWireFee';
 import updateWireFee from '@salesforce/apex/PaymentPlanEditorController.updateWireFee';
 import getStatusPicklistValues from '@salesforce/apex/PaymentPlanEditorController.getStatusPicklistValues';
+import updateScheduleItemFlag from '@salesforce/apex/PaymentPlanEditorController.updateScheduleItemFlag';
 
 // Default fallback if dynamic fetch fails
 const DEFAULT_STATUS_OPTIONS = [
@@ -1519,6 +1520,84 @@ export default class PaymentPlanEditor extends LightningElement {
         this.wireFeeType = 'Wire Fee';  // Reset to default
         this.wireFeeAmount = null;      // Reset amount
         this.showWireModal = true;
+    }
+
+    /**
+     * Handles selection from the More actions dropdown menu.
+     * Routes to Wire, Void, or Process Immediately based on selection.
+     */
+    handleMoreMenuSelect(event) {
+        const action = event.detail.value;
+        const menuElement = event.currentTarget;
+        const scheduleItemId = menuElement.dataset.id;
+        const rowNumber = menuElement.dataset.rowNumber;
+        const draftAmount = menuElement.dataset.draftAmount;
+
+        switch (action) {
+            case 'wire':
+                // Inline the wire modal open logic
+                if (!scheduleItemId) {
+                    this.showToast('Error', 'Cannot create wire fee: Schedule item not saved yet.', 'error');
+                    return;
+                }
+                this.wireModalScheduleItemId = scheduleItemId;
+                this.wireModalRowNumber = rowNumber;
+                this.wireFeeType = 'Wire Fee';
+                this.wireFeeAmount = null;
+                this.showWireModal = true;
+                break;
+            case 'void':
+                this.handleVoidRequest(scheduleItemId, draftAmount);
+                break;
+            case 'immediateProcess':
+                this.handleImmediateProcessingRequest(scheduleItemId);
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Sends a Void request for a Payment Schedule Item.
+     * Sets Void_Requested__c = true on the record.
+     */
+    async handleVoidRequest(scheduleItemId, draftAmount) {
+        if (!scheduleItemId) {
+            this.showToast('Error', 'Cannot void: Schedule item not saved yet.', 'error');
+            return;
+        }
+        try {
+            await updateScheduleItemFlag({
+                scheduleItemId: scheduleItemId,
+                fieldName: 'Void_Requested__c',
+                value: true
+            });
+            const formattedAmount = draftAmount ? '$' + Number(draftAmount).toFixed(2) : '';
+            this.showToast('Success', 'Void request for the Payment Scheduled item with draft amount ' + formattedAmount, 'success');
+        } catch (error) {
+            this.showToast('Error', error.body ? error.body.message : error.message, 'error');
+        }
+    }
+
+    /**
+     * Sends an Immediate Processing request for a Payment Schedule Item.
+     * Sets Immediate_Processing_Requested__c = true on the record.
+     */
+    async handleImmediateProcessingRequest(scheduleItemId) {
+        if (!scheduleItemId) {
+            this.showToast('Error', 'Cannot process: Schedule item not saved yet.', 'error');
+            return;
+        }
+        try {
+            await updateScheduleItemFlag({
+                scheduleItemId: scheduleItemId,
+                fieldName: 'Immediate_Processing_Requested__c',
+                value: true
+            });
+            this.showToast('Success', 'Immediate processing', 'success');
+        } catch (error) {
+            this.showToast('Error', error.body ? error.body.message : error.message, 'error');
+        }
     }
 
     /**

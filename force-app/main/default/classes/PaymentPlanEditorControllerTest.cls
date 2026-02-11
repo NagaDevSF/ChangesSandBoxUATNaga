@@ -1862,4 +1862,49 @@ private class PaymentPlanEditorControllerTest {
         System.assert(exceptionThrown, 'AuraHandledException should have been thrown for null ID');
     }
 
+    @IsTest
+    static void testUpdateScheduleItemFlagVoid() {
+        PaymentPlan__c plan = [SELECT Id FROM PaymentPlan__c LIMIT 1];
+        Payment_Schedule_Item__c item = [SELECT Id, Void_Requested__c FROM Payment_Schedule_Item__c WHERE Payment_Plan__c = :plan.Id LIMIT 1];
+        System.assertEquals(false, item.Void_Requested__c, 'Void_Requested__c should initially be false');
+
+        Test.startTest();
+        PaymentPlanEditorController.updateScheduleItemFlag(item.Id, 'Void_Requested__c', true);
+        Test.stopTest();
+
+        item = [SELECT Id, Void_Requested__c FROM Payment_Schedule_Item__c WHERE Id = :item.Id];
+        System.assertEquals(true, item.Void_Requested__c, 'Void_Requested__c should be true after update');
+    }
+
+    @IsTest
+    static void testUpdateScheduleItemFlagImmediateProcessing() {
+        PaymentPlan__c plan = [SELECT Id FROM PaymentPlan__c LIMIT 1];
+        Payment_Schedule_Item__c item = [SELECT Id, Immediate_Processing_Requested__c FROM Payment_Schedule_Item__c WHERE Payment_Plan__c = :plan.Id LIMIT 1];
+        System.assertEquals(false, item.Immediate_Processing_Requested__c, 'Immediate_Processing_Requested__c should initially be false');
+
+        Test.startTest();
+        PaymentPlanEditorController.updateScheduleItemFlag(item.Id, 'Immediate_Processing_Requested__c', true);
+        Test.stopTest();
+
+        item = [SELECT Id, Immediate_Processing_Requested__c FROM Payment_Schedule_Item__c WHERE Id = :item.Id];
+        System.assertEquals(true, item.Immediate_Processing_Requested__c, 'Immediate_Processing_Requested__c should be true after update');
+    }
+
+    @IsTest
+    static void testUpdateScheduleItemFlagInvalidField() {
+        PaymentPlan__c plan = [SELECT Id FROM PaymentPlan__c LIMIT 1];
+        Payment_Schedule_Item__c item = [SELECT Id FROM Payment_Schedule_Item__c WHERE Payment_Plan__c = :plan.Id LIMIT 1];
+
+        Boolean exceptionThrown = false;
+        Test.startTest();
+        try {
+            PaymentPlanEditorController.updateScheduleItemFlag(item.Id, 'Invalid_Field__c', true);
+            System.assert(false, 'Should have thrown exception');
+        } catch (AuraHandledException e) {
+            exceptionThrown = true;
+        }
+        Test.stopTest();
+        System.assert(exceptionThrown, 'AuraHandledException should have been thrown for invalid field name');
+    }
+
 }

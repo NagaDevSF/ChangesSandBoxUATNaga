@@ -1035,6 +1035,50 @@ public with sharing class PaymentPlanEditorController {
     }
 
     /**
+     * @description Update a boolean flag on a Payment Schedule Item.
+     * Supports Void_Requested__c and Immediate_Processing_Requested__c fields.
+     * @param scheduleItemId The Payment Schedule Item ID
+     * @param fieldName The API name of the checkbox field to update
+     * @param value The boolean value to set
+     */
+    @AuraEnabled
+    public static void updateScheduleItemFlag(String scheduleItemId, String fieldName, Boolean value) {
+        String methodName = 'updateScheduleItemFlag';
+        System.debug(LoggingLevel.DEBUG, LOG_ENTRY + ' | ' + CLASS_NAME + '.' + methodName);
+        System.debug(LoggingLevel.DEBUG, LOG_PARAM + ' | scheduleItemId: ' + scheduleItemId + ' | fieldName: ' + fieldName + ' | value: ' + value);
+
+        try {
+            if (String.isBlank(scheduleItemId)) {
+                throw new AuraHandledException(VALIDATION_SYMBOL + 'Schedule Item ID is required.');
+            }
+
+            // Whitelist allowed fields for security
+            Set<String> allowedFields = new Set<String>{
+                'Void_Requested__c',
+                'Immediate_Processing_Requested__c'
+            };
+
+            if (!allowedFields.contains(fieldName)) {
+                throw new AuraHandledException(VALIDATION_SYMBOL + 'Invalid field name: ' + fieldName);
+            }
+
+            Payment_Schedule_Item__c item = new Payment_Schedule_Item__c(Id = scheduleItemId);
+            item.put(fieldName, value);
+            update item;
+
+            System.debug(LoggingLevel.DEBUG, LOG_SUCCESS + ' | ' + methodName + ' | Updated ' + fieldName + ' to ' + value + ' on ' + scheduleItemId);
+            System.debug(LoggingLevel.DEBUG, LOG_EXIT + ' | ' + CLASS_NAME + '.' + methodName + ' | SUCCESS');
+
+        } catch (AuraHandledException ae) {
+            throw ae;
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, LOG_ERROR + ' | ' + methodName + ' | Exception: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, LOG_ERROR + ' | ' + methodName + ' | Stack Trace: ' + e.getStackTraceString());
+            throw new AuraHandledException(ERROR_SYMBOL + 'Error updating schedule item flag: ' + e.getMessage());
+        }
+    }
+
+    /**
      * @description Save changes to schedule items (updates, inserts, deletes)
      * @param planId The Payment Plan ID
      * @param items List of ScheduleItemWrapper objects from LWC

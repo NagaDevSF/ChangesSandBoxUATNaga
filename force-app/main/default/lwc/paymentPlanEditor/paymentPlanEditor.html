@@ -144,7 +144,7 @@
                             <th scope="col" class="th-right th-currency-sm" role="columnheader">Banking</th>
                             <th scope="col" class="th-right th-currency" role="columnheader">Savings</th>
                             <th scope="col" class="th-center th-status" role="columnheader">Status</th>
-                            <th scope="col" class="th-center th-wire" role="columnheader">Wire</th>
+                            <th scope="col" class="th-center th-wire" role="columnheader">More</th>
                             <template lwc:if={canEdit}>
                                 <th scope="col" class="th-center th-action" role="columnheader">
                                     <span class="slds-assistive-text">Actions</span>
@@ -381,18 +381,33 @@
                                     </template>
                                 </td>
 
-                                <!-- Wire Payment Button - Hidden in edit mode -->
+                                <!-- More Actions Menu - Hidden in edit mode -->
                                 <td class="td-center" role="gridcell">
                                     <template lwc:if={showWireButton}>
-                                        <button type="button"
-                                                class="wire-btn"
-                                                data-id={item.id}
-                                                data-row-number={item.rowNumber}
-                                                onclick={handleOpenWireModal}
-                                                title="Add Wired Payment"
-                                                aria-label="Add wired payment for row">
-                                            <lightning-icon icon-name="utility:add" size="xx-small" alternative-text="Add"></lightning-icon>
-                                        </button>
+                                        <lightning-button-menu
+                                            alternative-text="More actions"
+                                            icon-size="x-small"
+                                            menu-alignment="auto"
+                                            data-id={item.id}
+                                            data-row-number={item.rowNumber}
+                                            data-draft-amount={item.draftAmount}
+                                            onselect={handleMoreMenuSelect}>
+                                            <lightning-menu-item
+                                                label="Wire"
+                                                value="wire"
+                                                icon-name="utility:routing_offline">
+                                            </lightning-menu-item>
+                                            <lightning-menu-item
+                                                label="Void"
+                                                value="void"
+                                                icon-name="utility:ban">
+                                            </lightning-menu-item>
+                                            <lightning-menu-item
+                                                label="Process Immediately"
+                                                value="immediateProcess"
+                                                icon-name="utility:priority">
+                                            </lightning-menu-item>
+                                        </lightning-button-menu>
                                     </template>
                                 </td>
 
