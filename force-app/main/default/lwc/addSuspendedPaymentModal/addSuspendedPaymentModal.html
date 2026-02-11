@@ -1,0 +1,45 @@
+<template>
+    <lightning-modal-header label={label}></lightning-modal-header>
+
+    <lightning-modal-body>
+        <div class="slds-p-around_small">
+            <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_warning slds-m-bottom_small" role="alert">
+                <span class="slds-assistive-text">warning</span>
+                <lightning-icon icon-name="utility:warning" size="x-small" class="slds-m-right_x-small" alternative-text="Warning"></lightning-icon>
+                <span>Clicking Submit will send this payment to Escrow for immediate processing.</span>
+            </div>
+
+            <lightning-input
+                type="date"
+                label="Payment Date"
+                value={paymentDate}
+                required
+                onchange={handleDateChange}>
+            </lightning-input>
+
+            <lightning-input
+                type="number"
+                label="Payment Amount"
+                value={paymentAmount}
+                required
+                min="0.01"
+                step="0.01"
+                onchange={handleAmountChange}>
+            </lightning-input>
+
+            <lightning-input
+                type="number"
+                label="Commission Fee"
+                value={commissionFeeValue}
+                min="0"
+                step="0.01"
+                onchange={handleCommissionFeeChange}>
+            </lightning-input>
+        </div>
+    </lightning-modal-body>
+
+    <lightning-modal-footer>
+        <lightning-button label="Cancel" variant="neutral" onclick={handleCancel}></lightning-button>
+        <lightning-button label="Submit" variant="brand" class="slds-m-left_x-small" onclick={handleSubmit}></lightning-button>
+    </lightning-modal-footer>
+</template>

@@ -1,0 +1,334 @@
+<template>
+    <lightning-card title="Program Configuration" icon-name="standard:settings">
+        <div slot="actions">
+            <lightning-button-menu
+                alternative-text="Configuration Options"
+                icon-size="x-small"
+                menu-alignment="right">
+                <lightning-menu-item
+                    value="reset"
+                    label="Reset to Defaults"
+                    onclick={handleResetToDefaults}>
+                </lightning-menu-item>
+                <lightning-menu-item
+                    value="save"
+                    label="Save as Template"
+                    onclick={handleSaveTemplate}>
+                </lightning-menu-item>
+                <lightning-menu-item
+                    value="load"
+                    label="Load Template"
+                    onclick={handleLoadTemplate}>
+                </lightning-menu-item>
+            </lightning-button-menu>
+        </div>
+
+        <div class="slds-p-horizontal_medium">
+            <!-- California Warning -->
+            <template if:true={showCaliforniaWarning}>
+                <div class="slds-notify slds-notify_alert slds-theme_warning slds-m-bottom_medium">
+                    <span class="slds-assistive-text">Warning</span>
+                    <lightning-icon
+                        icon-name="utility:warning"
+                        variant="inverse"
+                        size="x-small"
+                        class="slds-m-right_x-small">
+                    </lightning-icon>
+                    <h2>California No-Fee Program Required</h2>
+                </div>
+            </template>
+
+            <!-- Basic Configuration -->
+            <div class="slds-box slds-m-bottom_medium">
+                <h3 class="slds-text-heading_small slds-m-bottom_medium">Basic Settings</h3>
+                
+                <lightning-layout multiple-rows="true">
+                    <!-- Program Type -->
+                    <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                        <lightning-combobox
+                            label="Program Type"
+                            value={config.programType}
+                            options={programTypeOptions}
+                            onchange={handleProgramTypeChange}
+                            disabled={readonly}>
+                        </lightning-combobox>
+                    </lightning-layout-item>
+
+                    <!-- Payment Frequency -->
+                    <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                        <lightning-radio-group
+                            label="Payment Frequency"
+                            options={frequencyOptions}
+                            value={config.frequency}
+                            type="button"
+                            onchange={handleFrequencyChange}
+                            disabled={readonly}>
+                        </lightning-radio-group>
+                    </lightning-layout-item>
+
+                    <!-- Settlement Percentage -->
+                    <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                        <lightning-slider
+                            label="Settlement Percentage"
+                            value={config.settlementPercentage}
+                            min="20"
+                            max="80"
+                            step="1"
+                            onchange={handleSettlementChange}
+                            disabled={readonly}>
+                        </lightning-slider>
+                        <div class="slds-text-body_small slds-m-top_x-small">
+                            Settlement Amount: <strong>{formattedSettlementAmount}</strong>
+                        </div>
+                    </lightning-layout-item>
+
+                    <!-- Program Fee Percentage -->
+                    <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                        <lightning-slider
+                            label="Program Fee Percentage"
+                            value={config.programFeePercentage}
+                            min="0"
+                            max="50"
+                            step="1"
+                            onchange={handleProgramFeeChange}
+                            disabled={isProgramFeeDisabled}>
+                        </lightning-slider>
+                        <div class="slds-text-body_small slds-m-top_x-small">
+                            Program Fee: <strong>{formattedProgramFee}</strong>
+                        </div>
+                    </lightning-layout-item>
+
+                    <!-- Setup Fee -->
+                    <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                        <lightning-input
+                            label="Setup Fee"
+                            type="currency"
+                            value={config.setupFee}
+                            onchange={handleSetupFeeChange}
+                            disabled={readonly}>
+                        </lightning-input>
+                    </lightning-layout-item>
+
+                    <!-- Banking Fee -->
+                    <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                        <lightning-input
+                            label="Banking Fee (Per Payment)"
+                            type="currency"
+                            value={config.bankingFee}
+                            onchange={handleBankingFeeChange}
+                            disabled={readonly}>
+                        </lightning-input>
+                    </lightning-layout-item>
+                    
+                    <!-- First Draft Date -->
+                    <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                        <lightning-input
+                            label="First Draft Date"
+                            type="date"
+                            value={config.firstDraftDate}
+                            onchange={handleFirstDraftDateChange}
+                            disabled={readonly}>
+                        </lightning-input>
+                    </lightning-layout-item>
+                    
+                    <!-- Preferred Day of Week -->
+                    <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                        <lightning-combobox
+                            label="Preferred Day of Week"
+                            value={config.preferredDayOfWeek}
+                            options={dayOfWeekOptions}
+                            onchange={handlePreferredDayChange}
+                            disabled={readonly}>
+                        </lightning-combobox>
+                    </lightning-layout-item>
+                    
+                    <!-- Payment Allocation Split -->
+                    <lightning-layout-item size="12" padding="around-small">
+                        <div class="slds-box slds-theme_default">
+                            <h4 class="slds-text-heading_x-small slds-m-bottom_small">Payment Allocation</h4>
+                            <lightning-progress-bar 
+                                value={programSplitPercentage} 
+                                variant="circular">
+                            </lightning-progress-bar>
+                            <div class="slds-text-align_center slds-m-top_small">
+                                <span class="slds-text-body_small">
+                                    Program: <strong>{programSplitPercentage}%</strong> | 
+                                    Escrow: <strong>{escrowSplitPercentage}%</strong>
+                                </span>
+                            </div>
+                        </div>
+                    </lightning-layout-item>
+                </lightning-layout>
+            </div>
+
+            <!-- Real-time Calculation Preview -->
+            <div class="slds-box slds-theme_shade slds-m-bottom_medium">
+                <h3 class="slds-text-heading_small slds-m-bottom_medium">Calculation Preview</h3>
+                
+                <lightning-layout multiple-rows="true">
+                    <lightning-layout-item size="12" medium-device-size="3" padding="around-small">
+                        <div class="slds-text-align_center">
+                            <p class="slds-text-title">Total Debt</p>
+                            <p class="slds-text-heading_medium">{formattedTotalDebt}</p>
+                        </div>
+                    </lightning-layout-item>
+                    
+                    <lightning-layout-item size="12" medium-device-size="3" padding="around-small">
+                        <div class="slds-text-align_center">
+                            <p class="slds-text-title">Program Cost</p>
+                            <p class="slds-text-heading_medium">{formattedTotalProgramCost}</p>
+                        </div>
+                    </lightning-layout-item>
+                    
+                    <lightning-layout-item size="12" medium-device-size="3" padding="around-small">
+                        <div class="slds-text-align_center">
+                            <p class="slds-text-title">Estimated Savings</p>
+                            <p class="slds-text-heading_medium slds-text-color_success">{formattedEstimatedSavings}</p>
+                            <p class="slds-text-body_small">({savingsPercentage}% savings)</p>
+                        </div>
+                    </lightning-layout-item>
+                    
+                    <lightning-layout-item size="12" medium-device-size="3" padding="around-small">
+                        <div class="slds-text-align_center">
+                            <p class="slds-text-title">Estimated Payment</p>
+                            <p class="slds-text-heading_medium">{formattedWeeklyPayment}</p>
+                            <p class="slds-text-body_small">({config.frequency})</p>
+                        </div>
+                    </lightning-layout-item>
+                </lightning-layout>
+            </div>
+
+            <!-- Advanced Settings Toggle -->
+            <template if:false={readonly}>
+                <div class="slds-m-bottom_medium">
+                    <lightning-button
+                        label={advancedSettingsButtonLabel}
+                        icon-name={advancedSettingsButtonIcon}
+                        onclick={toggleAdvancedSettings}
+                        variant="neutral">
+                    </lightning-button>
+                </div>
+            </template>
+
+            <!-- Advanced Settings -->
+            <template if:true={showAdvancedSettings}>
+                <div class="slds-box">
+                    <h3 class="slds-text-heading_small slds-m-bottom_medium">Advanced Settings</h3>
+                    
+                    <lightning-layout multiple-rows="true">
+                        <!-- Calculation Mode -->
+                        <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                            <lightning-combobox
+                                label="Calculation Mode"
+                                value={config.calculationMode}
+                                options={calculationModeOptions}
+                                onchange={handleCalculationModeChange}>
+                            </lightning-combobox>
+                        </lightning-layout-item>
+
+                        <!-- Target Payment Percentage -->
+                        <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                            <lightning-slider
+                                label="Target Payment Percentage"
+                                value={config.targetPaymentPercentage}
+                                min="25"
+                                max="75"
+                                step="5"
+                                onchange={handleTargetPaymentChange}>
+                            </lightning-slider>
+                        </lightning-layout-item>
+
+                        <!-- Retainer Fee -->
+                        <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                            <lightning-slider
+                                label="Retainer Fee Percentage"
+                                value={config.retainerFeePercentage}
+                                min="0"
+                                max="15"
+                                step="0.5"
+                                onchange={handleRetainerFeeChange}>
+                            </lightning-slider>
+                        </lightning-layout-item>
+
+                        <!-- Retainer Term -->
+                        <template if:true={showRetainerFields}>
+                            <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                                <lightning-input
+                                    label="Retainer Fee Term (Payments)"
+                                    type="number"
+                                    value={config.retainerFeeTerm}
+                                    min="0"
+                                    max="12"
+                                    onchange={handleRetainerTermChange}>
+                                </lightning-input>
+                            </lightning-layout-item>
+                        </template>
+
+                        <!-- Setup Fee Term -->
+                        <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                            <lightning-input
+                                label="Setup Fee Term (Payments)"
+                                type="number"
+                                value={config.setupFeeTerm}
+                                min="1"
+                                max="24"
+                                onchange={handleSetupTermChange}>
+                            </lightning-input>
+                        </lightning-layout-item>
+
+                        <!-- Bank 2 Fee -->
+                        <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                            <lightning-input
+                                label="Secondary Banking Fee"
+                                type="currency"
+                                value={config.bank2Fee}
+                                onchange={handleBank2FeeChange}>
+                            </lightning-input>
+                        </lightning-layout-item>
+
+                        <!-- Legal Monitoring -->
+                        <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                            <lightning-input
+                                label="Legal Monitoring Fee"
+                                type="currency"
+                                value={config.legalMonitoring}
+                                onchange={handleLegalMonitoringChange}>
+                            </lightning-input>
+                        </lightning-layout-item>
+
+                        <!-- No Fee Program Toggle -->
+                        <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                            <lightning-radio-group
+                                label="No Fee Program"
+                                options={noFeeProgramOptions}
+                                value={config.noFeeProgram}
+                                type="button"
+                                onchange={handleNoFeeProgramChange}
+                                disabled={isCaliforniaClient}>
+                            </lightning-radio-group>
+                        </lightning-layout-item>
+                    </lightning-layout>
+                </div>
+            </template>
+
+            <!-- Configuration Summary -->
+            <div class="slds-box slds-theme_inverse slds-m-top_medium">
+                <h3 class="slds-text-heading_small slds-m-bottom_small">Configuration Summary</h3>
+                <div class="slds-grid slds-wrap slds-gutters_small">
+                    <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                        <p class="slds-text-body_small">Settlement: {config.settlementPercentage}%</p>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                        <p class="slds-text-body_small">Program Fee: {config.programFeePercentage}%</p>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                        <p class="slds-text-body_small">Setup Fee: {formattedSetupFee}</p>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                        <p class="slds-text-body_small">Frequency: {config.frequency}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </lightning-card>
+</template>

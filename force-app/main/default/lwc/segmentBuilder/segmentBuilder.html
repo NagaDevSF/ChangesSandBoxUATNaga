@@ -1,0 +1,193 @@
+<template>
+    <div class="segment-builder">
+        <!-- Segment List -->
+        <template lwc:if={hasSegments}>
+            <div class="slds-grid slds-grid_vertical slds-grid_vertical-stretch">
+                <template for:each={formattedSegments} for:item="segment">
+                    <div key={segment.key} class="segment-row slds-box slds-box_x-small slds-m-bottom_x-small">
+                        <div class="slds-grid slds-gutters slds-grid_vertical-align-end">
+                            <!-- Segment Order -->
+                            <div class="slds-col slds-size_1-of-12">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label">
+                                        <abbr class="slds-required" title="required">*</abbr>
+                                        #
+                                    </label>
+                                    <div class="slds-form-element__control">
+                                        <span class="segment-order-badge">{segment.displayOrder}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Segment Type -->
+                            <div class="slds-col slds-size_2-of-12">
+                                <lightning-combobox
+                                    label="Type"
+                                    value={segment.segmentType}
+                                    options={segmentTypeOptions}
+                                    data-index={segment.index}
+                                    data-field="segmentType"
+                                    onchange={handleFieldChange}
+                                    disabled={isReadOnly}
+                                    required>
+                                </lightning-combobox>
+                            </div>
+
+                            <!-- Payment Amount (conditional) -->
+                            <div class="slds-col slds-size_2-of-12">
+                                <template lwc:if={segment.showAmountField}>
+                                    <lightning-input
+                                        type="text"
+                                        label="Amount"
+                                        value={segment.paymentAmount}
+                                        data-index={segment.index}
+                                        data-field="paymentAmount"
+                                        onblur={handleNumericFieldBlur}
+                                        disabled={isReadOnly}
+                                        placeholder="Enter amount"
+                                        pattern="[0-9]*\.?[0-9]*"
+                                        required>
+                                    </lightning-input>
+                                </template>
+                                <template lwc:else>
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label">Amount</label>
+                                        <div class="slds-form-element__control">
+                                            <span class="slds-text-color_weak">(Calculated)</span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Payment Count (conditional) -->
+                            <div class="slds-col slds-size_2-of-12">
+                                <template lwc:if={segment.showCountField}>
+                                    <lightning-input
+                                        type="text"
+                                        label="# Payments"
+                                        value={segment.paymentCount}
+                                        data-index={segment.index}
+                                        data-field="paymentCount"
+                                        onblur={handleNumericFieldBlur}
+                                        disabled={isReadOnly}
+                                        placeholder="Enter count"
+                                        pattern="[0-9]*"
+                                        required>
+                                    </lightning-input>
+                                </template>
+                                <template lwc:else>
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label"># Payments</label>
+                                        <div class="slds-form-element__control">
+                                            <span class="slds-text-color_weak">(Until paid)</span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Frequency -->
+                            <div class="slds-col slds-size_2-of-12">
+                                <lightning-combobox
+                                    label="Frequency"
+                                    value={segment.frequency}
+                                    options={frequencyOptions}
+                                    data-index={segment.index}
+                                    data-field="frequency"
+                                    onchange={handleFieldChange}
+                                    disabled={isReadOnly}
+                                    required>
+                                </lightning-combobox>
+                            </div>
+
+                            <!-- Start Date / Semi-Monthly Dates -->
+                            <div class="slds-col slds-size_2-of-12">
+                                <lightning-input
+                                    type="date"
+                                    label={segment.startDateLabel}
+                                    value={segment.startDate}
+                                    data-index={segment.index}
+                                    data-field="startDate"
+                                    onchange={handleFieldChange}
+                                    disabled={isReadOnly}
+                                    required={segment.startDateRequired}>
+                                </lightning-input>
+                                <template lwc:if={segment.showOptionalHint}>
+                                    <span class="slds-text-body_small slds-text-color_weak">
+                                        (Optional - continues from previous)
+                                    </span>
+                                </template>
+                                <template lwc:if={segment.isSemiMonthly}>
+                                    <lightning-input
+                                        type="date"
+                                        label="Second Date"
+                                        value={segment.endDate}
+                                        data-index={segment.index}
+                                        data-field="endDate"
+                                        onchange={handleFieldChange}
+                                        disabled={isReadOnly}
+                                        class="slds-m-top_xx-small"
+                                        required>
+                                    </lightning-input>
+                                </template>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="slds-col slds-size_1-of-12 action-column">
+                                <template lwc:if={isEditable}>
+                                    <div class="slds-button-group" role="group">
+                                        <lightning-button-icon
+                                            icon-name="utility:arrowup"
+                                            alternative-text="Move up"
+                                            title="Move up"
+                                            size="small"
+                                            data-index={segment.index}
+                                            onclick={handleMoveUp}
+                                            disabled={segment.isFirstSegment}>
+                                        </lightning-button-icon>
+                                        <lightning-button-icon
+                                            icon-name="utility:arrowdown"
+                                            alternative-text="Move down"
+                                            title="Move down"
+                                            size="small"
+                                            data-index={segment.index}
+                                            onclick={handleMoveDown}
+                                            disabled={segment.isLastSegment}>
+                                        </lightning-button-icon>
+                                        <lightning-button-icon
+                                            icon-name="utility:delete"
+                                            alternative-text="Delete"
+                                            title="Delete segment"
+                                            variant="destructive"
+                                            size="small"
+                                            data-index={segment.index}
+                                            onclick={handleDeleteSegment}>
+                                        </lightning-button-icon>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- Empty State -->
+        <template lwc:else>
+            <div class="slds-text-align_center slds-p-around_medium slds-text-color_weak">
+                <p>No segments configured. Add a segment to define the payment schedule.</p>
+            </div>
+        </template>
+
+        <!-- Add Segment Button -->
+        <template lwc:if={isEditable}>
+            <div class="slds-m-top_small">
+                <lightning-button
+                    label="Add Segment"
+                    icon-name="utility:add"
+                    onclick={handleAddSegment}
+                    variant="neutral">
+                </lightning-button>
+            </div>
+        </template>
+    </div>
+</template>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>legal_Leads</fullName>
+    <columns>LEAD.CREATED_DATE</columns>
+    <columns>FULL_NAME</columns>
+    <columns>LEAD.EMAIL</columns>
+    <columns>LEAD.PHONE</columns>
+    <columns>LEAD.UNREAD</columns>
+    <columns>Rotation_List__c</columns>
+    <columns>Pre_Deal_Status__c</columns>
+    <columns>Sales_Office__c</columns>
+    <columns>CORE.USERS.FIRST_NAME</columns>
+    <columns>LEAD.STATE</columns>
+    <columns>Est_Total_Debt__c</columns>
+    <columns>QuickNotes__c</columns>
+    <columns>LEAD.LAST_ACTIVITY</columns>
+    <columns>LEAD.LAST_UPDATE</columns>
+    <columns>Lead_Source_Debtifi__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Integration_Assignement__c</field>
+        <operation>equals</operation>
+        <value>ZAP Legal Scaper Debtifi,ZAP NY Legal Scraper New</value>
+    </filters>
+    <label>legal Leads</label>
+    <sharedTo>
+        <group>Administrators</group>
+    </sharedTo>
+</ListView>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Labels__c</fullName>
+    <label>Labels</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>NEW LEAD</fullName>
+                <default>true</default>
+                <label>NEW LEAD</label>
+            </value>
+            <value>
+                <fullName>WARM LEAD</fullName>
+                <default>false</default>
+                <label>WARM LEAD</label>
+            </value>
+            <value>
+                <fullName>1ST ATTEMPT</fullName>
+                <default>false</default>
+                <label>1ST ATTEMPT</label>
+            </value>
+            <value>
+                <fullName>2ND ATTEMPT</fullName>
+                <default>false</default>
+                <label>2ND ATTEMPT</label>
+            </value>
+            <value>
+                <fullName>3RD ATTEMPT</fullName>
+                <default>false</default>
+                <label>3RD ATTEMPT</label>
+            </value>
+            <value>
+                <fullName>CALL BACK</fullName>
+                <default>false</default>
+                <label>CALL BACK</label>
+            </value>
+            <value>
+                <fullName>NO ANSWER</fullName>
+                <default>false</default>
+                <label>NO ANSWER</label>
+            </value>
+            <value>
+                <fullName>NOT INTERESTED</fullName>
+                <default>false</default>
+                <label>NOT INTERESTED</label>
+            </value>
+            <value>
+                <fullName>NOT QUALIFIED</fullName>
+                <default>false</default>
+                <label>NOT QUALIFIED</label>
+            </value>
+            <value>
+                <fullName>DNC</fullName>
+                <default>false</default>
+                <label>DNC</label>
+            </value>
+            <value>
+                <fullName>BAD LEAD</fullName>
+                <default>false</default>
+                <label>BAD LEAD</label>
+            </value>
+            <value>
+                <fullName>Cold Lead</fullName>
+                <default>false</default>
+                <label>Cold Lead</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Require_NSF_Date_For_Notices</fullName>
+    <active>true</active>
+    <errorConditionFormula>(
+    Send_Suspension_Notice__c = TRUE ||
+    Send_Cancellation_Notice__c = TRUE
+)
+&amp;&amp;
+(
+    ISBLANK(NSF_Date__c) ||
+    (Send_Suspension_Notice__c = TRUE &amp;&amp; Send_Cancellation_Notice__c = TRUE)
+)</errorConditionFormula>
+    <errorMessage>You must enter an NSF Date to send a notice, and only one notice type can be selected at a time.</errorMessage>
+</ValidationRule>

@@ -1,0 +1,65 @@
+<template>
+    <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+        <!-- Row 1: Total Enrolled Debt | Weekly Payment | Current Weekly Payment | First Draft -->
+        <lightning-layout multiple-rows>
+            <lightning-layout-item size="3" medium-device-size="6" large-device-size="3" padding="around-small">
+                <div class="summary-stat">
+                    <div class="stat-label">Total Enrolled Debt</div>
+                    <div class="stat-value">
+                        <lightning-formatted-number value={totalDebt} format-style="currency" currency-code="USD"></lightning-formatted-number>
+                    </div>
+                </div>
+            </lightning-layout-item>
+            <lightning-layout-item size="3" medium-device-size="6" large-device-size="3" padding="around-small">
+                <div class="summary-stat">
+                    <div class="stat-label">New Weekly Payment</div>
+                    <div class="stat-value">
+                        <lightning-formatted-number value={computedNewWeeklyPayment} format-style="currency" currency-code="USD"></lightning-formatted-number>
+                    </div>
+                </div>
+            </lightning-layout-item>
+            <lightning-layout-item size="3" medium-device-size="6" large-device-size="3" padding="around-small">
+                <div class="summary-stat">
+                    <div class="stat-label">Current Weekly Payment</div>
+                    <div class="stat-value">
+                        <lightning-formatted-number value={currentPayment} format-style="currency" currency-code="USD"></lightning-formatted-number>
+                    </div>
+                </div>
+            </lightning-layout-item>
+            <lightning-layout-item size="3" medium-device-size="6" large-device-size="3" padding="around-small">
+                <div class="summary-stat">
+                    <div class="stat-label">First Draft</div>
+                    <div class="stat-value">
+                        <lightning-formatted-date-time value={computedFirstDraftDate} year="numeric" month="short" day="2-digit"></lightning-formatted-date-time>
+                    </div>
+                </div>
+            </lightning-layout-item>
+        </lightning-layout>
+
+        <!-- Row 2: Weekly Savings | Percent Savings | Program Duration/Weeks -->
+        <lightning-layout multiple-rows>
+            <lightning-layout-item size="12" medium-device-size="6" large-device-size="4" padding="around-small">
+                <div class="summary-stat">
+                    <div class="stat-label">Weekly Savings</div>
+                    <div class="stat-value">
+                        <lightning-formatted-number value={computedWeeklySavings} format-style="currency" currency-code="USD"></lightning-formatted-number>
+                    </div>
+                </div>
+            </lightning-layout-item>
+            <lightning-layout-item size="12" medium-device-size="6" large-device-size="4" padding="around-small">
+                <div class="summary-stat">
+                    <div class="stat-label">Percent Savings</div>
+                    <div class="stat-value">
+                        <lightning-formatted-number value={computedPercentWeeklySavingDecimal} format-style="percent" maximum-fraction-digits="1"></lightning-formatted-number>
+                    </div>
+                </div>
+            </lightning-layout-item>
+            <lightning-layout-item size="12" medium-device-size="6" large-device-size="4" padding="around-small">
+                <div class="summary-stat">
+                    <div class="stat-label">Program Duration/Weeks</div>
+                    <div class="stat-value">{computedWeeksToPayoff}</div>
+                </div>
+            </lightning-layout-item>
+        </lightning-layout>
+    </div>
+</template>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Lead_Source_EDD_Is_Mandatory_Convert</fullName>
+    <active>true</active>
+    <errorConditionFormula>AND(
+  Sales_Office__c = &quot;Everyday Debt&quot;,
+  ISBLANK(TEXT(Lead_Source_EDD__c)),
+  IsConverted
+)</errorConditionFormula>
+    <errorDisplayField>Lead_Source_EDD__c</errorDisplayField>
+    <errorMessage>Lead Source EDD is required for EDD leads before conversion.</errorMessage>
+</ValidationRule>

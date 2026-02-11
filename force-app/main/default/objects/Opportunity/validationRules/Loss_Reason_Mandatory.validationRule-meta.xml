@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Loss_Reason_Mandatory</fullName>
+    <active>true</active>
+    <description>When ever opportunity lost is checked</description>
+    <errorConditionFormula>AND(
+    OR(
+        Sales_Office__c = &quot;Debtifi&quot;,
+        Sales_Office__c = &quot;Everyday Debt&quot;
+    ),
+    Lost__c = TRUE,
+    ISPICKVAL(Loss_Reason__c, &quot;&quot;)
+)</errorConditionFormula>
+    <errorDisplayField>Loss_Reason__c</errorDisplayField>
+    <errorMessage>Please provide a reason for marking the opportunity as lost</errorMessage>
+</ValidationRule>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Type_of_Debt__c</fullName>
+    <label>Type of Debt</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Medical Debt</fullName>
+                <default>false</default>
+                <label>Medical Debt</label>
+            </value>
+            <value>
+                <fullName>Personal Consumer Debt</fullName>
+                <default>false</default>
+                <label>Personal Consumer Debt</label>
+            </value>
+            <value>
+                <fullName>Taxes Debt</fullName>
+                <default>false</default>
+                <label>Taxes Debt</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

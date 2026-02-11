@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Change_of_Stage_after_Contract_Signed_SM</fullName>
+    <active>true</active>
+    <description>Only System Adm can change the stage from contract signed</description>
+    <errorConditionFormula>AND(
+    ISCHANGED(StageName),
+    OR(
+        ISPICKVAL(StageName, &quot;Enrolled&quot;),
+        ISPICKVAL(StageName, &quot;NSF&quot;),
+ISPICKVAL(StageName, &quot;Fess Done&quot;),
+        ISPICKVAL(StageName, &quot;Cancelled&quot;)
+    ),
+    $Profile.Name = &quot;SalesManager&quot;
+)</errorConditionFormula>
+    <errorMessage>Please ask the Underwriter or a System Administrator to change the Stage.</errorMessage>
+</ValidationRule>

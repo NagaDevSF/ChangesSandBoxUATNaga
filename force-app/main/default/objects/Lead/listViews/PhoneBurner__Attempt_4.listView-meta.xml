@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>PhoneBurner__Attempt_4</fullName>
+    <columns>FULL_NAME</columns>
+    <columns>LEAD.EMAIL</columns>
+    <columns>LEAD.COMPANY</columns>
+    <columns>LEAD.STATE</columns>
+    <columns>LEAD.STATUS</columns>
+    <columns>LEAD.CREATED_DATE</columns>
+    <columns>PhoneBurner__Attempted_Calls__c</columns>
+    <columns>PhoneBurner__Last_Attempt__c</columns>
+    <columns>PhoneBurner__Last_Dispostion__c</columns>
+    <filterScope>Mine</filterScope>
+    <filters>
+        <field>PhoneBurner__Attempted_Calls__c</field>
+        <operation>equals</operation>
+        <value>3</value>
+    </filters>
+    <filters>
+        <field>PhoneBurner__Last_Attempt__c</field>
+        <operation>notEqual</operation>
+        <value>TODAY,YESTERDAY</value>
+    </filters>
+    <label>Attempt 4</label>
+</ListView>

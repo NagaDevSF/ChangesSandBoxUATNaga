@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Integration_Assignement__c</fullName>
+    <label>Integration Assignement</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>ZAP Everyday</fullName>
+                <default>false</default>
+                <label>ZAP Everyday</label>
+            </value>
+            <value>
+                <fullName>CSEP</fullName>
+                <default>false</default>
+                <label>CSEP</label>
+            </value>
+            <value>
+                <fullName>ZAP Marketting</fullName>
+                <default>false</default>
+                <label>ZAP Marketting</label>
+            </value>
+            <value>
+                <fullName>ZAP EDD Lawsuite</fullName>
+                <default>false</default>
+                <label>ZAP EDD Lawsuite</label>
+            </value>
+            <value>
+                <fullName>ZAP YP Health</fullName>
+                <default>false</default>
+                <label>ZAP YP Health</label>
+            </value>
+            <value>
+                <fullName>ZAP YP Construction</fullName>
+                <default>false</default>
+                <label>ZAP YP Construction</label>
+            </value>
+            <value>
+                <fullName>ZAP YP Restaurant</fullName>
+                <default>false</default>
+                <label>ZAP YP Restaurant</label>
+            </value>
+            <value>
+                <fullName>ZAP YP Retail</fullName>
+                <default>false</default>
+                <label>ZAP YP Retail</label>
+            </value>
+            <value>
+                <fullName>ZAP Mack Blast</fullName>
+                <default>false</default>
+                <label>ZAP Mack Blast</label>
+            </value>
+            <value>
+                <fullName>ZAP PACK</fullName>
+                <default>false</default>
+                <label>ZAP PACK</label>
+            </value>
+            <value>
+                <fullName>Coeff DV INB</fullName>
+                <default>false</default>
+                <label>Coeff DV INB</label>
+            </value>
+            <value>
+                <fullName>Coeff DV AP</fullName>
+                <default>false</default>
+                <label>Coeff DV AP</label>
+            </value>
+            <value>
+                <fullName>Coeff DV Packs</fullName>
+                <default>false</default>
+                <label>Coeff DV Packs</label>
+            </value>
+            <value>
+                <fullName>Coeff DV Legal</fullName>
+                <default>false</default>
+                <label>Coeff DV Legal</label>
+            </value>
+            <value>
+                <fullName>ZAP RE RR D</fullName>
+                <default>false</default>
+                <label>ZAP RE RR D</label>
+            </value>
+            <value>
+                <fullName>ZAP Legal Scaper Debtifi</fullName>
+                <default>false</default>
+                <label>ZAP Legal Scaper Debtifi</label>
+            </value>
+            <value>
+                <fullName>ZAP Marketing DC</fullName>
+                <default>false</default>
+                <label>ZAP Marketing DC</label>
+            </value>
+            <value>
+                <fullName>ZAP Debtifi Albert</fullName>
+                <default>false</default>
+                <label>ZAP Debtifi Albert</label>
+            </value>
+            <value>
+                <fullName>ZAP Marketting QRMCA</fullName>
+                <default>false</default>
+                <label>ZAP Marketting QRMCA</label>
+            </value>
+            <value>
+                <fullName>ZAP NY Legal Scraper New</fullName>
+                <default>false</default>
+                <label>ZAP NY Legal Scraper New</label>
+            </value>
+            <value>
+                <fullName>ZAP DCG Marketing</fullName>
+                <default>false</default>
+                <label>ZAP DCG Marketing</label>
+            </value>
+            <value>
+                <fullName>ZAP WOD</fullName>
+                <default>false</default>
+                <label>ZAP WOD</label>
+            </value>
+            <value>
+                <fullName>ZAP RTC</fullName>
+                <default>false</default>
+                <label>ZAP RTC</label>
+            </value>
+            <value>
+                <fullName>ZAP DLGL APP</fullName>
+                <default>false</default>
+                <label>ZAP DLGL APP</label>
+            </value>
+            <value>
+                <fullName>ZAP Quiz DC</fullName>
+                <default>false</default>
+                <label>ZAP Quiz DC</label>
+            </value>
+            <value>
+                <fullName>ZAP RR Cherry DC</fullName>
+                <default>false</default>
+                <label>ZAP RR Cherry DC</label>
+            </value>
+            <value>
+                <fullName>ZAP Quiz DCG</fullName>
+                <default>false</default>
+                <label>ZAP Quiz DCG</label>
+            </value>
+            <value>
+                <fullName>ZAP Quiz QRMCA</fullName>
+                <default>false</default>
+                <label>ZAP Quiz QRMCA</label>
+            </value>
+            <value>
+                <fullName>ZAP Quiz Debtifi</fullName>
+                <default>false</default>
+                <label>ZAP Quiz Debtifi</label>
+            </value>
+            <value>
+                <fullName>ZAP Jesse Cherry</fullName>
+                <default>false</default>
+                <label>ZAP Jesse Cherry</label>
+            </value>
+            <value>
+                <fullName>ZAP RR Cherry QRMCA</fullName>
+                <default>false</default>
+                <label>ZAP RR Cherry QRMCA</label>
+            </value>
+            <value>
+                <fullName>ZAP weekend Cherry QRMCA</fullName>
+                <default>false</default>
+                <label>ZAP weekend Cherry QRMCA</label>
+            </value>
+            <value>
+                <fullName>ZAP Everyday Main</fullName>
+                <default>false</default>
+                <label>ZAP Everyday Main</label>
+            </value>
+            <value>
+                <fullName>ZAP RR Viper QRMCA</fullName>
+                <default>false</default>
+                <label>ZAP RR Viper QRMCA</label>
+            </value>
+            <value>
+                <fullName>RR EData QRMCA</fullName>
+                <default>false</default>
+                <label>RR EData QRMCA</label>
+            </value>
+            <value>
+                <fullName>QRDC A</fullName>
+                <default>false</default>
+                <label>QRDC A</label>
+            </value>
+            <value>
+                <fullName>QRDC B</fullName>
+                <default>false</default>
+                <label>QRDC B</label>
+            </value>
+            <value>
+                <fullName>Zak Legal Re Blast</fullName>
+                <default>false</default>
+                <label>Zak Legal Re Blast</label>
+            </value>
+            <value>
+                <fullName>RR EDD FB</fullName>
+                <default>false</default>
+                <label>RR EDD FB</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

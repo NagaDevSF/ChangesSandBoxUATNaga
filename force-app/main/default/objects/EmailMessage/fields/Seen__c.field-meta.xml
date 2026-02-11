@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Seen__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Indicates whether the email has been seen/viewed by the user. Used for NEW email notification feature.</description>
+    <inlineHelpText>Check this box when the email has been viewed by the user. This controls the green NEW bar display in the Email Inbox utility.</inlineHelpText>
+    <label>Seen</label>
+    <type>Checkbox</type>
+</CustomField>

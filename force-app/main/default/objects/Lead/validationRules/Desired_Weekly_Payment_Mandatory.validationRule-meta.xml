@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Desired_Weekly_Payment_Mandatory</fullName>
+    <active>false</active>
+    <description>Desired Weekly Payment field should be mandatory for conversion</description>
+    <errorConditionFormula>ISBLANK(Desired_Weekly_Payment__c) &amp;&amp; IsConverted</errorConditionFormula>
+    <errorDisplayField>Desired_Weekly_Payment__c</errorDisplayField>
+    <errorMessage>Please provide the desired weekly payment before converting the lead.</errorMessage>
+</ValidationRule>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Client_Document_Request__c</fullName>
+    <label>Client Document Request</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>MultiselectPicklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Any court document or motion</fullName>
+                <default>false</default>
+                <label>Any court document or motion</label>
+            </value>
+            <value>
+                <fullName>Bank statements</fullName>
+                <default>false</default>
+                <label>Bank statements</label>
+            </value>
+            <value>
+                <fullName>Copy of Complaints</fullName>
+                <default>false</default>
+                <label>Copy of Complaints</label>
+            </value>
+            <value>
+                <fullName>Correspondence or contact information from Lenders</fullName>
+                <default>false</default>
+                <label>Correspondence or contact information from Lenders</label>
+            </value>
+            <value>
+                <fullName>Detailed Hardship Statement</fullName>
+                <default>false</default>
+                <label>Detailed Hardship Statement</label>
+            </value>
+            <value>
+                <fullName>Service of Process (Summons + Complaints)</fullName>
+                <default>false</default>
+                <label>Service of Process (Summons + Complaints)</label>
+            </value>
+            <value>
+                <fullName>Standard Hardship Letter</fullName>
+                <default>false</default>
+                <label>Standard Hardship Letter</label>
+            </value>
+            <value>
+                <fullName>UCC Lien Notices</fullName>
+                <default>false</default>
+                <label>UCC Lien Notices</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+    <visibleLines>4</visibleLines>
+</CustomField>

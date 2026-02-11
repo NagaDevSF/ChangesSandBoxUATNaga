@@ -1,0 +1,836 @@
+/* ============================================
+   PAYMENT PLAN VIEWER - UI STYLES
+   Matches Payment Plan Editor design
+   ============================================ */
+
+/* Main Container */
+.payment-plan-viewer {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    background: white;
+    border: 1px solid #cbd5e0;
+    width: 100%;
+}
+
+/* Section Frame for Summary Stats */
+.section-frame {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 12px;
+    margin: 12px;
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+.modal-header {
+    background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+    color: white;
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 40px;
+}
+
+.modal-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mode-indicator {
+    opacity: 0.9;
+}
+
+.plan-name {
+    font-weight: 700;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.icon-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.refresh-btn,
+.maximize-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.refresh-btn:hover,
+.maximize-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Maximized state */
+.payment-plan-viewer.maximized {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    z-index: 9999 !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+}
+
+.payment-plan-viewer.maximized .table-container {
+    max-height: calc(100vh - 250px) !important;
+    height: calc(100vh - 250px) !important;
+}
+
+.version-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 12px;
+}
+
+/* User Info Row */
+.user-info-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    justify-content: flex-end;
+    margin-right: 16px;
+}
+
+.user-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.user-badge lightning-icon {
+    --lwc-colorTextIconDefault: rgba(255, 255, 255, 0.9);
+}
+
+.activated-by {
+    background: rgba(72, 187, 120, 0.3);
+}
+
+.created-by {
+    background: rgba(66, 153, 225, 0.3);
+}
+
+/* ============================================
+   PLAN VERSION SELECTOR
+   ============================================ */
+.plan-selector-container {
+    background: #f7fafc;
+    padding: 10px 16px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.plan-selector-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.plan-dropdown {
+    flex: 0 0 300px;
+    max-width: 300px;
+}
+
+.plan-count-badge {
+    background: #e2e8f0;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #4a5568;
+}
+
+/* ============================================
+   TAB BAR
+   ============================================ */
+.tab-bar {
+    display: flex;
+    align-items: center;
+    background: #f7fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0 8px;
+}
+
+.tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    color: #4a5568;
+    transition: all 0.2s;
+    background: transparent;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+
+.tab:hover {
+    color: #3182ce;
+}
+
+.tab.active {
+    background: white;
+    border-bottom: 2px solid #3182ce;
+    color: #3182ce;
+}
+
+.tab-count {
+    margin-left: 4px;
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.epps-badge {
+    margin-left: auto;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: #4a5568;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #e2e8f0;
+    border-radius: 4px;
+}
+
+.epps-badge lightning-icon {
+    --slds-c-icon-color-foreground-default: #4a5568;
+}
+
+/* ============================================
+   TABLE CONTAINER - MODERN RICH DESIGN
+   ============================================ */
+.table-container {
+    position: relative;
+    max-height: 600px;
+    overflow-y: auto;
+    overflow-x: auto;
+    background: linear-gradient(180deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: 0 0 8px 8px;
+    border: 1px solid #e2e8f0;
+    border-top: none;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.table-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+/* ============================================
+   DATA TABLE - MODERN RICH DESIGN
+   ============================================ */
+.data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: transparent;
+}
+
+/* Table Header - Rich Gradient */
+.data-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.data-table thead tr {
+    background: linear-gradient(135deg, #1a365d 0%, #2c5282 50%, #2b6cb0 100%);
+    box-shadow: 0 4px 6px rgba(26, 54, 93, 0.25), 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.data-table th {
+    padding: 14px 8px;
+    font-weight: 700;
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: 3px solid #63b3ed;
+    white-space: nowrap;
+    color: #ffffff;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.data-table th:first-child {
+    border-top-left-radius: 8px;
+}
+
+.data-table th:last-child {
+    border-top-right-radius: 8px;
+}
+
+/* ============================================
+   COLUMN ALIGNMENT CLASSES
+   ============================================ */
+
+.th-center { text-align: center !important; }
+.th-right { text-align: right !important; padding-right: 8px !important; }
+.th-left { text-align: left !important; padding-left: 8px !important; }
+
+.td-center { text-align: center !important; }
+.td-right { text-align: right !important; padding-right: 8px !important; }
+.td-left { text-align: left !important; padding-left: 8px !important; }
+
+.td-currency {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', Consolas, monospace !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+}
+
+/* Header column width classes */
+.th-rownum { width: 40px; min-width: 40px; }
+.th-draftnum { width: 55px; min-width: 50px; }
+.th-date { width: 90px; min-width: 90px; }
+.th-currency { width: 80px; min-width: 70px; }
+.th-currency-sm { width: 70px; min-width: 60px; }
+.th-status { width: 80px; min-width: 70px; }
+
+/* Table Body - Modern Rich Rows */
+.data-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+    height: 40px;
+}
+
+.data-table tbody tr {
+    background: linear-gradient(180deg, #ffffff 0%, #f7fafc 100%);
+    transition: all 0.2s ease;
+}
+
+.data-table tbody tr:nth-child(even):not(.wire-sub-row) {
+    background: linear-gradient(180deg, #f7fafc 0%, #edf2f7 100%);
+}
+
+.data-table tbody tr:hover:not(.wire-sub-row) {
+    background: linear-gradient(180deg, #ebf8ff 0%, #bee3f8 100%);
+    box-shadow: 0 2px 8px rgba(74, 85, 104, 0.15);
+}
+
+/* ============================================
+   ROW STATES - MODERN RICH STATUS COLORS
+   ============================================ */
+
+/* Cleared = Green */
+.row-cleared {
+    background: linear-gradient(180deg, #c6f6d5 0%, #9ae6b4 100%) !important;
+    border-left: 4px solid #38a169;
+}
+
+.row-cleared:hover {
+    background: linear-gradient(180deg, #9ae6b4 0%, #68d391 100%) !important;
+    box-shadow: 0 2px 8px rgba(56, 161, 105, 0.25);
+}
+
+/* NSF = Red */
+.row-nsf {
+    background: linear-gradient(180deg, #fed7d7 0%, #feb2b2 100%) !important;
+    border-left: 4px solid #e53e3e;
+}
+
+.row-nsf:hover {
+    background: linear-gradient(180deg, #feb2b2 0%, #fc8181 100%) !important;
+    box-shadow: 0 2px 8px rgba(229, 62, 62, 0.25);
+}
+
+/* Cancelled = Yellow */
+.row-cancelled {
+    background: linear-gradient(180deg, #fefcbf 0%, #faf089 100%) !important;
+    border-left: 4px solid #d69e2e;
+}
+
+.row-cancelled:hover {
+    background: linear-gradient(180deg, #faf089 0%, #ecc94b 100%) !important;
+    box-shadow: 0 2px 8px rgba(214, 158, 46, 0.25);
+}
+
+/* Scheduled = Blue */
+.row-scheduled {
+    background: linear-gradient(180deg, #bee3f8 0%, #90cdf4 100%) !important;
+    border-left: 4px solid #3182ce;
+}
+
+.row-scheduled:hover {
+    background: linear-gradient(180deg, #90cdf4 0%, #63b3ed 100%) !important;
+    box-shadow: 0 2px 8px rgba(49, 130, 206, 0.25);
+}
+
+/* Row number styling */
+.row-number {
+    font-weight: 500;
+    color: #2d3748;
+}
+
+/* Modified star indicator */
+.row-number.modified-star::before {
+    content: '\2605';
+    color: #ed8936;
+    margin-right: 4px;
+    font-size: 10px;
+}
+
+/* Draft number (skips NSF/Cancelled) */
+.draft-number {
+    font-weight: 600;
+    color: #2b6cb0;
+    font-size: 11px;
+}
+
+/* ============================================
+   WIRE FEE SUB-ROWS
+   ============================================ */
+.wire-sub-row {
+    font-size: 12px;
+    border-left: 4px solid;
+}
+
+.wire-sub-row td {
+    padding: 8px;
+    border-bottom: 1px dashed var(--gray-200);
+}
+
+/* Orange - Wires received less than draft amount */
+.wire-row-orange {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border-left-color: #f97316;
+}
+
+.wire-row-orange td {
+    color: #9a3412;
+}
+
+.wire-row-orange .wire-amount {
+    color: #ea580c;
+    font-weight: 700;
+}
+
+.wire-row-orange .wire-icon {
+    --slds-c-icon-color-foreground-default: #f97316;
+}
+
+/* Green - Wires received equal to or greater than draft amount */
+.wire-row-green {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border-left-color: #22c55e;
+}
+
+.wire-row-green td {
+    color: #166534;
+}
+
+.wire-row-green .wire-amount {
+    color: #16a34a;
+    font-weight: 700;
+}
+
+.wire-row-green .wire-icon {
+    --slds-c-icon-color-foreground-default: #22c55e;
+}
+
+/* Wire row content styling */
+.wire-type {
+    font-size: 11px;
+}
+
+.wire-amount {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', Consolas, monospace;
+}
+
+.wire-icon {
+    opacity: 0.7;
+}
+
+/* ============================================
+   VALUE STYLING
+   ============================================ */
+.value-positive {
+    color: #38a169;
+    font-weight: 500;
+}
+
+.value-negative {
+    color: #e53e3e;
+    font-weight: 500;
+}
+
+.value-zero {
+    color: #a0aec0;
+}
+
+.savings-positive {
+    color: #38a169;
+    font-weight: 600;
+}
+
+.savings-negative {
+    color: #e53e3e;
+    font-weight: 600;
+}
+
+/* ============================================
+   STATUS BADGES
+   ============================================ */
+.status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-scheduled {
+    background: #bee3f8;
+    color: #2b6cb0;
+}
+
+.status-cleared {
+    background: #c6f6d5;
+    color: #276749;
+}
+
+.status-nsf {
+    background: #fed7d7;
+    color: #c53030;
+}
+
+.status-cancelled {
+    background: #fefcbf;
+    color: #975a16;
+    text-decoration: line-through;
+}
+
+.status-pending {
+    background: #fefcbf;
+    color: #975a16;
+}
+
+/* ============================================
+   AGGREGATE FOOTER - MODERN RICH TOTALS ROW
+   ============================================ */
+.aggregate-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+
+.aggregate-row {
+    background: linear-gradient(135deg, #1a365d 0%, #2c5282 50%, #2b6cb0 100%) !important;
+    border-top: 3px solid #63b3ed;
+    box-shadow: 0 -4px 12px rgba(26, 54, 93, 0.3);
+}
+
+.aggregate-row td {
+    padding: 14px 8px;
+    color: white;
+    font-weight: 600;
+    border-bottom: none;
+}
+
+.aggregate-row td:first-child {
+    border-bottom-left-radius: 8px;
+}
+
+.aggregate-row td:last-child {
+    border-bottom-right-radius: 8px;
+}
+
+.aggregate-row:hover {
+    background: linear-gradient(135deg, #1a365d 0%, #2c5282 50%, #2b6cb0 100%) !important;
+}
+
+.aggregate-label {
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #ffffff !important;
+}
+
+.aggregate-value {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', Consolas, monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: #90cdf4 !important;
+    text-align: right;
+    padding-right: 8px !important;
+}
+
+/* Cleared Row - Green Theme */
+.cleared-row {
+    background: linear-gradient(135deg, #276749 0%, #38a169 50%, #48bb78 100%) !important;
+    border-top: 2px solid #68d391;
+}
+
+.cleared-row td {
+    color: white !important;
+}
+
+.cleared-value {
+    color: #c6f6d5 !important;
+}
+
+/* NSF Row - Red Theme */
+.nsf-row {
+    background: linear-gradient(135deg, #9b2c2c 0%, #c53030 50%, #e53e3e 100%) !important;
+    border-top: 2px solid #fc8181;
+}
+
+.nsf-row td {
+    color: white !important;
+}
+
+.nsf-value {
+    color: #fed7d7 !important;
+}
+
+/* Wires Row - Purple/Indigo Theme */
+.wires-row {
+    background: linear-gradient(135deg, #553c9a 0%, #6b46c1 50%, #805ad5 100%) !important;
+    border-top: 2px solid #b794f4;
+}
+
+.wires-row td {
+    color: white !important;
+}
+
+.wires-value {
+    color: #e9d8fd !important;
+}
+
+/* ============================================
+   FOOTER BUTTON BAR
+   ============================================ */
+.modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f7fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+.footer-left,
+.footer-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.footer-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #718096;
+}
+
+.footer-info lightning-icon {
+    --slds-c-icon-color-foreground-default: #718096;
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #718096;
+}
+
+.empty-state-text {
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.empty-state-subtext {
+    font-size: 12px;
+    color: #a0aec0;
+}
+
+/* ============================================
+   NO PAYMENT PLAN STATE
+   ============================================ */
+.no-plan-container {
+    padding: 60px 20px;
+    text-align: center;
+    background: #f7fafc;
+    border-radius: 8px;
+}
+
+.no-plan-icon {
+    margin-bottom: 16px;
+}
+
+.no-plan-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 8px;
+}
+
+.no-plan-text {
+    font-size: 13px;
+    color: #718096;
+}
+
+/* ============================================
+   LOADING STATE
+   ============================================ */
+:host {
+    position: relative;
+    display: block;
+    min-height: 200px;
+    width: 100%;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+lightning-spinner {
+    z-index: 101;
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+@media (max-width: 900px) {
+    .data-table {
+        font-size: 11px;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 4px 2px;
+    }
+
+    .th-currency,
+    .th-currency-sm {
+        width: 60px;
+        min-width: 55px;
+    }
+
+    .plan-dropdown {
+        flex: 1;
+        max-width: none;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .footer-left,
+    .footer-right {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 600px) {
+    .tab {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .epps-badge {
+        display: none;
+    }
+
+    .plan-selector-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .plan-count-badge {
+        align-self: flex-start;
+    }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+.hidden {
+    display: none !important;
+}
+
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.font-mono {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', Consolas, monospace;
+}

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Legal_Status__c</fullName>
+    <label>Legal Status</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Communication</fullName>
+                <default>false</default>
+                <label>Communication</label>
+            </value>
+            <value>
+                <fullName>Debt Verified</fullName>
+                <default>false</default>
+                <label>Debt Verified</label>
+            </value>
+            <value>
+                <fullName>Negotiation</fullName>
+                <default>false</default>
+                <label>Negotiation</label>
+            </value>
+            <value>
+                <fullName>Fully Executed Settlement</fullName>
+                <default>false</default>
+                <label>Settlement Executed</label>
+            </value>
+            <value>
+                <fullName>Judgment</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Judgment</label>
+            </value>
+            <value>
+                <fullName>Lawsuit</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Lawsuit</label>
+            </value>
+            <value>
+                <fullName>Payment History Pending</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Payment History Pending</label>
+            </value>
+            <value>
+                <fullName>Payoff Letter Pending</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Payoff Letter Pending</label>
+            </value>
+            <value>
+                <fullName>UCC/Money on Hold</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>UCC/Money on Hold</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

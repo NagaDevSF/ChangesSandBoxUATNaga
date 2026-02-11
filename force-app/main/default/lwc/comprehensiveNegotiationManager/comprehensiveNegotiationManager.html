@@ -1,0 +1,291 @@
+<template>
+    <lightning-card class="custom-card">
+        <h2 slot="title" class="card-title">
+            <lightning-icon icon-name="standard:contract" size="small" class="slds-m-right_x-small title-icon"></lightning-icon>
+            Negotiation Manager
+        </h2>
+        
+        <div slot="actions">
+            <lightning-button 
+                label="New Negotiation" 
+                class="new-btn btn-base btn-md btn-ripple btn-magnetic"
+                icon-name="utility:add"
+                onclick={handleNewNegotiation}>
+            </lightning-button>
+        </div>
+
+        <div class="card-content">
+            
+            <template if:true={isLoading}>
+                <div class="slds-is-relative slds-p-around_large">
+                    <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+            <template if:true={showCreateForm}>
+                <div class="form-container">
+                    <div class="form-header">
+                        <h3 class="form-title">{formTitle}</h3>
+                        <lightning-button-icon
+                            icon-name="utility:close"
+                            variant="bare"
+                            onclick={handleCancelForm}
+                            alternative-text="Close"
+                            class="close-btn">
+                        </lightning-button-icon>
+                    </div>
+                    
+                    <div class="form-content">
+                        <div class="form-row">
+                            <div class="form-field">
+                                <lightning-input
+                                    label="Settlement Offer Amount"
+                                    type="number"
+                                    formatter="currency"
+                                    step="0.01"
+                                    value={negotiationForm.settlementOffer}
+                                    data-field="settlementOffer"
+                                    onchange={handleInputChange}
+                                    class="custom-input">
+                                </lightning-input>
+                            </div>
+                            <div class="form-field">
+                                <lightning-input
+                                    label="Counter Offer Amount"
+                                    type="number"
+                                    formatter="currency"
+                                    step="0.01"
+                                    value={negotiationForm.counterOffer}
+                                    data-field="counterOffer"
+                                    onchange={handleInputChange}
+                                    class="custom-input">
+                                </lightning-input>
+                            </div>
+                            <div class="form-field">
+                                <lightning-input
+                                    label="Final Agreed Amount"
+                                    type="number"
+                                    formatter="currency"
+                                    step="0.01"
+                                    value={negotiationForm.finalAmount}
+                                    data-field="finalAmount"
+                                    onchange={handleInputChange}
+                                    class="custom-input">
+                                </lightning-input>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-field">
+                                <lightning-input
+                                    label="Paid Amount"
+                                    type="number"
+                                    formatter="currency"
+                                    step="0.01"
+                                    value={negotiationForm.paidAmount}
+                                    data-field="paidAmount"
+                                    onchange={handleInputChange}
+                                    class="custom-input">
+                                </lightning-input>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-field">
+                                <lightning-combobox
+                                    label="Status"
+                                    value={negotiationForm.status}
+                                    options={statusOptions}
+                                    data-field="status"
+                                    onchange={handleInputChange}
+                                    required
+                                    class="custom-combobox"
+                                    dropdown-length="5">
+                                </lightning-combobox>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <lightning-button 
+                            label="Cancel" 
+                            class="cancel-btn btn-base btn-md btn-ripple"
+                            onclick={handleCancelForm}>
+                        </lightning-button>
+                        <lightning-button 
+                            label={saveButtonLabel}
+                            class="save-btn btn-base btn-md btn-ripple btn-loading"
+                            onclick={handleSaveNegotiation}
+                            disabled={isLoading}>
+                        </lightning-button>
+                    </div>
+                </div>
+            </template>
+
+            <template if:false={showCreateForm}>
+                <template if:true={hasNegotiations}>
+                    <div class="table-container">
+                        <lightning-datatable
+                            key-field="Id"
+                            data={negotiations}
+                            columns={columns}
+                            onrowaction={handleRowAction}
+                            hide-checkbox-column="true"
+                            show-row-number-column="false"
+                            sorted-direction="desc"
+                            sorted-by="CreatedDate"
+                            class="custom-datatable">
+                        </lightning-datatable>
+                    </div>
+                </template>
+                
+                <template if:false={hasNegotiations}>
+                    <div class="empty-state">
+                        <lightning-icon icon-name="standard:contract" size="large" class="empty-icon"></lightning-icon>
+                        <h3 class="empty-title">No negotiations yet</h3>
+                        <p class="empty-message">
+                            Start tracking negotiations by creating your first negotiation record.
+                        </p>
+                        <lightning-button 
+                            label="Create First Negotiation" 
+                            class="create-first-btn btn-base btn-md btn-glow btn-pulse btn-magnetic"
+                            onclick={handleNewNegotiation}>
+                        </lightning-button>
+                    </div>
+                </template>
+            </template>
+        </div>
+        
+        <template if:true={showPaymentModal}>
+            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium">Record Payment</h2>
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" 
+                                onclick={handleCancelPayment}>
+                            <lightning-icon icon-name="utility:close" alternative-text="close" size="small"></lightning-icon>
+                        </button>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-col slds-size_1-of-2">
+                                <lightning-input
+                                    label="Payment Amount"
+                                    type="number"
+                                    formatter="currency"
+                                    step="0.01"
+                                    value={paymentForm.paymentAmount}
+                                    data-field="paymentAmount"
+                                    onchange={handlePaymentInputChange}
+                                    required>
+                                </lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2">
+                                <lightning-input
+                                    label="Payment Date"
+                                    type="date"
+                                    value={paymentForm.paymentDate}
+                                    data-field="paymentDate"
+                                    onchange={handlePaymentInputChange}
+                                    required>
+                                </lightning-input>
+                            </div>
+                        </div>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button 
+                            label="Cancel" 
+                            class="cancel-btn btn-base btn-md btn-ripple"
+                            variant="neutral" 
+                            onclick={handleCancelPayment}>
+                        </lightning-button>
+                        <lightning-button 
+                            label="Record Payment" 
+                            class="save-btn btn-base btn-md btn-ripple btn-loading"
+                            variant="brand" 
+                            onclick={handleSavePayment}
+                            disabled={isLoading}>
+                        </lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+        <!-- View Details Modal -->
+        <template if:true={showViewModal}>
+            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container view-modal-container">
+                    <header class="slds-modal__header view-modal-header">
+                        <h2 class="slds-text-heading_medium">Negotiation Details</h2>
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" 
+                                onclick={handleCancelView}>
+                            <lightning-icon icon-name="utility:close" alternative-text="close" size="small"></lightning-icon>
+                        </button>
+                    </header>
+                    <div class="slds-modal__content view-modal-content">
+                        <div class="details-grid">
+                            <div class="detail-section">
+                                <h3 class="section-title">Basic Information</h3>
+                                <div class="detail-row">
+                                    <span class="detail-label">Negotiation Number:</span>
+                                    <span class="detail-value">{formattedSelectedNegotiation.Name}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Status:</span>
+                                    <span class="detail-value">{formattedSelectedNegotiation.Negotiation_Status__c}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Active:</span>
+                                    <span class="detail-value">{formattedSelectedNegotiation.activeStatus}</span>
+                                </div>
+                            </div>
+
+                            <div class="detail-section">
+                                <h3 class="section-title">Financial Information</h3>
+                                <div class="detail-row">
+                                    <span class="detail-label">Settlement Offer Amount:</span>
+                                    <span class="detail-value">{formattedSelectedNegotiation.formattedSettlementAmount}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Counter Offer Amount:</span>
+                                    <span class="detail-value">{formattedSelectedNegotiation.formattedCounterAmount}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Final Agreed Amount:</span>
+                                    <span class="detail-value">{formattedSelectedNegotiation.formattedFinalAmount}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Paid Amount:</span>
+                                    <span class="detail-value">{formattedSelectedNegotiation.formattedPaidAmount}</span>
+                                </div>
+                            </div>
+
+                            <div class="detail-section">
+                                <h3 class="section-title">Timestamps</h3>
+                                <div class="detail-row">
+                                    <span class="detail-label">Created Date:</span>
+                                    <span class="detail-value">{formattedSelectedNegotiation.formattedCreatedDate}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Last Modified Date:</span>
+                                    <span class="detail-value">{formattedSelectedNegotiation.formattedLastModifiedDate}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button 
+                            label="Close" 
+                            class="cancel-btn btn-base btn-md btn-ripple"
+                            variant="neutral" 
+                            onclick={handleCancelView}>
+                        </lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+        
+    </lightning-card>
+</template>

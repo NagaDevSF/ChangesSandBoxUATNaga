@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Lead_Source__c</fullName>
+    <label>Lead Source DCG</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>AnswerForce</fullName>
+                <default>false</default>
+                <label>AnswerForce</label>
+            </value>
+            <value>
+                <fullName>App</fullName>
+                <default>false</default>
+                <label>App</label>
+            </value>
+            <value>
+                <fullName>Blog</fullName>
+                <default>false</default>
+                <label>Blog</label>
+            </value>
+            <value>
+                <fullName>BOOKING</fullName>
+                <default>false</default>
+                <label>BOOKING</label>
+            </value>
+            <value>
+                <fullName>BrodyLeads</fullName>
+                <default>false</default>
+                <label>BrodyLeads</label>
+            </value>
+            <value>
+                <fullName>CALCULATOR</fullName>
+                <default>false</default>
+                <label>CALCULATOR</label>
+            </value>
+            <value>
+                <fullName>Cherry</fullName>
+                <default>false</default>
+                <label>Cherry</label>
+            </value>
+            <value>
+                <fullName>Cherry_V.2</fullName>
+                <default>false</default>
+                <label>Cherry_V.2</label>
+            </value>
+            <value>
+                <fullName>Cherry07</fullName>
+                <default>false</default>
+                <label>Cherry07</label>
+            </value>
+            <value>
+                <fullName>Cherry14</fullName>
+                <default>false</default>
+                <label>Cherry14</label>
+            </value>
+            <value>
+                <fullName>Cherry21</fullName>
+                <default>false</default>
+                <label>Cherry21</label>
+            </value>
+            <value>
+                <fullName>Cherry30</fullName>
+                <default>false</default>
+                <label>Cherry30</label>
+            </value>
+            <value>
+                <fullName>Cherry DC</fullName>
+                <default>false</default>
+                <label>Cherry DC</label>
+            </value>
+            <value>
+                <fullName>cherrySms</fullName>
+                <default>false</default>
+                <label>cherrySms</label>
+            </value>
+            <value>
+                <fullName>CherryV.2</fullName>
+                <default>false</default>
+                <label>CherryV.2</label>
+            </value>
+            <value>
+                <fullName>cherryX</fullName>
+                <default>false</default>
+                <label>cherryX</label>
+            </value>
+            <value>
+                <fullName>Convoso</fullName>
+                <default>false</default>
+                <label>Convoso</label>
+            </value>
+            <value>
+                <fullName>CT Legal Scraper</fullName>
+                <default>false</default>
+                <label>CT Legal Scraper</label>
+            </value>
+            <value>
+                <fullName>DCGDI</fullName>
+                <default>false</default>
+                <label>DCGDI</label>
+            </value>
+            <value>
+                <fullName>DCG DI</fullName>
+                <default>false</default>
+                <label>DCG DI</label>
+            </value>
+            <value>
+                <fullName>EBOOK</fullName>
+                <default>false</default>
+                <label>EBOOK</label>
+            </value>
+            <value>
+                <fullName>EData</fullName>
+                <default>false</default>
+                <label>EData</label>
+            </value>
+            <value>
+                <fullName>EDD30</fullName>
+                <default>false</default>
+                <label>EDD30</label>
+            </value>
+            <value>
+                <fullName>Email</fullName>
+                <default>false</default>
+                <label>Email</label>
+            </value>
+            <value>
+                <fullName>Everyday Form</fullName>
+                <default>false</default>
+                <label>Everyday Form</label>
+            </value>
+            <value>
+                <fullName>Facebook</fullName>
+                <default>false</default>
+                <label>Facebook</label>
+            </value>
+            <value>
+                <fullName>facebookX</fullName>
+                <default>false</default>
+                <label>facebookX</label>
+            </value>
+            <value>
+                <fullName>Google Ad Words</fullName>
+                <default>false</default>
+                <label>Google Ad Words</label>
+            </value>
+            <value>
+                <fullName>HB700</fullName>
+                <default>false</default>
+                <label>HB700</label>
+            </value>
+            <value>
+                <fullName>Instagram</fullName>
+                <default>false</default>
+                <label>Instagram</label>
+            </value>
+            <value>
+                <fullName>Javier</fullName>
+                <default>false</default>
+                <label>Javier</label>
+            </value>
+            <value>
+                <fullName>JJ AP</fullName>
+                <default>false</default>
+                <label>JJ AP</label>
+            </value>
+            <value>
+                <fullName>JJ Legal</fullName>
+                <default>false</default>
+                <label>JJ Legal</label>
+            </value>
+            <value>
+                <fullName>JJ Live</fullName>
+                <default>false</default>
+                <label>JJ Live</label>
+            </value>
+            <value>
+                <fullName>JJ PACK</fullName>
+                <default>false</default>
+                <label>JJ PACK</label>
+            </value>
+            <value>
+                <fullName>JJ WAP</fullName>
+                <default>false</default>
+                <label>JJ WAP</label>
+            </value>
+            <value>
+                <fullName>JV Referral</fullName>
+                <default>false</default>
+                <label>JV Referral</label>
+            </value>
+            <value>
+                <fullName>LAD</fullName>
+                <default>false</default>
+                <label>LAD</label>
+            </value>
+            <value>
+                <fullName>LB Referral</fullName>
+                <default>false</default>
+                <label>LB Referral</label>
+            </value>
+            <value>
+                <fullName>Legacy</fullName>
+                <default>false</default>
+                <label>Legacy</label>
+            </value>
+            <value>
+                <fullName>Legal</fullName>
+                <default>false</default>
+                <label>Legal</label>
+            </value>
+            <value>
+                <fullName>LinkedIn</fullName>
+                <default>false</default>
+                <label>LinkedIn</label>
+            </value>
+            <value>
+                <fullName>Lumix</fullName>
+                <default>false</default>
+                <label>Lumix</label>
+            </value>
+            <value>
+                <fullName>Mack</fullName>
+                <default>false</default>
+                <label>Mack</label>
+            </value>
+            <value>
+                <fullName>MCA</fullName>
+                <default>false</default>
+                <label>MCA</label>
+            </value>
+            <value>
+                <fullName>MD Legal Scrape</fullName>
+                <default>false</default>
+                <label>MD Legal Scrape</label>
+            </value>
+            <value>
+                <fullName>NY Legal Scraper</fullName>
+                <default>false</default>
+                <label>NY Legal Scraper</label>
+            </value>
+            <value>
+                <fullName>One Oak</fullName>
+                <default>false</default>
+                <label>One Oak</label>
+            </value>
+            <value>
+                <fullName>Open Lead Reblast</fullName>
+                <default>false</default>
+                <label>Open Lead Reblast</label>
+            </value>
+            <value>
+                <fullName>Organic</fullName>
+                <default>false</default>
+                <label>Organic</label>
+            </value>
+            <value>
+                <fullName>Other</fullName>
+                <default>false</default>
+                <label>Other</label>
+            </value>
+            <value>
+                <fullName>Packages</fullName>
+                <default>false</default>
+                <label>Packages</label>
+            </value>
+            <value>
+                <fullName>Pack Archive</fullName>
+                <default>false</default>
+                <label>Pack Archive</label>
+            </value>
+            <value>
+                <fullName>q-quiz-c QRMCA</fullName>
+                <default>false</default>
+                <label>q-quiz-c QRMCA</label>
+            </value>
+            <value>
+                <fullName>QR-DC</fullName>
+                <default>false</default>
+                <label>QR-DC</label>
+            </value>
+            <value>
+                <fullName>QR-DC QRMCA</fullName>
+                <default>false</default>
+                <label>QR-DC QRMCA</label>
+            </value>
+            <value>
+                <fullName>QRMCA07</fullName>
+                <default>false</default>
+                <label>QRMCA07</label>
+            </value>
+            <value>
+                <fullName>QRMCA14</fullName>
+                <default>false</default>
+                <label>QRMCA14</label>
+            </value>
+            <value>
+                <fullName>QRMCA21</fullName>
+                <default>false</default>
+                <label>QRMCA21</label>
+            </value>
+            <value>
+                <fullName>QRMCA30</fullName>
+                <default>false</default>
+                <label>QRMCA30</label>
+            </value>
+            <value>
+                <fullName>Quiz</fullName>
+                <default>false</default>
+                <label>Quiz</label>
+            </value>
+            <value>
+                <fullName>Referral</fullName>
+                <default>false</default>
+                <label>Referral</label>
+            </value>
+            <value>
+                <fullName>SFMC SMS</fullName>
+                <default>false</default>
+                <label>SFMC SMS</label>
+            </value>
+            <value>
+                <fullName>SMS</fullName>
+                <default>false</default>
+                <label>SMS</label>
+            </value>
+            <value>
+                <fullName>Sourcify</fullName>
+                <default>false</default>
+                <label>Sourcify</label>
+            </value>
+            <value>
+                <fullName>TBS Referral</fullName>
+                <default>false</default>
+                <label>TBS Referral</label>
+            </value>
+            <value>
+                <fullName>Telegram</fullName>
+                <default>false</default>
+                <label>Telegram</label>
+            </value>
+            <value>
+                <fullName>Tier 1</fullName>
+                <default>false</default>
+                <label>Tier 1</label>
+            </value>
+            <value>
+                <fullName>TikTok</fullName>
+                <default>false</default>
+                <label>TikTok</label>
+            </value>
+            <value>
+                <fullName>Twitter</fullName>
+                <default>false</default>
+                <label>Twitter</label>
+            </value>
+            <value>
+                <fullName>Viper</fullName>
+                <default>false</default>
+                <label>Viper</label>
+            </value>
+            <value>
+                <fullName>VIP Referral</fullName>
+                <default>false</default>
+                <label>VIP Referral</label>
+            </value>
+            <value>
+                <fullName>VOSO AI Qualified</fullName>
+                <default>false</default>
+                <label>VOSO AI Qualified</label>
+            </value>
+            <value>
+                <fullName>Web Lead</fullName>
+                <default>false</default>
+                <label>Web Lead</label>
+            </value>
+            <value>
+                <fullName>WhatsApp</fullName>
+                <default>false</default>
+                <label>WhatsApp</label>
+            </value>
+            <value>
+                <fullName>YouTube</fullName>
+                <default>false</default>
+                <label>YouTube</label>
+            </value>
+            <value>
+                <fullName>YP Cherry</fullName>
+                <default>false</default>
+                <label>YP Cherry</label>
+            </value>
+            <value>
+                <fullName>Zak Legal Re Blast</fullName>
+                <default>false</default>
+                <label>Zak Legal Re Blast</label>
+            </value>
+            <value>
+                <fullName>Burner</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Burner</label>
+            </value>
+            <value>
+                <fullName>Dialer</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Dialer</label>
+            </value>
+            <value>
+                <fullName>Diamond Tier</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Diamond Tier</label>
+            </value>
+            <value>
+                <fullName>MANN</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>MANN</label>
+            </value>
+            <value>
+                <fullName>Paper Lead</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Paper Lead</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

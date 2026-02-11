@@ -1,0 +1,56 @@
+<template>
+<lightning-card title="Email Attachments" icon-name="standard:file">
+<div slot="actions">
+<lightning-button-icon icon-name="utility:refresh"
+alternative-text="Refresh"
+title="Refresh"
+onclick={handleRefresh}>
+</lightning-button-icon>
+</div>
+
+<div class="slds-p-around_medium">
+<!-- Spinner while loading -->
+<template if:true={isLoading}>
+<lightning-spinner alternative-text="Loading attachments..." size="small"></lightning-spinner>
+</template>
+
+<!-- Table of attachments -->
+<template if:false={isLoading}>
+<template if:true={hasAttachments}>
+<div class="slds-m-bottom_small">
+<lightning-datatable
+key-field="recordId"
+data={attachments}
+columns={columns}
+hide-checkbox-column
+sorted-by={sortedBy}
+sorted-direction={sortedDirection}
+onsort={handleSort}>
+</lightning-datatable>
+</div>
+</template>
+
+<!-- No files message -->
+<template if:false={hasAttachments}>
+<div class="slds-illustration slds-illustration_small slds-p-around_medium">
+<div class="slds-text-longform">
+<h3 class="slds-text-heading_medium slds-text-align_center">No email attachments found</h3>
+<p class="slds-text-body_regular slds-text-align_center">
+When emails with attachments are sent to or from this Lead, they'll appear here.
+</p>
+</div>
+</div>
+</template>
+</template>
+
+<!-- Error message -->
+<template if:true={error}>
+<div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+<span class="slds-assistive-text">Error</span>
+<lightning-icon icon-name="utility:error" alternative-text="Error" class="slds-m-right_x-small"></lightning-icon>
+<h2>{errorMessage}</h2>
+</div>
+</template>
+</div>
+</lightning-card>
+</template>

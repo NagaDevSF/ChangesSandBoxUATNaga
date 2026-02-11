@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Pre_Deal_Status__c</fullName>
+    <label>Pre Deal Status</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>DOCS IN</fullName>
+                <default>false</default>
+                <label>DOCS IN</label>
+            </value>
+            <value>
+                <fullName>Duplicate</fullName>
+                <default>false</default>
+                <label>Duplicate</label>
+            </value>
+            <value>
+                <fullName>Enrolled</fullName>
+                <default>false</default>
+                <label>Enrolled</label>
+            </value>
+            <value>
+                <fullName>ENROLLED WITH COMPETITOR - NOT SETTLED OUT</fullName>
+                <default>false</default>
+                <label>ENROLLED WITH COMPETITOR - NOT SETTLED OUT</label>
+            </value>
+            <value>
+                <fullName>ENROLLED WITH COMPETITOR - SETTLED OUT</fullName>
+                <default>false</default>
+                <label>ENROLLED WITH COMPETITOR - SETTLED OUT</label>
+            </value>
+            <value>
+                <fullName>Interested</fullName>
+                <default>false</default>
+                <label>Interested</label>
+            </value>
+            <value>
+                <fullName>LEGACY</fullName>
+                <default>false</default>
+                <label>LEGACY</label>
+            </value>
+            <value>
+                <fullName>NQ - AFFORDABILITY</fullName>
+                <default>false</default>
+                <label>NQ - AFFORDABILITY</label>
+            </value>
+            <value>
+                <fullName>NQ - BALANCE / PAYMENTS</fullName>
+                <default>false</default>
+                <label>NQ - BALANCE / PAYMENTS</label>
+            </value>
+            <value>
+                <fullName>NQ - OTHER</fullName>
+                <default>false</default>
+                <label>NQ - OTHER</label>
+            </value>
+            <value>
+                <fullName>ATTEMPTING</fullName>
+                <default>false</default>
+                <label>↗️ ATTEMPTING</label>
+            </value>
+            <value>
+                <fullName>Transfer</fullName>
+                <default>false</default>
+                <label>⏩Transfer</label>
+            </value>
+            <value>
+                <fullName>FUTURE FOLLOW UP</fullName>
+                <default>false</default>
+                <label>⏳ FUTURE FOLLOW UP</label>
+            </value>
+            <value>
+                <fullName>INVALID</fullName>
+                <default>false</default>
+                <label>❌ INVALID</label>
+            </value>
+            <value>
+                <fullName>Funding</fullName>
+                <default>false</default>
+                <label>🏦Funding</label>
+            </value>
+            <value>
+                <fullName>NOT INTERESTED - (SEEKING FUNDING)</fullName>
+                <default>false</default>
+                <label>💰🚫 NOT INTERESTED - (SEEKING FUNDING)</label>
+            </value>
+            <value>
+                <fullName>Reduced pays with Creditor</fullName>
+                <default>false</default>
+                <label>💳🔽 Reduced pays with Creditor</label>
+            </value>
+            <value>
+                <fullName>NOT INTERESTED - (HAS DEBT)</fullName>
+                <default>false</default>
+                <label>💸🚫 NOT INTERESTED - (HAS DEBT)</label>
+            </value>
+            <value>
+                <fullName>DOCS IN - REOPEN</fullName>
+                <default>false</default>
+                <label>📂🔄 DOCS IN - REOPEN</label>
+            </value>
+            <value>
+                <fullName>APPOINTMENT SET</fullName>
+                <default>false</default>
+                <label>📅 APPOINTMENT SET</label>
+            </value>
+            <value>
+                <fullName>WAITING ON DOCS</fullName>
+                <default>false</default>
+                <label>📑⏳ WAITING ON DOCS</label>
+            </value>
+            <value>
+                <fullName>FOLLOW UP</fullName>
+                <default>false</default>
+                <label>🔄 FOLLOW UP</label>
+            </value>
+            <value>
+                <fullName>DNC</fullName>
+                <default>false</default>
+                <label>🚫 DNC</label>
+            </value>
+            <value>
+                <fullName>NOT INTERESTED</fullName>
+                <default>false</default>
+                <label>🚫 NOT INTERESTED</label>
+            </value>
+            <value>
+                <fullName>NEW LEAD</fullName>
+                <default>false</default>
+                <label>🟢🆕 NEW LEAD</label>
+            </value>
+            <value>
+                <fullName>AI Transfer</fullName>
+                <default>false</default>
+                <label>⏩⏩ AI Transfer</label>
+            </value>
+            <value>
+                <fullName>SENT TO CLOSERS</fullName>
+                <default>false</default>
+                <label>SENT TO CLOSERS</label>
+            </value>
+            <value>
+                <fullName>Not Qualified</fullName>
+                <default>false</default>
+                <label>Not Qualified</label>
+            </value>
+            <value>
+                <fullName>Dupicate</fullName>
+                <default>false</default>
+                <label>Dupicate</label>
+            </value>
+            <value>
+                <fullName>BAD NUMBER</fullName>
+                <default>false</default>
+                <label>BAD NUMBER</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

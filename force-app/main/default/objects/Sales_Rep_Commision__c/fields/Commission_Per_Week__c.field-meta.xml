@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Commission_Per_Week__c</fullName>
+    <formula>IF(
+  of_r__c &gt; 0,
+  IF(
+    X2__c,
+    (Enrolled_Debt__c * 0.02) / of_r__c,
+    (Enrolled_Debt__c * 0.01) /of_r__c
+  ),
+  0
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Commission Per Week</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Currency</type>
+</CustomField>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Payment_Draft_Invalidated__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Flags as true if at least one payment draft was invalidated. This is used in the LWC to fire persistent toast to end user.</description>
+    <isFilteringDisabled>false</isFilteringDisabled>
+    <isNameField>false</isNameField>
+    <isSortingDisabled>false</isSortingDisabled>
+    <label>Payment Draft Invalidated</label>
+    <type>Checkbox</type>
+</CustomField>

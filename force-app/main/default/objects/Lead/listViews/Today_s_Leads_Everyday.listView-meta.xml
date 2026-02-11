@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Today_s_Leads_Everyday</fullName>
+    <columns>LEAD.CREATED_DATE</columns>
+    <columns>Main_Source__c</columns>
+    <columns>FULL_NAME</columns>
+    <columns>LEAD.PHONE</columns>
+    <columns>LEAD.EMAIL</columns>
+    <columns>LEAD.COMPANY</columns>
+    <columns>Est_Total_Debt__c</columns>
+    <columns>Est_weekly_payment__c</columns>
+    <columns>Sales_Office__c</columns>
+    <columns>CORE.USERS.FIRST_NAME</columns>
+    <columns>CORE.USERS.LAST_NAME</columns>
+    <columns>Pre_Deal_Status__c</columns>
+    <columns>LEAD.LAST_UPDATE</columns>
+    <columns>QuickNotes__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>LEAD.CREATED_DATE</field>
+        <operation>equals</operation>
+        <value>TODAY</value>
+    </filters>
+    <filters>
+        <field>Sales_Office__c</field>
+        <operation>equals</operation>
+        <value>Everyday Debt</value>
+    </filters>
+    <label>Today&apos;s Leads (Everyday)</label>
+    <sharedTo>
+        <group>DCG_Lee</group>
+        <group>List_View_EDD_pre_deal_status</group>
+    </sharedTo>
+</ListView>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Rotation_List__c</fullName>
+    <label>Rotation List</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Not available</fullName>
+                <default>false</default>
+                <label>⬛Not available</label>
+            </value>
+            <value>
+                <fullName>Not Interested</fullName>
+                <default>false</default>
+                <label>🚫❌Not Interested</label>
+            </value>
+            <value>
+                <fullName>Do not call</fullName>
+                <default>false</default>
+                <label>📵🚫Do not call</label>
+            </value>
+            <value>
+                <fullName>Connected</fullName>
+                <default>false</default>
+                <label>🔗✅Connected</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Segment_Total__c</fullName>
+    <formula>CASE(Segment_Type__c,
+    &quot;Fixed&quot;,
+      Payment_Amount__c * Payment_Count__c,
+    &quot;Remainder&quot;,
+      Payment_Amount__c * Calculated_Count__c,
+    &quot;SolveAmount&quot;,
+      Calculated_Amount__c * Payment_Count__c,
+    0
+  )</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Segment Total</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Currency</type>
+</CustomField>

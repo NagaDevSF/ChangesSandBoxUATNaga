@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Escrow_Shortage_Count__c</fullName>
+    <label>Escrow Shortage Count</label>
+    <summaryFilterItems>
+        <field>Settlement_Plan_Item__c.Is_Escrow_Shortage__c</field>
+        <operation>equals</operation>
+        <value>True</value>
+    </summaryFilterItems>
+    <summaryForeignKey>Settlement_Plan_Item__c.Settlement_Plan__c</summaryForeignKey>
+    <summaryOperation>count</summaryOperation>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Summary</type>
+</CustomField>

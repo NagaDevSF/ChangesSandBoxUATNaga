@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Negotiation_Status__c</fullName>
+    <label>Negotiation Status</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Cancelled</fullName>
+                <default>false</default>
+                <label>Cancelled</label>
+            </value>
+            <value>
+                <fullName>Client Approved</fullName>
+                <default>false</default>
+                <label>Client Approved</label>
+            </value>
+            <value>
+                <fullName>Client Declined</fullName>
+                <default>false</default>
+                <label>Client Declined</label>
+            </value>
+            <value>
+                <fullName>Client Defaulted</fullName>
+                <default>false</default>
+                <label>Client Defaulted</label>
+            </value>
+            <value>
+                <fullName>Client Late-Offer Expired</fullName>
+                <default>false</default>
+                <label>Client Late-Offer Expired</label>
+            </value>
+            <value>
+                <fullName>Client Pay</fullName>
+                <default>false</default>
+                <label>Client Pay</label>
+            </value>
+            <value>
+                <fullName>Completed</fullName>
+                <default>false</default>
+                <label>Completed</label>
+            </value>
+            <value>
+                <fullName>Contact Attempted</fullName>
+                <default>false</default>
+                <label>Contact Attempted</label>
+            </value>
+            <value>
+                <fullName>Creditor Accepted</fullName>
+                <default>false</default>
+                <label>Creditor Accepted</label>
+            </value>
+            <value>
+                <fullName>Creditor Declined</fullName>
+                <default>false</default>
+                <label>Creditor Declined</label>
+            </value>
+            <value>
+                <fullName>Incomplete</fullName>
+                <default>false</default>
+                <label>Incomplete</label>
+            </value>
+            <value>
+                <fullName>In Progress</fullName>
+                <default>true</default>
+                <label>In Progress</label>
+            </value>
+            <value>
+                <fullName>Insufficient Funds</fullName>
+                <default>false</default>
+                <label>Insufficient Funds</label>
+            </value>
+            <value>
+                <fullName>In Transit</fullName>
+                <default>false</default>
+                <label>In Transit</label>
+            </value>
+            <value>
+                <fullName>Lender Drafting The Client&apos;s Account</fullName>
+                <default>false</default>
+                <label>Lender Drafting The Client&apos;s Account</label>
+            </value>
+            <value>
+                <fullName>Negotiation In Process</fullName>
+                <default>false</default>
+                <label>Negotiation In Process</label>
+            </value>
+            <value>
+                <fullName>Negotiations Paused</fullName>
+                <default>false</default>
+                <label>Negotiations Paused</label>
+            </value>
+            <value>
+                <fullName>Negotiator Declined</fullName>
+                <default>false</default>
+                <label>Negotiator Declined</label>
+            </value>
+            <value>
+                <fullName>Not Active</fullName>
+                <default>false</default>
+                <label>Not Active</label>
+            </value>
+            <value>
+                <fullName>Offer Made</fullName>
+                <default>false</default>
+                <label>Offer Made</label>
+            </value>
+            <value>
+                <fullName>Payment Plan - Active</fullName>
+                <default>false</default>
+                <label>Payment Plan - Active</label>
+            </value>
+            <value>
+                <fullName>Payment Plan - Suspended</fullName>
+                <default>false</default>
+                <label>Payment Plan - Suspended</label>
+            </value>
+            <value>
+                <fullName>Pending Client Approval</fullName>
+                <default>false</default>
+                <label>Pending Client Approval</label>
+            </value>
+            <value>
+                <fullName>POA On File</fullName>
+                <default>false</default>
+                <label>POA On File</label>
+            </value>
+            <value>
+                <fullName>POA Out</fullName>
+                <default>false</default>
+                <label>POA Out</label>
+            </value>
+            <value>
+                <fullName>Scheduled</fullName>
+                <default>false</default>
+                <label>Scheduled</label>
+            </value>
+            <value>
+                <fullName>Settled</fullName>
+                <default>false</default>
+                <label>Settled</label>
+            </value>
+            <value>
+                <fullName>Simulate Active Settl. Plan</fullName>
+                <default>false</default>
+                <label>Simulate Active Settl. Plan</label>
+            </value>
+            <value>
+                <fullName>To Payment Processing</fullName>
+                <default>false</default>
+                <label>To Payment Processing</label>
+            </value>
+            <value>
+                <fullName>Waiting for Letter</fullName>
+                <default>false</default>
+                <label>Waiting for Letter</label>
+            </value>
+            <value>
+                <fullName>Canceled</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Canceled</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

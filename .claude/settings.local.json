@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:playbooks.com)",
+      "Bash(claude mcp add asana --scope user -e ASANA_ACCESS_TOKEN=\"2/1210859739324139/1213218486462105:a328cebc8cd34b2f95249ac25eaf2ca9\" -- npx -y @roychri/mcp-server-asana)",
+      "mcp__asana__asana_list_workspaces",
+      "mcp__asana__asana_search_projects",
+      "mcp__asana__asana_search_tasks",
+      "Bash(sf project retrieve start:*)",
+      "Bash(sf project deploy start:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

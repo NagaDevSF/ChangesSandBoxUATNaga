@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Weekly_Savings_So_Far_c__c</fullName>
+    <formula>IF(
+  AND(
+    NOT(ISBLANK(Estimated_Current_Payment__c)),
+    NOT(ISBLANK(Quiz_Quote__c))
+  ),
+  (Estimated_Current_Payment__c - Quiz_Quote__c) * FLOOR((TODAY() - DATEVALUE(CreatedDate)) / 7),
+  null
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Weekly Savings So Far</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackHistory>false</trackHistory>
+    <type>Currency</type>
+</CustomField>

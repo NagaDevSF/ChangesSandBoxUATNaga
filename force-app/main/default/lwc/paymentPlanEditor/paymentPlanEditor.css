@@ -1,0 +1,1551 @@
+/* ============================================
+   PAYMENT PLAN EDITOR - UI STYLES
+   ============================================ */
+
+/* Main Container */
+.payment-plan-modal {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    background: white;
+    border: 1px solid #cbd5e0;
+    width: 100%;
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+.modal-header {
+    background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+    color: white;
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 40px;
+}
+
+.modal-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-title lightning-icon {
+    --slds-c-icon-color-foreground-default: white;
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Header actions container */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Refresh button */
+.refresh-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.refresh-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Maximize button */
+.maximize-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.maximize-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Maximized state for modal */
+.payment-plan-modal.maximized {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    z-index: 9999 !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.payment-plan-modal.maximized .modal-header,
+.payment-plan-modal.maximized .plan-selector-container,
+.payment-plan-modal.maximized .tab-bar,
+.payment-plan-modal.maximized .add-row-container,
+.payment-plan-modal.maximized .modal-footer {
+    flex-shrink: 0 !important;
+}
+
+.payment-plan-modal.maximized .table-container {
+    flex: 1 1 auto !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow-y: auto !important;
+}
+
+/* Version badge in header */
+.version-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 12px;
+}
+
+/* User Info Row */
+.user-info-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    justify-content: flex-end;
+    margin-right: 16px;
+}
+
+.user-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.user-badge lightning-icon {
+    --lwc-colorTextIconDefault: rgba(255, 255, 255, 0.9);
+}
+
+.activated-by {
+    background: rgba(72, 187, 120, 0.3);
+}
+
+.created-by {
+    background: rgba(66, 153, 225, 0.3);
+}
+
+/* ============================================
+   PLAN SELECTOR (Dropdown)
+   ============================================ */
+.plan-selector-container {
+    background-color: #f7fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 10px 16px;
+}
+
+.plan-selector-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.plan-dropdown {
+    flex: 0 0 280px;
+    max-width: 320px;
+}
+
+.plan-dropdown lightning-combobox {
+    --slds-c-input-radius-border: 4px;
+}
+
+.plan-count-badge {
+    font-size: 12px;
+    color: #4a5568;
+    background: #e2e8f0;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+/* ============================================
+   TAB BAR
+   ============================================ */
+.tab-bar {
+    display: flex;
+    align-items: center;
+    background: #f7fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0 8px;
+}
+
+.tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    color: #4a5568;
+    transition: all 0.2s;
+    background: transparent;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+
+.tab:hover {
+    color: #3182ce;
+}
+
+.tab.active {
+    background: white;
+    border-bottom: 2px solid #3182ce;
+    color: #3182ce;
+}
+
+.tab-count {
+    margin-left: 4px;
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.epps-badge {
+    margin-left: auto;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: #4a5568;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #e2e8f0;
+    border-radius: 4px;
+}
+
+.epps-badge lightning-icon {
+    --slds-c-icon-color-foreground-default: #4a5568;
+}
+
+/* ============================================
+   TABLE CONTAINER - MODERN RICH DESIGN
+   ============================================ */
+.table-container {
+    position: relative;
+    max-height: 600px; /* Increased to show more items - scroll to see all payments */
+    overflow-y: auto;
+    overflow-x: auto;
+    background: linear-gradient(180deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: 0 0 8px 8px;
+    border: 1px solid #e2e8f0;
+    border-top: none;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+/* Custom scrollbar */
+.table-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+/* ============================================
+   DATA TABLE - MODERN RICH DESIGN
+   Universal browser compatibility (no backdrop-filter)
+   ============================================ */
+.data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: transparent;
+}
+
+/* Table Header - Rich Gradient */
+.data-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.data-table thead tr {
+    background: linear-gradient(135deg, #1a365d 0%, #2c5282 50%, #2b6cb0 100%);
+    box-shadow: 0 4px 6px rgba(26, 54, 93, 0.25), 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.data-table th {
+    padding: 14px 8px;
+    font-weight: 700;
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: 3px solid #63b3ed;
+    white-space: nowrap;
+    color: #ffffff;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.data-table th:first-child {
+    border-top-left-radius: 8px;
+}
+
+.data-table th:last-child {
+    border-top-right-radius: 8px;
+}
+
+/* Column widths */
+.col-checkbox { width: 30px; min-width: 30px; }
+.col-rownum { width: 40px; min-width: 40px; }
+.col-draftnum { width: 55px; min-width: 50px; }
+.col-date { width: 90px; min-width: 90px; }
+.col-currency { width: 80px; min-width: 70px; }
+.col-currency-sm { width: 70px; min-width: 60px; }
+.col-status { width: 70px; min-width: 70px; }
+.col-wire { width: 45px; min-width: 40px; }
+.col-action { width: 30px; min-width: 30px; }
+
+/* Table Body - Modern Rich Rows */
+.data-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+    height: 40px;
+}
+
+.data-table tbody tr {
+    background: linear-gradient(180deg, #ffffff 0%, #f7fafc 100%);
+    transition: all 0.2s ease;
+}
+
+.data-table tbody tr:nth-child(even) {
+    background: linear-gradient(180deg, #f7fafc 0%, #edf2f7 100%);
+}
+
+.data-table tbody tr:hover {
+    background: linear-gradient(180deg, #ebf8ff 0%, #bee3f8 100%);
+    box-shadow: 0 2px 8px rgba(49, 130, 206, 0.15);
+}
+
+/* ============================================
+   COLUMN ALIGNMENT CLASSES (Header & Cell)
+   Uses higher specificity instead of !important
+   ============================================ */
+
+/* Header alignment classes - scoped to data-table for specificity */
+.data-table th.th-center,
+.data-table .th-center {
+    text-align: center;
+}
+
+.data-table th.th-right,
+.data-table .th-right {
+    text-align: right;
+    padding-right: 8px;
+}
+
+.data-table th.th-left,
+.data-table .th-left {
+    text-align: left;
+    padding-left: 8px;
+}
+
+/* Cell alignment classes - scoped to data-table for specificity */
+.data-table td.td-center,
+.data-table .td-center {
+    text-align: center;
+}
+
+.data-table td.td-right,
+.data-table .td-right {
+    text-align: right;
+    padding-right: 8px;
+}
+
+.data-table td.td-left,
+.data-table .td-left {
+    text-align: left;
+    padding-left: 8px;
+}
+
+/* Currency cells - consistent monospace font and right alignment */
+.data-table td.td-currency,
+.data-table .td-currency {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', Consolas, monospace;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* Header column width classes */
+.th-checkbox { width: 30px; min-width: 30px; }
+.th-rownum { width: 40px; min-width: 40px; }
+.th-draftnum { width: 55px; min-width: 50px; }
+.th-date { width: 90px; min-width: 90px; }
+.th-currency { width: 80px; min-width: 70px; }
+.th-currency-sm { width: 70px; min-width: 60px; }
+.th-status { width: 70px; min-width: 70px; }
+.th-wire { width: 45px; min-width: 40px; }
+.th-action { width: 30px; min-width: 30px; }
+
+/* Legacy cell alignments (for backwards compatibility) - scoped for specificity */
+.data-table td.cell-center,
+.data-table .cell-center {
+    text-align: center;
+}
+
+.data-table td.cell-right,
+.data-table .cell-right {
+    text-align: right;
+    padding-right: 8px;
+}
+
+.data-table td.cell-left,
+.data-table .cell-left {
+    text-align: left;
+    padding-left: 8px;
+}
+
+/* Legacy currency cells - scoped for specificity */
+.data-table td.cell-currency,
+.data-table .cell-currency {
+    text-align: right;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', Consolas, monospace;
+    padding-right: 8px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* Bold all numerical values */
+.cell-currency span,
+.edit-input-currency {
+    font-weight: 700;
+}
+
+/* ============================================
+   ROW STATES - Using higher specificity instead of !important
+   ============================================ */
+.data-table tbody tr.row-modified {
+    background-color: #fffaf0;
+}
+
+.data-table tbody tr.row-modified:hover {
+    background-color: #fef3cd;
+}
+
+.data-table tbody tr.row-new {
+    background-color: #e6fffa;
+}
+
+.data-table tbody tr.row-new:hover {
+    background-color: #b2f5ea;
+}
+
+.data-table tbody tr.row-deleted {
+    background-color: #fed7d7;
+    opacity: 0.7;
+}
+
+/* Status-based row colors - Modern Rich Style */
+/* Cleared = Green */
+.data-table tbody tr.row-cleared {
+    background: linear-gradient(180deg, #c6f6d5 0%, #9ae6b4 100%);
+    border-left: 4px solid #38a169;
+}
+
+.data-table tbody tr.row-cleared:hover {
+    background: linear-gradient(180deg, #9ae6b4 0%, #68d391 100%);
+    box-shadow: 0 2px 8px rgba(56, 161, 105, 0.25);
+}
+
+/* NSF = Red */
+.data-table tbody tr.row-nsf {
+    background: linear-gradient(180deg, #fed7d7 0%, #feb2b2 100%);
+    border-left: 4px solid #e53e3e;
+}
+
+.data-table tbody tr.row-nsf:hover {
+    background: linear-gradient(180deg, #feb2b2 0%, #fc8181 100%);
+    box-shadow: 0 2px 8px rgba(229, 62, 62, 0.25);
+}
+
+/* Cancelled = Yellow */
+.data-table tbody tr.row-cancelled {
+    background: linear-gradient(180deg, #fefcbf 0%, #faf089 100%);
+    border-left: 4px solid #d69e2e;
+}
+
+.data-table tbody tr.row-cancelled:hover {
+    background: linear-gradient(180deg, #faf089 0%, #ecc94b 100%);
+    box-shadow: 0 2px 8px rgba(214, 158, 46, 0.25);
+}
+
+/* Scheduled = Blue */
+.data-table tbody tr.row-scheduled {
+    background: linear-gradient(180deg, #bee3f8 0%, #90cdf4 100%);
+    border-left: 4px solid #3182ce;
+}
+
+.data-table tbody tr.row-scheduled:hover {
+    background: linear-gradient(180deg, #90cdf4 0%, #63b3ed 100%);
+    box-shadow: 0 2px 8px rgba(49, 130, 206, 0.25);
+}
+
+/* Non-editable row (Cleared/NSF/Cancelled status) - shown in edit mode */
+.row-locked {
+    opacity: 0.85;
+}
+
+.row-locked:hover {
+    opacity: 0.9;
+}
+
+/* Row number with asterisk for modified */
+.row-number {
+    font-weight: 500;
+    color: #2d3748;
+}
+
+.row-number-modified {
+    color: #e53e3e;
+    font-weight: 600;
+}
+
+.row-number-modified::after {
+    content: '*';
+    color: #e53e3e;
+    font-weight: bold;
+}
+
+/* Draft number (skips NSF/Cancelled) */
+.draft-number {
+    font-weight: 600;
+    color: #2b6cb0;
+    font-size: 11px;
+}
+
+/* ============================================
+   WIRE PAYMENT BUTTON & MODAL
+   ============================================ */
+.wire-btn {
+    background: #48bb78;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.wire-btn:hover {
+    background: #38a169;
+    transform: scale(1.1);
+}
+
+.wire-btn:focus {
+    outline: 2px solid #38a169;
+    outline-offset: 2px;
+}
+
+.wire-btn lightning-icon {
+    --slds-c-icon-color-foreground-default: white;
+}
+
+/* Wire Modal Styling */
+.wire-modal {
+    z-index: 10001;
+    background: transparent;
+    border: none;
+}
+
+.wire-modal .slds-modal__container {
+    max-width: 500px;
+    margin: 0 auto;
+    background: transparent;
+    padding: 0;
+    border: none;
+}
+
+/* Remove default dialog border */
+dialog.wire-modal {
+    border: none;
+    outline: none;
+}
+
+/* Modal card - the actual floating card */
+.wire-modal .slds-modal__content {
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.wire-modal-header {
+    background: linear-gradient(135deg, #38a169 0%, #48bb78 100%);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 8px 8px 0 0;
+}
+
+.wire-modal-header .slds-modal__title {
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.wire-modal-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.wire-modal-body {
+    background: #f7fafc;
+    border-radius: 0 0 8px 8px;
+}
+
+.wire-modal-body lightning-input-field {
+    margin-bottom: 12px;
+}
+
+/* Override SLDS backdrop - remove blur, use light transparent overlay */
+.wire-modal + .slds-backdrop,
+.wire-modal + .slds-backdrop_open {
+    background-color: rgba(0, 0, 0, 0.2);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+
+/* ============================================
+   VALUE STYLING
+   ============================================ */
+.value-positive {
+    color: #38a169;
+    font-weight: 500;
+}
+
+.value-negative {
+    color: #e53e3e;
+    font-weight: 500;
+}
+
+.value-zero {
+    color: #a0aec0;
+}
+
+.savings-positive {
+    color: #38a169;
+    font-weight: 600;
+}
+
+.savings-negative {
+    color: #e53e3e;
+    font-weight: 600;
+}
+
+/* ============================================
+   STATUS BADGES
+   ============================================ */
+.status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-scheduled {
+    background: #bee3f8;
+    color: #2b6cb0;
+}
+
+.status-cleared {
+    background: #c6f6d5;
+    color: #276749;
+}
+
+.status-nsf {
+    background: #fed7d7;
+    color: #c53030;
+}
+
+.status-cancelled {
+    background: #fefcbf;
+    color: #975a16;
+    text-decoration: line-through;
+}
+
+.status-pending {
+    background: #fefcbf;
+    color: #975a16;
+}
+
+/* ============================================
+   CHECKBOX STYLING
+   ============================================ */
+.row-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #3182ce;
+}
+
+.header-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #3182ce;
+}
+
+/* ============================================
+   ACTION MENU BUTTON
+   ============================================ */
+.action-btn {
+    background: #bee3f8;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    color: #2b6cb0;
+    font-size: 14px;
+    line-height: 1;
+    transition: background-color 0.2s;
+}
+
+.action-btn:hover {
+    background: #90cdf4;
+}
+
+.action-btn:focus {
+    outline: 2px solid #3182ce;
+    outline-offset: 1px;
+}
+
+/* ============================================
+   EDIT MODE INPUTS
+   ============================================ */
+.edit-input {
+    width: 100%;
+    padding: 4px 6px;
+    border: 1px solid #cbd5e0;
+    border-radius: 3px;
+    font-size: 11px;
+    background: white;
+}
+
+.edit-input:focus {
+    outline: none;
+    border-color: #3182ce;
+    box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.2);
+}
+
+.edit-input-currency {
+    text-align: right;
+    font-family: 'SF Mono', Consolas, monospace;
+    font-weight: 700;
+}
+
+.edit-input-date {
+    width: 100px;
+}
+
+/* Compact inputs for LWC */
+.compact-input {
+    --slds-c-input-spacing-horizontal-start: 4px;
+    --slds-c-input-spacing-horizontal-end: 4px;
+}
+
+.compact-input lightning-input,
+.compact-input lightning-combobox {
+    font-size: 11px;
+}
+
+/* ============================================
+   FOOTER BUTTON BAR
+   ============================================ */
+.modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f7fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+.footer-left,
+.footer-right {
+    display: flex;
+    gap: 8px;
+}
+
+/* Button base styles */
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn:focus {
+    outline: 2px solid #3182ce;
+    outline-offset: 2px;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Button variants */
+.btn-blue {
+    background: #3182ce;
+    color: white;
+}
+
+.btn-blue:hover:not(:disabled) {
+    background: #2c5282;
+}
+
+.btn-red {
+    background: #e53e3e;
+    color: white;
+}
+
+.btn-red:hover:not(:disabled) {
+    background: #c53030;
+}
+
+.btn-yellow {
+    background: #ecc94b;
+    color: #1a202c;
+}
+
+.btn-yellow:hover:not(:disabled) {
+    background: #d69e2e;
+}
+
+.btn-green {
+    background: #48bb78;
+    color: white;
+}
+
+.btn-green:hover:not(:disabled) {
+    background: #38a169;
+}
+
+.btn-gray {
+    background: #a0aec0;
+    color: white;
+}
+
+.btn-gray:hover:not(:disabled) {
+    background: #718096;
+}
+
+.btn-teal {
+    background-color: #20c997;
+    color: white;
+    border: 1px solid #1aa179;
+}
+
+.btn-teal:hover:not(:disabled) {
+    background-color: #1aa179;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid #cbd5e0;
+    color: #4a5568;
+}
+
+.btn-outline:hover:not(:disabled) {
+    background: #f7fafc;
+    border-color: #a0aec0;
+}
+
+/* ============================================
+   ADD ROW SECTION
+   ============================================ */
+.add-row-container {
+    padding: 8px 16px;
+    background: #f7fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+.add-row-btn {
+    background: transparent;
+    border: 1px dashed #3182ce;
+    color: #3182ce;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.add-row-btn:hover {
+    background: #ebf8ff;
+    border-style: solid;
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #718096;
+}
+
+.empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-state-text {
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.empty-state-subtext {
+    font-size: 12px;
+    color: #a0aec0;
+}
+
+/* ============================================
+   PAGINATION CONTROLS
+   ============================================ */
+.pagination-footer {
+    background: #f7fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+.pagination-row td {
+    padding: 8px 16px;
+    border-bottom: none;
+}
+
+.pagination-cell {
+    text-align: center;
+}
+
+.pagination-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-btn {
+    background: #ffffff;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4a5568;
+    transition: all 0.2s ease;
+    min-width: 32px;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: #edf2f7;
+    border-color: #a0aec0;
+    color: #2d3748;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pagination-btn:focus {
+    outline: 2px solid #3182ce;
+    outline-offset: 2px;
+}
+
+.pagination-info {
+    font-size: 13px;
+    color: #4a5568;
+    font-weight: 500;
+    padding: 0 12px;
+    min-width: 100px;
+    text-align: center;
+}
+
+/* ============================================
+   AGGREGATE FOOTER - MODERN RICH TOTALS ROW
+   ============================================ */
+.aggregate-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+
+.aggregate-row {
+    background: linear-gradient(135deg, #1a365d 0%, #2c5282 50%, #2b6cb0 100%) !important;
+    border-top: 3px solid #63b3ed;
+    box-shadow: 0 -4px 12px rgba(26, 54, 93, 0.3);
+}
+
+.aggregate-row td {
+    padding: 14px 8px;
+    color: white;
+    font-weight: 600;
+    border-bottom: none;
+}
+
+.aggregate-row td:first-child {
+    border-bottom-left-radius: 8px;
+}
+
+.aggregate-row td:last-child {
+    border-bottom-right-radius: 8px;
+}
+
+.aggregate-row:hover {
+    background: linear-gradient(135deg, #1a365d 0%, #2c5282 50%, #2b6cb0 100%) !important;
+}
+
+.aggregate-label {
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #ffffff !important;
+}
+
+.aggregate-value {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', Consolas, monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: #90cdf4 !important;
+    text-align: right;
+    padding-right: 8px !important;
+}
+
+/* Cleared Row - Shows Total Amount Cleared */
+.cleared-row {
+    background: linear-gradient(135deg, #1a4731 0%, #276749 50%, #2f855a 100%) !important;
+    border-top: 2px solid #68d391;
+    box-shadow: 0 -2px 8px rgba(39, 103, 73, 0.3);
+}
+
+.cleared-row td {
+    padding: 12px 8px;
+}
+
+.cleared-row td:first-child {
+    border-bottom-left-radius: 8px;
+}
+
+.cleared-row td:last-child {
+    border-bottom-right-radius: 8px;
+}
+
+.cleared-row:hover {
+    background: linear-gradient(135deg, #1a4731 0%, #276749 50%, #2f855a 100%) !important;
+}
+
+.cleared-value {
+    color: #9ae6b4 !important;
+}
+
+/* NSF Row - Shows Total Amount from NSF items */
+.nsf-row {
+    background: linear-gradient(135deg, #742a2a 0%, #9b2c2c 50%, #c53030 100%) !important;
+    border-top: 2px solid #fc8181;
+    box-shadow: 0 -2px 8px rgba(155, 44, 44, 0.3);
+}
+
+.nsf-row td {
+    padding: 12px 8px;
+}
+
+.nsf-row:hover {
+    background: linear-gradient(135deg, #742a2a 0%, #9b2c2c 50%, #c53030 100%) !important;
+}
+
+.nsf-value {
+    color: #feb2b2 !important;
+}
+
+/* Wires Row - Shows Total Wired Payments */
+.wires-row {
+    background: linear-gradient(135deg, #2c5282 0%, #3182ce 50%, #4299e1 100%) !important;
+    border-top: 2px solid #90cdf4;
+    box-shadow: 0 -2px 8px rgba(49, 130, 206, 0.3);
+}
+
+.wires-row td {
+    padding: 12px 8px;
+}
+
+.wires-row td:first-child {
+    border-bottom-left-radius: 8px;
+}
+
+.wires-row td:last-child {
+    border-bottom-right-radius: 8px;
+}
+
+.wires-row:hover {
+    background: linear-gradient(135deg, #2c5282 0%, #3182ce 50%, #4299e1 100%) !important;
+}
+
+.wires-value {
+    color: #bee3f8 !important;
+}
+
+/* ============================================
+   WIRED PAYMENT SUB-ROWS
+   ============================================ */
+.wire-sub-row {
+    font-size: 12px;
+    border-left: 4px solid;
+}
+
+.wire-sub-row td {
+    padding: 8px;
+    border-bottom: 1px dashed var(--gray-200);
+}
+
+/* Orange - Wires received less than draft amount */
+.wire-row-orange {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border-left-color: #f97316;
+}
+
+.wire-row-orange td {
+    color: #9a3412;
+}
+
+.wire-row-orange .wire-amount {
+    color: #ea580c;
+    font-weight: 700;
+}
+
+.wire-row-orange .wire-icon {
+    --slds-c-icon-color-foreground-default: #f97316;
+}
+
+/* Green - Wires received equal to or greater than draft amount */
+.wire-row-green {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border-left-color: #22c55e;
+}
+
+.wire-row-green td {
+    color: #166534;
+}
+
+.wire-row-green .wire-amount {
+    color: #16a34a;
+    font-weight: 700;
+}
+
+.wire-row-green .wire-icon {
+    --slds-c-icon-color-foreground-default: #22c55e;
+}
+
+/* Wire row content styling */
+.wire-date {
+    font-style: italic;
+    font-size: 11px;
+}
+
+.wire-amount {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', Consolas, monospace;
+}
+
+.wire-description {
+    text-align: left !important;
+    max-width: 200px;
+}
+
+.wire-desc-text {
+    font-size: 11px;
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.wire-icon {
+    opacity: 0.7;
+}
+
+/* ============================================
+   LOADING STATE
+   ============================================ */
+:host {
+    position: relative;
+    display: block;
+    min-height: 200px;
+    width: 100%;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+lightning-spinner {
+    z-index: 101;
+}
+
+/* ============================================
+   NO PAYMENT PLAN STATE
+   ============================================ */
+.no-plan-container {
+    padding: 60px 20px;
+    text-align: center;
+    background: #f7fafc;
+    border-radius: 8px;
+}
+
+.no-plan-icon {
+    margin-bottom: 16px;
+}
+
+.no-plan-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 8px;
+}
+
+.no-plan-text {
+    font-size: 13px;
+    color: #718096;
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+@media (max-width: 900px) {
+    .data-table {
+        font-size: 11px;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 4px 2px;
+    }
+
+    .col-currency,
+    .col-currency-sm {
+        width: 60px;
+        min-width: 55px;
+    }
+
+    .btn {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .footer-left,
+    .footer-right {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 600px) {
+    .tab {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .epps-badge {
+        display: none;
+    }
+
+    .plan-selector-btn {
+        min-width: 100px;
+        padding: 6px 8px;
+    }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+.hidden {
+    display: none !important;
+}
+
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.font-mono {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', Consolas, monospace;
+}
+
+/* ============================================
+   CONFETTI CELEBRATION
+   ============================================ */
+.confetti-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10000;
+    overflow: hidden;
+}
+
+.confetti-piece {
+    position: absolute;
+    top: -20px;
+    opacity: 0;
+    animation: confetti-fall linear forwards;
+}
+
+.confetti-square {
+    width: 10px;
+    height: 10px;
+}
+
+.confetti-circle {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.confetti-rectangle {
+    width: 6px;
+    height: 14px;
+}
+
+@keyframes confetti-fall {
+    0% {
+        opacity: 1;
+        top: -20px;
+        transform: translateX(0) rotateZ(0deg);
+    }
+    25% {
+        opacity: 1;
+        transform: translateX(30px) rotateZ(90deg);
+    }
+    50% {
+        opacity: 1;
+        transform: translateX(-20px) rotateZ(180deg);
+    }
+    75% {
+        opacity: 0.8;
+        transform: translateX(40px) rotateZ(270deg);
+    }
+    100% {
+        opacity: 0;
+        top: 100vh;
+        transform: translateX(-10px) rotateZ(360deg);
+    }
+}
+
+/* ============================================
+   FILL HANDLE FEATURE
+   ============================================ */
+
+/* Cell wrapper for fill handle positioning */
+.fill-cell {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+/* The fill handle - small square at bottom-right corner */
+.fill-handle {
+    position: absolute;
+    bottom: -3px;
+    right: -3px;
+    width: 8px;
+    height: 8px;
+    background-color: #1a365d;
+    border: 1px solid #fff;
+    cursor: crosshair;
+    z-index: 20;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+/* Show fill handle on hover */
+.fill-cell:hover .fill-handle,
+.fill-cell.cell-selected .fill-handle {
+    opacity: 1;
+}
+
+/* Selected cell highlight */
+.fill-cell.cell-selected {
+    outline: 2px solid #3182ce;
+    background-color: #ebf8ff;
+}
+
+/* Cells in fill range during drag */
+.fill-cell.in-fill-range {
+    background-color: #bee3f8 !important;
+    outline: 1px dashed #3182ce;
+}
+
+/* Fill preview tooltip */
+.fill-preview {
+    position: fixed;
+    background: #1a365d;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    z-index: 10001;
+    pointer-events: none;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Keyboard shortcut hint */
+.fill-hint {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #4a5568;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+}
+
+.fill-cell:hover .fill-hint {
+    opacity: 0.8;
+}
+
+/* Cursor during fill drag */
+.fill-dragging {
+    cursor: crosshair !important;
+}
+
+.fill-dragging * {
+    cursor: crosshair !important;
+}
+
+/* ============================================
+   FEE STATUS INDICATOR DOTS
+   Shows payment status for Setup, Program, Banking fees
+   ============================================ */
+
+/* Container for fee value with status dot */
+.fee-with-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Base status dot styles */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-block;
+}
+
+/* Green dot - Cleared status */
+.status-dot--cleared {
+    background-color: #22c55e;
+    box-shadow: 0 0 4px rgba(34, 197, 94, 0.5);
+}
+
+/* Yellow dot - Pending status */
+.status-dot--pending {
+    background-color: #eab308;
+    box-shadow: 0 0 4px rgba(234, 179, 8, 0.5);
+}
+
+/* Red dot - NSF, Cancelled, Missed status */
+.status-dot--failed {
+    background-color: #ef4444;
+    box-shadow: 0 0 4px rgba(239, 68, 68, 0.5);
+}
+
+/* Hide dot for Scheduled and other statuses */
+.status-dot--none {
+    display: none;
+}

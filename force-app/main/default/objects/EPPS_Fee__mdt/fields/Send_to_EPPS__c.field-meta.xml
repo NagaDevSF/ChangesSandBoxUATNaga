@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Send_to_EPPS__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>If this fee type should be sent to EPPS, some fees are internally managed and should not be sent.</description>
+    <fieldManageability>SubscriberControlled</fieldManageability>
+    <inlineHelpText>If this fee type should be sent to EPPS, some fees are internally managed and should not be sent.</inlineHelpText>
+    <label>Send to EPPS</label>
+    <type>Checkbox</type>
+</CustomField>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>PhoneBurner__PhoneBurner_Lead_View</fullName>
+    <columns>FULL_NAME</columns>
+    <columns>LEAD.EMAIL</columns>
+    <columns>LEAD.COMPANY</columns>
+    <columns>LEAD.STATUS</columns>
+    <columns>LEAD.STATE</columns>
+    <columns>PhoneBurner__Attempted_Calls__c</columns>
+    <columns>PhoneBurner__Last_Dispostion__c</columns>
+    <columns>PhoneBurner__Last_Attempt__c</columns>
+    <filterScope>Mine</filterScope>
+    <label>PhoneBurner Lead View</label>
+</ListView>

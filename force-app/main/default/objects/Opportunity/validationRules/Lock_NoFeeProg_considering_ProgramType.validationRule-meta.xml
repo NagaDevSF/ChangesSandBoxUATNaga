@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Lock_NoFeeProg_considering_ProgramType</fullName>
+    <active>true</active>
+    <errorConditionFormula>AND(
+    No_Fee_Program__c = TRUE,
+    OR(
+        ISPICKVAL(Program_Type__c, &quot;DCG MOD CA&quot;), 
+        ISPICKVAL(Program_Type__c, &quot;DCG DEBT&quot;)
+    )
+)</errorConditionFormula>
+    <errorMessage>&apos;No-Fee Program&apos; cannot be used when Program Type is Mod CA or Debt.</errorMessage>
+</ValidationRule>

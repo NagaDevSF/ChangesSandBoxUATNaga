@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Type__c</fullName>
+    <label>Inbound Type</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Text Response</fullName>
+                <default>false</default>
+                <label>Text Response</label>
+            </value>
+            <value>
+                <fullName>Email Response</fullName>
+                <default>false</default>
+                <label>Email Response</label>
+            </value>
+            <value>
+                <fullName>Email Call-In</fullName>
+                <default>false</default>
+                <label>Email Call-In</label>
+            </value>
+            <value>
+                <fullName>Form</fullName>
+                <default>false</default>
+                <label>Form</label>
+            </value>
+            <value>
+                <fullName>Consumer Call-In</fullName>
+                <default>false</default>
+                <label>Consumer Call-In</label>
+            </value>
+            <value>
+                <fullName>Text Call-In</fullName>
+                <default>false</default>
+                <label>Text Call-In</label>
+            </value>
+            <value>
+                <fullName>Call-In</fullName>
+                <default>false</default>
+                <label>Call-In</label>
+            </value>
+            <value>
+                <fullName>Adam - Call in</fullName>
+                <default>false</default>
+                <label>Adam - Call in</label>
+            </value>
+            <value>
+                <fullName>Others</fullName>
+                <default>false</default>
+                <label>Others</label>
+            </value>
+            <value>
+                <fullName>Manual Entry</fullName>
+                <default>false</default>
+                <label>Manual Entry</label>
+            </value>
+            <value>
+                <fullName>Witzy AI Call in</fullName>
+                <default>false</default>
+                <label>Witzy AI Call in</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

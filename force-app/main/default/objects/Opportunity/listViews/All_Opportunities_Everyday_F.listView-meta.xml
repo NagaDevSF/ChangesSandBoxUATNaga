@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>All_Opportunities_Everyday_F</fullName>
+    <booleanFilter>(1 OR 2 OR 3 OR 4 OR 5) AND 6</booleanFilter>
+    <columns>OPPORTUNITY.CREATED_DATE</columns>
+    <columns>Main_Source__c</columns>
+    <columns>Contact_Name__c</columns>
+    <columns>Phone__c</columns>
+    <columns>Email__c</columns>
+    <columns>OPPORTUNITY.NAME</columns>
+    <columns>Time_Zone__c</columns>
+    <columns>Estimated_Total_Debt__c</columns>
+    <columns>Est_weekly_payment__c</columns>
+    <columns>Sales_Office__c</columns>
+    <columns>Fronter__c</columns>
+    <columns>Closer__c</columns>
+    <columns>OPPORTUNITY.STAGE_NAME</columns>
+    <columns>OPPORTUNITY.LAST_UPDATE</columns>
+    <columns>Quick_Notes__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>OPPORTUNITY.LEAD_SOURCE</field>
+        <operation>equals</operation>
+        <value>Facebook</value>
+    </filters>
+    <filters>
+        <field>Lead_Source__c</field>
+        <operation>equals</operation>
+        <value>Facebook</value>
+    </filters>
+    <filters>
+        <field>Lead_Source_DC__c</field>
+        <operation>equals</operation>
+        <value>Facebook</value>
+    </filters>
+    <filters>
+        <field>Lead_Source_Debtifi__c</field>
+        <operation>equals</operation>
+        <value>Facebook</value>
+    </filters>
+    <filters>
+        <field>Main_Source__c</field>
+        <operation>contains</operation>
+        <value>Facebook</value>
+    </filters>
+    <filters>
+        <field>Sales_Office__c</field>
+        <operation>equals</operation>
+        <value>Everyday Debt</value>
+    </filters>
+    <label>Facebook Opportunities (Everyday) 🅵</label>
+    <sharedTo>
+        <group>DCG_Lee</group>
+        <group>List_View_EDD_pre_deal_status</group>
+    </sharedTo>
+</ListView>

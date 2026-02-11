@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebLink xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Deca2dPe000002m1YXIAY</fullName>
+    <availability>online</availability>
+    <displayType>button</displayType>
+    <encodingKey>UTF-8</encodingKey>
+    <linkType>url</linkType>
+    <masterLabel>MOD Resolution Agreement POA REV</masterLabel>
+    <openType>replace</openType>
+    <protected>false</protected>
+    <url>{!URLFOR($Site.BaseUrl + &apos;/apex/dfsle__sending&apos;, null, [sId = Opportunity.Id, sendingExperience = &apos;null&apos;, isEmbedded = false, templateId = &apos;a2dPe000002m1YXIAY&apos;, recordId = Opportunity.Id, title = &apos;MOD Resolution Agreement POA REV&apos;])}</url>
+</WebLink>

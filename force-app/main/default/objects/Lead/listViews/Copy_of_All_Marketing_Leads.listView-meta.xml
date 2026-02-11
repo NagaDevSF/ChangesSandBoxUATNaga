@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Copy_of_All_Marketing_Leads</fullName>
+    <booleanFilter>1 and (2 or 3)</booleanFilter>
+    <columns>LEAD.CREATED_DATE</columns>
+    <columns>Main_Source__c</columns>
+    <columns>FULL_NAME</columns>
+    <columns>LEAD.PHONE</columns>
+    <columns>LEAD.EMAIL</columns>
+    <columns>LEAD.COMPANY</columns>
+    <columns>Est_Total_Debt__c</columns>
+    <columns>Est_weekly_payment__c</columns>
+    <columns>Sales_Office__c</columns>
+    <columns>CORE.USERS.FIRST_NAME</columns>
+    <columns>CORE.USERS.LAST_NAME</columns>
+    <columns>Pre_Deal_Status__c</columns>
+    <columns>LEAD.LAST_UPDATE</columns>
+    <columns>QuickNotes__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Pre_Deal_Status__c</field>
+        <operation>notEqual</operation>
+        <value>NOT INTERESTED,NOT INTERESTED - (HAS DEBT),NOT INTERESTED - (SEEKING FUNDING),NQ - BALANCE / PAYMENTS,NQ - AFFORDABILITY,INVALID,NQ - OTHER,DNC,Invalid lead,Not Qualified</value>
+    </filters>
+    <filters>
+        <field>utm_source__c</field>
+        <operation>contains</operation>
+        <value>quiz</value>
+    </filters>
+    <filters>
+        <field>Main_Source__c</field>
+        <operation>contains</operation>
+        <value>quiz</value>
+    </filters>
+    <label>All Quiz Leads 📋</label>
+</ListView>

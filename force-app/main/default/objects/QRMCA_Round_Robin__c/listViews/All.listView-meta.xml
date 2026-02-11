@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>All</fullName>
+    <columns>NAME</columns>
+    <columns>USER__c</columns>
+    <columns>Add_In_Round_Robin__c</columns>
+    <columns>Short_Reason__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Type__c</field>
+        <operation>equals</operation>
+        <value>Regular</value>
+    </filters>
+    <label>Regular</label>
+</ListView>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Max_Target_Percent__c</fullName>
+    <description>Maximum target percentage slider value</description>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>Max Target Percent</label>
+    <precision>5</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <type>Percent</type>
+</CustomField>

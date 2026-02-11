@@ -1,0 +1,794 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Lead_Source_EDD__c</fullName>
+    <label>Lead Source EDD</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>true</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Cherry</fullName>
+                <default>false</default>
+                <label>Cherry</label>
+            </value>
+            <value>
+                <fullName>Cherry DC</fullName>
+                <default>false</default>
+                <label>Cherry DC</label>
+            </value>
+            <value>
+                <fullName>CH Referral</fullName>
+                <default>false</default>
+                <label>CH Referral</label>
+            </value>
+            <value>
+                <fullName>Convoso</fullName>
+                <default>false</default>
+                <label>Convoso</label>
+            </value>
+            <value>
+                <fullName>DCGDI</fullName>
+                <default>false</default>
+                <label>DCGDI</label>
+            </value>
+            <value>
+                <fullName>DCG DI</fullName>
+                <default>false</default>
+                <label>DCG DI</label>
+            </value>
+            <value>
+                <fullName>Diamond Quiz</fullName>
+                <default>false</default>
+                <label>Diamond Quiz</label>
+            </value>
+            <value>
+                <fullName>EDD30</fullName>
+                <default>false</default>
+                <label>EDD30</label>
+            </value>
+            <value>
+                <fullName>EDD Di</fullName>
+                <default>false</default>
+                <label>EDD Di</label>
+            </value>
+            <value>
+                <fullName>Everyday Email Drip</fullName>
+                <default>false</default>
+                <label>Everyday Email Drip</label>
+            </value>
+            <value>
+                <fullName>Everyday Form</fullName>
+                <default>false</default>
+                <label>Everyday Form</label>
+            </value>
+            <value>
+                <fullName>FA Referral Reblast</fullName>
+                <default>false</default>
+                <label>FA Referral Reblast</label>
+            </value>
+            <value>
+                <fullName>FB Intent</fullName>
+                <default>false</default>
+                <label>FB Intent</label>
+            </value>
+            <value>
+                <fullName>FB Volume</fullName>
+                <default>false</default>
+                <label>FB Volume</label>
+            </value>
+            <value>
+                <fullName>FS Form</fullName>
+                <default>false</default>
+                <label>FS Form</label>
+            </value>
+            <value>
+                <fullName>GFG Referral</fullName>
+                <default>false</default>
+                <label>GFG Referral</label>
+            </value>
+            <value>
+                <fullName>JJ AP</fullName>
+                <default>false</default>
+                <label>JJ AP</label>
+            </value>
+            <value>
+                <fullName>JJ Legal</fullName>
+                <default>false</default>
+                <label>JJ Legal</label>
+            </value>
+            <value>
+                <fullName>JJ Live</fullName>
+                <default>false</default>
+                <label>JJ Live</label>
+            </value>
+            <value>
+                <fullName>JJ PACK</fullName>
+                <default>false</default>
+                <label>JJ PACK</label>
+            </value>
+            <value>
+                <fullName>JJ SBA</fullName>
+                <default>false</default>
+                <label>JJ SBA</label>
+            </value>
+            <value>
+                <fullName>JJ WAP</fullName>
+                <default>false</default>
+                <label>JJ WAP</label>
+            </value>
+            <value>
+                <fullName>Legacy</fullName>
+                <default>false</default>
+                <label>Legacy</label>
+            </value>
+            <value>
+                <fullName>Legal</fullName>
+                <default>false</default>
+                <label>Legal</label>
+            </value>
+            <value>
+                <fullName>LL AP</fullName>
+                <default>false</default>
+                <label>LL AP</label>
+            </value>
+            <value>
+                <fullName>LL Form</fullName>
+                <default>false</default>
+                <label>LL Form</label>
+            </value>
+            <value>
+                <fullName>LS Referral</fullName>
+                <default>false</default>
+                <label>LS Referral</label>
+            </value>
+            <value>
+                <fullName>NY Legal Scaper</fullName>
+                <default>false</default>
+                <label>NY Legal Scraper</label>
+            </value>
+            <value>
+                <fullName>Pack</fullName>
+                <default>false</default>
+                <label>Pack</label>
+            </value>
+            <value>
+                <fullName>PC Referral</fullName>
+                <default>false</default>
+                <label>PC Referral</label>
+            </value>
+            <value>
+                <fullName>TBS Referral</fullName>
+                <default>false</default>
+                <label>TBS Referral</label>
+            </value>
+            <value>
+                <fullName>Tier 1</fullName>
+                <default>false</default>
+                <label>Tier 1</label>
+            </value>
+            <value>
+                <fullName>TSM Call in</fullName>
+                <default>false</default>
+                <label>TSM Call in</label>
+            </value>
+            <value>
+                <fullName>VA Referral</fullName>
+                <default>false</default>
+                <label>VA Referral</label>
+            </value>
+            <value>
+                <fullName>Wittzy</fullName>
+                <default>false</default>
+                <label>Wittzy</label>
+            </value>
+            <value>
+                <fullName>ZAK Legal</fullName>
+                <default>false</default>
+                <label>ZAK Legal</label>
+            </value>
+            <value>
+                <fullName>Zak Legal Re Blast</fullName>
+                <default>false</default>
+                <label>Zak Legal Re Blast</label>
+            </value>
+            <value>
+                <fullName>A1 Credit</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>A1 Credit</label>
+            </value>
+            <value>
+                <fullName>AR Referral</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>AR Referral</label>
+            </value>
+            <value>
+                <fullName>AR Referral,JJ Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>AR Referral,JJ Pack</label>
+            </value>
+            <value>
+                <fullName>Adam Legal Call in</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Adam Legal Call in</label>
+            </value>
+            <value>
+                <fullName>App</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>App</label>
+            </value>
+            <value>
+                <fullName>BH Referral</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>BH Referral</label>
+            </value>
+            <value>
+                <fullName>Blog</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Blog</label>
+            </value>
+            <value>
+                <fullName>CX Referral</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>CX Referral</label>
+            </value>
+            <value>
+                <fullName>Candella Media</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Candella Media</label>
+            </value>
+            <value>
+                <fullName>DCG</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>DCG</label>
+            </value>
+            <value>
+                <fullName>DCG Form</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>DCG Form</label>
+            </value>
+            <value>
+                <fullName>DD Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>DD Pack</label>
+            </value>
+            <value>
+                <fullName>DD Pack,JJ Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>DD Pack,JJ Pack</label>
+            </value>
+            <value>
+                <fullName>DD Pack,JJA Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>DD Pack,JJA Pack</label>
+            </value>
+            <value>
+                <fullName>Email</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Email</label>
+            </value>
+            <value>
+                <fullName>Facebook</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Facebook</label>
+            </value>
+            <value>
+                <fullName>Google Ad Words</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Google Ad Words</label>
+            </value>
+            <value>
+                <fullName>IAPDA Lead</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>IAPDA Lead</label>
+            </value>
+            <value>
+                <fullName>Instagram</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Instagram</label>
+            </value>
+            <value>
+                <fullName>JJ DI 23</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ DI 23</label>
+            </value>
+            <value>
+                <fullName>JJ DI 24</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ DI 24</label>
+            </value>
+            <value>
+                <fullName>JJ General</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ General</label>
+            </value>
+            <value>
+                <fullName>JJ L 23</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ L 23</label>
+            </value>
+            <value>
+                <fullName>JJ L 24</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ L 24</label>
+            </value>
+            <value>
+                <fullName>JJ Live Call-In</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ Live Call-In</label>
+            </value>
+            <value>
+                <fullName>JJ Live Call-In,JJ DI 24</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ Live Call-In,JJ DI 24</label>
+            </value>
+            <value>
+                <fullName>JJ Live Call-In,JJ Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ Live Call-In,JJ Pack</label>
+            </value>
+            <value>
+                <fullName>JJ Live Call-In,JJA Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ Live Call-In,JJA Pack</label>
+            </value>
+            <value>
+                <fullName>JJ Live Call-In,Legal</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ Live Call-In,Legal</label>
+            </value>
+            <value>
+                <fullName>JJ Live Call-In,Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ Live Call-In,Pack</label>
+            </value>
+            <value>
+                <fullName>JJ Live Call-In,Referral</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ Live Call-In,Referral</label>
+            </value>
+            <value>
+                <fullName>JJ Live Call-In,TBS Apps</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ Live Call-In,TBS Apps</label>
+            </value>
+            <value>
+                <fullName>JJ Live Call-In,Text Response</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ Live Call-In,Text Response</label>
+            </value>
+            <value>
+                <fullName>JJ Pack,DD Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ Pack,DD Pack</label>
+            </value>
+            <value>
+                <fullName>JJ Pack,JJ Live Call-In</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ Pack,JJ Live Call-In</label>
+            </value>
+            <value>
+                <fullName>JJ Pack,JJ Live Call-In,Legal</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ Pack,JJ Live Call-In,Legal</label>
+            </value>
+            <value>
+                <fullName>JJ Pack,JJA Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ Pack,JJA Pack</label>
+            </value>
+            <value>
+                <fullName>JJ Pack,Legal</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ Pack,Legal</label>
+            </value>
+            <value>
+                <fullName>JJ Pack,TBS Apps</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ Pack,TBS Apps</label>
+            </value>
+            <value>
+                <fullName>JJ Pack,TBS Referral</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJ Pack,TBS Referral</label>
+            </value>
+            <value>
+                <fullName>JJA Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJA Pack</label>
+            </value>
+            <value>
+                <fullName>JJA Pack,JJ DI 24</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJA Pack,JJ DI 24</label>
+            </value>
+            <value>
+                <fullName>JJA Pack,JJ Live Call-In</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJA Pack,JJ Live Call-In</label>
+            </value>
+            <value>
+                <fullName>JJA Pack,Legal</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJA Pack,Legal</label>
+            </value>
+            <value>
+                <fullName>JJA Pack,TBS Apps</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJA Pack,TBS Apps</label>
+            </value>
+            <value>
+                <fullName>JJA Pack,Text Response</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJA Pack,Text Response</label>
+            </value>
+            <value>
+                <fullName>JJA Pack,Tier 1</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JJA Pack,Tier 1</label>
+            </value>
+            <value>
+                <fullName>JPW</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JPW</label>
+            </value>
+            <value>
+                <fullName>JV Referral</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>JV Referral</label>
+            </value>
+            <value>
+                <fullName>LB Referral</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>LB Referral</label>
+            </value>
+            <value>
+                <fullName>Legal,DD Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Legal,DD Pack</label>
+            </value>
+            <value>
+                <fullName>Legal,JJ Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Legal,JJ Pack</label>
+            </value>
+            <value>
+                <fullName>Legal,JJA Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Legal,JJA Pack</label>
+            </value>
+            <value>
+                <fullName>LinkedIn</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>LinkedIn</label>
+            </value>
+            <value>
+                <fullName>MA Referral</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>MA Referral</label>
+            </value>
+            <value>
+                <fullName>MD Apps</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>MD Apps</label>
+            </value>
+            <value>
+                <fullName>MD Referral</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>MD Referral</label>
+            </value>
+            <value>
+                <fullName>Organic</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Organic</label>
+            </value>
+            <value>
+                <fullName>Pack,JJ Live Call-In</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Pack,JJ Live Call-In</label>
+            </value>
+            <value>
+                <fullName>Pack,JJA Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Pack,JJA Pack</label>
+            </value>
+            <value>
+                <fullName>Pack,MD Referral</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Pack,MD Referral</label>
+            </value>
+            <value>
+                <fullName>Pack,ZH Lead</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Pack,ZH Lead</label>
+            </value>
+            <value>
+                <fullName>Referral</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Referral</label>
+            </value>
+            <value>
+                <fullName>Referral,JJ Live Call-In</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Referral,JJ Live Call-In</label>
+            </value>
+            <value>
+                <fullName>Referral,JJ Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Referral,JJ Pack</label>
+            </value>
+            <value>
+                <fullName>Referral,JJA Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Referral,JJA Pack</label>
+            </value>
+            <value>
+                <fullName>Referral,Legal</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Referral,Legal</label>
+            </value>
+            <value>
+                <fullName>Referral,TBS Referral</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Referral,TBS Referral</label>
+            </value>
+            <value>
+                <fullName>SB Referral</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>SB Referral</label>
+            </value>
+            <value>
+                <fullName>SP Lead</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>SP Lead</label>
+            </value>
+            <value>
+                <fullName>SP Lead,Legal</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>SP Lead,Legal</label>
+            </value>
+            <value>
+                <fullName>SP Lead,Tier 1</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>SP Lead,Tier 1</label>
+            </value>
+            <value>
+                <fullName>TBS Apps</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>TBS Apps</label>
+            </value>
+            <value>
+                <fullName>TBS Apps,JJ Live Call-In</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>TBS Apps,JJ Live Call-In</label>
+            </value>
+            <value>
+                <fullName>TBS Apps,JJA Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>TBS Apps,JJA Pack</label>
+            </value>
+            <value>
+                <fullName>TBS Apps,Text Response</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>TBS Apps,Text Response</label>
+            </value>
+            <value>
+                <fullName>TBS Referral,JJA Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>TBS Referral,JJA Pack</label>
+            </value>
+            <value>
+                <fullName>TBS Referral,Legal</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>TBS Referral,Legal</label>
+            </value>
+            <value>
+                <fullName>TBS Referral,SP Lead,Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>TBS Referral,SP Lead,Pack</label>
+            </value>
+            <value>
+                <fullName>TSM Bus</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>TSM Bus</label>
+            </value>
+            <value>
+                <fullName>Telegram</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Telegram</label>
+            </value>
+            <value>
+                <fullName>Text Call In</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Text Call In</label>
+            </value>
+            <value>
+                <fullName>Text Response</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Text Response</label>
+            </value>
+            <value>
+                <fullName>Text Response,DCG DI</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Text Response,DCG DI</label>
+            </value>
+            <value>
+                <fullName>Text Response,JJ Live Call-In</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Text Response,JJ Live Call-In</label>
+            </value>
+            <value>
+                <fullName>Text Response,JJ Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Text Response,JJ Pack</label>
+            </value>
+            <value>
+                <fullName>Text Response,JJ Pack,Legal</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Text Response,JJ Pack,Legal</label>
+            </value>
+            <value>
+                <fullName>Text Response,JJA Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Text Response,JJA Pack</label>
+            </value>
+            <value>
+                <fullName>Text Response,TBS Referral</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Text Response,TBS Referral</label>
+            </value>
+            <value>
+                <fullName>Text Response,Text Call In</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Text Response,Text Call In</label>
+            </value>
+            <value>
+                <fullName>Tier 1,JJ Live Call-In</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Tier 1,JJ Live Call-In</label>
+            </value>
+            <value>
+                <fullName>Tier 1,JJA Pack</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Tier 1,JJA Pack</label>
+            </value>
+            <value>
+                <fullName>TikTok</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>TikTok</label>
+            </value>
+            <value>
+                <fullName>Twitter</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Twitter</label>
+            </value>
+            <value>
+                <fullName>VGU Referral</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>VGU Referral</label>
+            </value>
+            <value>
+                <fullName>Whatsapp</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Whatsapp</label>
+            </value>
+            <value>
+                <fullName>Youtube</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Youtube</label>
+            </value>
+            <value>
+                <fullName>ZH Lead</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>ZH Lead</label>
+            </value>
+            <value>
+                <fullName>ZH Lead,JJ Live Call-In</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>ZH Lead,JJ Live Call-In</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

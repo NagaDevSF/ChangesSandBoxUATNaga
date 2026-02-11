@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Everyday_Debt_Facebook_Leads</fullName>
+    <columns>LEAD.CREATED_DATE</columns>
+    <columns>Main_Source__c</columns>
+    <columns>FULL_NAME</columns>
+    <columns>LEAD.PHONE</columns>
+    <columns>LEAD.EMAIL</columns>
+    <columns>LEAD.COMPANY</columns>
+    <columns>Est_Total_Debt__c</columns>
+    <columns>Est_weekly_payment__c</columns>
+    <columns>Sales_Office__c</columns>
+    <columns>CORE.USERS.FIRST_NAME</columns>
+    <columns>CORE.USERS.LAST_NAME</columns>
+    <columns>Pre_Deal_Status__c</columns>
+    <columns>LEAD.LAST_UPDATE</columns>
+    <columns>QuickNotes__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Main_Source__c</field>
+        <operation>contains</operation>
+        <value>Facebook</value>
+    </filters>
+    <filters>
+        <field>Sales_Office__c</field>
+        <operation>equals</operation>
+        <value>Everyday Debt</value>
+    </filters>
+    <label>Everyday Debt Facebook Leads 🅵</label>
+    <sharedTo>
+        <group>DCG_Lee</group>
+    </sharedTo>
+</ListView>

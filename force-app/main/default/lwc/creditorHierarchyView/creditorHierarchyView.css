@@ -1,0 +1,295 @@
+/* Container Styles */
+.creditor-hierarchy-container {
+    font-family: 'Salesforce Sans', Arial, sans-serif;
+}
+
+/* Summary Cards */
+.summary-card {
+    border: 1px solid #d8dde6;
+    border-radius: 4px;
+    transition: box-shadow 0.2s ease;
+}
+
+.summary-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.summary-number {
+    color: #0176d3;
+    font-weight: 700;
+}
+
+.summary-number.settled {
+    color: #4bca81;
+}
+
+/* Search Bar */
+.search-bar {
+    max-width: 500px;
+}
+
+/* Hierarchy Items */
+.hierarchy-item {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.hierarchy-item:hover {
+    background-color: #f3f3f3;
+}
+
+.expand-icon {
+    transition: transform 0.2s ease;
+}
+
+/* Account Cards */
+.account-card {
+    border-left: 4px solid #0176d3;
+    transition: box-shadow 0.2s ease;
+}
+
+.account-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.account-details {
+    font-size: 0.75rem;
+    color: #706e6b;
+    margin-top: 4px;
+}
+
+/* Creditor List Items */
+.creditor-list-item {
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 12px;
+    background-color: #fafaf9;
+    transition: background-color 0.2s ease;
+}
+
+.creditor-list-item:hover {
+    background-color: #f4f4f4;
+}
+
+.creditor-list-header {
+    cursor: pointer;
+}
+
+.creditor-list-details {
+    font-size: 0.75rem;
+    color: #706e6b;
+    margin-top: 4px;
+}
+
+/* Negotiation Items */
+.negotiations-container {
+    border-left: 2px solid #d8dde6;
+    padding-left: 16px;
+}
+
+.negotiation-item {
+    background-color: white;
+    border: 1px solid #d8dde6;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.negotiation-item:hover {
+    border-color: #0176d3;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.negotiation-details {
+    font-size: 0.75rem;
+    color: #706e6b;
+    margin-top: 4px;
+}
+
+/* Status Badges */
+.green {
+    background-color: #4bca81;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.yellow {
+    background-color: #ffb75d;
+    color: #5a2d0c;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.red {
+    background-color: #ea001e;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.blue {
+    background-color: #0176d3;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.gray {
+    background-color: #706e6b;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* Detail Labels */
+.detail-label {
+    font-weight: 600;
+    color: #514f4d;
+}
+
+/* Record Links */
+.record-link {
+    color: #0176d3;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.record-link:hover {
+    color: #014486;
+    text-decoration: underline;
+}
+
+/* Refresh Animation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.refresh-icon {
+    animation: spin 1s linear infinite;
+    margin-left: 8px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .slds-grid.slds-gutters {
+        display: block;
+    }
+    
+    .slds-col {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+    
+    .account-details,
+    .creditor-list-details,
+    .negotiation-details {
+        display: block;
+    }
+    
+    .account-details > div,
+    .creditor-list-details > div,
+    .negotiation-details > div {
+        display: block;
+        margin-bottom: 4px;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .slds-button-group,
+    .search-bar {
+        display: none !important;
+    }
+    
+    .account-card,
+    .creditor-list-item,
+    .negotiation-item {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+    }
+    
+    .hierarchy-item {
+        cursor: default !important;
+    }
+    
+    .expand-icon {
+        display: none !important;
+    }
+    
+    /* Expand all items for print */
+    .slds-card__body {
+        display: block !important;
+    }
+    
+    .negotiations-container {
+        display: block !important;
+    }
+}
+
+/* Accessibility */
+.hierarchy-item:focus {
+    outline: 2px solid #0176d3;
+    outline-offset: 2px;
+}
+
+.record-link:focus {
+    outline: 2px solid #0176d3;
+    outline-offset: 1px;
+}
+
+/* Loading States */
+.slds-spinner_container {
+    position: relative;
+    min-height: 200px;
+}
+
+/* Empty States */
+.slds-illustration {
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+/* Animation for expand/collapse */
+.slds-card__body,
+.negotiations-container {
+    transition: all 0.3s ease-in-out;
+}
+
+/* Badge styling */
+.slds-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Card hover effects */
+.slds-card {
+    transition: all 0.2s ease-in-out;
+}
+
+.slds-card:hover {
+    transform: translateY(-1px);
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}

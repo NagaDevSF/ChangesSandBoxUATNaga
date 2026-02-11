@@ -1,0 +1,27 @@
+.summary-stat {
+    background: white;
+    border: 1px solid #dddbda;
+    border-radius: 0.25rem;
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #3e3e3c;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #080707;
+}
+
+@media (max-width: 768px) {
+    .stat-value {
+        font-size: 1rem;
+    }
+}

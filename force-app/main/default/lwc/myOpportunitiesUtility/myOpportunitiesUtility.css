@@ -1,0 +1,38 @@
+.opportunity-item {
+    transition: background-color 0.2s ease;
+}
+
+.opportunity-item:hover {
+    background-color: #f3f3f3;
+}
+
+.opportunities-container {
+    overflow-y: auto;
+}
+
+.opportunities-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.opportunities-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.opportunities-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.opportunities-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+.phone-icon {
+    color: #28a745 !important;
+    fill: #28a745 !important;
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    vertical-align: middle;
+}

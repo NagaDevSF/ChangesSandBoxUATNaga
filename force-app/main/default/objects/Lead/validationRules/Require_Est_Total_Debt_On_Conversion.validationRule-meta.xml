@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Require_Est_Total_Debt_On_Conversion</fullName>
+    <active>true</active>
+    <errorConditionFormula>ISBLANK(Est_Total_Debt__c) &amp;&amp; IsConverted</errorConditionFormula>
+    <errorDisplayField>Est_Total_Debt__c</errorDisplayField>
+    <errorMessage>Error: Please update the &apos;Est. Total Debt&apos; field before converting the Lead.</errorMessage>
+</ValidationRule>

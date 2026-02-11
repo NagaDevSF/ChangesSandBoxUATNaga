@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Last_EPPS_Integration__c</fullName>
+    <description>Last time EPPS integration was attempted</description>
+    <inlineHelpText>Last time EPPS integration was attempted</inlineHelpText>
+    <label>Last EPPS Integration</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>DateTime</type>
+</CustomField>

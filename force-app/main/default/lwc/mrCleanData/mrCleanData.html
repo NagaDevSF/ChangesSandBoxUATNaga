@@ -1,0 +1,47 @@
+<!-- mrCleanData.html -->
+<template>
+    <lightning-card class="slds-card_boundary no-header">
+        
+        <!-- Loading State -->
+        <template if:true={isLoading}>
+            <div class="loading-container">
+                <lightning-spinner 
+                    alternative-text="Loading logo"
+                    size="small">
+                </lightning-spinner>
+            </div>
+        </template>
+        
+        <!-- Logo Display -->
+        <template if:true={showContent}>
+            <template if:false={hasError}>
+                <div class="slds-card__body slds-card__body_inner">
+                    <div class="logo-container">
+                        <img 
+                            src={finalImageUrl}
+                            alt={imageAltText}
+                            class="clean-logo"
+                            onload={handleImageLoad}
+                            onerror={handleImageError}
+                        />
+                    </div>
+                </div>
+            </template>
+        </template>
+        
+        <!-- Error State -->
+        <template if:true={hasError}>
+            <div class="error-container">
+                <div class="error-message">
+                    <lightning-icon 
+                        icon-name="utility:error" 
+                        size="small" 
+                        variant="error">
+                    </lightning-icon>
+                    <span>Logo not available</span>
+                </div>
+            </div>
+        </template>
+        
+    </lightning-card>
+</template>

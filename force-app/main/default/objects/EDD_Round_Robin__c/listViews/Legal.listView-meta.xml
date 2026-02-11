@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Legal</fullName>
+    <columns>NAME</columns>
+    <columns>EDD_User__c</columns>
+    <columns>Add_in_Roundrobin__c</columns>
+    <columns>Short_Reason__c</columns>
+    <columns>Cherry_Box__c</columns>
+    <columns>Last_Assignment_Time__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Cherry_Box__c</field>
+        <operation>equals</operation>
+        <value>Legal</value>
+    </filters>
+    <label>Legal</label>
+</ListView>

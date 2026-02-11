@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ROGER_EDD_OPP_S_ONLY</fullName>
+    <columns>OPPORTUNITY.CREATED_DATE</columns>
+    <columns>Main_Source__c</columns>
+    <columns>Contact_Name__c</columns>
+    <columns>Phone__c</columns>
+    <columns>Email__c</columns>
+    <columns>OPPORTUNITY.NAME</columns>
+    <columns>Time_Zone__c</columns>
+    <columns>Estimated_Total_Debt__c</columns>
+    <columns>Est_weekly_payment__c</columns>
+    <columns>Sales_Office__c</columns>
+    <columns>Fronter__c</columns>
+    <columns>Closer__c</columns>
+    <columns>OPPORTUNITY.STAGE_NAME</columns>
+    <columns>OPPORTUNITY.LAST_UPDATE</columns>
+    <columns>Quick_Notes__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Sales_Office__c</field>
+        <operation>equals</operation>
+        <value>Everyday Debt</value>
+    </filters>
+    <filters>
+        <field>Lost__c</field>
+        <operation>equals</operation>
+        <value>0</value>
+    </filters>
+    <filters>
+        <field>Closer__c</field>
+        <operation>contains</operation>
+        <value>Roger</value>
+    </filters>
+    <filters>
+        <field>OPPORTUNITY.STAGE_NAME</field>
+        <operation>notEqual</operation>
+        <value>Enrolled,Cancelled,1st NSF,Contract Signed</value>
+    </filters>
+    <label>ROGER EDD OPP&apos;S ONLY</label>
+    <sharedTo>
+        <group>Greg_Roger</group>
+    </sharedTo>
+</ListView>

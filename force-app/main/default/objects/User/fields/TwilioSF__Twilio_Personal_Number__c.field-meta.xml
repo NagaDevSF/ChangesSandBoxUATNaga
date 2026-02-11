@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>TwilioSF__Twilio_Personal_Number__c</fullName>
+    <deprecated>false</deprecated>
+    <description>Twilio Personal Number assigned to this User</description>
+    <inlineHelpText>Twilio Personal Number assigned to this User</inlineHelpText>
+    <label>Twilio Personal Number</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Phone</type>
+</CustomField>

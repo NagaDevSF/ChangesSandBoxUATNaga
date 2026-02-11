@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Welcome_Call_Status__c</fullName>
+    <label>Welcome Call Status</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>MultiselectPicklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Welcome Call Scheduled</fullName>
+                <default>false</default>
+                <label>Welcome Call Scheduled</label>
+            </value>
+            <value>
+                <fullName>Welcome Call Rescheduled</fullName>
+                <default>false</default>
+                <label>Welcome Call Rescheduled</label>
+            </value>
+            <value>
+                <fullName>Welcome Call Completed.</fullName>
+                <default>false</default>
+                <label>Welcome Call Completed.</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+    <visibleLines>4</visibleLines>
+</CustomField>

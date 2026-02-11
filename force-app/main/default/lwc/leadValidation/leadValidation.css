@@ -1,0 +1,38 @@
+.error-box {
+    display: flex;
+    align-items: center;
+    background: #ffe6e6;
+    border-left: 4px solid #d8000c;
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+}
+
+.error-text {
+    color: #d8000c;
+    font-weight: 600;
+    margin-left: 6px;
+}
+
+.error-icon {
+    --sds-c-icon-color-foreground-default: #d8000c;
+}
+
+.success-box {
+    display: flex;
+    align-items: center;
+    background: #e6ffe6;
+    border-left: 4px solid #28a745;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.success-text {
+    color: #2b8a3e;
+    font-weight: 700;
+    margin-left: 8px;
+}
+
+.success-icon {
+    --sds-c-icon-color-foreground-default: #28a745;
+}

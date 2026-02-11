@@ -1,0 +1,58 @@
+/* Segment Builder Styles */
+
+.segment-builder {
+    padding: 0.5rem;
+}
+
+.segment-row {
+    background-color: #f9f9f9;
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+}
+
+.segment-row:hover {
+    background-color: #f3f3f3;
+}
+
+.segment-order-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background-color: #0070d2;
+    color: white;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 0.875rem;
+}
+
+/* Compact form elements */
+.segment-row lightning-input,
+.segment-row lightning-combobox {
+    --sds-c-input-spacing-block-start: 0;
+    --sds-c-input-spacing-block-end: 0;
+}
+
+/* Button group alignment */
+.segment-row .slds-button-group {
+    display: flex;
+    gap: 0.25rem;
+    align-items: flex-end;
+    padding-bottom: 0.25rem;
+}
+
+/* Action column - ensure proper vertical alignment */
+.segment-row .action-column {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    min-height: 60px;
+    padding-bottom: 0.5rem;
+}
+
+/* Disable state styling */
+.segment-row[disabled] {
+    opacity: 0.7;
+    pointer-events: none;
+}

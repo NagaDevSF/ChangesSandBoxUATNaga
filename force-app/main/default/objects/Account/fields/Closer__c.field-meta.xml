@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Closer__c</fullName>
+    <label>Closer</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Adrian Alleyne</fullName>
+                <default>false</default>
+                <label>Adrian Alleyne</label>
+            </value>
+            <value>
+                <fullName>Angel Santiago</fullName>
+                <default>false</default>
+                <label>Angel Santiago</label>
+            </value>
+            <value>
+                <fullName>Chris Delcioppo</fullName>
+                <default>false</default>
+                <label>Chris Delcioppo</label>
+            </value>
+            <value>
+                <fullName>Ian NDR</fullName>
+                <default>false</default>
+                <label>Ian NDR</label>
+            </value>
+            <value>
+                <fullName>Jack Young</fullName>
+                <default>false</default>
+                <label>Jack Young</label>
+            </value>
+            <value>
+                <fullName>James</fullName>
+                <default>false</default>
+                <label>James</label>
+            </value>
+            <value>
+                <fullName>Jarrett McLucas</fullName>
+                <default>false</default>
+                <label>Jarrett McLucas</label>
+            </value>
+            <value>
+                <fullName>Jason Miles</fullName>
+                <default>false</default>
+                <label>Jason Miles</label>
+            </value>
+            <value>
+                <fullName>Joshua Bhoopsingh</fullName>
+                <default>false</default>
+                <label>Joshua Bhoopsingh</label>
+            </value>
+            <value>
+                <fullName>Juan Molina</fullName>
+                <default>false</default>
+                <label>Juan Molina</label>
+            </value>
+            <value>
+                <fullName>Ken Davis</fullName>
+                <default>false</default>
+                <label>Ken Davis</label>
+            </value>
+            <value>
+                <fullName>Mick Harely</fullName>
+                <default>false</default>
+                <label>Mick Harley</label>
+            </value>
+            <value>
+                <fullName>Miguel Magana</fullName>
+                <default>false</default>
+                <label>Miguel Magana</label>
+            </value>
+            <value>
+                <fullName>Oscar NDR</fullName>
+                <default>false</default>
+                <label>Oscar NDR</label>
+            </value>
+            <value>
+                <fullName>Rogelio Casuso</fullName>
+                <default>false</default>
+                <label>Rogelio Casuso</label>
+            </value>
+            <value>
+                <fullName>Roger Casuso</fullName>
+                <default>false</default>
+                <label>Roger Casuso</label>
+            </value>
+            <value>
+                <fullName>Sal Rebolledo</fullName>
+                <default>false</default>
+                <label>Sal Rebolledo</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

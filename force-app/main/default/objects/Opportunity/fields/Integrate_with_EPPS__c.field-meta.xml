@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Integrate_with_EPPS__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Temporary field to have greater control of Opportunities and downstream objects that are integrated with EPPS</description>
+    <inlineHelpText>Temporary field to have greater control of Opportunities and downstream objects that are integrated with EPPS</inlineHelpText>
+    <label>Integrate with EPPS</label>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Checkbox</type>
+</CustomField>

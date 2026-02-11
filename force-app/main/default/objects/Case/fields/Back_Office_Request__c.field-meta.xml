@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Back_Office_Request__c</fullName>
+    <label>Back Office Request</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>MultiselectPicklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Cashflow</fullName>
+                <default>false</default>
+                <label>Cashflow</label>
+            </value>
+            <value>
+                <fullName>Change Draft Date</fullName>
+                <default>false</default>
+                <label>Change Draft Date</label>
+            </value>
+            <value>
+                <fullName>Ledger</fullName>
+                <default>false</default>
+                <label>Ledger</label>
+            </value>
+            <value>
+                <fullName>Payment Decrease</fullName>
+                <default>false</default>
+                <label>Payment Decrease</label>
+            </value>
+            <value>
+                <fullName>Payment Increase</fullName>
+                <default>false</default>
+                <label>Payment Increase</label>
+            </value>
+            <value>
+                <fullName>Projection</fullName>
+                <default>false</default>
+                <label>Projection</label>
+            </value>
+            <value>
+                <fullName>Skip Payment</fullName>
+                <default>false</default>
+                <label>Skip Payment</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+    <visibleLines>7</visibleLines>
+</CustomField>

@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Pre_Deal_Statuses_DC__c</fullName>
+    <label>Pre Deal Statuses DC</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Assigned - not contacted</fullName>
+                <default>true</default>
+                <label>Assigned - not contacted</label>
+            </value>
+            <value>
+                <fullName>Attempting - 1st round</fullName>
+                <default>false</default>
+                <label>Attempting - 1st round</label>
+            </value>
+            <value>
+                <fullName>Attempting - 2nd round</fullName>
+                <default>false</default>
+                <label>Attempting - 2nd round</label>
+            </value>
+            <value>
+                <fullName>Attempting - 3rd round</fullName>
+                <default>false</default>
+                <label>Attempting - 3rd round</label>
+            </value>
+            <value>
+                <fullName>Attempting - 4th round</fullName>
+                <default>false</default>
+                <label>Attempting - 4th round</label>
+            </value>
+            <value>
+                <fullName>Attempting - 5th round</fullName>
+                <default>false</default>
+                <label>Attempting - 5th round</label>
+            </value>
+            <value>
+                <fullName>Attempting - 6th round</fullName>
+                <default>false</default>
+                <label>Attempting - 6th round</label>
+            </value>
+            <value>
+                <fullName>Attempting - 7th round</fullName>
+                <default>false</default>
+                <label>Attempting - 7th round</label>
+            </value>
+            <value>
+                <fullName>Attempting - 8th round</fullName>
+                <default>false</default>
+                <label>Attempting - 8th round</label>
+            </value>
+            <value>
+                <fullName>Attempting - 9th round</fullName>
+                <default>false</default>
+                <label>Attempting - 9th round</label>
+            </value>
+            <value>
+                <fullName>Attempting - no response</fullName>
+                <default>false</default>
+                <label>Attempting - no response</label>
+            </value>
+            <value>
+                <fullName>Follow Up - didn&apos;t qualify yet</fullName>
+                <default>false</default>
+                <label>Follow Up - didn&apos;t qualify yet</label>
+            </value>
+            <value>
+                <fullName>Follow Up - partially qualified</fullName>
+                <default>false</default>
+                <label>Follow Up - partially qualified</label>
+            </value>
+            <value>
+                <fullName>Follow Up - missed follow up</fullName>
+                <default>false</default>
+                <label>Follow Up - missed follow up</label>
+            </value>
+            <value>
+                <fullName>Follow Up - future</fullName>
+                <default>false</default>
+                <label>Follow Up - future</label>
+            </value>
+            <value>
+                <fullName>Follow Up - no response</fullName>
+                <default>false</default>
+                <label>Follow Up - no response</label>
+            </value>
+            <value>
+                <fullName>Not Interested - seeking funding</fullName>
+                <default>false</default>
+                <label>Not Interested - seeking funding</label>
+            </value>
+            <value>
+                <fullName>Not Interested - has mca debt</fullName>
+                <default>false</default>
+                <label>Not Interested - has mca debt</label>
+            </value>
+            <value>
+                <fullName>Not Interested - already in debt program</fullName>
+                <default>false</default>
+                <label>Not Interested - already in debt program</label>
+            </value>
+            <value>
+                <fullName>Not Interested - reduced with lenders directly</fullName>
+                <default>false</default>
+                <label>Not Interested - reduced with lenders directly</label>
+            </value>
+            <value>
+                <fullName>Not Interested - already in debt program (settled)</fullName>
+                <default>false</default>
+                <label>Not Interested - already in debt program (settled)</label>
+            </value>
+            <value>
+                <fullName>Not Interested - already in debt program (not settled)</fullName>
+                <default>false</default>
+                <label>Not Interested - already in debt program (not settled)</label>
+            </value>
+            <value>
+                <fullName>Not Interested - no hardship</fullName>
+                <default>false</default>
+                <label>Not Interested - no hardship</label>
+            </value>
+            <value>
+                <fullName>Not Interested - other</fullName>
+                <default>false</default>
+                <label>Not Interested - other</label>
+            </value>
+            <value>
+                <fullName>Not Qualified - no debt</fullName>
+                <default>false</default>
+                <label>Not Qualified - no debt</label>
+            </value>
+            <value>
+                <fullName>Not Qualified - little/no revenue</fullName>
+                <default>false</default>
+                <label>Not Qualified - little/no revenue</label>
+            </value>
+            <value>
+                <fullName>Not Qualified - has business debt (not mca)</fullName>
+                <default>false</default>
+                <label>Not Qualified - has business debt (not mca)</label>
+            </value>
+            <value>
+                <fullName>Not Qualified - total debt less than minimum</fullName>
+                <default>false</default>
+                <label>Not Qualified - total debt less than minimum</label>
+            </value>
+            <value>
+                <fullName>Not Qualified - total payments less than minimum</fullName>
+                <default>false</default>
+                <label>Not Qualified - total payments less than minimum</label>
+            </value>
+            <value>
+                <fullName>Not Qualified - other</fullName>
+                <default>false</default>
+                <label>Not Qualified - other</label>
+            </value>
+            <value>
+                <fullName>Bad Lead - disconnected number</fullName>
+                <default>false</default>
+                <label>Bad Lead - disconnected number</label>
+            </value>
+            <value>
+                <fullName>Bad Lead - wrong number</fullName>
+                <default>false</default>
+                <label>Bad Lead - wrong number</label>
+            </value>
+            <value>
+                <fullName>Bad Lead - not business owner</fullName>
+                <default>false</default>
+                <label>Bad Lead - not business owner</label>
+            </value>
+            <value>
+                <fullName>Bad Lead - spam/fake info</fullName>
+                <default>false</default>
+                <label>Bad Lead - spam/fake info</label>
+            </value>
+            <value>
+                <fullName>Duplicate</fullName>
+                <default>false</default>
+                <label>Duplicate</label>
+            </value>
+            <value>
+                <fullName>DNC</fullName>
+                <default>false</default>
+                <label>DNC</label>
+            </value>
+            <value>
+                <fullName>already in debt program (not settled)</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>already in debt program (not settled)</label>
+            </value>
+            <value>
+                <fullName>already in debt program (settled)</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>already in debt program (settled)</label>
+            </value>
+            <value>
+                <fullName>little/no revenue</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>little/no revenue</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

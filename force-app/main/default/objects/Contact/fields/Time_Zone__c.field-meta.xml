@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Time_Zone__c</fullName>
+    <externalId>false</externalId>
+    <formula>CASE(
+    MailingState,
+    /* Eastern Time Zone */
+    &quot;ME&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;NH&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;VT&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;MA&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;RI&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;CT&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;NY&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;NJ&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;PA&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;DE&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;MD&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;DC&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;VA&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;NC&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;SC&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;GA&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;FL&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;MI&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;OH&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;IN&quot;, &quot;Eastern Standard Time (EST)&quot;,
+    &quot;KY&quot;, &quot;Eastern Standard Time (EST)&quot;,
+
+    /* Central Time Zone */
+    &quot;AL&quot;, &quot;Central Standard Time (CST)&quot;,
+    &quot;MS&quot;, &quot;Central Standard Time (CST)&quot;,
+    &quot;TN&quot;, &quot;Central Standard Time (CST)&quot;,
+    &quot;WI&quot;, &quot;Central Standard Time (CST)&quot;,
+    &quot;IL&quot;, &quot;Central Standard Time (CST)&quot;,
+    &quot;MO&quot;, &quot;Central Standard Time (CST)&quot;,
+    &quot;AR&quot;, &quot;Central Standard Time (CST)&quot;,
+    &quot;LA&quot;, &quot;Central Standard Time (CST)&quot;,
+    &quot;IA&quot;, &quot;Central Standard Time (CST)&quot;,
+    &quot;MN&quot;, &quot;Central Standard Time (CST)&quot;,
+    &quot;ND&quot;, &quot;Central Standard Time (CST)&quot;,
+    &quot;SD&quot;, &quot;Central Standard Time (CST)&quot;,
+    &quot;NE&quot;, &quot;Central Standard Time (CST)&quot;,
+    &quot;KS&quot;, &quot;Central Standard Time (CST)&quot;,
+    &quot;OK&quot;, &quot;Central Standard Time (CST)&quot;,
+    &quot;TX&quot;, &quot;Central Standard Time (CST)&quot;,
+
+    /* Mountain Time Zone */
+    &quot;MT&quot;, &quot;Mountain Standard Time (MST)&quot;,
+    &quot;WY&quot;, &quot;Mountain Standard Time (MST)&quot;,
+    &quot;CO&quot;, &quot;Mountain Standard Time (MST)&quot;,
+    &quot;NM&quot;, &quot;Mountain Standard Time (MST)&quot;,
+    &quot;AZ&quot;, &quot;Mountain Standard Time (MST) (No DST)&quot;,
+    &quot;UT&quot;, &quot;Mountain Standard Time (MST)&quot;,
+    &quot;ID&quot;, &quot;Mountain Standard Time (MST)&quot;,
+
+    /* Pacific Time Zone */
+    &quot;NV&quot;, &quot;Pacific Standard Time (PST)&quot;,
+    &quot;CA&quot;, &quot;Pacific Standard Time (PST)&quot;,
+    &quot;OR&quot;, &quot;Pacific Standard Time (PST)&quot;,
+    &quot;WA&quot;, &quot;Pacific Standard Time (PST)&quot;,
+
+    /* Alaska Time Zone */
+    &quot;AK&quot;, &quot;Alaska Standard Time (AKST)&quot;,
+
+    /* Hawaii-Aleutian Time Zone */
+    &quot;HI&quot;, &quot;Hawaii-Aleutian Standard Time (HAST)&quot;,
+
+    &quot;Unknown&quot;
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Time Zone</label>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

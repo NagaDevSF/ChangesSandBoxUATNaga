@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Google_Ads_Opportunities</fullName>
+    <booleanFilter>1 or 2 or 3</booleanFilter>
+    <columns>OPPORTUNITY.CREATED_DATE</columns>
+    <columns>Main_Source__c</columns>
+    <columns>Contact_Name__c</columns>
+    <columns>Phone__c</columns>
+    <columns>Email__c</columns>
+    <columns>OPPORTUNITY.NAME</columns>
+    <columns>Time_Zone__c</columns>
+    <columns>Estimated_Total_Debt__c</columns>
+    <columns>Est_weekly_payment__c</columns>
+    <columns>Sales_Office__c</columns>
+    <columns>Fronter__c</columns>
+    <columns>Closer__c</columns>
+    <columns>OPPORTUNITY.STAGE_NAME</columns>
+    <columns>OPPORTUNITY.LAST_UPDATE</columns>
+    <columns>Quick_Notes__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>utm_source__c</field>
+        <operation>contains</operation>
+        <value>google</value>
+    </filters>
+    <filters>
+        <field>Lead_Source__c</field>
+        <operation>contains</operation>
+        <value>Google Ad Words</value>
+    </filters>
+    <filters>
+        <field>Main_Source__c</field>
+        <operation>contains</operation>
+        <value>Google</value>
+    </filters>
+    <label>Google Ads Opportunities 🅶</label>
+</ListView>

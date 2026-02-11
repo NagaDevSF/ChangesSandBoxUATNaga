@@ -1,0 +1,309 @@
+<template>
+    <!-- Loading Spinner Overlay -->
+    <template lwc:if={isLoading}>
+        <div class="loading-overlay" role="status" aria-live="polite">
+            <lightning-spinner alternative-text="Loading payment plan data" size="medium"></lightning-spinner>
+        </div>
+    </template>
+
+    <!-- No Payment Plan State -->
+    <template lwc:if={hasPlans}>
+    </template>
+    <template lwc:else>
+        <template lwc:if={isLoading}>
+        </template>
+        <template lwc:else>
+            <article class="payment-plan-viewer">
+                <header class="modal-header">
+                    <h1 class="modal-title">Payment Plan Viewer</h1>
+                </header>
+                <section class="no-plan-container" role="alert">
+                    <figure class="no-plan-icon">
+                        <lightning-icon icon-name="utility:warning" size="large" alternative-text="Warning"></lightning-icon>
+                    </figure>
+                    <h2 class="no-plan-title">No Payment Plan Found</h2>
+                    <p class="no-plan-text">There is no payment plan for this opportunity.</p>
+                </section>
+            </article>
+        </template>
+    </template>
+
+    <!-- Main Content -->
+    <template lwc:if={hasPlans}>
+        <article class={modalContainerClass} role="main">
+            <!-- Header Section -->
+            <header class="modal-header">
+                <h1 class="modal-title">
+                    <span class="mode-indicator">View Plan - </span>
+                    <span class="plan-name">{planName}</span>
+                    <mark class="version-badge">{versionInfo}</mark>
+                </h1>
+                <div class="user-info-row">
+                    <template lwc:if={hasActivatedBy}>
+                        <span class="user-badge activated-by">
+                            <lightning-icon icon-name="utility:check" size="xx-small" alternative-text="Activated"></lightning-icon>
+                            Activated by: {activatedByName}
+                        </span>
+                    </template>
+                    <template lwc:if={hasCreatedBy}>
+                        <span class="user-badge created-by">
+                            <lightning-icon icon-name="utility:user" size="xx-small" alternative-text="Created"></lightning-icon>
+                            Created by: {createdByName}
+                        </span>
+                    </template>
+                </div>
+                <nav class="header-actions" aria-label="Viewer actions">
+                    <button type="button" class="icon-btn refresh-btn" onclick={handleRefresh} title="Refresh data" aria-label="Refresh data">
+                        <span aria-hidden="true">&#8635;</span>
+                    </button>
+                    <button type="button" class="icon-btn maximize-btn" onclick={handleMaximize} title="Toggle fullscreen" aria-label="Toggle fullscreen">
+                        <span aria-hidden="true">&#9634;</span>
+                    </button>
+                </nav>
+            </header>
+
+            <!-- Tab Navigation (Single Tab - View Only) -->
+            <nav class="tab-bar" role="tablist" aria-label="Payment plan tabs">
+                <button type="button" class="tab active" role="tab" aria-selected="true" aria-controls="view-panel">
+                    {activeTabLabel}
+                    <output class="tab-count">({itemCount})</output>
+                </button>
+                <aside class="epps-badge" aria-label="EPPS indicator">
+                    <abbr title="Electronic Payment Processing System">EPPS</abbr>
+                    <lightning-icon icon-name="utility:info" size="xx-small" alternative-text="Information"></lightning-icon>
+                </aside>
+            </nav>
+
+            <!-- Data Table Section -->
+            <section class="table-container" id="view-panel" role="tabpanel" aria-label="Payment schedule data">
+                <table class="data-table" role="grid" aria-label="Payment schedule items">
+                    <thead>
+                        <tr role="row">
+                            <th scope="col" class="th-center th-rownum" role="columnheader">#</th>
+                            <th scope="col" class="th-center th-draftnum" role="columnheader">Draft #</th>
+                            <th scope="col" class="th-center th-date" role="columnheader">Date</th>
+                            <th scope="col" class="th-right th-currency" role="columnheader">Draft</th>
+                            <th scope="col" class="th-right th-currency-sm" role="columnheader">Setup</th>
+                            <th scope="col" class="th-right th-currency-sm" role="columnheader">Program</th>
+                            <th scope="col" class="th-right th-currency-sm" role="columnheader">Banking</th>
+                            <th scope="col" class="th-right th-currency" role="columnheader">Savings</th>
+                            <th scope="col" class="th-center th-status" role="columnheader">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template for:each={displayItems} for:item="item">
+                            <!-- Schedule Item Row -->
+                            <template lwc:if={item.isWireFee}>
+                            </template>
+                            <template lwc:else>
+                                <tr key={item.uniqueKey}
+                                    class={item.rowClass}
+                                    data-row-id={item.id}
+                                    role="row">
+
+                                    <!-- Row Number with Star Indicator -->
+                                    <td class="td-center" role="gridcell">
+                                        <data class={item.rowNumberClass} value={item.rowNumber}>{item.rowNumber}</data>
+                                    </td>
+
+                                    <!-- Draft # (skips NSF/Cancelled) -->
+                                    <td class="td-center" role="gridcell">
+                                        <data class="draft-number" value={item.calculatedDraftNumber}>{item.calculatedDraftNumber}</data>
+                                    </td>
+
+                                    <!-- Date -->
+                                    <td class="td-center" role="gridcell">
+                                        <time datetime={item.paymentDateFormatted}>{item.paymentDateDisplay}</time>
+                                    </td>
+
+                                    <!-- Draft Amount -->
+                                    <td class="td-right td-currency" role="gridcell">
+                                        <data class={item.draftAmountClass} value={item.draftAmount}>{item.draftAmountFormatted}</data>
+                                    </td>
+
+                                    <!-- Setup Fee -->
+                                    <td class="td-right td-currency" role="gridcell">
+                                        <data class={item.setupFeeClass} value={item.setupFee}>{item.setupFeeFormatted}</data>
+                                    </td>
+
+                                    <!-- Program Fee -->
+                                    <td class="td-right td-currency" role="gridcell">
+                                        <data class={item.programFeeClass} value={item.programFee}>{item.programFeeFormatted}</data>
+                                    </td>
+
+                                    <!-- Banking Fee -->
+                                    <td class="td-right td-currency" role="gridcell">
+                                        <data class={item.bankingFeeClass} value={item.bankingFee}>{item.bankingFeeFormatted}</data>
+                                    </td>
+
+                                    <!-- Savings Balance -->
+                                    <td class="td-right td-currency" role="gridcell">
+                                        <data class={item.savingsClass} value={item.savingsBalance}>{item.savingsBalanceFormatted}</data>
+                                    </td>
+
+                                    <!-- Status -->
+                                    <td class="td-center" role="gridcell">
+                                        <mark class={item.statusBadgeClass}>{item.status}</mark>
+                                    </td>
+                                </tr>
+                            </template>
+
+                            <!-- Wire Fee Row (Nested, Indented) -->
+                            <template lwc:if={item.isWireFee}>
+                                <tr key={item.uniqueKey} class={item.wireRowClass} role="row">
+                                    <!-- Empty cell for # column -->
+                                    <td class="td-center" role="gridcell"></td>
+                                    <!-- Wire indicator (under Draft # column) -->
+                                    <td class="td-center" role="gridcell">
+                                        <lightning-icon icon-name="utility:routing_offline" size="xx-small" alternative-text="Wire Fee" class="wire-icon"></lightning-icon>
+                                    </td>
+                                    <!-- Fee Type (under Date column) -->
+                                    <td class="td-center" role="gridcell">
+                                        <span class="wire-type">{item.feeTypeFormatted}</span>
+                                    </td>
+                                    <!-- Amount (under Draft column) -->
+                                    <td class="td-right td-currency" role="gridcell">
+                                        <data class="wire-amount">{item.amountFormatted}</data>
+                                    </td>
+                                    <!-- Empty cells for Setup, Program, Banking -->
+                                    <td class="td-center" role="gridcell"></td>
+                                    <td class="td-center" role="gridcell"></td>
+                                    <td class="td-center" role="gridcell"></td>
+                                    <!-- Empty for Savings -->
+                                    <td class="td-center" role="gridcell"></td>
+                                    <!-- Empty for Status column -->
+                                    <td class="td-center" role="gridcell"></td>
+                                </tr>
+                            </template>
+                        </template>
+
+                        <!-- Empty State -->
+                        <template lwc:if={hasDisplayItems}>
+                        </template>
+                        <template lwc:else>
+                            <tr role="row">
+                                <td colspan="9" class="empty-state" role="gridcell">
+                                    <p class="empty-state-text">No schedule items found</p>
+                                    <p class="empty-state-subtext">This plan has no payment schedule items</p>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+
+                    <!-- Aggregate Footer Rows -->
+                    <template lwc:if={hasDisplayItems}>
+                        <tfoot class="aggregate-footer">
+                            <!-- Total Row -->
+                            <tr class="aggregate-row" role="row">
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center aggregate-label" role="gridcell">
+                                    <strong>Total</strong>
+                                </td>
+                                <td class="td-right aggregate-value" role="gridcell">
+                                    <output>{totalDraftAmountFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value" role="gridcell">
+                                    <output>{totalSetupFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value" role="gridcell">
+                                    <output>{totalProgramFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value" role="gridcell">
+                                    <output>{totalBankingFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value" role="gridcell">
+                                    <output>{totalSavingsBalanceFormatted}</output>
+                                </td>
+                                <td class="td-center" role="gridcell"></td>
+                            </tr>
+
+                            <!-- Cleared Row -->
+                            <tr class="aggregate-row cleared-row" role="row">
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center aggregate-label" role="gridcell">
+                                    <strong>Cleared</strong>
+                                </td>
+                                <td class="td-right aggregate-value cleared-value" role="gridcell">
+                                    <output>{clearedDraftAmountFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value cleared-value" role="gridcell">
+                                    <output>{clearedSetupFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value cleared-value" role="gridcell">
+                                    <output>{clearedProgramFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value cleared-value" role="gridcell">
+                                    <output>{clearedBankingFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value cleared-value" role="gridcell">
+                                    <output>{clearedSavingsBalanceFormatted}</output>
+                                </td>
+                                <td class="td-center" role="gridcell"></td>
+                            </tr>
+
+                            <!-- NSF Row -->
+                            <tr class="aggregate-row nsf-row" role="row">
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center aggregate-label" role="gridcell">
+                                    <strong>NSF</strong>
+                                </td>
+                                <td class="td-right aggregate-value nsf-value" role="gridcell">
+                                    <output>{nsfDraftAmountFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value nsf-value" role="gridcell">
+                                    <output>{nsfSetupFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value nsf-value" role="gridcell">
+                                    <output>{nsfProgramFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value nsf-value" role="gridcell">
+                                    <output>{nsfBankingFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value nsf-value" role="gridcell">
+                                    <output>{nsfSavingsBalanceFormatted}</output>
+                                </td>
+                                <td class="td-center" role="gridcell"></td>
+                            </tr>
+
+                            <!-- Wires Row -->
+                            <tr class="aggregate-row wires-row" role="row">
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center aggregate-label" role="gridcell">
+                                    <strong>Wires</strong>
+                                </td>
+                                <td class="td-right aggregate-value wires-value" role="gridcell">
+                                    <output>{totalWiresReceivedFormatted}</output>
+                                </td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                            </tr>
+                        </tfoot>
+                    </template>
+                </table>
+
+            </section>
+
+            <!-- Footer -->
+            <footer class="modal-footer">
+                <div class="footer-left">
+                    <span class="footer-info">
+                        <lightning-icon icon-name="utility:preview" size="xx-small" alternative-text="View Only"></lightning-icon>
+                        <span>View-only mode</span>
+                    </span>
+                </div>
+                <div class="footer-right">
+                    <span class="footer-info">
+                        <span>{totalRowCount} items</span>
+                    </span>
+                </div>
+            </footer>
+        </article>
+    </template>
+</template>

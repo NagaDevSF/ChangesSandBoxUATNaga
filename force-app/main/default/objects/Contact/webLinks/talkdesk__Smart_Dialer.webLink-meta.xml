@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebLink xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>talkdesk__Smart_Dialer</fullName>
+    <availability>online</availability>
+    <description>Allows the agent to dial through the selected contacts</description>
+    <displayType>massActionButton</displayType>
+    <encodingKey>UTF-8</encodingKey>
+    <height>600</height>
+    <linkType>url</linkType>
+    <masterLabel>Dialer</masterLabel>
+    <openType>sidebar</openType>
+    <protected>false</protected>
+    <requireRowSelection>true</requireRowSelection>
+    <url>{!$Site.BaseUrl}/lightning/n/talkdesk__Dialer_Lists</url>
+</WebLink>

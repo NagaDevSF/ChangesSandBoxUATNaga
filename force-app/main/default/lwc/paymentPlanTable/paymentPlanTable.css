@@ -1,0 +1,222 @@
+.version-history-section {
+    background-color: #f4f6f9;
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.version-info {
+    border-bottom: 1px solid #dddbda;
+    padding-bottom: 1rem;
+}
+
+.summary-stat {
+    background: white;
+    border: 1px solid #dddbda;
+    border-radius: 0.25rem;
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #3e3e3c;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #080707;
+}
+
+.payment-schedule-container {
+    width: 100%;
+    overflow: visible;
+}
+
+.table-wrapper {
+    width: 100%;
+    min-width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+/* Force lightning-datatable to fill container width */
+.payment-schedule-container lightning-datatable,
+.fullscreen-modal lightning-datatable {
+    width: 100% !important;
+    min-width: 100% !important;
+    display: block !important;
+}
+
+/* Ensure table fills the available width with flexible layout */
+.payment-schedule-container .slds-table,
+.fullscreen-modal .slds-table {
+    width: 100% !important;
+    min-width: 100% !important;
+    table-layout: fixed !important;
+}
+
+/* Force the datatable container to expand */
+.payment-schedule-container .slds-scrollable_x,
+.fullscreen-modal .slds-scrollable_x {
+    width: 100% !important;
+    overflow-x: visible !important;
+}
+
+/* Ensure the table body stretches */
+.payment-schedule-container .slds-table tbody,
+.fullscreen-modal .slds-table tbody {
+    width: 100% !important;
+}
+
+/* Fullscreen modal styles */
+.fullscreen-modal {
+    width: 95%;
+    max-width: none;
+    height: 90vh;
+}
+
+.fullscreen-modal .slds-modal__content {
+    height: calc(100% - 6rem);
+    overflow: auto;
+    padding: 1rem !important;
+}
+
+/* Print styles */
+@media print {
+    .slds-card__header,
+    .version-history-section,
+    lightning-button-group,
+    .slds-modal__header button,
+    .slds-modal__footer {
+        display: none !important;
+    }
+    
+    .payment-schedule-container {
+        page-break-inside: avoid;
+    }
+    
+    .summary-stat {
+        border: 1px solid #000;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .table-wrapper {
+        width: 100%;
+        overflow-x: scroll;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .stat-value {
+        font-size: 1rem;
+    }
+    
+    /* Ensure table stays full width on mobile */
+    .payment-schedule-container lightning-datatable,
+    .fullscreen-modal lightning-datatable {
+        min-width: 100% !important;
+    }
+}
+
+/* Highlight active version row */
+lightning-datatable .slds-is-selected {
+    background-color: #e8f4fb !important;
+}
+
+/* Custom styling for version badges */
+lightning-badge {
+    margin-left: 0.5rem;
+}
+
+/* Table row hover effect */
+.slds-table tbody tr:hover {
+    background-color: #f4f6f9;
+}
+
+/* Sticky table headers */
+.payment-schedule-container lightning-datatable {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+/* Ensure columns distribute properly across full width */
+.payment-schedule-container .slds-th__action,
+.fullscreen-modal .slds-th__action {
+    justify-content: flex-start !important;
+}
+
+/* Distribute column widths evenly across full width */
+.payment-schedule-container .slds-table td,
+.payment-schedule-container .slds-table th,
+.fullscreen-modal .slds-table td,
+.fullscreen-modal .slds-table th {
+    width: auto !important;
+    min-width: 80px;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+/* Ensure equal column distribution */
+.payment-schedule-container .slds-table col,
+.fullscreen-modal .slds-table col {
+    width: auto !important;
+}
+
+/* Force datatable to use full width of card */
+lightning-datatable {
+    width: 100% !important;
+    display: block !important;
+}
+
+/* Override any SLDS max-width constraints */
+.slds-max-medium-table_stacked,
+.slds-max-medium-table_stacked-horizontal {
+    max-width: none !important;
+}
+
+/* Enhanced button group styling */
+lightning-button-group {
+    display: inline-flex;
+    gap: 0.25rem;
+}
+
+/* Loading spinner overlay */
+lightning-spinner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+}
+
+/* Ensure lightning-card uses full width */
+:host {
+    display: block;
+    width: 100%;
+}
+
+lightning-card {
+    width: 100% !important;
+}
+
+/* Remove any padding constraints that might limit table width */
+.slds-card__body {
+    padding: 0 !important;
+}
+
+.slds-card__body_inner {
+    padding: 0 !important;
+}
+
+/* Ensure the payment schedule container truly fills the card */
+lightning-card .payment-schedule-container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+}

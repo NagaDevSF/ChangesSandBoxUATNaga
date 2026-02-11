@@ -1,0 +1,207 @@
+<template>
+    <!-- Search and Filter Section -->
+    <div class="slds-card">
+        <div class="slds-card__body slds-card__body_inner">
+            <div class="slds-grid slds-gutters slds-wrap">
+                <!-- Search Bar -->
+                <div class="slds-col slds-size_8-of-12">
+                    <lightning-input
+                        type="search"
+                        label="Search Opportunities"
+                        placeholder="Search opportunities by name, stage, or tier..."
+                        value={searchTerm}
+                        onchange={handleSearch}
+                        variant="label-hidden">
+                    </lightning-input>
+                </div>
+                <!-- Filter Buttons -->
+                <div class="slds-col slds-size_4-of-12">
+                    <div class="filter-buttons slds-button-group" role="group">
+                        <lightning-button variant={allFilterClass} label="All" onclick={handleFilterAll}></lightning-button>
+                        <lightning-button variant={contractSignedFilterClass} label="Contract Signed" onclick={handleFilterContractSigned}></lightning-button>
+                        <lightning-button variant={enrolledFilterClass} label="Enrolled" onclick={handleFilterEnrolled}></lightning-button>
+                        <lightning-button variant={nsfFilterClass} label="NSF" onclick={handleFilterNSF}></lightning-button>
+                        <lightning-button variant={cancelledFilterClass} label="Cancelled" onclick={handleFilterCancelled}></lightning-button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Section -->
+            <div class="slds-grid slds-gutters slds-m-top_medium stats-container">
+                <div class="slds-col slds-text-align_center">
+                    <div class="stat-value slds-text-heading_large">{displayTotalOpportunities}</div>
+                    <div class="stat-label slds-text-body_small">TOTAL OPPORTUNITIES</div>
+                </div>
+                <div class="slds-col slds-text-align_center">
+                    <div class="stat-value slds-text-heading_large">{displayContractSignedOpportunities}</div>
+                    <div class="stat-label slds-text-body_small">CONTRACT SIGNED</div>
+                </div>
+                <div class="slds-col slds-text-align_center">
+                    <div class="stat-value slds-text-heading_large">{displayEnrolledOpportunities}</div>
+                    <div class="stat-label slds-text-body_small">ENROLLED</div>
+                </div>
+                <div class="slds-col slds-text-align_center">
+                    <div class="stat-value slds-text-heading_large">{displayNsfOpportunities}</div>
+                    <div class="stat-label slds-text-body_small">NSF</div>
+                </div>
+                <div class="slds-col slds-text-align_center">
+                    <div class="stat-value slds-text-heading_large">{displayCancelledOpportunities}</div>
+                    <div class="stat-label slds-text-body_small">CANCELLED</div>
+                </div>
+                <div class="slds-col slds-text-align_center">
+                    <div class="stat-value slds-text-heading_large">{totalDebtFormatted}</div>
+                    <div class="stat-label slds-text-body_small">TOTAL DEBT</div>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="slds-m-top_large">
+                <template if:true={isLoading}>
+                    <div class="slds-text-align_center slds-p-around_medium">
+                        <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+                    </div>
+                </template>
+                
+                <template if:false={isLoading}>
+                    <template if:true={hasOpportunities}>
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th class="slds-text-title_caps" scope="col">
+                                        <div class="slds-truncate" title="Opportunity">OPPORTUNITY</div>
+                                    </th>
+                                    <th class="slds-text-title_caps" scope="col">
+                                        <div class="slds-truncate" title="Tier">TIER</div>
+                                    </th>
+                                    <th class="slds-text-title_caps" scope="col">
+                                        <div class="slds-truncate" title="Stage">STAGE</div>
+                                    </th>
+                                    <th class="slds-text-title_caps" scope="col">
+                                        <div class="slds-truncate" title="Progress">PROGRESS</div>
+                                    </th>
+                                    <th class="slds-text-title_caps" scope="col">
+                                        <div class="slds-truncate" title="Total Debt">TOTAL DEBT</div>
+                                    </th>
+                                    <th class="slds-text-title_caps" scope="col">
+                                        <div class="slds-truncate" title="Settled">SETTLED</div>
+                                    </th>
+                                    <th class="slds-text-title_caps" scope="col">
+                                        <div class="slds-truncate" title="Enrollment">ENROLLMENT</div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={filteredOpportunities} for:item="opportunity">
+                                    <tr key={opportunity.Id} class={opportunity.rowClass} onclick={handleRowClick} data-id={opportunity.Id} data-stage={opportunity.Stage}>
+                                        <!-- Opportunity Info Column -->
+                                        <td data-label="Opportunity" scope="row">
+                                            <div class="slds-media slds-media_center">
+                                                <div class="slds-media__figure">
+                                                    <lightning-icon 
+                                                        icon-name="utility:chevronright" 
+                                                        alternative-text="Expand" 
+                                                        size="x-small"
+                                                        class="expand-icon">
+                                                    </lightning-icon>
+                                                </div>
+                                                <div class="slds-media__body">
+                                                    <div class="client-name-container">
+                                                        <a href="#" 
+                                                           class="client-name-link slds-text-link" 
+                                                           data-opportunity-id={opportunity.Id}
+                                                           onclick={handleOpportunityNameClick}
+                                                           title="Navigate to Opportunity record">
+                                                            {opportunity.Name}
+                                                        </a>
+                                                    </div>
+                                                    <div class="slds-text-body_small slds-text-color_weak">
+                                                        <lightning-icon 
+                                                            icon-name="utility:down" 
+                                                            size="xx-small"
+                                                            class="dropdown-hint-icon">
+                                                        </lightning-icon>
+                                                        Click row to view case details
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        <!-- Tier Column -->
+                                        <td data-label="Tier">
+                                            <span class={opportunity.tierBadgeClass}>{opportunity.Tier__c}</span>
+                                        </td>
+
+                                        <!-- Stage Column -->
+                                        <td data-label="Stage">
+                                            <span class={opportunity.statusBadgeClass}>{opportunity.statusDisplay}</span>
+                                        </td>
+
+                                        <!-- Progress Column -->
+                                        <td data-label="Progress">
+                                            <div class="progress-container">
+                                                <div class="progress-bar-background">
+                                                    <div class={opportunity.progressClass} style={opportunity.progressStyle}></div>
+                                                </div>
+                                                <span class="progress-text">{opportunity.progressDisplay}%</span>
+                                            </div>
+                                        </td>
+
+                                        <!-- Total Debt Column -->
+                                        <td data-label="Total Debt">
+                                            <span class="debt-amount">{opportunity.debtFormatted}</span>
+                                        </td>
+
+                                        <!-- Settled Column -->
+                                        <td data-label="Settled">
+                                            <span class="settled-amount">{opportunity.settledDisplay}</span>
+                                        </td>
+
+                                        <!-- Enrollment Date Column -->
+                                        <td data-label="Enrollment">
+                                            <span class={opportunity.dateClass}>{opportunity.enrollmentFormatted}</span>
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Expandable Case Panel Row -->
+                                    <template if:true={opportunity.showWelcomePanel}>
+                                        <tr key={opportunity.expandedKey} class="expanded-panel-row">
+                                            <td colspan="7" class="expanded-panel-cell">
+                                                <c-opportunity-case-panel 
+                                                    opportunity-id={opportunity.Id}>
+                                                </c-opportunity-case-panel>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </template>
+                            </tbody>
+                        </table>
+                    </template>
+                    
+                    <!-- Empty State -->
+                    <template if:false={hasOpportunities}>
+                        <div class="slds-text-align_center slds-p-around_large">
+                            <lightning-icon icon-name="utility:search" alternative-text="No results" size="large"></lightning-icon>
+                            <h3 class="slds-text-heading_small slds-m-top_medium">No opportunities found</h3>
+                            <p class="slds-text-body_regular slds-m-top_small">Try adjusting your search criteria or filters</p>
+                        </div>
+                    </template>
+                </template>
+            </div>
+
+            <!-- Pagination -->
+            <template if:true={showPagination}>
+                <div class="slds-m-top_medium slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                    <div class="slds-col">
+                        <p class="slds-text-body_small">
+                            Showing {startRecord}-{endRecord} of {totalRecords} opportunities
+                        </p>
+                    </div>
+                    <div class="slds-col slds-no-flex">
+                        <lightning-button variant="neutral" label="Previous" onclick={handlePrevious} disabled={isFirstPage}></lightning-button>
+                        <lightning-button variant="neutral" label="Next" onclick={handleNext} disabled={isLastPage} class="slds-m-left_x-small"></lightning-button>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</template>

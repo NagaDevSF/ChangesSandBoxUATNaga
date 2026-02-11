@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Everyday_Web_Opportunities</fullName>
+    <booleanFilter>(1 or 3) and 2</booleanFilter>
+    <columns>OPPORTUNITY.CREATED_DATE</columns>
+    <columns>Main_Source__c</columns>
+    <columns>Contact_Name__c</columns>
+    <columns>Phone__c</columns>
+    <columns>Email__c</columns>
+    <columns>OPPORTUNITY.NAME</columns>
+    <columns>Time_Zone__c</columns>
+    <columns>Estimated_Total_Debt__c</columns>
+    <columns>Est_weekly_payment__c</columns>
+    <columns>Sales_Office__c</columns>
+    <columns>Fronter__c</columns>
+    <columns>Closer__c</columns>
+    <columns>OPPORTUNITY.STAGE_NAME</columns>
+    <columns>OPPORTUNITY.LAST_UPDATE</columns>
+    <columns>Quick_Notes__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Main_Source__c</field>
+        <operation>contains</operation>
+        <value>Organic</value>
+    </filters>
+    <filters>
+        <field>Sales_Office__c</field>
+        <operation>equals</operation>
+        <value>Everyday Debt</value>
+    </filters>
+    <filters>
+        <field>Main_Source__c</field>
+        <operation>contains</operation>
+        <value>Web</value>
+    </filters>
+    <label>Everyday Web Opportunities🖥️</label>
+    <sharedTo>
+        <group>DCG_Lee</group>
+        <group>List_View_EDD_pre_deal_status</group>
+    </sharedTo>
+</ListView>

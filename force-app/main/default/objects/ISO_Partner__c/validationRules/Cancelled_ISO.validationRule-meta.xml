@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Cancelled_ISO</fullName>
+    <active>true</active>
+    <errorConditionFormula>AND(
+    Cancelled_ISO__c = TRUE,
+    ISBLANK(Cancellation_Reason__c)
+)</errorConditionFormula>
+    <errorMessage>Cancellation Reason must be filled out when Cancelled ISO is checked</errorMessage>
+</ValidationRule>

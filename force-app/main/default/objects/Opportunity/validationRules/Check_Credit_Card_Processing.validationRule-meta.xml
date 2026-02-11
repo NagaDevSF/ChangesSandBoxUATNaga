@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Check_Credit_Card_Processing</fullName>
+    <active>true</active>
+    <errorConditionFormula>AND(
+  Credit_Card_Processing__c = TRUE,
+  OR(
+    ISBLANK(Account.Name),
+    ISBLANK(Account.BillingAddress),
+    ISBLANK(Contact_Name__c),
+    ISBLANK(Phone__c),
+    ISBLANK(Email__c)
+  )
+)</errorConditionFormula>
+    <errorMessage>Complete Business Name, Business Address, Contact Name, Phone Number, and Email Address before checking “Credit Card Processing”.
+Checking this box will trigger an email to Archie, and the client.</errorMessage>
+</ValidationRule>

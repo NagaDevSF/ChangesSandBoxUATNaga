@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DISPOSITION_1_WEEK_4</fullName>
+    <columns>NAME</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>NAME</field>
+        <operation>startsWith</operation>
+        <value>DISPOSITION_1_WEEK_4</value>
+    </filters>
+    <label>DISPOSITION-1 WEEK-4</label>
+</ListView>

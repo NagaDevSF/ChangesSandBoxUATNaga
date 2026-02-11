@@ -1,0 +1,195 @@
+<template>
+    <lightning-card title={cardTitleWithCount} icon-name="standard:note">
+        <!-- Header Actions -->
+        <lightning-button-group slot="actions">
+            <lightning-button-icon
+                icon-name="utility:refresh"
+                alternative-text="Refresh"
+                title="Refresh Notes"
+                onclick={handleRefresh}>
+            </lightning-button-icon>
+            <lightning-button
+                label="New Note"
+                variant="brand"
+                icon-name="utility:add"
+                onclick={openNewNoteModal}>
+            </lightning-button>
+        </lightning-button-group>
+
+        <!-- Loading Spinner -->
+        <template if:true={isLoading}>
+            <div class="slds-is-relative slds-p-around_medium">
+                <lightning-spinner alternative-text="Loading..." size="small"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Notes List -->
+        <template if:false={isLoading}>
+            <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+                <template if:true={hasNotes}>
+                    <div class="notes-container">
+                        <template for:each={notes} for:item="note">
+                            <div key={note.noteId} class="note-item slds-box slds-box_x-small slds-m-bottom_small">
+                                <!-- Note Header -->
+                                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                                    <div class="slds-col slds-grow">
+                                        <h3 class="slds-text-heading_small slds-truncate" title={note.title}>
+                                            {note.title}
+                                        </h3>
+                                        <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                                            <lightning-icon icon-name="utility:clock" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                            {note.lastModifiedDate} by {note.lastModifiedBy}
+                                        </p>
+                                    </div>
+                                    <div class="slds-col slds-shrink-none">
+                                        <lightning-button-icon
+                                            icon-name="utility:edit"
+                                            alternative-text="Edit"
+                                            title="Edit Note"
+                                            data-note-id={note.noteId}
+                                            onclick={openEditNoteModal}
+                                            class="slds-m-right_xx-small">
+                                        </lightning-button-icon>
+                                        <lightning-button-icon
+                                            icon-name="utility:delete"
+                                            alternative-text="Delete"
+                                            title="Delete Note"
+                                            data-note-id={note.noteId}
+                                            data-note-title={note.title}
+                                            onclick={handleDeleteNote}
+                                            variant="bare"
+                                            class="delete-icon">
+                                        </lightning-button-icon>
+                                    </div>
+                                </div>
+
+                                <!-- Note Content -->
+                                <div class="slds-m-top_small note-content">
+                                    <template if:true={note.isExpanded}>
+                                        <p class="slds-text-body_regular content-text">{note.content}</p>
+                                    </template>
+                                    <template if:false={note.isExpanded}>
+                                        <p class="slds-text-body_regular content-text">{note.contentPreview}</p>
+                                    </template>
+
+                                    <!-- Show More/Less -->
+                                    <template if:true={note.hasMoreContent}>
+                                        <template if:true={note.isExpanded}>
+                                            <lightning-button
+                                                variant="base"
+                                                label="Show Less"
+                                                data-note-id={note.noteId}
+                                                onclick={toggleNoteExpansion}
+                                                class="slds-m-top_x-small">
+                                            </lightning-button>
+                                        </template>
+                                        <template if:false={note.isExpanded}>
+                                            <lightning-button
+                                                variant="base"
+                                                label="Show More"
+                                                data-note-id={note.noteId}
+                                                onclick={toggleNoteExpansion}
+                                                class="slds-m-top_x-small">
+                                            </lightning-button>
+                                        </template>
+                                    </template>
+                                </div>
+
+                                <!-- Source Info -->
+                                <template if:true={note.sourceObject}>
+                                    <div class="slds-m-top_small">
+                                        <span class="slds-badge slds-badge_lightest">
+                                            <lightning-icon icon-name="utility:link" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                            {note.sourceObject}
+                                        </span>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Empty State -->
+                <template if:false={hasNotes}>
+                    <div class="slds-illustration slds-illustration_small slds-p-vertical_large">
+                        <div class="slds-text-longform slds-text-align_center">
+                            <lightning-icon
+                                icon-name="standard:note"
+                                size="large"
+                                class="slds-m-bottom_small">
+                            </lightning-icon>
+                            <h3 class="slds-text-heading_small slds-m-bottom_x-small">No Notes Yet</h3>
+                            <p class="slds-text-body_regular slds-text-color_weak">
+                                Click "New Note" to add your first note.
+                            </p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </lightning-card>
+
+    <!-- Create/Edit Modal -->
+    <template if:true={isModalOpen}>
+        <section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="modal-heading" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <div class="modal-surface">
+                    <!-- Modal Header -->
+                    <header class="slds-modal__header">
+                        <button class="slds-button slds-button_icon slds-modal__close close-button" title="Close" onclick={closeModal}>
+                            <lightning-icon icon-name="utility:close" alternative-text="Close" size="small" class="close-icon"></lightning-icon>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <h2 id="modal-heading" class="slds-modal__title slds-hyphenate">{modalTitle}</h2>
+                    </header>
+
+                    <!-- Modal Body -->
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <lightning-input
+                            type="text"
+                            label="Title"
+                            value={currentNote.title}
+                            onchange={handleTitleChange}
+                            required
+                            data-field="title"
+                            message-when-value-missing="Title is required"
+                            maxlength="255"
+                            placeholder="Enter note title">
+                        </lightning-input>
+
+                        <div class="slds-form-element slds-m-top_small">
+                            <label class="slds-form-element__label" for="note-content">
+                                <abbr class="slds-required" title="required">*</abbr>Content
+                            </label>
+                            <div class="slds-form-element__control">
+                                <textarea
+                                    id="note-content"
+                                    class="slds-textarea note-textarea"
+                                    placeholder="Enter note content"
+                                    maxlength="32000"
+                                    data-field="content"
+                                    oninput={handleContentChange}></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <footer class="slds-modal__footer">
+                        <lightning-button
+                            label="Cancel"
+                            onclick={closeModal}>
+                        </lightning-button>
+                        <lightning-button
+                            label={saveButtonLabel}
+                            variant="brand"
+                            onclick={handleSaveNote}
+                            disabled={disableSaveButton}
+                            class="slds-m-left_x-small">
+                        </lightning-button>
+                    </footer>
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

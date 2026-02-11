@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Retention_Days__c</fullName>
+    <externalId>false</externalId>
+    <formula>IF(
+  OR(
+    ISPICKVAL(StageName, &quot;Contract Signed&quot;),
+    ISPICKVAL(StageName, &quot;Enrolled&quot;),
+    ISPICKVAL(StageName, &quot;NSF&quot;),ISPICKVAL(StageName, &quot;Fees Done&quot;),
+    ISPICKVAL(StageName, &quot;Cancelled&quot;)
+  ),
+  IF(
+    ISBLANK(Cancellation_Date__c),
+    FLOOR( (TODAY() - CloseDate) / 7 ),
+    FLOOR( (Cancellation_Date__c - CloseDate) / 7 )
+  ),
+  NULL
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Retention Weeks</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>1</scale>
+    <trackHistory>false</trackHistory>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

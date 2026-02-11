@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Segment_Type__c</fullName>
+    <label>Segment Type</label>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Fixed</fullName>
+                <default>false</default>
+                <label>Fixed</label>
+            </value>
+            <value>
+                <fullName>Remainder</fullName>
+                <default>false</default>
+                <label>Remainder</label>
+            </value>
+            <value>
+                <fullName>SolveAmount</fullName>
+                <default>false</default>
+                <label>SolveAmount</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

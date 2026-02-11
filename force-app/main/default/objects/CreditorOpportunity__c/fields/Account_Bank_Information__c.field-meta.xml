@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Account_Bank_Information__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <label>Account Bank Information</label>
+    <lookupFilter>
+        <active>true</active>
+        <filterItems>
+            <field>Account_Bank_Information__c.Account__c</field>
+            <operation>equals</operation>
+            <valueField>$Source.CreditorAccount__c</valueField>
+        </filterItems>
+        <isOptional>false</isOptional>
+    </lookupFilter>
+    <referenceTo>Account_Bank_Information__c</referenceTo>
+    <relationshipLabel>Creditors List</relationshipLabel>
+    <relationshipName>Creditors_List</relationshipName>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

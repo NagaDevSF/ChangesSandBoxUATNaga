@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Lien_Legal_Status__c</fullName>
+    <label>Lender Document Request</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>MultiselectPicklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Arbitration</fullName>
+                <default>false</default>
+                <label>Arbitration</label>
+            </value>
+            <value>
+                <fullName>Arbitration Award</fullName>
+                <default>false</default>
+                <label>Arbitration Award</label>
+            </value>
+            <value>
+                <fullName>COJ</fullName>
+                <default>false</default>
+                <label>COJ</label>
+            </value>
+            <value>
+                <fullName>Contract(s)</fullName>
+                <default>false</default>
+                <label>Contract(s)</label>
+            </value>
+            <value>
+                <fullName>Judgment</fullName>
+                <default>false</default>
+                <label>Judgment</label>
+            </value>
+            <value>
+                <fullName>Lawsuit</fullName>
+                <default>false</default>
+                <label>Lawsuit</label>
+            </value>
+            <value>
+                <fullName>Notice for Arbitration</fullName>
+                <default>false</default>
+                <label>Notice for Arbitration</label>
+            </value>
+            <value>
+                <fullName>Payment History Pending</fullName>
+                <default>false</default>
+                <label>Payment History Pending</label>
+            </value>
+            <value>
+                <fullName>Payoff Letter Pending</fullName>
+                <default>false</default>
+                <label>Payoff Letter Pending</label>
+            </value>
+            <value>
+                <fullName>Previous Settlements</fullName>
+                <default>false</default>
+                <label>Previous Settlements</label>
+            </value>
+            <value>
+                <fullName>Settlement drafts</fullName>
+                <default>false</default>
+                <label>Settlement drafts</label>
+            </value>
+            <value>
+                <fullName>Stipulation of Settlements</fullName>
+                <default>false</default>
+                <label>Stipulation of Settlements</label>
+            </value>
+            <value>
+                <fullName>Zero Balance Letter</fullName>
+                <default>false</default>
+                <label>Zero Balance Letter</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+    <visibleLines>7</visibleLines>
+</CustomField>

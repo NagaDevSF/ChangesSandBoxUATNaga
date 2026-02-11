@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Main_Source__c</fullName>
+    <externalId>false</externalId>
+    <formula>IF(
+    /* 1) If UTM Source is populated */
+    NOT(ISBLANK(utm_source__c)),
+    utm_source__c &amp; &quot; &quot; &amp; TEXT(Campaign_Brand__c),
+
+    /* 2) Else, pick by Sales_Office__c */
+    IF(
+        Sales_Office__c = &quot;Everyday Debt&quot;,
+        IF(
+            NOT(ISBLANK(TEXT(Lead_Source_EDD__c))),
+            TEXT(Lead_Source_EDD__c) &amp; &quot; &quot; &amp; TEXT(Campaign_Brand__c),
+            TEXT(Source__c)         &amp; &quot; &quot; &amp; TEXT(Campaign_Brand__c)
+        ),
+        IF(
+            Sales_Office__c = &quot;Next Day Settlement&quot;,
+            IF(
+                NOT(ISBLANK(TEXT(Lead_Source_Debtifi__c))),
+                TEXT(Lead_Source_Debtifi__c) &amp; &quot; &quot; &amp; TEXT(Campaign_Brand__c),
+                TEXT(Source__c)              &amp; &quot; &quot; &amp; TEXT(Campaign_Brand__c)
+            ),
+            IF(
+                Sales_Office__c = &quot;Debt Crusaders&quot;,
+                IF(
+                    NOT(ISBLANK(TEXT(Lead_Source_DC__c))),
+                    TEXT(Lead_Source_DC__c) &amp; &quot; &quot; &amp; TEXT(Campaign_Brand__c),
+                    TEXT(Source__c)        &amp; &quot; &quot; &amp; TEXT(Campaign_Brand__c)
+                ),
+                /* Default for any other office */
+                TEXT(Source__c) &amp; &quot; &quot; &amp; TEXT(Campaign_Brand__c)
+            )
+        )
+    )
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Main Source</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

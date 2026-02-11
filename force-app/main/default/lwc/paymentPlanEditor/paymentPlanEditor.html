@@ -1,0 +1,718 @@
+<template>
+    <!-- Confetti Celebration Container -->
+    <template lwc:if={showConfetti}>
+        <aside class="confetti-container" aria-hidden="true">
+            <template for:each={confettiPieces} for:item="piece">
+                <span key={piece.id} class={piece.shapeClass} style={piece.style}></span>
+            </template>
+        </aside>
+    </template>
+
+    <!-- Loading Spinner Overlay -->
+    <template lwc:if={isLoading}>
+        <div class="loading-overlay" role="status" aria-live="polite">
+            <lightning-spinner alternative-text="Loading payment plan data" size="medium"></lightning-spinner>
+        </div>
+    </template>
+
+    <!-- No Payment Plan State - Only show when not loading and no plans exist -->
+    <template lwc:if={showNoPlanState}>
+            <article class="payment-plan-modal">
+                <header class="modal-header">
+                    <h1 class="modal-title">Payment Plan Editor</h1>
+                    <button type="button" class="close-btn" onclick={handleClose} title="Close" aria-label="Close editor">
+                        <span aria-hidden="true">&#10005;</span>
+                    </button>
+                </header>
+                <section class="no-plan-container" role="alert">
+                    <figure class="no-plan-icon">
+                        <lightning-icon icon-name="utility:warning" size="large" alternative-text="Warning"></lightning-icon>
+                    </figure>
+                    <h2 class="no-plan-title">No Payment Plan Found</h2>
+                    <p class="no-plan-text">Create a payment plan to view and edit schedule items.</p>
+                </section>
+            </article>
+    </template>
+
+    <!-- Main Content -->
+    <template lwc:if={hasPlans}>
+        <article class={modalContainerClass} role="main">
+            <!-- Header Section -->
+            <header class="modal-header">
+                <h1 class="modal-title">
+                    <template lwc:if={isEditMode}>
+                        <span class="mode-indicator">Edit Plan - </span>
+                    </template>
+                    <template lwc:else>
+                        <span class="mode-indicator">View Plan - </span>
+                    </template>
+                    <span class="plan-name">{planName}</span>
+                    <mark class="version-badge">{versionInfo}</mark>
+                </h1>
+                <div class="user-info-row">
+                    <template lwc:if={hasActivatedBy}>
+                        <span class="user-badge activated-by">
+                            <lightning-icon icon-name="utility:check" size="xx-small" alternative-text="Activated"></lightning-icon>
+                            Activated by: {activatedByName}
+                        </span>
+                    </template>
+                    <template lwc:if={hasCreatedBy}>
+                        <span class="user-badge created-by">
+                            <lightning-icon icon-name="utility:user" size="xx-small" alternative-text="Created"></lightning-icon>
+                            Created by: {createdByName}
+                        </span>
+                    </template>
+                </div>
+                <nav class="header-actions" aria-label="Editor actions">
+                    <button type="button" class="icon-btn refresh-btn" onclick={handleRefresh} title="Refresh data" aria-label="Refresh data">
+                        <span aria-hidden="true">&#8635;</span>
+                    </button>
+                    <button type="button" class="icon-btn maximize-btn" onclick={handleMaximize} title="Toggle fullscreen" aria-label="Toggle fullscreen">
+                        <span aria-hidden="true">&#9634;</span>
+                    </button>
+                </nav>
+            </header>
+
+            <!-- Plan Version Selector -->
+            <section class="plan-selector-container" aria-label="Version selector">
+                <div class="plan-selector-row">
+                    <lightning-combobox
+                        name="planSelector"
+                        label="Select Payment Plan Version"
+                        value={selectedPlanId}
+                        placeholder="Select a plan..."
+                        options={planDropdownOptions}
+                        onchange={handlePlanDropdownChange}
+                        variant="label-hidden"
+                        class="plan-dropdown"
+                        dropdown-alignment="left">
+                    </lightning-combobox>
+                    <output class="plan-count-badge">{planCount} version(s)</output>
+                </div>
+            </section>
+
+            <!-- Tab Navigation -->
+            <nav class="tab-bar" role="tablist" aria-label="Payment plan tabs">
+                <button type="button"
+                        class={activeTabButtonClass}
+                        data-tab="Active"
+                        onclick={handleTabClick}
+                        role="tab"
+                        aria-selected={isActiveTab}
+                        aria-controls="active-panel">
+                    {activeTabLabel}
+                    <output class="tab-count">({activeItemCount})</output>
+                </button>
+                <template lwc:if={showPendingTab}>
+                    <button type="button"
+                            class={pendingTabButtonClass}
+                            data-tab="Pending"
+                            onclick={handleTabClick}
+                            role="tab"
+                            aria-selected={isPendingTab}
+                            aria-controls="pending-panel">
+                        Pending
+                        <output class="tab-count">({pendingItemCount})</output>
+                    </button>
+                </template>
+                <aside class="epps-badge" aria-label="EPPS indicator">
+                    <abbr title="Electronic Payment Processing System">EPPS</abbr>
+                    <lightning-icon icon-name="utility:info" size="xx-small" alternative-text="Information"></lightning-icon>
+                </aside>
+            </nav>
+
+            <!-- Data Table Section -->
+            <section class="table-container" role="tabpanel" aria-label="Payment schedule data">
+                <table class="data-table" role="grid" aria-label="Payment schedule items">
+                    <thead>
+                        <tr role="row">
+                            <!-- Checkbox column removed - functionality was not working -->
+                            <!-- <th scope="col" class="th-checkbox" role="columnheader">
+                                <input type="checkbox"
+                                       id="selectAll"
+                                       class="header-checkbox"
+                                       onchange={handleSelectAll}
+                                       checked={allSelected}
+                                       aria-label="Select all rows">
+                            </th> -->
+                            <th scope="col" class="th-center th-rownum" role="columnheader">#</th>
+                            <th scope="col" class="th-center th-draftnum" role="columnheader">Draft #</th>
+                            <th scope="col" class="th-center th-date" role="columnheader">Date</th>
+                            <th scope="col" class="th-right th-currency" role="columnheader">Draft</th>
+                            <th scope="col" class="th-right th-currency-sm" role="columnheader">Setup</th>
+                            <th scope="col" class="th-right th-currency-sm" role="columnheader">Program</th>
+                            <th scope="col" class="th-right th-currency-sm" role="columnheader">Banking</th>
+                            <th scope="col" class="th-right th-currency" role="columnheader">Savings</th>
+                            <th scope="col" class="th-center th-status" role="columnheader">Status</th>
+                            <th scope="col" class="th-center th-wire" role="columnheader">Wire</th>
+                            <template lwc:if={canEdit}>
+                                <th scope="col" class="th-center th-action" role="columnheader">
+                                    <span class="slds-assistive-text">Actions</span>
+                                </th>
+                            </template>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template for:each={displayItems} for:item="item" for:index="index">
+                            <tr key={item.tempId}
+                                class={item.rowClass}
+                                data-row-id={item.id}
+                                role="row">
+
+                                <!-- Checkbox Column removed - functionality was not working -->
+                                <!-- <td class="td-center" role="gridcell">
+                                    <input type="checkbox"
+                                           class="row-checkbox"
+                                           data-id={item.tempId}
+                                           checked={item.isSelected}
+                                           onchange={handleRowSelect}
+                                           aria-label="Select row">
+                                </td> -->
+
+                                <!-- Row Number -->
+                                <td class="td-center" role="gridcell">
+                                    <data class={item.rowNumberClass} value={item.rowNumber}>{item.rowNumber}</data>
+                                </td>
+
+                                <!-- Draft Number -->
+                                <td class="td-center" role="gridcell">
+                                    <data class="draft-number" value={item.calculatedDraftNumber}>{item.calculatedDraftNumber}</data>
+                                </td>
+
+                                <!-- Payment Date -->
+                                <td class="td-center" role="gridcell">
+                                    <template lwc:if={canEdit}>
+                                        <template lwc:if={item.isRowEditable}>
+                                            <div class="fill-cell"
+                                                 data-field="paymentDate"
+                                                 data-id={item.tempId}
+                                                 data-row-index={index}
+                                                 onclick={handleCellSelect}>
+                                                <input type="date"
+                                                       value={item.paymentDateFormatted}
+                                                       class="edit-input edit-input-date"
+                                                       data-field="paymentDate"
+                                                       data-id={item.tempId}
+                                                       oninput={handleFieldChange}
+                                                       onblur={handleFieldBlur}
+                                                       aria-label="Payment date">
+                                                <span class="fill-handle" onmousedown={handleFillHandleMouseDown} aria-hidden="true"></span>
+                                            </div>
+                                        </template>
+                                        <template lwc:else>
+                                            <time datetime={item.paymentDateFormatted}>{item.paymentDateDisplay}</time>
+                                        </template>
+                                    </template>
+                                    <template lwc:else>
+                                        <time datetime={item.paymentDateFormatted}>{item.paymentDateDisplay}</time>
+                                    </template>
+                                </td>
+
+                                <!-- Draft Amount -->
+                                <td class="td-right td-currency" role="gridcell">
+                                    <template lwc:if={canEdit}>
+                                        <template lwc:if={item.isRowEditable}>
+                                            <div class="fill-cell"
+                                                 data-field="draftAmount"
+                                                 data-id={item.tempId}
+                                                 data-row-index={index}
+                                                 onclick={handleCellSelect}>
+                                                <input type="text"
+                                                       inputmode="decimal"
+                                                       value={item.draftAmountEdit}
+                                                       class="edit-input edit-input-currency"
+                                                       data-field="draftAmount"
+                                                       data-id={item.tempId}
+                                                       oninput={handleFieldChange}
+                                                       onblur={handleFieldBlur}
+                                                       aria-label="Draft amount">
+                                                <span class="fill-handle" onmousedown={handleFillHandleMouseDown} aria-hidden="true"></span>
+                                            </div>
+                                        </template>
+                                        <template lwc:else>
+                                            <data class={item.draftAmountClass} value={item.draftAmount}>{item.draftAmountFormatted}</data>
+                                        </template>
+                                    </template>
+                                    <template lwc:else>
+                                        <data class={item.draftAmountClass} value={item.draftAmount}>{item.draftAmountFormatted}</data>
+                                    </template>
+                                </td>
+
+                                <!-- Setup Fee -->
+                                <td class="td-right td-currency" role="gridcell">
+                                    <template lwc:if={canEdit}>
+                                        <template lwc:if={item.isRowEditable}>
+                                            <div class="fill-cell"
+                                                 data-field="setupFee"
+                                                 data-id={item.tempId}
+                                                 data-row-index={index}
+                                                 onclick={handleCellSelect}>
+                                                <input type="text"
+                                                       inputmode="decimal"
+                                                       value={item.setupFeeEdit}
+                                                       class="edit-input edit-input-currency"
+                                                       data-field="setupFee"
+                                                       data-id={item.tempId}
+                                                       oninput={handleFieldChange}
+                                                       onblur={handleFieldBlur}
+                                                       aria-label="Setup fee">
+                                                <span class="fill-handle" onmousedown={handleFillHandleMouseDown} aria-hidden="true"></span>
+                                            </div>
+                                        </template>
+                                        <template lwc:else>
+                                            <span class="fee-with-status">
+                                                <span class={item.setupFeeStatusDotClass} aria-hidden="true"></span>
+                                                <data class={item.setupFeeClass} value={item.setupFee}>{item.setupFeeFormatted}</data>
+                                            </span>
+                                        </template>
+                                    </template>
+                                    <template lwc:else>
+                                        <span class="fee-with-status">
+                                            <span class={item.setupFeeStatusDotClass} aria-hidden="true"></span>
+                                            <data class={item.setupFeeClass} value={item.setupFee}>{item.setupFeeFormatted}</data>
+                                        </span>
+                                    </template>
+                                </td>
+
+                                <!-- Program Fee -->
+                                <td class="td-right td-currency" role="gridcell">
+                                    <template lwc:if={canEdit}>
+                                        <template lwc:if={item.isRowEditable}>
+                                            <div class="fill-cell"
+                                                 data-field="programFee"
+                                                 data-id={item.tempId}
+                                                 data-row-index={index}
+                                                 onclick={handleCellSelect}>
+                                                <input type="text"
+                                                       inputmode="decimal"
+                                                       value={item.programFeeEdit}
+                                                       class="edit-input edit-input-currency"
+                                                       data-field="programFee"
+                                                       data-id={item.tempId}
+                                                       oninput={handleFieldChange}
+                                                       onblur={handleFieldBlur}
+                                                       aria-label="Program fee">
+                                                <span class="fill-handle" onmousedown={handleFillHandleMouseDown} aria-hidden="true"></span>
+                                            </div>
+                                        </template>
+                                        <template lwc:else>
+                                            <span class="fee-with-status">
+                                                <span class={item.programFeeStatusDotClass} aria-hidden="true"></span>
+                                                <data class={item.programFeeClass} value={item.programFee}>{item.programFeeFormatted}</data>
+                                            </span>
+                                        </template>
+                                    </template>
+                                    <template lwc:else>
+                                        <span class="fee-with-status">
+                                            <span class={item.programFeeStatusDotClass} aria-hidden="true"></span>
+                                            <data class={item.programFeeClass} value={item.programFee}>{item.programFeeFormatted}</data>
+                                        </span>
+                                    </template>
+                                </td>
+
+                                <!-- Banking Fee -->
+                                <td class="td-right td-currency" role="gridcell">
+                                    <template lwc:if={canEdit}>
+                                        <template lwc:if={item.isRowEditable}>
+                                            <div class="fill-cell"
+                                                 data-field="bankingFee"
+                                                 data-id={item.tempId}
+                                                 data-row-index={index}
+                                                 onclick={handleCellSelect}>
+                                                <input type="text"
+                                                       inputmode="decimal"
+                                                       value={item.bankingFeeEdit}
+                                                       class="edit-input edit-input-currency"
+                                                       data-field="bankingFee"
+                                                       data-id={item.tempId}
+                                                       oninput={handleFieldChange}
+                                                       onblur={handleFieldBlur}
+                                                       aria-label="Banking fee">
+                                                <span class="fill-handle" onmousedown={handleFillHandleMouseDown} aria-hidden="true"></span>
+                                            </div>
+                                        </template>
+                                        <template lwc:else>
+                                            <span class="fee-with-status">
+                                                <span class={item.bankingFeeStatusDotClass} aria-hidden="true"></span>
+                                                <data class={item.bankingFeeClass} value={item.bankingFee}>{item.bankingFeeFormatted}</data>
+                                            </span>
+                                        </template>
+                                    </template>
+                                    <template lwc:else>
+                                        <span class="fee-with-status">
+                                            <span class={item.bankingFeeStatusDotClass} aria-hidden="true"></span>
+                                            <data class={item.bankingFeeClass} value={item.bankingFee}>{item.bankingFeeFormatted}</data>
+                                        </span>
+                                    </template>
+                                </td>
+
+                                <!-- Savings Balance (Read-only - auto-calculated) -->
+                                <td class="td-right td-currency" role="gridcell">
+                                    <data class={item.savingsClass} value={item.savingsBalance}>{item.savingsBalanceFormatted}</data>
+                                </td>
+
+                                <!-- Status -->
+                                <td class="td-center" role="gridcell">
+                                    <template lwc:if={canEdit}>
+                                        <template lwc:if={item.isRowEditable}>
+                                            <div class="fill-cell"
+                                                 data-field="status"
+                                                 data-id={item.tempId}
+                                                 data-row-index={index}
+                                                 onclick={handleCellSelect}>
+                                                <select class="edit-input edit-input-select"
+                                                        data-field="status"
+                                                        data-id={item.tempId}
+                                                        onchange={handleFieldChange}
+                                                        aria-label="Payment status">
+                                                    <template for:each={item.statusOptionsWithSelection} for:item="opt">
+                                                        <option key={opt.value} value={opt.value} selected={opt.selected}>{opt.label}</option>
+                                                    </template>
+                                                </select>
+                                                <span class="fill-handle" onmousedown={handleFillHandleMouseDown} aria-hidden="true"></span>
+                                            </div>
+                                        </template>
+                                        <template lwc:else>
+                                            <mark class={item.statusBadgeClass}>{item.status}</mark>
+                                        </template>
+                                    </template>
+                                    <template lwc:else>
+                                        <mark class={item.statusBadgeClass}>{item.status}</mark>
+                                    </template>
+                                </td>
+
+                                <!-- Wire Payment Button - Hidden in edit mode -->
+                                <td class="td-center" role="gridcell">
+                                    <template lwc:if={showWireButton}>
+                                        <button type="button"
+                                                class="wire-btn"
+                                                data-id={item.id}
+                                                data-row-number={item.rowNumber}
+                                                onclick={handleOpenWireModal}
+                                                title="Add Wired Payment"
+                                                aria-label="Add wired payment for row">
+                                            <lightning-icon icon-name="utility:add" size="xx-small" alternative-text="Add"></lightning-icon>
+                                        </button>
+                                    </template>
+                                </td>
+
+                                <!-- Action Column (Edit Mode) -->
+                                <template lwc:if={canEdit}>
+                                    <td class="td-center" role="gridcell">
+                                        <template lwc:if={item.isRowEditable}>
+                                            <button type="button"
+                                                    class="action-btn action-btn-delete"
+                                                    data-id={item.tempId}
+                                                    onclick={handleDeleteRow}
+                                                    title="Delete row"
+                                                    aria-label="Delete this row">
+                                                <span aria-hidden="true">&#10005;</span>
+                                            </button>
+                                        </template>
+                                        <template lwc:else>
+                                            <lightning-icon icon-name="utility:lock" size="xx-small" title="This row cannot be edited" alternative-text="Locked"></lightning-icon>
+                                        </template>
+                                    </td>
+                                </template>
+                            </tr>
+
+                            <!-- Wire Fee Sub-Rows -->
+                            <template lwc:if={item.hasWireFees}>
+                                <template for:each={item.wireFees} for:item="fee">
+                                    <tr key={fee.id} class={fee.wireRowClass} role="row">
+                                        <!-- Empty cells for #, Draft # -->
+                                        <td class="td-center" role="gridcell"></td>
+                                        <td class="td-center" role="gridcell">
+                                            <lightning-icon icon-name="utility:routing_offline" size="xx-small" alternative-text="Wire Fee" class="wire-icon"></lightning-icon>
+                                        </td>
+                                        <!-- Fee Type (under Date column) -->
+                                        <td class="td-center" role="gridcell">
+                                            <span class="wire-type">{fee.feeTypeFormatted}</span>
+                                        </td>
+                                        <!-- Amount (under Draft column) -->
+                                        <td class="td-right td-currency" role="gridcell">
+                                            <template lwc:if={canEdit}>
+                                                <input type="text"
+                                                       inputmode="decimal"
+                                                       value={fee.amountEdit}
+                                                       class="edit-input edit-input-currency"
+                                                       data-fee-id={fee.id}
+                                                       data-schedule-item-id={fee.scheduleItemId}
+                                                       oninput={handleWireFeeAmountFieldChange}
+                                                       onblur={handleWireFeeAmountBlur}
+                                                       aria-label="Wire fee amount">
+                                            </template>
+                                            <template lwc:else>
+                                                <data class="wire-amount">{fee.amountFormatted}</data>
+                                            </template>
+                                        </td>
+                                        <!-- Empty cells for Setup, Program, Banking -->
+                                        <td class="td-center" role="gridcell"></td>
+                                        <td class="td-center" role="gridcell"></td>
+                                        <td class="td-center" role="gridcell"></td>
+                                        <!-- Empty for Savings -->
+                                        <td class="td-center" role="gridcell"></td>
+                                        <!-- Empty for Status column -->
+                                        <td class="td-center" role="gridcell"></td>
+                                        <!-- Delete button for Wire fee -->
+                                        <td class="td-center" role="gridcell">
+                                            <lightning-button-icon
+                                                icon-name="utility:delete"
+                                                variant="bare"
+                                                size="small"
+                                                alternative-text="Delete wire fee"
+                                                data-fee-id={fee.id}
+                                                onclick={handleDeleteWireFee}>
+                                            </lightning-button-icon>
+                                        </td>
+                                        <!-- Empty for Action column if in edit mode -->
+                                        <template lwc:if={canEdit}>
+                                            <td class="td-center" role="gridcell"></td>
+                                        </template>
+                                    </tr>
+                                </template>
+                            </template>
+                        </template>
+
+                        <!-- Empty State - Show when no items to display -->
+                        <template lwc:if={showEmptyState}>
+                            <tr role="row">
+                                <td colspan="11" class="empty-state" role="gridcell">
+                                    <template lwc:if={isPendingTab}>
+                                        <p class="empty-state-text">No pending changes</p>
+                                        <p class="empty-state-subtext">Click "Manual" to start editing</p>
+                                    </template>
+                                    <template lwc:else>
+                                        <p class="empty-state-text">No schedule items found</p>
+                                        <p class="empty-state-subtext">This plan has no payment schedule items</p>
+                                    </template>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+
+                    <!-- Pagination Controls Removed - All items shown with scrolling -->
+
+                    <!-- Aggregate Footer -->
+                    <template lwc:if={hasDisplayItems}>
+                        <tfoot class="aggregate-footer">
+                            <tr class="aggregate-row" role="row">
+                                <!-- Removed empty cell for checkbox column -->
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center aggregate-label" role="gridcell">
+                                    <strong>Total</strong>
+                                </td>
+                                <td class="td-right aggregate-value" role="gridcell">
+                                    <output>{totalDraftAmountFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value" role="gridcell">
+                                    <output>{totalSetupFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value" role="gridcell">
+                                    <output>{totalProgramFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value" role="gridcell">
+                                    <output>{totalBankingFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value" role="gridcell">
+                                    <output>{totalSavingsBalanceFormatted}</output>
+                                </td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <template lwc:if={canEdit}>
+                                    <td class="td-center" role="gridcell"></td>
+                                </template>
+                            </tr>
+                            <!-- Cleared Row - Shows totals from items where status = Cleared -->
+                            <tr class="aggregate-row cleared-row">
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center aggregate-label" role="gridcell">
+                                    <strong>Cleared</strong>
+                                </td>
+                                <td class="td-right aggregate-value cleared-value" role="gridcell">
+                                    <output>{clearedDraftAmountFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value cleared-value" role="gridcell">
+                                    <output>{clearedSetupFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value cleared-value" role="gridcell">
+                                    <output>{clearedProgramFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value cleared-value" role="gridcell">
+                                    <output>{clearedBankingFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value cleared-value" role="gridcell">
+                                    <output>{clearedSavingsBalanceFormatted}</output>
+                                </td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <template lwc:if={canEdit}>
+                                    <td class="td-center" role="gridcell"></td>
+                                </template>
+                            </tr>
+                            <!-- NSF Row - Shows totals from items where status = NSF -->
+                            <tr class="aggregate-row nsf-row">
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center aggregate-label" role="gridcell">
+                                    <strong>NSF</strong>
+                                </td>
+                                <td class="td-right aggregate-value nsf-value" role="gridcell">
+                                    <output>{nsfDraftAmountFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value nsf-value" role="gridcell">
+                                    <output>{nsfSetupFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value nsf-value" role="gridcell">
+                                    <output>{nsfProgramFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value nsf-value" role="gridcell">
+                                    <output>{nsfBankingFeeFormatted}</output>
+                                </td>
+                                <td class="td-right aggregate-value nsf-value" role="gridcell">
+                                    <output>{nsfSavingsBalanceFormatted}</output>
+                                </td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <template lwc:if={canEdit}>
+                                    <td class="td-center" role="gridcell"></td>
+                                </template>
+                            </tr>
+                            <!-- Wires Row - Shows total of all wired payments -->
+                            <tr class="aggregate-row wires-row">
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center aggregate-label" role="gridcell">
+                                    <strong>Wires</strong>
+                                </td>
+                                <td class="td-right aggregate-value wires-value" role="gridcell">
+                                    <output>{totalWiresReceivedFormatted}</output>
+                                </td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <td class="td-center" role="gridcell"></td>
+                                <template lwc:if={canEdit}>
+                                    <td class="td-center" role="gridcell"></td>
+                                </template>
+                            </tr>
+                        </tfoot>
+                    </template>
+                </table>
+
+            </section>
+
+            <!-- Add Row Button (Edit Mode Only) -->
+            <template lwc:if={canEdit}>
+                <div class="add-row-container">
+                    <button type="button" class="add-row-btn" onclick={handleAddRow} aria-label="Add new draft payment row">
+                        <span aria-hidden="true">+</span> Add Draft Payment
+                    </button>
+                </div>
+            </template>
+
+            <!-- Footer Actions -->
+            <footer class="modal-footer">
+                <template lwc:if={isEditMode}>
+                    <nav class="footer-left" aria-label="Edit actions">
+                        <button type="button" class="btn btn-blue" onclick={handleRecalculate}>
+                            Recalculate
+                        </button>
+                        <button type="button" class="btn btn-teal" onclick={handleRecalculateRemainingBalance}>
+                            Recalculate Remaining
+                        </button>
+                    </nav>
+                    <nav class="footer-right" aria-label="Save actions">
+                        <button type="button" class="btn btn-gray" onclick={handleCancelEdit}>
+                            Cancel
+                        </button>
+                        <button type="button" class="btn btn-blue" onclick={handleSave}>
+                            Save as New Version
+                        </button>
+                    </nav>
+                </template>
+                <template lwc:else>
+                    <nav class="footer-left" aria-label="Plan actions">
+                        <button type="button" class="btn btn-blue" onclick={handleRecalculate}>
+                            Recalculate
+                        </button>
+                        <button type="button" class="btn btn-teal" onclick={handleRecalculateRemainingBalance}>
+                            Recalculate Remaining
+                        </button>
+                    </nav>
+                    <nav class="footer-right" aria-label="Version actions">
+                        <template lwc:if={canActivate}>
+                            <button type="button" class="btn btn-green" onclick={handleActivate}>
+                                Activate
+                            </button>
+                        </template>
+                        <button type="button" class="btn btn-blue" onclick={handleManualClick}>
+                            Manual
+                        </button>
+                        <template lwc:if={showSuspendButton}>
+                            <button type="button" class="btn btn-yellow" onclick={handleSuspend}>
+                                Suspend
+                            </button>
+                        </template>
+                        <template lwc:if={showReactivateButton}>
+                            <button type="button" class="btn btn-green" onclick={handleReactivate}>
+                                Reactivate
+                            </button>
+                        </template>
+                    </nav>
+                </template>
+            </footer>
+        </article>
+    </template>
+
+    <!-- Wire Fee Creation Modal -->
+    <template lwc:if={showWireModal}>
+        <dialog class="wire-modal slds-modal slds-fade-in-open" open aria-modal="true" aria-labelledby="wire-modal-heading">
+            <article class="slds-modal__container">
+                <header class="slds-modal__header wire-modal-header">
+                    <h2 id="wire-modal-heading" class="slds-modal__title slds-hyphenate">Add Wire Fee</h2>
+                    <p class="wire-modal-subtitle">Payment Schedule Item #{wireModalRowNumber}</p>
+                </header>
+
+                <section class="slds-modal__content slds-p-around_medium wire-modal-body">
+                    <lightning-combobox
+                        label="Type"
+                        value={wireFeeType}
+                        options={wireFeeTypeOptions}
+                        onchange={handleWireFeeTypeChange}
+                        required
+                        class="slds-m-bottom_medium">
+                    </lightning-combobox>
+
+                    <lightning-input
+                        type="number"
+                        label="Amount"
+                        value={wireFeeAmount}
+                        formatter="currency"
+                        step="0.01"
+                        onchange={handleWireFeeAmountChange}>
+                    </lightning-input>
+
+                    <footer class="slds-m-top_medium slds-text-align_right">
+                        <lightning-button
+                            variant="neutral"
+                            label="Cancel"
+                            onclick={handleCloseWireModal}
+                            class="slds-m-right_x-small">
+                        </lightning-button>
+                        <lightning-button
+                            variant="brand"
+                            label="Save"
+                            onclick={handleSaveWireFee}>
+                        </lightning-button>
+                    </footer>
+                </section>
+            </article>
+        </dialog>
+        <div class="slds-backdrop slds-backdrop_open" aria-hidden="true"></div>
+    </template>
+</template>

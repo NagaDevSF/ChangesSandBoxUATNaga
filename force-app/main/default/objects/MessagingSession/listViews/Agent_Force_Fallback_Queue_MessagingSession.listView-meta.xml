@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Agent_Force_Fallback_Queue_MessagingSession</fullName>
+    <filterScope>Queue</filterScope>
+    <label>Agent Force Fallback Queue</label>
+    <queue>Agent_Force_Fallback_Queue</queue>
+    <sharedTo>
+        <allInternalUsers></allInternalUsers>
+    </sharedTo>
+</ListView>

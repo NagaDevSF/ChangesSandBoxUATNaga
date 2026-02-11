@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>QRMCA_Sales_Team_Queue_MessagingSession</fullName>
+    <filterScope>Queue</filterScope>
+    <label>QRMCA Sales Team Queue</label>
+    <queue>QRMCA_Sales_Team_Queue</queue>
+    <sharedTo>
+        <allInternalUsers></allInternalUsers>
+    </sharedTo>
+</ListView>

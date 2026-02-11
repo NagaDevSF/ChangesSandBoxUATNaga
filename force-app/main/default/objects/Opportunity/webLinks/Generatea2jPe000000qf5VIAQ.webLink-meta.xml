@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebLink xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Generatea2jPe000000qf5VIAQ</fullName>
+    <availability>online</availability>
+    <displayType>button</displayType>
+    <encodingKey>UTF-8</encodingKey>
+    <linkType>url</linkType>
+    <masterLabel>Fee Agreement Addendum</masterLabel>
+    <openType>replace</openType>
+    <protected>false</protected>
+    <url>{!URLFOR($Site.BaseUrl + &apos;/apex/dfsle__gendocumentgenerator&apos;, null, [sId = Opportunity.Id, templateId = &apos;a2jPe000000qf5VIAQ&apos;, recordId = Opportunity.Id, title = &apos;Fee Agreement Addendum&apos;])}</url>
+</WebLink>

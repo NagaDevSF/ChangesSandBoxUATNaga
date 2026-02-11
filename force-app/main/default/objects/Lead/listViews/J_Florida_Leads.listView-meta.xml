@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>J_Florida_Leads</fullName>
+    <columns>LEAD.CREATED_DATE</columns>
+    <columns>Main_Source__c</columns>
+    <columns>FULL_NAME</columns>
+    <columns>LEAD.PHONE</columns>
+    <columns>LEAD.EMAIL</columns>
+    <columns>LEAD.COMPANY</columns>
+    <columns>Est_Total_Debt__c</columns>
+    <columns>Est_weekly_payment__c</columns>
+    <columns>Sales_Office__c</columns>
+    <columns>Pre_Deal_Status__c</columns>
+    <columns>CORE.USERS.FIRST_NAME</columns>
+    <columns>QuickNotes__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Integration_Assignement__c</field>
+        <operation>contains</operation>
+        <value>ZAP Jesse Cherry</value>
+    </filters>
+    <label>J Florida Leads 🍒</label>
+    <sharedTo>
+        <group>DCG_Lee</group>
+        <group>J_Florida</group>
+        <group>NDS</group>
+    </sharedTo>
+</ListView>

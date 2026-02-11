@@ -1,0 +1,310 @@
+/* Settlement Plan Builder Styles */
+
+/* Tab navigation horizontal scroll */
+.slds-tabs_default__nav {
+    overflow-x: auto;
+    white-space: nowrap;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+}
+
+.slds-tabs_default__nav::-webkit-scrollbar {
+    height: 4px;
+}
+
+.slds-tabs_default__nav::-webkit-scrollbar-thumb {
+    background-color: var(--slds-g-color-border-base-2, #c9c9c9);
+    border-radius: 2px;
+}
+
+.slds-tabs_default__item {
+    flex-shrink: 0;
+}
+
+/* Draft tabs styling */
+.slds-tabs_default__item.slds-is-active .slds-tabs_default__link {
+    border-bottom-color: var(--slds-g-color-brand-base-50, #0176d3);
+    color: var(--slds-g-color-brand-base-50, #0176d3);
+}
+
+.slds-tabs_default__link {
+    cursor: pointer;
+}
+
+/* Active plan tab - green highlight */
+.slds-tabs_default__item.active-plan-tab .slds-tabs_default__link {
+    background-color: var(--slds-g-color-success-base-95, #e6f7e6);
+    border-bottom-color: var(--slds-g-color-success-base-50, #2e844a);
+    color: var(--slds-g-color-success-base-40, #1e6130);
+    font-weight: 600;
+}
+
+.slds-tabs_default__item.active-plan-tab.slds-is-active .slds-tabs_default__link {
+    background-color: var(--slds-g-color-success-base-90, #cdefc9);
+    border-bottom-color: var(--slds-g-color-success-base-50, #2e844a);
+    color: var(--slds-g-color-success-base-40, #1e6130);
+}
+
+/* Active status badge - green */
+.slds-badge_success {
+    background-color: var(--slds-g-color-success-base-50, #2e844a);
+    color: white;
+}
+
+/* Payment status badges */
+.slds-badge_error {
+    background-color: var(--slds-g-color-error-base-40, #ba0517);
+    color: white;
+}
+
+.slds-badge_warning {
+    background-color: var(--slds-g-color-warning-base-50, #dd7a01);
+    color: white;
+}
+
+/* Draft name inline input */
+.draft-name-inline {
+    max-width: 200px;
+}
+
+/* Payment table improvements */
+.payment-table-container {
+    border: 1px solid var(--slds-g-color-border-base-1, #e5e5e5);
+    border-radius: 4px;
+}
+
+.payment-table-container--scroll-y {
+    max-height: 400px;
+    overflow-y: auto !important;
+}
+
+/* When there are only a few rows, disable vertical scrolling so dropdown menus aren't clipped by overflow boundaries. */
+.payment-table-container--no-scroll-y {
+    max-height: none;
+    overflow: visible !important;
+}
+
+.payment-table-container table {
+    margin-bottom: 0;
+}
+
+/* Sticky header for scrollable table */
+.payment-table-container--scroll-y thead {
+    position: sticky;
+    top: 0;
+    background: var(--slds-g-color-neutral-base-95, #f3f3f3);
+    z-index: 1;
+}
+
+/* Payment status truncation (fixed layout table) */
+.payment-status-wrap {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.payment-status-badge {
+    min-width: 0;
+    flex: 1 1 auto;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.payment-status-cleared {
+    background: #cdefc9;
+    color: #194e31;
+    border: 1px solid rgba(25, 78, 49, 0.25);
+}
+
+.payment-status-processing {
+    background: #d8edff;
+    color: #0b5cab;
+    border: 1px solid rgba(11, 92, 171, 0.25);
+}
+
+.payment-status-missed {
+    background: #fdd6d6;
+    color: #8e030f;
+    border: 1px solid rgba(142, 3, 15, 0.25);
+}
+
+.payment-status-warning {
+    background: #ffecd0;
+    color: #8c4b02;
+    border: 1px solid rgba(140, 75, 2, 0.25);
+}
+
+.payment-status-neutral {
+    background: #f3f3f3;
+    color: var(--slds-g-color-neutral-base-10, #181818);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+/* Row highlighting - modified rows (override striped table) */
+.modified-row,
+.modified-row td {
+    background-color: var(--slds-g-color-warning-base-95, #fffbea) !important;
+}
+
+.modified-row {
+    border-left: 3px solid var(--slds-g-color-warning-base-50, #dd7a01) !important;
+}
+
+/* Problem status rows - Suspended, Cancelled, Missed, Skipped (override striped table) */
+.problem-row,
+.problem-row td {
+    background-color: var(--slds-g-color-error-base-95, #fef1f1) !important;
+}
+
+.problem-row {
+    border-left: 3px solid var(--slds-g-color-error-base-50, #ea001e) !important;
+}
+
+/* Fix dropdown positioning on problem rows */
+.problem-row td[data-label="Actions"] {
+    position: relative;
+    overflow: visible;
+}
+
+.problem-row lightning-button-menu {
+    position: relative;
+    z-index: 10;
+}
+
+/* Native select styling for status dropdown */
+.slds-select_status {
+    min-width: 110px;
+    height: 28px;
+    padding: 2px 8px;
+    font-size: 13px;
+}
+
+/* Modification indicator column */
+.indicator-cell {
+    width: 32px;
+    text-align: center;
+    padding: 0 4px !important;
+}
+
+/* Modified row pencil icon */
+.modified-icon {
+    --slds-c-icon-color-foreground-default: var(--slds-g-color-warning-base-50, #dd7a01);
+}
+
+/* Locked row styling - Historical items cannot be edited */
+.locked-row {
+    background-color: var(--slds-g-color-neutral-base-90, #e8e8e8) !important;
+    /* Removed opacity: 0.85 - was creating stacking context that trapped dropdown z-index */
+}
+
+.locked-row td {
+    color: var(--slds-g-color-neutral-base-30, #706e6b);
+}
+
+/* Lock icon styling */
+.locked-icon {
+    color: var(--slds-g-color-neutral-base-50, #969492);
+    vertical-align: middle;
+}
+
+/* Amount input in table */
+.amount-input {
+    max-width: 100px;
+}
+
+/* Summary box styling */
+.summary-box {
+    border: 2px solid var(--slds-g-color-border-base-2, #c9c9c9);
+    border-radius: 8px;
+}
+
+/* Summary box - funding status variants */
+.summary-box-balanced {
+    border-color: var(--slds-g-color-success-base-50, #2e844a);
+    background-color: var(--slds-g-color-success-base-95, #e6f7e6);
+}
+
+.summary-box-underfunded {
+    border-color: var(--slds-g-color-error-base-50, #ea001e);
+    background-color: var(--slds-g-color-error-base-95, #fef1f1);
+}
+
+.summary-box-overfunded {
+    border-color: var(--slds-g-color-warning-base-50, #dd7a01);
+    background-color: var(--slds-g-color-warning-base-95, #fffbea);
+}
+
+/* Funding status indicator */
+.funding-status-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.funding-balanced {
+    background-color: var(--slds-g-color-success-base-90, #cdefc9);
+    color: var(--slds-g-color-success-base-30, #194e31);
+}
+
+.funding-underfunded {
+    background-color: var(--slds-g-color-error-base-90, #fdd6d6);
+    color: var(--slds-g-color-error-base-30, #8e030f);
+}
+
+.funding-overfunded {
+    background-color: var(--slds-g-color-warning-base-90, #ffecd0);
+    color: var(--slds-g-color-warning-base-30, #8c4b02);
+}
+
+/* Summary value colors */
+.summary-value-success {
+    color: var(--slds-g-color-success-base-40, #2e844a);
+}
+
+.summary-value-error {
+    color: var(--slds-g-color-error-base-40, #ba0517);
+    font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .draft-name-inline {
+        display: block !important;
+        width: 100% !important;
+        margin-top: 8px;
+        margin-left: 0 !important;
+    }
+    
+    .payment-table-container {
+        font-size: 12px;
+    }
+}
+
+/* Badge styling within tabs */
+.slds-tabs_default__link .slds-badge {
+    vertical-align: middle;
+}
+
+/* Void button wrapper - clickable red icon for Processing rows */
+.void-button-wrapper {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.void-button-wrapper:hover {
+    background-color: var(--slds-g-color-error-base-95, #fef1f1);
+}
+
+/* Spinner container for card */
+.slds-spinner_container.slds-is-relative {
+    position: relative;
+}

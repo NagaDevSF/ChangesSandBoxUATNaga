@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Client_Status_BO__c</fullName>
+    <label>Client Status</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Collections</fullName>
+                <default>false</default>
+                <label>Collections</label>
+            </value>
+            <value>
+                <fullName>EFT Missing</fullName>
+                <default>false</default>
+                <label>EFT Missing</label>
+            </value>
+            <value>
+                <fullName>Judgement</fullName>
+                <default>false</default>
+                <label>Judgement</label>
+            </value>
+            <value>
+                <fullName>Manual Payments</fullName>
+                <default>false</default>
+                <label>Manual Payments</label>
+            </value>
+            <value>
+                <fullName>No Fee Program</fullName>
+                <default>false</default>
+                <label>No Fee Program</label>
+            </value>
+            <value>
+                <fullName>Program Complete</fullName>
+                <default>false</default>
+                <label>Program Complete</label>
+            </value>
+            <value>
+                <fullName>UCC</fullName>
+                <default>false</default>
+                <label>UCC</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

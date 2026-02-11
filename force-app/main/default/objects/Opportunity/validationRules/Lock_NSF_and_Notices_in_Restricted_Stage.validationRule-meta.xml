@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Lock_NSF_and_Notices_in_Restricted_Stage</fullName>
+    <active>true</active>
+    <errorConditionFormula>(
+    ISCHANGED(NSF_Date__c) ||
+    ISCHANGED(Send_Cancellation_Notice__c) ||
+    ISCHANGED(Send_Suspension_Notice__c)
+)
+&amp;&amp;
+(
+    ISPICKVAL(StageName, &quot;Build Plan&quot;) ||
+    ISPICKVAL(StageName, &quot;Submitted to UW&quot;) ||
+    ISPICKVAL(StageName, &quot;Approved/Ready to close&quot;) ||
+    ISPICKVAL(StageName, &quot;Contract Sent&quot;) ||
+ ISPICKVAL(StageName, &quot;Cancelled&quot;)
+)</errorConditionFormula>
+    <errorMessage>You cannot modify NSF Date, Suspension Notice, or Cancellation Notice while the Opportunity is in Build Plan, Submitted to UW, Approved/Ready to Close, Cancelled or Contract Sent stage.</errorMessage>
+</ValidationRule>

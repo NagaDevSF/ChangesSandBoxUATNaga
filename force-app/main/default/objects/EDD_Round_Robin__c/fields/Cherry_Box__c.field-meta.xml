@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Cherry_Box__c</fullName>
+    <label>Cherry Box Name</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>everyDayDebt_30Days</fullName>
+                <default>false</default>
+                <label>everyDayDebt_30Days</label>
+            </value>
+            <value>
+                <fullName>everyDayDebt12</fullName>
+                <default>false</default>
+                <label>everyDayDebt12</label>
+            </value>
+            <value>
+                <fullName>Legal</fullName>
+                <default>false</default>
+                <label>Legal</label>
+            </value>
+            <value>
+                <fullName>Zak Leads Re Blast</fullName>
+                <default>false</default>
+                <label>Zak Leads Re Blast</label>
+            </value>
+            <value>
+                <fullName>Reassign 2 Min</fullName>
+                <default>false</default>
+                <label>Reassign 2 Min</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

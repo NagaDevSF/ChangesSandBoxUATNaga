@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Group_Name__c</fullName>
+    <caseSensitive>false</caseSensitive>
+    <description>Identifies which round-robin group this counter belongs to</description>
+    <externalId>false</externalId>
+    <inlineHelpText>Name of the round-robin group (e.g., EDD_Lead_Assignment)</inlineHelpText>
+    <label>Group Name</label>
+    <length>255</length>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>true</unique>
+</CustomField>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>VR1_Block_completion_without_correct</fullName>
+    <active>true</active>
+    <errorConditionFormula>AND(Completed__c, NOT(Is_Answer_Correct__c))</errorConditionFormula>
+    <errorMessage>You can’t mark this module complete unless the correct answer is selected.</errorMessage>
+</ValidationRule>

@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Fronter__c</fullName>
+    <label>Fronter</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Adrian Alleyne</fullName>
+                <default>false</default>
+                <label>Adrian Alleyne</label>
+            </value>
+            <value>
+                <fullName>Adrienne NDR</fullName>
+                <default>false</default>
+                <label>Adrienne NDR</label>
+            </value>
+            <value>
+                <fullName>Angel Santiago</fullName>
+                <default>false</default>
+                <label>Angel Santiago</label>
+            </value>
+            <value>
+                <fullName>Antonio NDR</fullName>
+                <default>false</default>
+                <label>Antonio NDR</label>
+            </value>
+            <value>
+                <fullName>C Lopez NDR</fullName>
+                <default>false</default>
+                <label>C Lopez NDR</label>
+            </value>
+            <value>
+                <fullName>Chris Delcioppo</fullName>
+                <default>false</default>
+                <label>Chris Delcioppo</label>
+            </value>
+            <value>
+                <fullName>Chris Torres</fullName>
+                <default>false</default>
+                <label>Chris Torres</label>
+            </value>
+            <value>
+                <fullName>Daniel</fullName>
+                <default>false</default>
+                <label>Daniel</label>
+            </value>
+            <value>
+                <fullName>Danny NDR</fullName>
+                <default>false</default>
+                <label>Danny NDR</label>
+            </value>
+            <value>
+                <fullName>Donald NDR</fullName>
+                <default>false</default>
+                <label>Donald NDR</label>
+            </value>
+            <value>
+                <fullName>Evan Isenstein</fullName>
+                <default>false</default>
+                <label>Evan Isenstein</label>
+            </value>
+            <value>
+                <fullName>Fabian Lewis</fullName>
+                <default>false</default>
+                <label>Fabian Lewis</label>
+            </value>
+            <value>
+                <fullName>Frank Spaulding</fullName>
+                <default>false</default>
+                <label>Frank Spaulding</label>
+            </value>
+            <value>
+                <fullName>George</fullName>
+                <default>false</default>
+                <label>George</label>
+            </value>
+            <value>
+                <fullName>Ian NDR</fullName>
+                <default>false</default>
+                <label>Ian NDR</label>
+            </value>
+            <value>
+                <fullName>James</fullName>
+                <default>false</default>
+                <label>James</label>
+            </value>
+            <value>
+                <fullName>Jarrett McLucas</fullName>
+                <default>false</default>
+                <label>Jarrett McLucas</label>
+            </value>
+            <value>
+                <fullName>Jason Miles</fullName>
+                <default>false</default>
+                <label>Jason Miles</label>
+            </value>
+            <value>
+                <fullName>Jireh NDR</fullName>
+                <default>false</default>
+                <label>Jireh NDR</label>
+            </value>
+            <value>
+                <fullName>Joshua Bhoopsingh</fullName>
+                <default>false</default>
+                <label>Joshua Bhoopsingh</label>
+            </value>
+            <value>
+                <fullName>Juan Molina</fullName>
+                <default>false</default>
+                <label>Juan Molina</label>
+            </value>
+            <value>
+                <fullName>Ken Davis</fullName>
+                <default>false</default>
+                <label>Ken Davis</label>
+            </value>
+            <value>
+                <fullName>Lloyd Masika</fullName>
+                <default>false</default>
+                <label>Lloyd Masika</label>
+            </value>
+            <value>
+                <fullName>Maria NDR</fullName>
+                <default>false</default>
+                <label>Maria NDR</label>
+            </value>
+            <value>
+                <fullName>Marina</fullName>
+                <default>false</default>
+                <label>Marina</label>
+            </value>
+            <value>
+                <fullName>Mario NDR</fullName>
+                <default>false</default>
+                <label>Mario NDR</label>
+            </value>
+            <value>
+                <fullName>Matthew Steinback</fullName>
+                <default>false</default>
+                <label>Matthew Steinback</label>
+            </value>
+            <value>
+                <fullName>Mick Harley</fullName>
+                <default>false</default>
+                <label>Mick Harley</label>
+            </value>
+            <value>
+                <fullName>Miguel Magana</fullName>
+                <default>false</default>
+                <label>Miguel Magana</label>
+            </value>
+            <value>
+                <fullName>Oscar NDR</fullName>
+                <default>false</default>
+                <label>Oscar NDR</label>
+            </value>
+            <value>
+                <fullName>Rogelio Casuso</fullName>
+                <default>false</default>
+                <label>Rogelio Casuso</label>
+            </value>
+            <value>
+                <fullName>Roger Casuso</fullName>
+                <default>false</default>
+                <label>Roger Casuso</label>
+            </value>
+            <value>
+                <fullName>Sal Rebolledo</fullName>
+                <default>false</default>
+                <label>Sal Rebolledo</label>
+            </value>
+            <value>
+                <fullName>Sanjay NDR</fullName>
+                <default>false</default>
+                <label>Sanjay NDR</label>
+            </value>
+            <value>
+                <fullName>Stephen Mullings</fullName>
+                <default>false</default>
+                <label>Stephen Mullings</label>
+            </value>
+            <value>
+                <fullName>Steven Schnaufer</fullName>
+                <default>false</default>
+                <label>Steven Schnaufer</label>
+            </value>
+            <value>
+                <fullName>Steven Stewart</fullName>
+                <default>false</default>
+                <label>Steven Stewart</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

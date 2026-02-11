@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Docs_Missing__c</fullName>
+    <label>Docs_Missing</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>MultiselectPicklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Voided Check</fullName>
+                <default>false</default>
+                <label>Voided Check</label>
+            </value>
+            <value>
+                <fullName>Lender Agreements</fullName>
+                <default>false</default>
+                <label>Lender Agreements</label>
+            </value>
+            <value>
+                <fullName>Bank Statements</fullName>
+                <default>false</default>
+                <label>Bank Statements</label>
+            </value>
+            <value>
+                <fullName>Letter of Representation (LoR)</fullName>
+                <default>false</default>
+                <label>Letter of Representation (LoR)</label>
+            </value>
+            <value>
+                <fullName>Payoff Letter</fullName>
+                <default>false</default>
+                <label>Payoff Letter</label>
+            </value>
+            <value>
+                <fullName>EFT Form</fullName>
+                <default>false</default>
+                <label>EFT Form</label>
+            </value>
+            <value>
+                <fullName>No-Fee Retainer Form (DocuSign)</fullName>
+                <default>false</default>
+                <label>No-Fee Retainer Form (DocuSign)</label>
+            </value>
+            <value>
+                <fullName>Hardship Letter</fullName>
+                <default>false</default>
+                <label>Hardship Letter</label>
+            </value>
+            <value>
+                <fullName>Contract/Agreement</fullName>
+                <default>false</default>
+                <label>Contract/Agreement</label>
+            </value>
+            <value>
+                <fullName>Invoice/Receipt</fullName>
+                <default>false</default>
+                <label>Invoice/Receipt</label>
+            </value>
+            <value>
+                <fullName>Identification Document</fullName>
+                <default>false</default>
+                <label>Identification Document</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+    <visibleLines>4</visibleLines>
+</CustomField>

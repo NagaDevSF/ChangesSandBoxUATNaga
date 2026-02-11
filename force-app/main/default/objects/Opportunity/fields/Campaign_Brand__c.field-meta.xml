@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Campaign_Brand__c</fullName>
+    <label>Campaign Brand</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Debtifi</fullName>
+                <default>false</default>
+                <label>🟩🟩🟩Debtifi🟩🟩🟩</label>
+            </value>
+            <value>
+                <fullName>QRMCA</fullName>
+                <default>false</default>
+                <label>🟨🟨🟨QRMCA🟨🟨🟨</label>
+            </value>
+            <value>
+                <fullName>Debt Crusaders</fullName>
+                <default>false</default>
+                <label>🟧🟧🟧Debt Crusaders🟧🟧🟧</label>
+            </value>
+            <value>
+                <fullName>Debt Consultants Group</fullName>
+                <default>false</default>
+                <label>🟥🟥🟥Debt Consultants Group🟥🟥🟥</label>
+            </value>
+            <value>
+                <fullName>Everyday Debt</fullName>
+                <default>false</default>
+                <label>Everyday Debt</label>
+            </value>
+            <value>
+                <fullName>Next Day Settlement</fullName>
+                <default>false</default>
+                <label>Next Day Settlement</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

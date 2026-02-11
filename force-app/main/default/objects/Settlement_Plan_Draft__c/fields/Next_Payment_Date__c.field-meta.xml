@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Next_Payment_Date__c</fullName>
+    <label>Next Payment Date</label>
+    <summarizedField>Settlement_Plan_Item__c.Payment_Date__c</summarizedField>
+    <summaryFilterItems>
+        <field>Settlement_Plan_Item__c.Status__c</field>
+        <operation>equals</operation>
+        <value>Scheduled</value>
+    </summaryFilterItems>
+    <summaryForeignKey>Settlement_Plan_Item__c.Settlement_Plan__c</summaryForeignKey>
+    <summaryOperation>min</summaryOperation>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Summary</type>
+</CustomField>

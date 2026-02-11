@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>My_Cases</fullName>
+    <columns>CASES.CASE_NUMBER</columns>
+    <columns>CASES.SUBJECT</columns>
+    <columns>Opportunity__c</columns>
+    <columns>NAME</columns>
+    <columns>OWNER_NAME</columns>
+    <columns>CASES.CREATED_DATE</columns>
+    <filterScope>Mine</filterScope>
+    <filters>
+        <field>CASES.STATUS</field>
+        <operation>equals</operation>
+        <value>New,In Progress,Escalated,On Hold</value>
+    </filters>
+    <label>My Cases</label>
+    <sharedTo>
+        <group>Administrators</group>
+        <group>DCG_Lee</group>
+    </sharedTo>
+</ListView>

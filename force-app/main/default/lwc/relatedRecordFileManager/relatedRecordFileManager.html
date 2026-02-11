@@ -1,0 +1,150 @@
+<template>
+    <div class="slds-card">
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Loading..." variant="brand"></lightning-spinner>
+        </template>
+        <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-media__figure">
+                    <span class="slds-icon_container slds-icon-standard-file">
+                        <lightning-icon icon-name="standard:file" alternative-text="Files" size="small"></lightning-icon>
+                    </span>
+                </div>
+                <div class="slds-media__body">
+                    <h2 class="slds-card__header-title">
+                        <span>{objectLabel} Files</span>
+                    </h2>
+                </div>
+            </header>
+        </div>
+        <div class="slds-card__body slds-card__body_inner">
+            
+            <!-- File Upload Section -->
+            <div class="slds-m-bottom_medium">
+                <h3 class="slds-section__title slds-theme_shade">Upload New Document</h3>
+                
+                <div class="slds-grid slds-wrap slds-gutters">
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-combobox
+                            label="SELECT DOCUMENT TYPE"
+                            value={selectedFileType}
+                            placeholder="Choose the type of document you're uploading"
+                            options={fileTypeOptions}
+                            onchange={handleFileTypeChange}
+                            required>
+                        </lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-file-upload
+                            label="Upload Files"
+                            name="fileUploader"
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.xls,.xlsx,.txt,.zip"
+                            record-id={recordId}
+                            onuploadfinished={handleUploadFinished}
+                            multiple
+                            disabled={isUploadDisabled}>
+                        </lightning-file-upload>
+                    </div>
+                </div>
+                
+                <!-- Auto-sync enabled - no manual selection needed -->
+            </div>
+            
+            <!-- Files List -->
+            <template if:true={hasFiles}>
+                <div class="slds-m-bottom_medium">
+                    <h3 class="slds-section__title slds-theme_shade">Uploaded Files ({recordFiles.length})</h3>
+
+                    <div class="table-responsive-wrapper">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                        <thead>
+                            <tr class="slds-line-height_reset">
+                                <th class="slds-text-title_caps" scope="col">
+                                    <div class="slds-truncate" title="File Name">File Name</div>
+                                </th>
+                                <th class="slds-text-title_caps" scope="col">
+                                    <div class="slds-truncate" title="Document Type">Document Type</div>
+                                </th>
+                                <th class="slds-text-title_caps" scope="col">
+                                    <div class="slds-truncate" title="Size">Size</div>
+                                </th>
+                                <th class="slds-text-title_caps" scope="col">
+                                    <div class="slds-truncate" title="Uploaded">Uploaded</div>
+                                </th>
+                                <th class="slds-text-title_caps" scope="col">
+                                    <div class="slds-truncate" title="Uploaded By">Uploaded By</div>
+                                </th>
+                                <th class="slds-text-title_caps" scope="col">
+                                    <div class="slds-truncate" title="Source Object">Source Object</div>
+                                </th>
+                                <th class="slds-text-title_caps" scope="col">
+                                    <div class="slds-truncate" title="Actions">Actions</div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={recordFiles} for:item="file">
+                                <tr key={file.documentId} class="slds-hint-parent">
+                                    <td data-label="File Name">
+                                        <div class="slds-truncate">
+                                            <a href={file.downloadUrl} target="_blank" title={file.fileName} class="file-link">
+                                                <lightning-icon icon-name="utility:download" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                                {file.fileName}
+                                            </a>
+                                        </div>
+                                    </td>
+                                    <td data-label="Document Type">
+                                        <lightning-combobox
+                                            value={file.fileType}
+                                            options={fileTypeOptions}
+                                            data-version-id={file.versionId}
+                                            onchange={handleFileTypeUpdate}
+                                            variant="label-hidden">
+                                        </lightning-combobox>
+                                    </td>
+                                    <td data-label="Size">
+                                        <div class="slds-truncate">{file.fileSize}</div>
+                                    </td>
+                                    <td data-label="Uploaded">
+                                        <div class="slds-truncate">{file.createdDate}</div>
+                                    </td>
+                                    <td data-label="Uploaded By">
+                                        <div class="slds-truncate">{file.createdBy}</div>
+                                    </td>
+                                    <td data-label="Source Object">
+                                        <div class="slds-truncate">{file.sourceObject}</div>
+                                    </td>
+                                    <td data-label="Actions">
+                                        <lightning-button-icon 
+                                            icon-name="utility:delete" 
+                                            alternative-text="Remove from this record" 
+                                            title="Remove from this record" 
+                                            onclick={handleRemoveFile} 
+                                            data-document-id={file.documentId} 
+                                            variant="bare" 
+                                            class="delete-icon">
+                                        </lightning-button-icon>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </template>
+            
+            <!-- No Files Message -->
+            <template if:false={hasFiles}>
+                <div class="slds-illustration slds-illustration_small">
+                    <div class="slds-text-longform">
+                        <h3 class="slds-text-heading_medium">No Files Found</h3>
+                        <p class="slds-text-body_regular">No files have been uploaded for this {objectLabel} yet. Use the upload section above to add files.</p>
+                        <div class="slds-m-top_medium">
+                            <lightning-icon icon-name="utility:upload" size="large" class="slds-illustration__svg"></lightning-icon>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</template>

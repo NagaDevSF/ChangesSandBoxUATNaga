@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Setup_Fee__c</fullName>
+    <formula>IF ( ISPICKVAL (Program_Type__c, &quot;DCG DEBT&quot;), $CustomMetadata.Payment_Calc_Config__mdt.Default.Debt_Program_Setup_Fee__c, IF ( ISPICKVAL (Program_Type__c, &quot;DCG MOD CA&quot;), $CustomMetadata.Payment_Calc_Config__mdt.Default.No_Fee_Setup_Fee__c, IF (No_Fee_Program__c, $CustomMetadata.Payment_Calc_Config__mdt.Default.No_Fee_Setup_Fee__c, $CustomMetadata.Payment_Calc_Config__mdt.Default.Setup_Fee__c ) ) )</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Setup Fee</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackHistory>false</trackHistory>
+    <type>Currency</type>
+</CustomField>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Require_EIN_On_Conversion</fullName>
+    <active>false</active>
+    <errorConditionFormula>ISBLANK(EIN__c) &amp;&amp; IsConverted</errorConditionFormula>
+    <errorDisplayField>EIN__c</errorDisplayField>
+    <errorMessage>Please update the EIN before converting the Lead.</errorMessage>
+</ValidationRule>

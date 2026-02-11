@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Debt_Crusaders_Cherry_Leads</fullName>
+    <columns>LEAD.CREATED_DATE</columns>
+    <columns>Main_Source__c</columns>
+    <columns>FULL_NAME</columns>
+    <columns>LEAD.PHONE</columns>
+    <columns>LEAD.EMAIL</columns>
+    <columns>LEAD.COMPANY</columns>
+    <columns>Est_Total_Debt__c</columns>
+    <columns>Est_weekly_payment__c</columns>
+    <columns>Sales_Office__c</columns>
+    <columns>CORE.USERS.FIRST_NAME</columns>
+    <columns>CORE.USERS.LAST_NAME</columns>
+    <columns>Pre_Deal_Statuses_DC__c</columns>
+    <columns>LEAD.LAST_UPDATE</columns>
+    <columns>QuickNotes__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Main_Source__c</field>
+        <operation>contains</operation>
+        <value>Cherry</value>
+    </filters>
+    <filters>
+        <field>Sales_Office__c</field>
+        <operation>equals</operation>
+        <value>Debt Crusaders</value>
+    </filters>
+    <filters>
+        <field>Pre_Deal_Statuses_DC__c</field>
+        <operation>notEqual</operation>
+        <value>Not Interested - seeking funding,Not Interested - has mca debt,Not Interested - already in debt program,Not Interested - reduced with lenders directly,Not Interested - already in debt program (settled)</value>
+    </filters>
+    <filters>
+        <field>Pre_Deal_Statuses_DC__c</field>
+        <operation>notEqual</operation>
+        <value>Not Interested - already in debt program (not settled),Not Interested - no hardship,Not Interested - other,Not Qualified - no debt,Not Qualified - little/no revenue</value>
+    </filters>
+    <filters>
+        <field>Pre_Deal_Statuses_DC__c</field>
+        <operation>notEqual</operation>
+        <value>Not Qualified - has business debt (not mca),Not Qualified - total debt less than minimum,Not Qualified - total payments less than minimum,Not Qualified - other,Bad Lead - disconnected number</value>
+    </filters>
+    <filters>
+        <field>Pre_Deal_Statuses_DC__c</field>
+        <operation>notEqual</operation>
+        <value>Bad Lead - wrong number,Bad Lead - not business owner,Bad Lead - spam/fake info,Duplicate,DNC</value>
+    </filters>
+    <filters>
+        <field>Pre_Deal_Status__c</field>
+        <operation>notEqual</operation>
+        <value>NOT INTERESTED,INVALID,DNC,Not Qualified,Invalid lead</value>
+    </filters>
+    <label>Debt Crusaders 🍒 Cherry Leads</label>
+    <sharedTo>
+        <group>DCG_Lee</group>
+        <group>Debt_Crusaders_Group</group>
+    </sharedTo>
+</ListView>

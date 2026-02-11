@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Prevent_Non_Admins_From_Editing_Source</fullName>
+    <active>true</active>
+    <errorConditionFormula>AND(
+    ISCHANGED(Source__c), 
+    NOT(OR(
+        $Profile.Name = &quot;System Administrator&quot;, 
+        $Profile.Name = &quot;UW&quot;
+    ))
+)</errorConditionFormula>
+    <errorMessage>&quot;Only System Administrators can edit the Source field.&quot;</errorMessage>
+</ValidationRule>

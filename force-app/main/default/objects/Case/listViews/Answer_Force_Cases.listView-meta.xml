@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Answer_Force_Cases</fullName>
+    <columns>Case_Number__c</columns>
+    <columns>CASES.SUBJECT</columns>
+    <columns>Opportunity__c</columns>
+    <columns>OWNER_NAME</columns>
+    <columns>Call_Transferred__c</columns>
+    <columns>NAME</columns>
+    <columns>Request_Type__c</columns>
+    <columns>CASES.LAST_UPDATE</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Source__c</field>
+        <operation>equals</operation>
+        <value>Answer Force</value>
+    </filters>
+    <label>Answer Force Cases</label>
+    <sharedTo>
+        <group>Administrators</group>
+    </sharedTo>
+</ListView>

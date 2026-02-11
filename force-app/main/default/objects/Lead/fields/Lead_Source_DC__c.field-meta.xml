@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Lead_Source_DC__c</fullName>
+    <label>Lead Source DC</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>ACF</fullName>
+                <default>false</default>
+                <label>ACF</label>
+            </value>
+            <value>
+                <fullName>App</fullName>
+                <default>false</default>
+                <label>App</label>
+            </value>
+            <value>
+                <fullName>Appointment</fullName>
+                <default>false</default>
+                <label>Appointment</label>
+            </value>
+            <value>
+                <fullName>AR Referral</fullName>
+                <default>false</default>
+                <label>AR Referral</label>
+            </value>
+            <value>
+                <fullName>BC Referral</fullName>
+                <default>false</default>
+                <label>BC Referral</label>
+            </value>
+            <value>
+                <fullName>Berry</fullName>
+                <default>false</default>
+                <label>Berry</label>
+            </value>
+            <value>
+                <fullName>Blog</fullName>
+                <default>false</default>
+                <label>Blog</label>
+            </value>
+            <value>
+                <fullName>Cherry</fullName>
+                <default>false</default>
+                <label>Cherry</label>
+            </value>
+            <value>
+                <fullName>CX Referral</fullName>
+                <default>false</default>
+                <label>CX Referral</label>
+            </value>
+            <value>
+                <fullName>DCG</fullName>
+                <default>false</default>
+                <label>DCG</label>
+            </value>
+            <value>
+                <fullName>DCGDI</fullName>
+                <default>false</default>
+                <label>DCGDI</label>
+            </value>
+            <value>
+                <fullName>DCG DI</fullName>
+                <default>false</default>
+                <label>DCG DI</label>
+            </value>
+            <value>
+                <fullName>DD Web Form</fullName>
+                <default>false</default>
+                <label>DD Web Form</label>
+            </value>
+            <value>
+                <fullName>DHW</fullName>
+                <default>false</default>
+                <label>DHW</label>
+            </value>
+            <value>
+                <fullName>Dialer</fullName>
+                <default>false</default>
+                <label>Dialer</label>
+            </value>
+            <value>
+                <fullName>Diamond Quiz</fullName>
+                <default>false</default>
+                <label>Diamond Quiz</label>
+            </value>
+            <value>
+                <fullName>Docs In/Ready To Close drip</fullName>
+                <default>false</default>
+                <label>Docs In/Ready To Close drip</label>
+            </value>
+            <value>
+                <fullName>DR Live Transfers</fullName>
+                <default>false</default>
+                <label>DR Live Transfers</label>
+            </value>
+            <value>
+                <fullName>Email</fullName>
+                <default>false</default>
+                <label>Email</label>
+            </value>
+            <value>
+                <fullName>Everyday Form</fullName>
+                <default>false</default>
+                <label>Everyday Form</label>
+            </value>
+            <value>
+                <fullName>Facebook</fullName>
+                <default>false</default>
+                <label>Facebook</label>
+            </value>
+            <value>
+                <fullName>Facebook Ads</fullName>
+                <default>false</default>
+                <label>Facebook Ads</label>
+            </value>
+            <value>
+                <fullName>FB Lead</fullName>
+                <default>false</default>
+                <label>FB Lead</label>
+            </value>
+            <value>
+                <fullName>Fiche</fullName>
+                <default>false</default>
+                <label>Fiche</label>
+            </value>
+            <value>
+                <fullName>Google Ad Words</fullName>
+                <default>false</default>
+                <label>Google Ad Words</label>
+            </value>
+            <value>
+                <fullName>Instagram</fullName>
+                <default>false</default>
+                <label>Instagram</label>
+            </value>
+            <value>
+                <fullName>JJ AP</fullName>
+                <default>false</default>
+                <label>JJ AP</label>
+            </value>
+            <value>
+                <fullName>JJA Pack</fullName>
+                <default>false</default>
+                <label>JJA Pack</label>
+            </value>
+            <value>
+                <fullName>JJ L 24</fullName>
+                <default>false</default>
+                <label>JJ L 24</label>
+            </value>
+            <value>
+                <fullName>JJ Legal</fullName>
+                <default>false</default>
+                <label>JJ Legal</label>
+            </value>
+            <value>
+                <fullName>JJ Live</fullName>
+                <default>false</default>
+                <label>JJ Live</label>
+            </value>
+            <value>
+                <fullName>JJ Live Call-In</fullName>
+                <default>false</default>
+                <label>JJ Live Call-In</label>
+            </value>
+            <value>
+                <fullName>JJ Live Call-In, JJ Pack</fullName>
+                <default>false</default>
+                <label>JJ Live Call-In, JJ Pack</label>
+            </value>
+            <value>
+                <fullName>JJ Live Call-In, Text Response</fullName>
+                <default>false</default>
+                <label>JJ Live Call-In, Text Response</label>
+            </value>
+            <value>
+                <fullName>JJ Live Call-In, Tier 1</fullName>
+                <default>false</default>
+                <label>JJ Live Call-In, Tier 1</label>
+            </value>
+            <value>
+                <fullName>JJ PACK</fullName>
+                <default>false</default>
+                <label>JJ PACK</label>
+            </value>
+            <value>
+                <fullName>JJ Pack, JJ Live Call-In</fullName>
+                <default>false</default>
+                <label>JJ Pack, JJ Live Call-In</label>
+            </value>
+            <value>
+                <fullName>JJ SBA</fullName>
+                <default>false</default>
+                <label>JJ SBA</label>
+            </value>
+            <value>
+                <fullName>JonKay</fullName>
+                <default>false</default>
+                <label>JonKay</label>
+            </value>
+            <value>
+                <fullName>JV Referral</fullName>
+                <default>false</default>
+                <label>JV Referral</label>
+            </value>
+            <value>
+                <fullName>LB Referral</fullName>
+                <default>false</default>
+                <label>LB Referral</label>
+            </value>
+            <value>
+                <fullName>Legacy</fullName>
+                <default>false</default>
+                <label>Legacy</label>
+            </value>
+            <value>
+                <fullName>Legal</fullName>
+                <default>false</default>
+                <label>Legal</label>
+            </value>
+            <value>
+                <fullName>Legal, JJ Live Call-In</fullName>
+                <default>false</default>
+                <label>Legal, JJ Live Call-In</label>
+            </value>
+            <value>
+                <fullName>LinkedIn</fullName>
+                <default>false</default>
+                <label>LinkedIn</label>
+            </value>
+            <value>
+                <fullName>Mann</fullName>
+                <default>false</default>
+                <label>Mann</label>
+            </value>
+            <value>
+                <fullName>MCAHelper Form</fullName>
+                <default>false</default>
+                <label>MCAHelper Form</label>
+            </value>
+            <value>
+                <fullName>NA</fullName>
+                <default>false</default>
+                <label>NA</label>
+            </value>
+            <value>
+                <fullName>Organic</fullName>
+                <default>false</default>
+                <label>Organic</label>
+            </value>
+            <value>
+                <fullName>Pack</fullName>
+                <default>false</default>
+                <label>Pack</label>
+            </value>
+            <value>
+                <fullName>Paid Ads</fullName>
+                <default>false</default>
+                <label>Paid Ads</label>
+            </value>
+            <value>
+                <fullName>Referral</fullName>
+                <default>false</default>
+                <label>Referral</label>
+            </value>
+            <value>
+                <fullName>Sales Referral</fullName>
+                <default>false</default>
+                <label>Sales Referral</label>
+            </value>
+            <value>
+                <fullName>Sim</fullName>
+                <default>false</default>
+                <label>Sim</label>
+            </value>
+            <value>
+                <fullName>Sim Web Form</fullName>
+                <default>false</default>
+                <label>Sim Web Form</label>
+            </value>
+            <value>
+                <fullName>TBS Apps</fullName>
+                <default>false</default>
+                <label>TBS Apps</label>
+            </value>
+            <value>
+                <fullName>TBS Referral</fullName>
+                <default>false</default>
+                <label>TBS Referral</label>
+            </value>
+            <value>
+                <fullName>Telegram</fullName>
+                <default>false</default>
+                <label>Telegram</label>
+            </value>
+            <value>
+                <fullName>Text Response</fullName>
+                <default>false</default>
+                <label>Text Response</label>
+            </value>
+            <value>
+                <fullName>Tier 1</fullName>
+                <default>false</default>
+                <label>Tier 1</label>
+            </value>
+            <value>
+                <fullName>TikTok</fullName>
+                <default>false</default>
+                <label>TikTok</label>
+            </value>
+            <value>
+                <fullName>Twitter</fullName>
+                <default>false</default>
+                <label>Twitter</label>
+            </value>
+            <value>
+                <fullName>VGU Referral</fullName>
+                <default>false</default>
+                <label>VGU Referral</label>
+            </value>
+            <value>
+                <fullName>Waiting on Docs drip</fullName>
+                <default>false</default>
+                <label>Waiting on Docs drip</label>
+            </value>
+            <value>
+                <fullName>Whatsapp</fullName>
+                <default>false</default>
+                <label>Whatsapp</label>
+            </value>
+            <value>
+                <fullName>Youtube</fullName>
+                <default>false</default>
+                <label>Youtube</label>
+            </value>
+            <value>
+                <fullName>Web Lead</fullName>
+                <default>false</default>
+                <label>Web Lead</label>
+            </value>
+            <value>
+                <fullName>Other</fullName>
+                <default>false</default>
+                <label>Other</label>
+            </value>
+            <value>
+                <fullName>already in debt program (not settled)</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>already in debt program (not settled)</label>
+            </value>
+            <value>
+                <fullName>already in debt program (settled)</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>already in debt program (settled)</label>
+            </value>
+            <value>
+                <fullName>little/no revenue</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>little/no revenue</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

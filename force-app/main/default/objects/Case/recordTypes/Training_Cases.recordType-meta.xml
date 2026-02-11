@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RecordType xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Training_Cases</fullName>
+    <active>true</active>
+    <businessProcess>Training Cases</businessProcess>
+    <label>Training Cases</label>
+    <picklistValues>
+        <picklist>Back_Office_Request__c</picklist>
+        <values>
+            <fullName>Cashflow</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Change Draft Date</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Ledger</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Payment Decrease</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Payment Increase</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Projection</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Skip Payment</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Client_Document_Request__c</picklist>
+        <values>
+            <fullName>Any court document or motion</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Bank statements</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Copy of Complaints</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Correspondence or contact information from Lenders</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Detailed Hardship Statement</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Service of Process %28Summons %2B Complaints%29</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Standard Hardship Letter</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>UCC Lien Notices</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Collection_Stages__c</picklist>
+        <values>
+            <fullName>Duplicate Draft</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>NSF</fullName>
+            <default>true</default>
+        </values>
+        <values>
+            <fullName>New Draft Scheduled</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Payment Defaulted</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Wire Received</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Docs_Missing__c</picklist>
+        <values>
+            <fullName>Bank Statements</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Contract%2FAgreement</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>EFT Form</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Hardship Letter</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Identification Document</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Invoice%2FReceipt</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Lender Agreements</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Letter of Representation %28LoR%29</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>No-Fee Retainer Form %28DocuSign%29</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Payoff Letter</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Voided Check</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Legal_Office__c</picklist>
+        <values>
+            <fullName>The Law Office of Paul D%2E Lazarus</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Legal_Status__c</picklist>
+        <values>
+            <fullName>Communication</fullName>
+            <default>true</default>
+        </values>
+        <values>
+            <fullName>Debt Verified</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Fully Executed Settlement</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Negotiation</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Lien_Legal_Status__c</picklist>
+        <values>
+            <fullName>Arbitration</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>COJ</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Judgment</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Lawsuit</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Payment History Pending</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Payoff Letter Pending</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Origin</picklist>
+        <values>
+            <fullName>Email</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Internal</fullName>
+            <default>true</default>
+        </values>
+        <values>
+            <fullName>Phone</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Web</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Priority</picklist>
+        <values>
+            <fullName>High</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Low</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Medium</fullName>
+            <default>true</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Reason</picklist>
+        <values>
+            <fullName>Complex functionality</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Existing problem</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Instructions not clear</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>New problem</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>User didn%27t attend training</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Request_Type__c</picklist>
+        <values>
+            <fullName>Accounting</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Customer Support</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Finance</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Legal Queries</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Other</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Payments</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Service_Record_Type__c</picklist>
+        <values>
+            <fullName>Case Management</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Legal Team</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Welcome Team</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Source__c</picklist>
+        <values>
+            <fullName>Answer Force</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Webform</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Training_Stage__c</picklist>
+        <values>
+            <fullName>Completed</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Module 1</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Module 2</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Module 3</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Module 4</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Module 5</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Module 6</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Type</picklist>
+        <values>
+            <fullName>Training</fullName>
+            <default>true</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Welcome_Team_Journey__c</picklist>
+        <values>
+            <fullName>Documents Received</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>New</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Onboarding Complete</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Welcome Call Scheduled</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Welcome Email Sent</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Welcome SMS Sent</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+</RecordType>

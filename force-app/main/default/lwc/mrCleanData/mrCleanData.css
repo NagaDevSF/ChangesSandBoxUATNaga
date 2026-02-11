@@ -1,0 +1,82 @@
+/* mrCleanData.css */
+
+/* Hide card header */
+.no-header .slds-card__header {
+    display: none;
+}
+
+/* Loading container */
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px;
+    padding: 1rem;
+}
+
+/* Logo container with perfect fit */
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+/* Clean logo styling for perfect fit */
+.clean-logo {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    border: none;
+    border-radius: 4px;
+    box-shadow: none;
+    transition: opacity 0.3s ease;
+    display: block;
+}
+
+.clean-logo:hover {
+    opacity: 0.9;
+}
+
+/* Remove card padding for full width logo */
+.no-header .slds-card__body {
+    padding: 0;
+}
+
+/* Remove any margins */
+.slds-card__body_inner {
+    padding: 0;
+    margin: 0;
+}
+
+/* Error container */
+.error-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px;
+    padding: 1rem;
+}
+
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #c23934;
+    font-size: 0.875rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .clean-logo {
+        width: 100%;
+        height: auto;
+    }
+    
+    .loading-container,
+    .error-container {
+        height: 80px;
+    }
+}

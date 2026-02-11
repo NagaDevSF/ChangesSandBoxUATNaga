@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>TwilioSF__Last_Message_Status__c</fullName>
+    <deprecated>false</deprecated>
+    <label>Last Message Status</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>delivered</fullName>
+                <default>false</default>
+                <label>delivered</label>
+            </value>
+            <value>
+                <fullName>undelivered</fullName>
+                <default>false</default>
+                <label>undelivered</label>
+            </value>
+            <value>
+                <fullName>failed</fullName>
+                <default>false</default>
+                <label>failed</label>
+            </value>
+            <value>
+                <fullName>blocked</fullName>
+                <default>false</default>
+                <label>blocked</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

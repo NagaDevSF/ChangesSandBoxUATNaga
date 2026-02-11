@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Is_Settlement__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>When marked as true, additional fields will be sent as part of addFee</description>
+    <fieldManageability>SubscriberControlled</fieldManageability>
+    <inlineHelpText>When marked as true, additional fields will be sent as part of addFee</inlineHelpText>
+    <label>Is Settlement</label>
+    <type>Checkbox</type>
+</CustomField>

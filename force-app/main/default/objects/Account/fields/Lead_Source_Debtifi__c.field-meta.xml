@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Lead_Source_Debtifi__c</fullName>
+    <label>Lead Source QRMCA</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Cherry</fullName>
+                <default>false</default>
+                <label>Cherry</label>
+            </value>
+            <value>
+                <fullName>Email</fullName>
+                <default>false</default>
+                <label>Email</label>
+            </value>
+            <value>
+                <fullName>Facebook</fullName>
+                <default>false</default>
+                <label>Facebook</label>
+            </value>
+            <value>
+                <fullName>Organic</fullName>
+                <default>false</default>
+                <label>Organic</label>
+            </value>
+            <value>
+                <fullName>LinkedIn</fullName>
+                <default>false</default>
+                <label>LinkedIn</label>
+            </value>
+            <value>
+                <fullName>Instagram</fullName>
+                <default>false</default>
+                <label>Instagram</label>
+            </value>
+            <value>
+                <fullName>TikTok</fullName>
+                <default>false</default>
+                <label>TikTok</label>
+            </value>
+            <value>
+                <fullName>Google Ad Words</fullName>
+                <default>false</default>
+                <label>Google Ad Words</label>
+            </value>
+            <value>
+                <fullName>Youtube</fullName>
+                <default>false</default>
+                <label>Youtube</label>
+            </value>
+            <value>
+                <fullName>Blog</fullName>
+                <default>false</default>
+                <label>Blog</label>
+            </value>
+            <value>
+                <fullName>Twitter</fullName>
+                <default>false</default>
+                <label>Twitter</label>
+            </value>
+            <value>
+                <fullName>Whatsapp</fullName>
+                <default>false</default>
+                <label>Whatsapp</label>
+            </value>
+            <value>
+                <fullName>Telegram</fullName>
+                <default>false</default>
+                <label>Telegram</label>
+            </value>
+            <value>
+                <fullName>Referral</fullName>
+                <default>false</default>
+                <label>Referral</label>
+            </value>
+            <value>
+                <fullName>DCGDI</fullName>
+                <default>false</default>
+                <label>DCGDI</label>
+            </value>
+            <value>
+                <fullName>JJ Live</fullName>
+                <default>false</default>
+                <label>JJ Live</label>
+            </value>
+            <value>
+                <fullName>TBS Referral</fullName>
+                <default>false</default>
+                <label>TBS Referral</label>
+            </value>
+            <value>
+                <fullName>LB Referral</fullName>
+                <default>false</default>
+                <label>LB Referral</label>
+            </value>
+            <value>
+                <fullName>JV Referral</fullName>
+                <default>false</default>
+                <label>JV Referral</label>
+            </value>
+            <value>
+                <fullName>Legal</fullName>
+                <default>false</default>
+                <label>Legal</label>
+            </value>
+            <value>
+                <fullName>Everyday Form</fullName>
+                <default>false</default>
+                <label>Everyday Form</label>
+            </value>
+            <value>
+                <fullName>App</fullName>
+                <default>false</default>
+                <label>App</label>
+            </value>
+            <value>
+                <fullName>Tier 1</fullName>
+                <default>false</default>
+                <label>Tier 1</label>
+            </value>
+            <value>
+                <fullName>DCG</fullName>
+                <default>false</default>
+                <label>DCG</label>
+            </value>
+            <value>
+                <fullName>NY Legal Scaper</fullName>
+                <default>false</default>
+                <label>NY Legal Scaper</label>
+            </value>
+            <value>
+                <fullName>Web Lead</fullName>
+                <default>false</default>
+                <label>Web Lead</label>
+            </value>
+            <value>
+                <fullName>GHL</fullName>
+                <default>false</default>
+                <label>GHL</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

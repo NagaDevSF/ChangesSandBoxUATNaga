@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>County__c</fullName>
+    <label>County</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>ALBANY COUNTY</fullName>
+                <default>false</default>
+                <label>ALBANY COUNTY</label>
+            </value>
+            <value>
+                <fullName>CLINTON COUNTY</fullName>
+                <default>false</default>
+                <label>CLINTON COUNTY</label>
+            </value>
+            <value>
+                <fullName>ERIE COUNTY</fullName>
+                <default>false</default>
+                <label>ERIE COUNTY</label>
+            </value>
+            <value>
+                <fullName>KINGS COUNTY</fullName>
+                <default>false</default>
+                <label>KINGS COUNTY</label>
+            </value>
+            <value>
+                <fullName>MONROE COUNTY</fullName>
+                <default>false</default>
+                <label>MONROE COUNTY</label>
+            </value>
+            <value>
+                <fullName>NASSAU COUNTY</fullName>
+                <default>false</default>
+                <label>NASSAU COUNTY</label>
+            </value>
+            <value>
+                <fullName>NEW YORK COUNTY</fullName>
+                <default>false</default>
+                <label>NEW YORK COUNTY</label>
+            </value>
+            <value>
+                <fullName>NIAGARA COUNTY</fullName>
+                <default>false</default>
+                <label>NIAGARA COUNTY</label>
+            </value>
+            <value>
+                <fullName>ONEIDA COUNTY</fullName>
+                <default>false</default>
+                <label>ONEIDA COUNTY</label>
+            </value>
+            <value>
+                <fullName>ONTARIO COUNTY</fullName>
+                <default>false</default>
+                <label>ONTARIO COUNTY</label>
+            </value>
+            <value>
+                <fullName>ORANGE COUNTY</fullName>
+                <default>false</default>
+                <label>ORANGE COUNTY</label>
+            </value>
+            <value>
+                <fullName>QUEENS COUNTY</fullName>
+                <default>false</default>
+                <label>QUEENS COUNTY</label>
+            </value>
+            <value>
+                <fullName>ROCKLAND COUNTY</fullName>
+                <default>false</default>
+                <label>ROCKLAND COUNTY</label>
+            </value>
+            <value>
+                <fullName>SUFFOLK COUNTY</fullName>
+                <default>false</default>
+                <label>SUFFOLK COUNTY</label>
+            </value>
+            <value>
+                <fullName>SULLIVAN COUNTY</fullName>
+                <default>false</default>
+                <label>SULLIVAN COUNTY</label>
+            </value>
+            <value>
+                <fullName>TOMPKINS COUNTY</fullName>
+                <default>false</default>
+                <label>TOMPKINS COUNTY</label>
+            </value>
+            <value>
+                <fullName>WARREN COUNTY</fullName>
+                <default>false</default>
+                <label>WARREN COUNTY</label>
+            </value>
+            <value>
+                <fullName>WASHINGTON COUNTY</fullName>
+                <default>false</default>
+                <label>WASHINGTON COUNTY</label>
+            </value>
+            <value>
+                <fullName>WESTCHESTER COUNTY</fullName>
+                <default>false</default>
+                <label>WESTCHESTER COUNTY</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

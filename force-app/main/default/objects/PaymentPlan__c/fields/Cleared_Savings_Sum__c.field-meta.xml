@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Cleared_Savings_Sum__c</fullName>
+    <description>Sum of Savings_Balance__c for items with Status = Cleared</description>
+    <label>Cleared Savings Sum</label>
+    <summarizedField>Payment_Schedule_Item__c.Savings_Balance__c</summarizedField>
+    <summaryFilterItems>
+        <field>Payment_Schedule_Item__c.Status__c</field>
+        <operation>equals</operation>
+        <value>Cleared</value>
+    </summaryFilterItems>
+    <summaryForeignKey>Payment_Schedule_Item__c.Payment_Plan__c</summaryForeignKey>
+    <summaryOperation>sum</summaryOperation>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Summary</type>
+</CustomField>

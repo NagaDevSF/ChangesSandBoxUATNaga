@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Copy_of_EDD_ALL_ENROLLED</fullName>
+    <columns>OPPORTUNITY.CREATED_DATE</columns>
+    <columns>OPPORTUNITY.NAME</columns>
+    <columns>Contact_Name__c</columns>
+    <columns>Mobile__c</columns>
+    <columns>Phone__c</columns>
+    <columns>OPPORTUNITY.STAGE_NAME</columns>
+    <columns>OPPORTUNITY.AMOUNT</columns>
+    <columns>Estimated_Total_Debt__c</columns>
+    <columns>CORE.USERS.ALIAS</columns>
+    <columns>Main_Source__c</columns>
+    <columns>Email__c</columns>
+    <columns>Lost__c</columns>
+    <columns>Loss_Reason__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>OPPORTUNITY.STAGE_NAME</field>
+        <operation>equals</operation>
+        <value>Enrolled,Cancelled,NSF</value>
+    </filters>
+    <label>EDD Enrolled Agent</label>
+</ListView>

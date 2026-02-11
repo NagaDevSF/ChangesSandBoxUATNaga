@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebLink xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>TwilioSF__Twilio_Two_Way_Messages</fullName>
+    <availability>online</availability>
+    <displayType>button</displayType>
+    <height>600</height>
+    <linkType>page</linkType>
+    <masterLabel>Twilio Two Way Messages</masterLabel>
+    <openType>noSidebar</openType>
+    <page>TwilioSF__TwoWayMessagesContact</page>
+    <protected>false</protected>
+</WebLink>

@@ -1,0 +1,15 @@
+.custom-alert {
+    background-color: #f44336; /* Red */
+    color: white;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  .custom-alert:hover {
+    opacity: 0.9;
+  }

@@ -1,0 +1,658 @@
+/* Sales Calendar Container */
+.sales-calendar-container {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', sans-serif;
+}
+
+/* Calendar Header */
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px 8px 0 0;
+    position: relative; /* For refresh indicator positioning */
+}
+
+/* Subtle refresh indicator for TV display */
+.calendar-header.refreshing::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(255,255,255,0.3), rgba(255,255,255,0.8));
+    animation: refresh-pulse 2s ease-in-out infinite;
+}
+
+@keyframes refresh-pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+
+.header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.calendar-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.date-display {
+    font-size: 14px;
+    opacity: 0.95;
+    font-weight: 500;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-controls lightning-input {
+    --slds-c-input-text-color: white;
+    --slds-c-input-background-color: rgba(255, 255, 255, 0.15);
+    --slds-c-input-border-color: rgba(255, 255, 255, 0.3);
+    --slds-c-input-border-color-focus: white;
+    --slds-c-input-shadow-focus: 0 0 3px white;
+}
+
+.nav-button,
+.refresh-button,
+.export-button {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    color: white;
+}
+
+.nav-button:hover,
+.refresh-button:hover,
+.export-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.today-button {
+    background: white;
+    color: #667eea;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.today-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Stats Dashboard */
+.stats-dashboard {
+    padding: 16px 24px;
+    background: white;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+}
+
+.stats-card {
+    min-width: 120px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.stats-card.primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+}
+
+.stats-card.secondary {
+    background: linear-gradient(135deg, #00bcf2, #0078d4);
+    color: white;
+    border: none;
+}
+
+.stats-value {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.stats-label {
+    font-size: 12px;
+    font-weight: 500;
+    opacity: 0.9;
+    text-transform: uppercase;
+}
+
+.stats-card.rep-stat {
+    min-width: 160px;
+}
+
+.rep-stat-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.rep-stat-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+.rep-stat-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #212529;
+}
+
+.rep-stat-values {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.rep-stat-meetings {
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.rep-stat-hours {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+/* Calendar Wrapper */
+.calendar-wrapper {
+    flex: 1;
+    overflow: auto;
+    background: #f8f9fa;
+    position: relative;
+}
+
+/* Sales Calendar Table */
+.sales-calendar-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    min-width: 800px;
+    table-layout: auto; /* Allow dynamic column widths */
+}
+
+/* Header Row */
+.header-row {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Time Column Header */
+.time-column-header {
+    width: 110px;
+    min-width: 110px;
+    background: #f8f9fa;
+    border-right: 2px solid #e9ecef;
+    padding: 12px;
+    text-align: center;
+    position: sticky;
+    left: 0;
+    z-index: 101;
+}
+
+.time-header-content {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #6c757d;
+    letter-spacing: 1px;
+}
+
+/* Rep Column Headers */
+.rep-column-header {
+    background: white;
+    border-right: 2px solid #dee2e6;
+    padding: 12px;
+    vertical-align: top;
+    min-width: 200px;
+    width: auto; /* Dynamic width */
+}
+
+.rep-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.rep-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    color: white;
+    flex-shrink: 0;
+}
+
+.rep-initials {
+    text-transform: uppercase;
+}
+
+.rep-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.rep-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #212529;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rep-badge {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 4px;
+}
+
+/* Time Rows */
+.time-row {
+    height: 30px;
+    border-bottom: 1px solid #f0f0f0;
+    position: relative;
+}
+
+.time-row.hour-mark {
+    border-bottom: 1px solid rgba(192, 199, 208, 0.15);
+    background: linear-gradient(to bottom, rgba(249, 250, 251, 0.1), transparent);
+}
+
+/* Add a very subtle grid line that extends across all columns for hour marks */
+.time-row.hour-mark::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background: linear-gradient(to right, 
+        transparent 0%, 
+        rgba(156, 163, 175, 0.15) 110px, 
+        rgba(156, 163, 175, 0.15) 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.time-row.half-hour-mark {
+    border-bottom: 1px dashed #e5e7eb;
+}
+
+/* Time Label Cell */
+.time-label-cell {
+    padding: 0 12px;
+    text-align: right;
+    vertical-align: middle;
+    background: #f8f9fa;
+    position: sticky;
+    left: 0;
+    z-index: 50;
+    border-right: 2px solid #e9ecef;
+    width: 110px;
+    min-width: 110px;
+}
+
+.time-label {
+    font-size: 12px;
+    color: #495057;
+    font-weight: 500;
+}
+
+.half-hour-dot {
+    color: #adb5bd;
+    font-size: 16px;
+    display: inline-block;
+    margin-top: -4px;
+}
+
+/* Time Cells */
+.time-cell {
+    border-right: 2px solid #dee2e6;
+    padding: 0;
+    vertical-align: top;
+    position: relative;
+    background: white;
+    transition: background-color 0.2s;
+    min-width: 200px;
+    width: auto; /* Dynamic width */
+}
+
+/* Add subtle visual separation for hour marks in cells */
+.hour-mark .time-cell {
+    border-bottom: 1px solid rgba(192, 199, 208, 0.15);
+    box-shadow: inset 0 -1px 0 0 rgba(156, 163, 175, 0.1);
+}
+
+.time-cell:hover {
+    background: #fafbfc;
+}
+
+.cell-container {
+    position: relative;
+    width: 100%; /* Fill available width */
+    min-width: 200px;
+    height: 30px;
+}
+
+/* Event Cards */
+.event-card {
+    position: absolute;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 11px;
+    overflow: visible;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s;
+    min-height: 60px;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.event-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    z-index: 100;
+    overflow: visible;
+}
+
+.event-time-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+    white-space: nowrap;
+    margin-bottom: 3px;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.event-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 2px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.event-client {
+    font-size: 11px;
+    color: white;
+    opacity: 0.95;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+    margin: 2px 0;
+}
+
+.event-location {
+    font-size: 10px;
+    color: white;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.event-duration {
+    position: absolute;
+    bottom: 3px;
+    right: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+    opacity: 0.9;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+/* Loading State */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 400px;
+    gap: 16px;
+}
+
+.loading-text {
+    font-size: 14px;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* Error State */
+.error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    gap: 12px;
+    padding: 24px;
+}
+
+.error-container h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #dc3545;
+}
+
+.error-message {
+    font-size: 14px;
+    color: #6c757d;
+    margin: 0;
+    text-align: center;
+}
+
+.retry-button {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+}
+
+.retry-button:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+}
+
+/* Empty State */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    color: #6c757d;
+}
+
+.empty-state h3 {
+    margin: 16px 0 8px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Calendar Legend */
+.calendar-legend {
+    padding: 16px 24px;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    border-radius: 0 0 8px 8px;
+}
+
+.legend-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #6c757d;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+}
+
+.legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.legend-name {
+    color: #495057;
+}
+
+/* Scrollbar Styling */
+.calendar-wrapper::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.calendar-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 5px;
+}
+
+.calendar-wrapper::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 5px;
+}
+
+.calendar-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .rep-column-header {
+        min-width: 150px;
+    }
+}
+
+@media (max-width: 768px) {
+    .calendar-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    
+    .header-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+/* PERFORMANCE OPTIMIZATIONS */
+/* Common event styles to reduce inline CSS generation */
+.event-optimized {
+    color: white;
+    padding: 3px 5px;
+    border-radius: 4px;
+    font-size: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: transform 0.2s ease;
+    will-change: transform; /* Optimize for hover animations */
+}
+
+/* Hardware acceleration for smooth scrolling */
+.calendar-wrapper-optimized {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* Reduce repaints during hover */
+.time-cell-optimized {
+    will-change: background-color;
+}
+
+/* Optimize event hover performance */
+.event-optimized:hover {
+    transform: scale(1.02) translateZ(0);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+    z-index: 100 !important;
+}

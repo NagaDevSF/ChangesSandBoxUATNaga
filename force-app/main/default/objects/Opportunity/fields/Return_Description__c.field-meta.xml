@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Return_Description__c</fullName>
+    <externalId>false</externalId>
+    <formula>CASE(
+    TEXT(Return_Code__c),
+
+    &quot;R01&quot;, &quot;INSUFFICIENT FUNDS&quot;,
+    &quot;R02&quot;, &quot;ACCOUNT CLOSED&quot;,
+    &quot;R03&quot;, &quot;NO ACCOUNT / UNABLE TO LOCATE ACCOUNT&quot;,
+    &quot;R04&quot;, &quot;INVALID ACCOUNT NUMBER&quot;,
+    &quot;R05&quot;, &quot;CORPORATE DEBIT TO CONSUMER ACCOUNT&quot;,
+&quot;R07&quot;, &quot;AUTHORIZATION REVOKED BY CUSTOMER&quot;,
+    &quot;R08&quot;, &quot;PAYMENT STOPPED&quot;,
+    &quot;R09&quot;, &quot;UNCOLLECTED FUNDS&quot;,
+    &quot;R10&quot;, &quot;CUSTOMER ADVISES NOT AUTHORIZED&quot;,
+    &quot;R11&quot;, &quot;ENTRY NOT IN ACCORDANCE WITH AUTHORIZATION&quot;,
+    &quot;R16&quot;, &quot;ACCOUNT FROZEN&quot;,
+    &quot;R20&quot;, &quot;NON-TRANSACTION ACCOUNT&quot;,
+    &quot;R29&quot;, &quot;CORPORATE CUSTOMER ADVISES NOT AUTHORIZED&quot;,
+
+    &quot;&quot;
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Return Description</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

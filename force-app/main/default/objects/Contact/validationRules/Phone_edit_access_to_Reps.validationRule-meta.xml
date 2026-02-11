@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Phone_edit_access_to_Reps</fullName>
+    <active>true</active>
+    <errorConditionFormula>AND(
+  $Profile.Name = &quot;Sales Rep&quot;,
+  ISCHANGED(Phone)
+)</errorConditionFormula>
+    <errorMessage>Sales Reps are not allowed to edit the Phone field.</errorMessage>
+</ValidationRule>

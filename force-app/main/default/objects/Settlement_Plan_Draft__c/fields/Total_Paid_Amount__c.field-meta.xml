@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Total_Paid_Amount__c</fullName>
+    <label>Total Paid Amount</label>
+    <summarizedField>Settlement_Plan_Item__c.Rollup_Payment_Amount__c</summarizedField>
+    <summaryFilterItems>
+        <field>Settlement_Plan_Item__c.Status__c</field>
+        <operation>equals</operation>
+        <value>Cleared</value>
+    </summaryFilterItems>
+    <summaryForeignKey>Settlement_Plan_Item__c.Settlement_Plan__c</summaryForeignKey>
+    <summaryOperation>sum</summaryOperation>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Summary</type>
+</CustomField>

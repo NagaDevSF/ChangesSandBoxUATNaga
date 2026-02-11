@@ -1,0 +1,27 @@
+<template>
+    <div class="container">
+        <h1 class="title">Transfer Status</h1>
+
+        <template lwc:if={isDataLoaded}>
+            <div class="button-group">
+                <button class={qualifiedClass} onclick={handleQualifiedClick} disabled={isLoading}>
+                    Qualified Transfer
+                    <span class="checkmark"></span>
+                </button>
+
+                <button class={unqualifiedClass} onclick={handleUnqualifiedClick} disabled={isLoading}>
+                    Unqualified Transfer
+                    <span class="checkmark"></span>
+                </button>
+            </div>
+
+            <div class={statusMessageClass}>{statusMessage}</div>
+        </template>
+
+        <template lwc:else>
+            <div class="spinner-container">
+                <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+            </div>
+        </template>
+    </div>
+</template>

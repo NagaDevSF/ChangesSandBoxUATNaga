@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Cancellation_Reason__c</fullName>
+    <label>Cancellation Reason</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Bankruptcy</fullName>
+                <default>false</default>
+                <label>Bankruptcy</label>
+            </value>
+            <value>
+                <fullName>Cant Afford</fullName>
+                <default>false</default>
+                <label>Cant Afford</label>
+            </value>
+            <value>
+                <fullName>Chose Competitor</fullName>
+                <default>false</default>
+                <label>Chose Competitor</label>
+            </value>
+            <value>
+                <fullName>Direct Lender</fullName>
+                <default>false</default>
+                <label>Direct Lender</label>
+            </value>
+            <value>
+                <fullName>File Completed</fullName>
+                <default>false</default>
+                <label>File Completed</label>
+            </value>
+            <value>
+                <fullName>No Response</fullName>
+                <default>false</default>
+                <label>No Response</label>
+            </value>
+            <value>
+                <fullName>Unhappy with Service</fullName>
+                <default>false</default>
+                <label>Unhappy with Service</label>
+            </value>
+            <value>
+                <fullName>File Merged</fullName>
+                <default>false</default>
+                <label>File Merged</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

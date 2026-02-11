@@ -1,0 +1,84 @@
+<template>
+    <lightning-card title="Email Attachments" icon-name="standard:document">
+        <div slot="actions">
+            <lightning-button-icon icon-name="utility:refresh" 
+                                  alternative-text="Refresh" 
+                                  title="Refresh" 
+                                  onclick={handleRefresh}>
+            </lightning-button-icon>
+        </div>
+        
+        <div class="slds-p-horizontal_small">
+            <!-- Loading Spinner -->
+            <template if:true={isLoading}>
+                <div class="slds-is-relative slds-p-around_medium">
+                    <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+                </div>
+            </template>
+            
+            <!-- Error Message -->
+            <template if:true={error}>
+                <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" role="alert">
+                    <span class="slds-assistive-text">Error</span>
+                    <h2>{error}</h2>
+                </div>
+            </template>
+            
+            <!-- No Attachments Message -->
+            <template if:false={hasAttachments}>
+                <div if:false={isLoading} class="slds-text-align_center slds-p-around_medium">
+                    <div class="slds-illustration slds-illustration_small">
+                        <lightning-icon icon-name="utility:file" size="medium"></lightning-icon>
+                        <p class="slds-p-top_small">No email attachments found for this opportunity.</p>
+                    </div>
+                </div>
+            </template>
+            
+            <!-- Attachments List -->
+            <template if:true={hasAttachments}>
+                <div class="slds-p-vertical_small">
+                    <ul class="slds-has-dividers_bottom-space">
+                        <template for:each={attachments} for:item="file">
+                            <li key={file.id} class="slds-item">
+                                <div class="slds-grid slds-wrap">
+                                    <!-- File Icon -->
+                                    <div class="slds-col slds-size_1-of-12 slds-p-right_x-small">
+                                        <lightning-icon icon-name={file.iconName} size="small"></lightning-icon>
+                                    </div>
+                                    
+                                    <!-- File Name -->
+                                    <div class="slds-col slds-size_7-of-12">
+                                        <a href="javascript:void(0);" 
+                                           onclick={handleFileClick} 
+                                           data-url={file.url} 
+                                           class="slds-text-link">{file.name}</a>
+                                        <div class="slds-text-body_small slds-text-color_weak">
+                                            {file.size}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Source -->
+                                    <div class="slds-col slds-size_4-of-12 slds-text-align_right">
+                                        <div class="slds-text-body_small">
+                                            <a href="javascript:void(0);" 
+                                               onclick={handleSourceClick} 
+                                               data-id={file.sourceId} 
+                                               class="slds-text-link">{file.source}</a>
+                                        </div>
+                                        <div class="slds-text-body_small slds-text-color_weak">
+                                            <lightning-formatted-date-time value={file.createdDate}
+                                                                          year="numeric"
+                                                                          month="short"
+                                                                          day="2-digit">
+                                            </lightning-formatted-date-time>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>
