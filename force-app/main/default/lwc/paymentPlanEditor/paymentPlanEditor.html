@@ -668,6 +668,11 @@
                         <button type="button" class="btn btn-blue" onclick={handleManualClick}>
                             Manual
                         </button>
+                        <template lwc:if={showDeactivateButton}>
+                            <button type="button" class="btn btn-red" onclick={handleDeactivate}>
+                                De-activate
+                            </button>
+                        </template>
                         <template lwc:if={showSuspendButton}>
                             <button type="button" class="btn btn-yellow" onclick={handleSuspend}>
                                 Suspend

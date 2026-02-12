@@ -35,6 +35,11 @@
                 <default>false</default>
                 <label>SUSPENDED</label>
             </value>
+            <value>
+                <fullName>Deactivated</fullName>
+                <default>false</default>
+                <label>Deactivated</label>
+            </value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>

@@ -2702,6 +2702,70 @@ public with sharing class PaymentPlanEditorController {
     }
 
     /**
+     * @description Deactivate an active payment plan
+     * Sets the plan back to Draft status without creating a new version
+     * @param planId The Payment Plan ID
+     * @return Updated PaymentPlanWrapper
+     */
+    @AuraEnabled
+    public static PaymentPlanWrapper deactivatePaymentPlan(Id planId) {
+        String methodName = 'deactivatePaymentPlan';
+        System.debug(LoggingLevel.DEBUG, LOG_ENTRY + ' | ' + CLASS_NAME + '.' + methodName);
+        System.debug(LoggingLevel.DEBUG, LOG_PARAM + ' | planId: ' + planId);
+
+        Savepoint sp = Database.setSavepoint();
+        try {
+            if (planId == null) {
+                System.debug(LoggingLevel.WARN, LOG_WARN + ' | ' + methodName + ' | planId is null');
+                throw new AuraHandledException(VALIDATION_SYMBOL + 'Plan ID is required.');
+            }
+
+            // Get the plan to deactivate
+            List<PaymentPlan__c> plansToDeactivate = [
+                SELECT Id, Opportunity__c, Version_Number__c, Version_Status__c, Status__c
+                FROM PaymentPlan__c
+                WHERE Id = :planId
+                LIMIT 1
+            ];
+
+            System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + plansToDeactivate.size() + ' plan(s)');
+
+            if (plansToDeactivate.isEmpty()) {
+                System.debug(LoggingLevel.WARN, LOG_WARN + ' | ' + methodName + ' | Payment Plan not found: ' + planId);
+                throw new AuraHandledException(NOT_FOUND_SYMBOL + 'Payment Plan not found. It may have been deleted.');
+            }
+
+            PaymentPlan__c planToDeactivate = plansToDeactivate[0];
+
+            if (planToDeactivate.Version_Status__c != VERSION_STATUS_ACTIVE) {
+                System.debug(LoggingLevel.WARN, LOG_WARN + ' | ' + methodName + ' | Plan is not active: ' + planId);
+                throw new AuraHandledException(VALIDATION_SYMBOL + 'Only active plans can be deactivated.');
+            }
+
+            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Deactivating plan version: ' + planToDeactivate.Version_Number__c);
+
+            // Set the plan to Deactivated
+            PaymentPlan__c plan = new PaymentPlan__c(Id = planId);
+            plan.Version_Status__c = VERSION_STATUS_DRAFT;
+            plan.Status__c = 'Deactivated';
+            plan.Is_Active__c = false;
+            plan.Calculation_Timestamp__c = DateTime.now();
+            update plan;
+            System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Deactivated plan: ' + planId + ' (Status__c set to Deactivated)');
+
+            System.debug(LoggingLevel.DEBUG, LOG_SUCCESS + ' | ' + methodName + ' | Plan deactivated successfully');
+            System.debug(LoggingLevel.DEBUG, LOG_EXIT + ' | ' + CLASS_NAME + '.' + methodName + ' | SUCCESS');
+            return getPaymentPlanById(planId);
+
+        } catch (Exception e) {
+            Database.rollback(sp);
+            System.debug(LoggingLevel.ERROR, LOG_ERROR + ' | ' + methodName + ' | Exception: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, LOG_ERROR + ' | ' + methodName + ' | Stack Trace: ' + e.getStackTraceString());
+            throw new AuraHandledException(ERROR_SYMBOL + 'Error deactivating payment plan: ' + e.getMessage());
+        }
+    }
+
+    /**
      * @description Reactivate a suspended payment plan
      * Finds the previous (pre-suspension) version, clones it as a new Active version,
      * and restores Cancelled items back to Scheduled.

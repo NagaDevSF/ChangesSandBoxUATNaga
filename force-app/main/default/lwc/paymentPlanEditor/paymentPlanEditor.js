@@ -9,6 +9,7 @@ import recalculatePaymentPlan from '@salesforce/apex/PaymentPlanEditorController
 import recalculateRemainingBalance from '@salesforce/apex/PaymentPlanEditorController.recalculateRemainingBalance';
 import suspendPaymentPlan from '@salesforce/apex/PaymentPlanEditorController.suspendPaymentPlan';
 import activatePaymentPlan from '@salesforce/apex/PaymentPlanEditorController.activatePaymentPlan';
+import deactivatePaymentPlan from '@salesforce/apex/PaymentPlanEditorController.deactivatePaymentPlan';
 import reactivatePaymentPlan from '@salesforce/apex/PaymentPlanEditorController.reactivatePaymentPlan';
 import getWireFeesByPlanId from '@salesforce/apex/PaymentPlanEditorController.getWireFeesByPlanId';
 import saveWireFee from '@salesforce/apex/PaymentPlanEditorController.saveWireFee';
@@ -540,6 +541,13 @@ export default class PaymentPlanEditor extends LightningElement {
      * Show Suspend button only for Active plans that are not already Suspended
      */
     get showSuspendButton() {
+        return this.paymentPlan?.Version_Status__c === 'Active' && this.paymentPlan?.Status__c?.toLowerCase() !== 'suspended';
+    }
+
+    /**
+     * Show De-activate button only for Active plans that are not Suspended
+     */
+    get showDeactivateButton() {
         return this.paymentPlan?.Version_Status__c === 'Active' && this.paymentPlan?.Status__c?.toLowerCase() !== 'suspended';
     }
 
@@ -1438,6 +1446,37 @@ export default class PaymentPlanEditor extends LightningElement {
                 this.triggerConfetti();
 
                 this.showToast('Success', 'Payment plan activated successfully!', 'success');
+            }
+        } catch (error) {
+            this.showToast('Error', this.reduceErrors(error), 'error');
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    async handleDeactivate() {
+        // eslint-disable-next-line no-alert
+        const confirmed = window.confirm(
+            'Do you want to deactivate this plan?\n\n' +
+            'This will set the plan back to Draft status. No new version will be created.'
+        );
+        if (!confirmed) return;
+
+        this.isLoading = true;
+        try {
+            const result = await deactivatePaymentPlan({ planId: this.selectedPlanId });
+
+            if (result) {
+                const deactivatedPlanId = result.paymentPlan.Id;
+
+                // Update local state
+                this.paymentPlan = result.paymentPlan;
+                this.scheduleItems = this.processItems(result.scheduleItems || []);
+
+                // Refresh plans and keep the deactivated plan selected
+                await this.refreshPlans(deactivatedPlanId);
+
+                this.showToast('Success', 'Payment plan deactivated successfully.', 'success');
             }
         } catch (error) {
             this.showToast('Error', this.reduceErrors(error), 'error');
