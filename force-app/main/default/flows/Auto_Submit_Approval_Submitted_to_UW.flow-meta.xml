@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>65.0</apiVersion>
-    <description>Auto-submits the Opportunity Approval Process when Stage changes to Submitted to UW (skips if already in approval)</description>
+    <description>Auto-submits the Opportunity Approval Process when Stage changes to Submitted to UW. Fault path silently handles records already in approval.</description>
     <environments>Default</environments>
     <interviewLabel>Auto Submit Approval - Submitted to UW {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Auto Submit Approval - Submitted to UW</label>
@@ -17,7 +17,7 @@
         <locationX>176</locationX>
         <locationY>0</locationY>
         <connector>
-            <targetReference>Get_Pending_Approval</targetReference>
+            <targetReference>Submit_for_Approval</targetReference>
         </connector>
         <filterFormula>AND(
     ISPICKVAL({!$Record.StageName}, &apos;Submitted to UW&apos;),
@@ -27,62 +27,16 @@
         <recordTriggerType>Update</recordTriggerType>
         <triggerType>RecordAfterSave</triggerType>
     </start>
-    <recordLookups>
-        <name>Get_Pending_Approval</name>
-        <label>Get Pending Approval</label>
-        <locationX>176</locationX>
-        <locationY>155</locationY>
-        <connector>
-            <targetReference>Is_Already_In_Approval</targetReference>
-        </connector>
-        <filterLogic>and</filterLogic>
-        <filters>
-            <field>TargetObjectId</field>
-            <operator>EqualTo</operator>
-            <value>
-                <elementReference>$Record.Id</elementReference>
-            </value>
-        </filters>
-        <filters>
-            <field>Status</field>
-            <operator>EqualTo</operator>
-            <value>
-                <stringValue>Pending</stringValue>
-            </value>
-        </filters>
-        <getFirstRecordOnly>true</getFirstRecordOnly>
-        <object>ProcessInstance</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordLookups>
-    <decisions>
-        <name>Is_Already_In_Approval</name>
-        <label>Is Already In Approval?</label>
-        <locationX>176</locationX>
-        <locationY>255</locationY>
-        <defaultConnector>
-            <targetReference>Submit_for_Approval</targetReference>
-        </defaultConnector>
-        <defaultConnectorLabel>Not In Approval</defaultConnectorLabel>
-        <rules>
-            <name>Already_In_Approval</name>
-            <conditionLogic>and</conditionLogic>
-            <conditions>
-                <leftValueReference>Get_Pending_Approval</leftValueReference>
-                <operator>IsNull</operator>
-                <rightValue>
-                    <booleanValue>false</booleanValue>
-                </rightValue>
-            </conditions>
-            <label>Already In Approval</label>
-        </rules>
-    </decisions>
     <actionCalls>
         <name>Submit_for_Approval</name>
         <label>Submit for Approval</label>
-        <locationX>352</locationX>
-        <locationY>355</locationY>
+        <locationX>176</locationX>
+        <locationY>311</locationY>
         <actionName>submit</actionName>
         <actionType>submit</actionType>
+        <faultConnector>
+            <targetReference>Log_Already_In_Approval</targetReference>
+        </faultConnector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
             <name>objectId</name>
@@ -109,5 +63,25 @@
             </value>
         </inputParameters>
     </actionCalls>
+    <assignments>
+        <name>Log_Already_In_Approval</name>
+        <label>Log Already In Approval</label>
+        <locationX>176</locationX>
+        <locationY>455</locationY>
+        <assignmentItems>
+            <assignToReference>FaultMessage</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </assignmentItems>
+    </assignments>
+    <variables>
+        <name>FaultMessage</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
     <status>Active</status>
 </Flow>
