@@ -34,7 +34,6 @@ private class PaymentPlanEditorControllerTest {
             First_Payment_Date__c = Date.today(),
             Status__c = 'Active',
             Version_Number__c = 1,
-            Version_Status__c = 'Active',
             Is_Active__c = true,
             Banking_Fee__c = 15,
             Setup_Fee__c = 1000,
@@ -152,12 +151,12 @@ private class PaymentPlanEditorControllerTest {
 
         // Verify original plan status (may vary based on controller logic)
         PaymentPlan__c originalUpdated = [
-            SELECT Version_Status__c, Is_Active__c
+            SELECT Status__c, Is_Active__c
             FROM PaymentPlan__c
             WHERE Id = :originalPlan.Id
         ];
         // The original plan's status depends on controller implementation
-        System.assertNotEquals(null, originalUpdated.Version_Status__c,
+        System.assertNotEquals(null, originalUpdated.Status__c,
             'Original plan should have a version status');
     }
 
@@ -436,7 +435,6 @@ private class PaymentPlanEditorControllerTest {
     static void testActivatePaymentPlan() {
         PaymentPlan__c plan = [SELECT Id FROM PaymentPlan__c LIMIT 1];
         plan.Status__c = 'Draft';
-        plan.Version_Status__c = 'Draft';
         update plan;
 
         Test.startTest();
@@ -539,12 +537,12 @@ private class PaymentPlanEditorControllerTest {
 
         // Verify original plan status (may vary based on controller logic)
         PaymentPlan__c originalUpdated = [
-            SELECT Version_Status__c, Is_Active__c
+            SELECT Status__c, Is_Active__c
             FROM PaymentPlan__c
             WHERE Id = :originalPlan.Id
         ];
         // The original plan's status depends on controller implementation
-        System.assertNotEquals(null, originalUpdated.Version_Status__c, 'Original plan should have a version status');
+        System.assertNotEquals(null, originalUpdated.Status__c, 'Original plan should have a version status');
 
         // Verify new plan was created
         System.assertNotEquals(null, result.paymentPlan, 'New plan should exist');
@@ -676,7 +674,6 @@ private class PaymentPlanEditorControllerTest {
                 First_Payment_Date__c = Date.today().addDays(14),
                 Status__c = 'Active',
                 Version_Number__c = 2,
-                Version_Status__c = 'Active',
                 Is_Active__c = true,
                 Banking_Fee__c = 15
             );
@@ -712,7 +709,6 @@ private class PaymentPlanEditorControllerTest {
             First_Payment_Date__c = Date.today(),
             Status__c = 'Draft',
             Version_Number__c = 2,
-            Version_Status__c = 'Draft',
             Is_Active__c = false,
             Previous_Version__c = existingPlan.Id
         );
@@ -1127,7 +1123,6 @@ private class PaymentPlanEditorControllerTest {
             First_Payment_Date__c = Date.today(),
             Status__c = 'Draft',
             Version_Number__c = 2,
-            Version_Status__c = 'Draft',
             Is_Active__c = false,
             Previous_Version__c = version1.Id,
             Banking_Fee__c = 15
@@ -1196,7 +1191,6 @@ private class PaymentPlanEditorControllerTest {
             First_Payment_Date__c = Date.today(),
             Status__c = 'Draft',
             Version_Number__c = 5, // Gap in version numbers
-            Version_Status__c = 'Draft',
             Is_Active__c = false,
             Banking_Fee__c = 15
         );
@@ -1816,11 +1810,11 @@ private class PaymentPlanEditorControllerTest {
 
             // Verify the suspended plan was archived
             PaymentPlan__c archivedSuspended = [
-                SELECT Version_Status__c, Is_Active__c
+                SELECT Status__c, Is_Active__c
                 FROM PaymentPlan__c
                 WHERE Id = :suspendedPlanId
             ];
-            System.assertEquals('Archived', archivedSuspended.Version_Status__c,
+            System.assertEquals('Archived', archivedSuspended.Status__c,
                 'Suspended plan should be archived after reactivation');
             System.assertEquals(false, archivedSuspended.Is_Active__c,
                 'Suspended plan should not be active after reactivation');
@@ -1911,10 +1905,9 @@ private class PaymentPlanEditorControllerTest {
 
     @IsTest
     static void testDeactivatePaymentPlan() {
-        PaymentPlan__c plan = [SELECT Id, Status__c, Version_Status__c, Is_Active__c FROM PaymentPlan__c LIMIT 1];
+        PaymentPlan__c plan = [SELECT Id, Status__c, Is_Active__c FROM PaymentPlan__c LIMIT 1];
         // Plan from @TestSetup is Active
         System.assertEquals('Active', plan.Status__c, 'Plan should start as Active');
-        System.assertEquals('Active', plan.Version_Status__c, 'Version_Status__c should be Active');
         System.assertEquals(true, plan.Is_Active__c, 'Is_Active__c should be true');
 
         Test.startTest();
@@ -1924,16 +1917,14 @@ private class PaymentPlanEditorControllerTest {
 
         System.assertNotEquals(null, result, 'Should return wrapper');
         System.assertEquals('Deactivated', result.paymentPlan.Status__c, 'Status__c should be Deactivated');
-        System.assertEquals('Draft', result.paymentPlan.Version_Status__c, 'Version_Status__c should be Draft');
 
         // Verify from database
         PaymentPlan__c updated = [
-            SELECT Status__c, Version_Status__c, Is_Active__c
+            SELECT Status__c, Is_Active__c
             FROM PaymentPlan__c
             WHERE Id = :plan.Id
         ];
         System.assertEquals('Deactivated', updated.Status__c, 'DB Status__c should be Deactivated');
-        System.assertEquals('Draft', updated.Version_Status__c, 'DB Version_Status__c should be Draft');
         System.assertEquals(false, updated.Is_Active__c, 'DB Is_Active__c should be false');
     }
 
@@ -1956,7 +1947,6 @@ private class PaymentPlanEditorControllerTest {
         PaymentPlan__c plan = [SELECT Id FROM PaymentPlan__c LIMIT 1];
         // Set plan to Draft first
         plan.Status__c = 'Draft';
-        plan.Version_Status__c = 'Draft';
         plan.Is_Active__c = false;
         update plan;
 

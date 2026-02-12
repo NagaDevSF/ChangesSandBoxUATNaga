@@ -18,7 +18,7 @@ public with sharing class PaymentPlanVersionController {
                 SELECT Id, 
                        Name,
                        Version_Number__c,
-                       Version_Status__c,
+                       Status__c,
                        Version_Notes__c,
                        Is_Active__c,
                        CreatedDate,
@@ -98,10 +98,12 @@ public with sharing class PaymentPlanVersionController {
             
             for (PaymentPlan__c plan : otherPlans) {
                 plan.Is_Active__c = false;
+                plan.Status__c = 'Archived';
             }
-            
+
             // Activate the selected version
             planToActivate.Is_Active__c = true;
+            planToActivate.Status__c = 'Active';
             
             // Update all plans
             List<PaymentPlan__c> plansToUpdate = new List<PaymentPlan__c>();
@@ -157,7 +159,7 @@ public with sharing class PaymentPlanVersionController {
             PaymentPlan__c newPlan = basePlan.clone(false, true, false, false);
             newPlan.Previous_Version__c = basePaymentPlanId;
             newPlan.Version_Number__c = nextVersion;
-            newPlan.Version_Status__c = 'Draft';
+            newPlan.Status__c = 'Draft';
             newPlan.Is_Active__c = false;
             newPlan.Version_Notes__c = 'Created from Version ' + basePlan.Version_Number__c;
             newPlan.Calculation_Timestamp__c = DateTime.now();

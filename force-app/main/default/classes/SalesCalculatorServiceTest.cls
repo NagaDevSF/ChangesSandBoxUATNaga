@@ -198,7 +198,7 @@ private class SalesCalculatorServiceTest {
         System.assertEquals(testOpp.Id, newPlan.Opportunity__c, 'Plan should be linked to opportunity');
         System.assertEquals(1, newPlan.Version_Number__c, 'Should be version 1');
         System.assertEquals('Initial', newPlan.Version_Type__c, 'Should be initial version');
-        System.assertEquals('Draft', newPlan.Version_Status__c, 'Should be in draft status');
+        System.assertEquals('Draft', newPlan.Status__c, 'Should be in draft status');
         System.assertEquals(false, newPlan.Is_Active__c, 'Should not be active by default');
     }
 
@@ -210,7 +210,7 @@ private class SalesCalculatorServiceTest {
             Opportunity__c = testOpp.Id,
             Version_Number__c = 1,
             Version_Type__c = 'Initial',
-            Version_Status__c = 'Active',
+            Status__c = 'Active',
             Is_Active__c = true
         );
         insert existingPlan;
@@ -488,7 +488,7 @@ private class SalesCalculatorServiceTest {
             Opportunity__c = testOpp.Id,
             Version_Number__c = 1,
             Version_Type__c = 'Initial',
-            Version_Status__c = 'Active',
+            Status__c = 'Active',
             Is_Active__c = true
         );
         insert plan1;
@@ -498,7 +498,7 @@ private class SalesCalculatorServiceTest {
             Opportunity__c = testOpp.Id,
             Version_Number__c = 2,
             Version_Type__c = 'Revision',
-            Version_Status__c = 'Draft',
+            Status__c = 'Draft',
             Is_Active__c = false
         );
         insert plan2;
@@ -524,7 +524,7 @@ private class SalesCalculatorServiceTest {
             Opportunity__c = testOpp.Id,
             Version_Number__c = 1,
             Version_Type__c = 'Initial',
-            Version_Status__c = 'Draft',
+            Status__c = 'Draft',
             Is_Active__c = false,
             Settlement_Percentage__c = 60,
             Program_Fee_Percentage__c = 35,
@@ -592,7 +592,7 @@ private class SalesCalculatorServiceTest {
             Opportunity__c = testOpp.Id,
             Version_Number__c = 1,
             Version_Type__c = 'Initial',
-            Version_Status__c = 'Draft',
+            Status__c = 'Draft',
             Is_Active__c = false,
             Settlement_Percentage__c = 55,
             Program_Fee_Percentage__c = 30,

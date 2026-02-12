@@ -94,7 +94,7 @@ public with sharing class SalesCalculatorService {
         newPlan.Opportunity__c = opportunityId;
         newPlan.Version_Number__c = currentVersion + 1;
         newPlan.Version_Type__c = currentVersion == 0 ? 'Initial' : 'Revision';
-        newPlan.Version_Status__c = 'Draft';
+        newPlan.Status__c = 'Draft';
         newPlan.Is_Active__c = false;
         newPlan.Calculation_Timestamp__c = DateTime.now();
         newPlan.Source__c = 'UI';

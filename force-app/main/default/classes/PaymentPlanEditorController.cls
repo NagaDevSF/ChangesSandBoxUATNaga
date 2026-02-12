@@ -169,7 +169,7 @@ public with sharing class PaymentPlanEditorController {
         'Total_Debt__c, Settlement_Percentage__c, Program_Fee_Percentage__c, ' +
         'Total_Program_Cost__c, Weekly_Payment__c, Monthly_Payment__c, ' +
         'Number_of_Payments__c, First_Payment_Date__c, Status__c, ' +
-        'Version_Number__c, Version_Status__c, Is_Active__c, ' +
+        'Version_Number__c, Is_Active__c, ' +
         'Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c, ' +
         'Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c, ' +
         'Calculation_Timestamp__c, Previous_Version__c, Source__c, ' +
@@ -427,7 +427,7 @@ public with sharing class PaymentPlanEditorController {
                        Total_Debt__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
                        Total_Program_Cost__c, Weekly_Payment__c, Monthly_Payment__c,
                        Number_of_Payments__c, First_Payment_Date__c, Status__c,
-                       Version_Number__c, Version_Status__c, Is_Active__c,
+                       Version_Number__c, Is_Active__c,
                        Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
                        Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
                        Calculation_Timestamp__c, Previous_Version__c, Source__c,
@@ -489,7 +489,7 @@ public with sharing class PaymentPlanEditorController {
                        Total_Debt__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
                        Total_Program_Cost__c, Weekly_Payment__c, Monthly_Payment__c,
                        Number_of_Payments__c, First_Payment_Date__c, Status__c,
-                       Version_Number__c, Version_Status__c, Is_Active__c,
+                       Version_Number__c, Is_Active__c,
                        Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
                        Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
                        Calculation_Timestamp__c, Previous_Version__c, Source__c,
@@ -520,7 +520,7 @@ public with sharing class PaymentPlanEditorController {
             PaymentPlanWrapper wrapper = new PaymentPlanWrapper();
             wrapper.paymentPlan = plans[0];
             wrapper.versionNumber = plans[0].Version_Number__c != null ? plans[0].Version_Number__c.intValue() : 1;
-            wrapper.versionStatus = plans[0].Version_Status__c;
+            wrapper.versionStatus = plans[0].Status__c;
             wrapper.isLatestVersion = true;
 
             // Build schedule items directly from PaymentPlan__c records
@@ -587,7 +587,7 @@ public with sharing class PaymentPlanEditorController {
             }
 
             List<PaymentPlan__c> plans = [
-                SELECT Id, Name, Version_Number__c, Version_Status__c, Is_Active__c,
+                SELECT Id, Name, Version_Number__c, Is_Active__c,
                        CreatedDate, LastModifiedDate, Status__c,
                        CreatedBy.Name, LastModifiedBy.Name
                 FROM PaymentPlan__c
@@ -607,7 +607,7 @@ public with sharing class PaymentPlanEditorController {
                 PaymentPlanWrapper wrapper = new PaymentPlanWrapper();
                 wrapper.paymentPlan = plan;
                 wrapper.versionNumber = plan.Version_Number__c != null ? plan.Version_Number__c.intValue() : 1;
-                wrapper.versionStatus = plan.Version_Status__c;
+                wrapper.versionStatus = plan.Status__c;
                 wrapper.isLatestVersion = (plan.Version_Number__c == latestVersion);
                 wrapper.createdByName = plan.CreatedBy?.Name;
                 wrapper.lastModifiedByName = plan.LastModifiedBy?.Name;
@@ -649,7 +649,7 @@ public with sharing class PaymentPlanEditorController {
                        Total_Debt__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
                        Total_Program_Cost__c, Weekly_Payment__c, Monthly_Payment__c,
                        Number_of_Payments__c, First_Payment_Date__c, Status__c,
-                       Version_Number__c, Version_Status__c, Is_Active__c,
+                       Version_Number__c, Is_Active__c,
                        Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
                        Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
                        Schedule_Item_Count__c
@@ -691,8 +691,7 @@ public with sharing class PaymentPlanEditorController {
             // Clone the plan as Draft (user must activate manually)
             PaymentPlan__c newPlan = currentPlan.clone(false, true, false, false);
             newPlan.Version_Number__c = newVersionNumber;
-            newPlan.Version_Status__c = VERSION_STATUS_DRAFT;
-            newPlan.Status__c = VERSION_STATUS_DRAFT;  // Also set Status__c to Draft
+            newPlan.Status__c = VERSION_STATUS_DRAFT;
             newPlan.Is_Active__c = false;
             newPlan.Previous_Version__c = currentPlan.Id;
             newPlan.Version_Type__c = VERSION_TYPE_REVISION;
@@ -768,7 +767,7 @@ public with sharing class PaymentPlanEditorController {
                        Total_Debt__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
                        Total_Program_Cost__c, Weekly_Payment__c, Monthly_Payment__c,
                        Number_of_Payments__c, First_Payment_Date__c, Status__c,
-                       Version_Number__c, Version_Status__c, Is_Active__c,
+                       Version_Number__c, Is_Active__c,
                        Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
                        Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
                        Calculation_Timestamp__c, Previous_Version__c, Source__c,
@@ -793,7 +792,7 @@ public with sharing class PaymentPlanEditorController {
                 throw new AuraHandledException(NOT_FOUND_SYMBOL + 'Payment Plan not found. It may have been deleted.');
             }
 
-            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Plan: ' + plans[0].Name + ' | Version: ' + plans[0].Version_Number__c + ' | Status: ' + plans[0].Version_Status__c);
+            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Plan: ' + plans[0].Name + ' | Version: ' + plans[0].Version_Number__c + ' | Status: ' + plans[0].Status__c);
             System.debug(LoggingLevel.DEBUG, LOG_EXIT + ' | ' + CLASS_NAME + '.' + methodName + ' | SUCCESS');
             return buildPaymentPlanWrapper(plans[0], true);
 
@@ -1510,7 +1509,7 @@ public with sharing class PaymentPlanEditorController {
 
             // Version metadata
             newPlan.Version_Number__c = newVersionNumber;
-            newPlan.Version_Status__c = VERSION_STATUS_DRAFT;
+            newPlan.Status__c = VERSION_STATUS_DRAFT;
             newPlan.Is_Active__c = false;
             newPlan.Previous_Version__c = currentPlan.Id;
             newPlan.Version_Type__c = VERSION_TYPE_REVISION;
@@ -1611,7 +1610,7 @@ public with sharing class PaymentPlanEditorController {
                        Number_of_Payments__c, First_Payment_Date__c, Banking_Fee__c, Bank2_Fee__c,
                        Setup_Fee__c, Setup_Fee_Payments__c, Total_Debt__c, Settlement_Percentage__c,
                        Program_Fee_Percentage__c, Total_Program_Cost__c, Weekly_Payment__c,
-                       Monthly_Payment__c, Contract__c, Status__c, Version_Status__c, Is_Active__c,
+                       Monthly_Payment__c, Contract__c, Status__c, Is_Active__c,
                        Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
                        Schedule_Item_Count__c
                 FROM PaymentPlan__c
@@ -1856,8 +1855,7 @@ public with sharing class PaymentPlanEditorController {
 
             PaymentPlan__c newPlan = currentPlan.clone(false, true, false, false);
             newPlan.Version_Number__c = newVersionNumber;
-            newPlan.Version_Status__c = VERSION_STATUS_DRAFT;
-            newPlan.Status__c = VERSION_STATUS_DRAFT;  // Also set Status__c to Draft
+            newPlan.Status__c = VERSION_STATUS_DRAFT;
             newPlan.Is_Active__c = false;
             newPlan.Previous_Version__c = currentPlan.Id;
             newPlan.Version_Type__c = VERSION_TYPE_REVISION;
@@ -2509,8 +2507,8 @@ public with sharing class PaymentPlanEditorController {
 
             // Get the current plan with all fields
             List<PaymentPlan__c> currentPlans = [
-                SELECT Id, Name, Opportunity__c, Version_Number__c, Version_Status__c,
-                       Is_Active__c, Version_Type__c, Source__c, Version_Notes__c,
+                SELECT Id, Name, Opportunity__c, Version_Number__c,
+                       Is_Active__c, Status__c, Version_Type__c, Source__c, Version_Notes__c,
                        Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
                        Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
                        Calculation_Timestamp__c, Schedule_Item_Count__c,
@@ -2548,7 +2546,7 @@ public with sharing class PaymentPlanEditorController {
             // Archive all other plans for this Opportunity BEFORE inserting the new active plan
             // to avoid the duplicate active Payment Plan trigger validation
             List<PaymentPlan__c> otherPlans = [
-                SELECT Id, Version_Status__c, Is_Active__c, Status__c
+                SELECT Id, Is_Active__c, Status__c
                 FROM PaymentPlan__c
                 WHERE Opportunity__c = :currentPlan.Opportunity__c
                 LIMIT :MAX_QUERY_LIMIT
@@ -2556,21 +2554,19 @@ public with sharing class PaymentPlanEditorController {
             System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + otherPlans.size() + ' other plan(s) to archive');
 
             for (PaymentPlan__c otherPlan : otherPlans) {
-                otherPlan.Version_Status__c = VERSION_STATUS_ARCHIVED;
-                otherPlan.Status__c = 'Draft';  // Set Status__c to Draft for archived plans
+                otherPlan.Status__c = VERSION_STATUS_ARCHIVED;
                 otherPlan.Is_Active__c = false;
             }
 
             if (!otherPlans.isEmpty()) {
                 update otherPlans;
-                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Archived ' + otherPlans.size() + ' plan(s) and set Status to Draft');
+                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Archived ' + otherPlans.size() + ' plan(s)');
             }
 
             // Create new plan as a clone with incremented version
             PaymentPlan__c newPlan = currentPlan.clone(false, true, false, false);
             newPlan.Version_Number__c = maxVersion + 1;
-            newPlan.Version_Status__c = VERSION_STATUS_ACTIVE;
-            newPlan.Status__c = STATUS_SUSPENDED;  // Set Status__c to Suspended for suspended plan
+            newPlan.Status__c = STATUS_SUSPENDED;
             newPlan.Is_Active__c = true;
             newPlan.Version_Type__c = VERSION_TYPE_SUSPENSION;
             newPlan.Source__c = SOURCE_UI;
@@ -2627,7 +2623,7 @@ public with sharing class PaymentPlanEditorController {
                        Total_Debt__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
                        Total_Program_Cost__c, Weekly_Payment__c, Monthly_Payment__c,
                        Number_of_Payments__c, First_Payment_Date__c, Status__c,
-                       Version_Number__c, Version_Status__c, Is_Active__c,
+                       Version_Number__c, Is_Active__c,
                        Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
                        Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
                        Calculation_Timestamp__c, Previous_Version__c, Source__c,
@@ -2690,35 +2686,33 @@ public with sharing class PaymentPlanEditorController {
 
             // Archive all other versions for this Opportunity and set their Status to Draft
             List<PaymentPlan__c> otherPlans = [
-                SELECT Id, Version_Status__c, Is_Active__c, Status__c
+                SELECT Id, Is_Active__c, Status__c
                 FROM PaymentPlan__c
                 WHERE Opportunity__c = :planToActivate.Opportunity__c
                   AND Id != :planId
-                  AND Version_Status__c != :VERSION_STATUS_ARCHIVED
+                  AND Status__c != :VERSION_STATUS_ARCHIVED
                 LIMIT :MAX_QUERY_LIMIT
             ];
 
             System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + otherPlans.size() + ' other plan(s) to archive');
 
             for (PaymentPlan__c otherPlan : otherPlans) {
-                otherPlan.Version_Status__c = VERSION_STATUS_ARCHIVED;
-                otherPlan.Status__c = 'Draft';  // Set Status__c to Draft for other plans
+                otherPlan.Status__c = VERSION_STATUS_ARCHIVED;
                 otherPlan.Is_Active__c = false;
             }
 
             if (!otherPlans.isEmpty()) {
                 update otherPlans;
-                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Archived ' + otherPlans.size() + ' plan(s) and set Status to Draft');
+                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Archived ' + otherPlans.size() + ' plan(s)');
             }
 
-            // Activate the selected plan - set both Version_Status__c and Status__c to Active
+            // Activate the selected plan
             PaymentPlan__c plan = new PaymentPlan__c(Id = planId);
-            plan.Version_Status__c = VERSION_STATUS_ACTIVE;
-            plan.Status__c = 'Active';  // Set Status__c to Active for current plan
+            plan.Status__c = 'Active';
             plan.Is_Active__c = true;
             plan.Calculation_Timestamp__c = DateTime.now();
             update plan;
-            System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Activated plan: ' + planId + ' (both Version_Status__c and Status__c set to Active)');
+            System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Activated plan: ' + planId + ' (Status__c set to Active)');
 
             System.debug(LoggingLevel.DEBUG, LOG_SUCCESS + ' | ' + methodName + ' | Plan activated successfully');
             System.debug(LoggingLevel.DEBUG, LOG_EXIT + ' | ' + CLASS_NAME + '.' + methodName + ' | SUCCESS');
@@ -2753,7 +2747,7 @@ public with sharing class PaymentPlanEditorController {
 
             // Get the plan to deactivate
             List<PaymentPlan__c> plansToDeactivate = [
-                SELECT Id, Opportunity__c, Version_Number__c, Version_Status__c, Status__c
+                SELECT Id, Opportunity__c, Version_Number__c, Status__c
                 FROM PaymentPlan__c
                 WHERE Id = :planId
                 LIMIT 1
@@ -2768,7 +2762,7 @@ public with sharing class PaymentPlanEditorController {
 
             PaymentPlan__c planToDeactivate = plansToDeactivate[0];
 
-            if (planToDeactivate.Version_Status__c != VERSION_STATUS_ACTIVE) {
+            if (planToDeactivate.Status__c != VERSION_STATUS_ACTIVE) {
                 System.debug(LoggingLevel.WARN, LOG_WARN + ' | ' + methodName + ' | Plan is not active: ' + planId);
                 throw new AuraHandledException(VALIDATION_SYMBOL + 'Only active plans can be deactivated.');
             }
@@ -2777,7 +2771,6 @@ public with sharing class PaymentPlanEditorController {
 
             // Set the plan to Deactivated
             PaymentPlan__c plan = new PaymentPlan__c(Id = planId);
-            plan.Version_Status__c = VERSION_STATUS_DRAFT;
             plan.Status__c = 'Deactivated';
             plan.Is_Active__c = false;
             plan.Calculation_Timestamp__c = DateTime.now();
@@ -2818,11 +2811,11 @@ public with sharing class PaymentPlanEditorController {
 
             // Get the suspended plan
             List<PaymentPlan__c> suspendedPlans = [
-                SELECT Id, Name, Opportunity__c, Version_Number__c, Version_Status__c,
-                       Is_Active__c, Version_Type__c, Source__c, Version_Notes__c,
+                SELECT Id, Name, Opportunity__c, Version_Number__c,
+                       Is_Active__c, Status__c, Version_Type__c, Source__c, Version_Notes__c,
                        Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
                        Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
-                       Calculation_Timestamp__c, Schedule_Item_Count__c, Status__c,
+                       Calculation_Timestamp__c, Schedule_Item_Count__c,
                        Weekly_Payment__c, Monthly_Payment__c, Number_of_Payments__c,
                        Total_Debt__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
                        Total_Program_Cost__c, Settlement_Amount__c, Program_Fee_Amount__c,
@@ -2849,11 +2842,11 @@ public with sharing class PaymentPlanEditorController {
 
             // Find the previous version (highest version number less than the suspended version, same Opportunity)
             List<PaymentPlan__c> previousPlans = [
-                SELECT Id, Name, Opportunity__c, Version_Number__c, Version_Status__c,
-                       Is_Active__c, Version_Type__c, Source__c, Version_Notes__c,
+                SELECT Id, Name, Opportunity__c, Version_Number__c,
+                       Is_Active__c, Status__c, Version_Type__c, Source__c, Version_Notes__c,
                        Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
                        Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
-                       Calculation_Timestamp__c, Schedule_Item_Count__c, Status__c,
+                       Calculation_Timestamp__c, Schedule_Item_Count__c,
                        Weekly_Payment__c, Monthly_Payment__c, Number_of_Payments__c,
                        Total_Debt__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
                        Total_Program_Cost__c, Settlement_Amount__c, Program_Fee_Amount__c,
@@ -2887,7 +2880,7 @@ public with sharing class PaymentPlanEditorController {
 
             // Archive all existing plans for this Opportunity
             List<PaymentPlan__c> allPlans = [
-                SELECT Id, Version_Status__c, Is_Active__c, Status__c
+                SELECT Id, Is_Active__c, Status__c
                 FROM PaymentPlan__c
                 WHERE Opportunity__c = :suspendedPlan.Opportunity__c
                 LIMIT :MAX_QUERY_LIMIT
@@ -2895,8 +2888,7 @@ public with sharing class PaymentPlanEditorController {
             System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + allPlans.size() + ' plan(s) to archive');
 
             for (PaymentPlan__c p : allPlans) {
-                p.Version_Status__c = VERSION_STATUS_ARCHIVED;
-                p.Status__c = 'Draft';
+                p.Status__c = VERSION_STATUS_ARCHIVED;
                 p.Is_Active__c = false;
             }
 
@@ -2908,7 +2900,6 @@ public with sharing class PaymentPlanEditorController {
             // Clone the PREVIOUS version (not the suspended one) as the new active plan
             PaymentPlan__c newPlan = previousPlan.clone(false, true, false, false);
             newPlan.Version_Number__c = maxVersion + 1;
-            newPlan.Version_Status__c = VERSION_STATUS_ACTIVE;
             newPlan.Status__c = 'Active';
             newPlan.Is_Active__c = true;
             newPlan.Version_Type__c = VERSION_TYPE_REACTIVATION;
@@ -2962,7 +2953,7 @@ public with sharing class PaymentPlanEditorController {
                        Total_Debt__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
                        Total_Program_Cost__c, Weekly_Payment__c, Monthly_Payment__c,
                        Number_of_Payments__c, First_Payment_Date__c, Status__c,
-                       Version_Number__c, Version_Status__c, Is_Active__c,
+                       Version_Number__c, Is_Active__c,
                        Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
                        Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
                        Calculation_Timestamp__c, Previous_Version__c, Source__c,
@@ -3016,7 +3007,7 @@ public with sharing class PaymentPlanEditorController {
                        Total_Debt__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
                        Total_Program_Cost__c, Weekly_Payment__c, Monthly_Payment__c,
                        Number_of_Payments__c, First_Payment_Date__c, Status__c,
-                       Version_Number__c, Version_Status__c, Is_Active__c,
+                       Version_Number__c, Is_Active__c,
                        Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
                        Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
                        Schedule_Item_Count__c
@@ -3061,8 +3052,7 @@ public with sharing class PaymentPlanEditorController {
             // Clone the plan as new version (save as Draft - user must activate manually)
             PaymentPlan__c newPlan = currentPlan.clone(false, true, false, false);
             newPlan.Version_Number__c = newVersionNumber;
-            newPlan.Version_Status__c = VERSION_STATUS_DRAFT;
-            newPlan.Status__c = VERSION_STATUS_DRAFT;  // Also set Status__c to Draft
+            newPlan.Status__c = VERSION_STATUS_DRAFT;
             newPlan.Is_Active__c = false;
             newPlan.Previous_Version__c = currentPlan.Id;
             newPlan.Version_Type__c = VERSION_TYPE_REVISION;
@@ -3285,7 +3275,7 @@ public with sharing class PaymentPlanEditorController {
         PaymentPlanWrapper wrapper = new PaymentPlanWrapper();
         wrapper.paymentPlan = plan;
         wrapper.versionNumber = plan.Version_Number__c != null ? plan.Version_Number__c.intValue() : 1;
-        wrapper.versionStatus = plan.Version_Status__c;
+        wrapper.versionStatus = plan.Status__c;
         wrapper.isLatestVersion = true;
         wrapper.createdByName = plan.CreatedBy?.Name;
         wrapper.lastModifiedByName = plan.LastModifiedBy?.Name;

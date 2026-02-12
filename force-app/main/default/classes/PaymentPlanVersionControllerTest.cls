@@ -11,7 +11,7 @@ private class PaymentPlanVersionControllerTest {
         // Base plan
         PaymentPlan__c base = new PaymentPlan__c(Opportunity__c = o.Id,
             Version_Number__c = 1,
-            Version_Status__c = 'Draft',
+            Status__c = 'Draft',
             Is_Active__c = false);
         insert base;
 
@@ -33,7 +33,7 @@ private class PaymentPlanVersionControllerTest {
     }
 
     private static PaymentPlan__c anyPlan() {
-        return [SELECT Id, Opportunity__c, Is_Active__c, Version_Status__c, Version_Number__c FROM PaymentPlan__c LIMIT 1];
+        return [SELECT Id, Opportunity__c, Is_Active__c, Status__c, Version_Number__c FROM PaymentPlan__c LIMIT 1];
     }
 
     @IsTest
@@ -43,7 +43,7 @@ private class PaymentPlanVersionControllerTest {
         // Add a second version to ensure list has more than one
         PaymentPlan__c p2 = new PaymentPlan__c(Opportunity__c = opp.Id,
             Version_Number__c = 2,
-            Version_Status__c = 'Draft',
+            Status__c = 'Draft',
             Is_Active__c = false);
         insert p2;
 
@@ -84,7 +84,7 @@ private class PaymentPlanVersionControllerTest {
         // Create a draft version we can safely delete
         PaymentPlan__c temp = new PaymentPlan__c(Opportunity__c = opp.Id,
             Version_Number__c = 99,
-            Version_Status__c = 'Draft',
+            Status__c = 'Draft',
             Is_Active__c = false);
         insert temp;
 

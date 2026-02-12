@@ -40,6 +40,16 @@
                 <default>false</default>
                 <label>Deactivated</label>
             </value>
+            <value>
+                <fullName>Archived</fullName>
+                <default>false</default>
+                <label>Archived</label>
+            </value>
+            <value>
+                <fullName>Pending_Review</fullName>
+                <default>false</default>
+                <label>Pending_Review</label>
+            </value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>

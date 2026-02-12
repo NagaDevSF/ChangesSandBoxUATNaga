@@ -44,7 +44,7 @@ export default class PaymentPlanTable extends LightningElement {
     // Version history columns
     versionColumns = [
         { label: 'Version', fieldName: 'Version_Number__c', type: 'number', initialWidth: 80 },
-        { label: 'Status', fieldName: 'Version_Status__c', type: 'text', initialWidth: 100 },
+        { label: 'Status', fieldName: 'Status__c', type: 'text', initialWidth: 100 },
         { label: 'Created Date', fieldName: 'CreatedDate', type: 'date', initialWidth: 130 },
         { label: 'Created By', fieldName: 'CreatedByName', type: 'text', initialWidth: 130 },
         { label: 'Notes', fieldName: 'Version_Notes__c', type: 'text' },

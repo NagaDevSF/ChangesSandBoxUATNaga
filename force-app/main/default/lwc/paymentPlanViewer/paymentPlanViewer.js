@@ -207,7 +207,7 @@ export default class PaymentPlanViewer extends LightningElement {
     get versionInfo() {
         if (!this.paymentPlan) return '';
         const version = this.paymentPlan.Version_Number__c || 1;
-        const status = this.paymentPlan.Version_Status__c || '';
+        const status = this.paymentPlan.Status__c || '';
         return `v${version} - ${status}`;
     }
 

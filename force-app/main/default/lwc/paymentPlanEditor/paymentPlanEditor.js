@@ -319,7 +319,7 @@ export default class PaymentPlanEditor extends LightningElement {
     buildPlanLabel(wrapper) {
         const name = wrapper.paymentPlan?.Name || 'Plan';
         const version = wrapper.versionNumber || 1;
-        const status = wrapper.paymentPlan?.Status__c || wrapper.paymentPlan?.Version_Status__c || wrapper.versionStatus || '';
+        const status = wrapper.paymentPlan?.Status__c || wrapper.versionStatus || '';
 
         let statusLabel = '';
         if (status) {
@@ -358,13 +358,13 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get planStatus() {
-        return this.paymentPlan?.Status__c || this.paymentPlan?.Version_Status__c || '';
+        return this.paymentPlan?.Status__c || '';
     }
 
     get versionInfo() {
         if (!this.paymentPlan) return '';
         const version = this.paymentPlan.Version_Number__c || 1;
-        const status = this.paymentPlan.Status__c || this.paymentPlan.Version_Status__c || '';
+        const status = this.paymentPlan.Status__c || '';
         return `v${version} - ${status}`;
     }
 
@@ -551,7 +551,7 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get isDraft() {
-        return this.paymentPlan?.Version_Status__c === 'Draft';
+        return this.paymentPlan?.Status__c === 'Draft';
     }
 
     get canActivate() {
@@ -587,14 +587,14 @@ export default class PaymentPlanEditor extends LightningElement {
      * Show Suspend button only for Active plans that are not already Suspended
      */
     get showSuspendButton() {
-        return this.paymentPlan?.Version_Status__c === 'Active' && this.paymentPlan?.Status__c?.toLowerCase() !== 'suspended';
+        return this.paymentPlan?.Status__c === 'Active';
     }
 
     /**
      * Show De-activate button only for Active plans that are not Suspended
      */
     get showDeactivateButton() {
-        return this.paymentPlan?.Version_Status__c === 'Active' && this.paymentPlan?.Status__c?.toLowerCase() !== 'suspended';
+        return this.paymentPlan?.Status__c === 'Active';
     }
 
     /**

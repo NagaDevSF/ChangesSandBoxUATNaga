@@ -35,7 +35,7 @@ private class PaymentPlanVersionServiceTest {
             // Create a non-active version; there are no other active versions
             PaymentPlan__c toActivate = new PaymentPlan__c(
                 Opportunity__c = opp.Id,
-                Version_Status__c = 'Draft',
+                Status__c = 'Draft',
                 Is_Active__c = false,
                 Version_Number__c = 81
             );
@@ -45,7 +45,7 @@ private class PaymentPlanVersionServiceTest {
             try {
                 PaymentPlan__c res = PaymentPlanVersionService.activateVersion(toActivate.Id);
                 System.assertEquals(true, res.Is_Active__c, 'Plan should be active when no others are active');
-                System.assertEquals('Active', res.Version_Status__c, 'Status should become Active');
+                System.assertEquals('Active', res.Status__c, 'Status should become Active');
             } catch (Exception e) {
                 // Some orgs enforce validations/picklists; treat as covered
                 System.assert(true);
@@ -61,9 +61,9 @@ private class PaymentPlanVersionServiceTest {
             Opportunity opp = getOpp();
             // Insert drafts with varying ages
             List<PaymentPlan__c> drafts = new List<PaymentPlan__c>{
-                new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 82),
-                new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 83),
-                new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 84)
+                new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 82),
+                new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 83),
+                new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 84)
             };
             insert drafts;
             // Age them: 10d and 20d should be archived with a 7-day cutoff; 3d should not
@@ -78,11 +78,11 @@ private class PaymentPlanVersionServiceTest {
                 System.assertEquals(2, archivedCount, 'Should archive exactly the two older drafts');
                 // Verify statuses if no exception
                 Map<Id, PaymentPlan__c> reloaded = new Map<Id, PaymentPlan__c>([
-                    SELECT Id, Version_Status__c FROM PaymentPlan__c WHERE Id IN :new List<Id>{ drafts[0].Id, drafts[1].Id, drafts[2].Id }
+                    SELECT Id, Status__c FROM PaymentPlan__c WHERE Id IN :new List<Id>{ drafts[0].Id, drafts[1].Id, drafts[2].Id }
                 ]);
-                System.assertEquals('Archived', reloaded.get(drafts[0].Id).Version_Status__c);
-                System.assertEquals('Archived', reloaded.get(drafts[1].Id).Version_Status__c);
-                System.assertEquals('Draft',    reloaded.get(drafts[2].Id).Version_Status__c);
+                System.assertEquals('Archived', reloaded.get(drafts[0].Id).Status__c);
+                System.assertEquals('Archived', reloaded.get(drafts[1].Id).Status__c);
+                System.assertEquals('Draft',    reloaded.get(drafts[2].Id).Status__c);
             } catch (Exception e) {
                 // On orgs with strict USER_MODE/FLS or triggers, accept handled path
                 System.assert(true);
@@ -114,7 +114,7 @@ private class PaymentPlanVersionServiceTest {
         System.runAs(admin) {
             Opportunity opp = getOpp();
             // Create a single active version: activating it again should early-return without errors
-            PaymentPlan__c act1 = new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Active', Is_Active__c = true, Version_Number__c = 80);
+            PaymentPlan__c act1 = new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Active', Is_Active__c = true, Version_Number__c = 80);
             insert act1;
 
             Test.startTest();
@@ -122,7 +122,7 @@ private class PaymentPlanVersionServiceTest {
                 PaymentPlan__c res = PaymentPlanVersionService.activateVersion(act1.Id);
                 // The selected plan remains active
                 System.assertEquals(true, res.Is_Active__c, 'Activated plan remains active');
-                System.assertEquals('Active', res.Version_Status__c, 'Status should remain Active');
+                System.assertEquals('Active', res.Status__c, 'Status should remain Active');
             } catch (Exception e) {
                 // Gracefully accept handled exception path to keep coverage
                 System.assert(true);
@@ -157,8 +157,8 @@ private class PaymentPlanVersionServiceTest {
         Opportunity opp = getOpp();
         // Fresh drafts (CreatedDate ~ now)
         insert new List<PaymentPlan__c>{
-            new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 90),
-            new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 91)
+            new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 90),
+            new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 91)
         };
 
         Integer archived = -1;
@@ -180,7 +180,7 @@ private class PaymentPlanVersionServiceTest {
         PaymentPlan__c p = new PaymentPlan__c(
             Opportunity__c = oppId,
             Version_Number__c = versionNo,
-            Version_Status__c = status,
+            Status__c = status,
             Is_Active__c = isActive
         );
         insert p;
@@ -224,9 +224,9 @@ private class PaymentPlanVersionServiceTest {
         System.runAs(admin) {
             Opportunity opp = getOpp();
             // Two versions: one active, one draft
-            PaymentPlan__c active = new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Active', Is_Active__c = true, Version_Number__c = 10);
+            PaymentPlan__c active = new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Active', Is_Active__c = true, Version_Number__c = 10);
             insert active;
-            PaymentPlan__c draft = new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 11);
+            PaymentPlan__c draft = new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 11);
             insert draft;
 
             Test.startTest();
@@ -234,9 +234,9 @@ private class PaymentPlanVersionServiceTest {
                 PaymentPlan__c result = PaymentPlanVersionService.activateVersion(draft.Id);
                 System.assertEquals(true, result.Is_Active__c, 'Activated plan should be active');
                 // Old active should now be archived
-                PaymentPlan__c old = [SELECT Id, Is_Active__c, Version_Status__c FROM PaymentPlan__c WHERE Id = :active.Id];
+                PaymentPlan__c old = [SELECT Id, Is_Active__c, Status__c FROM PaymentPlan__c WHERE Id = :active.Id];
                 System.assertEquals(false, old.Is_Active__c, 'Previous active should be deactivated');
-                System.assertEquals('Archived', old.Version_Status__c, 'Previous active should be archived');
+                System.assertEquals('Archived', old.Status__c, 'Previous active should be archived');
             } catch (Exception e) {
                 System.assert(true);
             }
@@ -251,9 +251,9 @@ private class PaymentPlanVersionServiceTest {
         User admin = TestPermsUtil.createSysAdminUser();
         System.runAs(admin) {
             Opportunity opp = getOpp();
-            PaymentPlan__c v1 = new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 20, Settlement_Percentage__c = 50);
+            PaymentPlan__c v1 = new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 20, Settlement_Percentage__c = 50);
             insert v1;
-            PaymentPlan__c v2 = new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 21, Settlement_Percentage__c = 60);
+            PaymentPlan__c v2 = new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 21, Settlement_Percentage__c = 60);
             insert v2;
 
             Test.startTest();
@@ -273,7 +273,7 @@ private class PaymentPlanVersionServiceTest {
         Opportunity opp = getOpp();
         List<PaymentPlan__c> drafts = new List<PaymentPlan__c>();
         for (Integer i = 0; i < 3; i++) {
-            drafts.add(new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 30 + i));
+            drafts.add(new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 30 + i));
         }
         insert drafts;
 
@@ -310,7 +310,7 @@ private class PaymentPlanVersionServiceTest {
         User admin = TestPermsUtil.createSysAdminUser();
         System.runAs(admin) {
             Opportunity opp = getOpp();
-            PaymentPlan__c v1 = new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 40);
+            PaymentPlan__c v1 = new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 40);
             insert v1;
 
             // Same id twice should yield size != 2 and hit handled error path
@@ -359,8 +359,8 @@ private class PaymentPlanVersionServiceTest {
     static void testArchiveOldDrafts_AlreadyArchivedUnaffected() {
         Opportunity opp = getOpp();
         // One archived, one draft
-        PaymentPlan__c archived = new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Archived', Is_Active__c = false, Version_Number__c = 50);
-        PaymentPlan__c draft = new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 51);
+        PaymentPlan__c archived = new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Archived', Is_Active__c = false, Version_Number__c = 50);
+        PaymentPlan__c draft = new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 51);
         insert new List<PaymentPlan__c>{ archived, draft };
 
         Integer count1 = 0, count2 = 0;
@@ -377,8 +377,8 @@ private class PaymentPlanVersionServiceTest {
 
         System.assert(count1 >= 0, 'First archive attempt returns non-negative');
         System.assertEquals(0, count2, 'Second archive should find nothing to archive');
-        PaymentPlan__c chk = [SELECT Version_Status__c FROM PaymentPlan__c WHERE Id = :archived.Id];
-        System.assertEquals('Archived', chk.Version_Status__c, 'Archived plan remains archived');
+        PaymentPlan__c chk = [SELECT Status__c FROM PaymentPlan__c WHERE Id = :archived.Id];
+        System.assertEquals('Archived', chk.Status__c, 'Archived plan remains archived');
     }
 
     @IsTest
@@ -387,9 +387,9 @@ private class PaymentPlanVersionServiceTest {
 
         // First batch: 5d, 10d, 20d
         List<PaymentPlan__c> drafts1 = new List<PaymentPlan__c>{
-            new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 60),
-            new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 61),
-            new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 62)
+            new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 60),
+            new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 61),
+            new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 62)
         };
         insert drafts1;
         Test.setCreatedDate(drafts1[0].Id, DateTime.now().addDays(-5));
@@ -399,9 +399,9 @@ private class PaymentPlanVersionServiceTest {
         Integer archived7 = 0;
         // Second batch: create fresh drafts and test a stricter cutoff (prepare before startTest to allow setCreatedDate)
         List<PaymentPlan__c> drafts2 = new List<PaymentPlan__c>{
-            new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 63),
-            new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 64),
-            new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 65)
+            new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 63),
+            new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 64),
+            new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 65)
         };
         insert drafts2;
         Test.setCreatedDate(drafts2[0].Id, DateTime.now().addDays(-5));
@@ -430,7 +430,7 @@ private class PaymentPlanVersionServiceTest {
             Opportunity opp = getOpp();
             PaymentPlan__c vA = new PaymentPlan__c(
                 Opportunity__c = opp.Id,
-                Version_Status__c = 'Draft',
+                Status__c = 'Draft',
                 Is_Active__c = false,
                 Version_Number__c = 70,
                 Settlement_Percentage__c = 50,
@@ -442,7 +442,7 @@ private class PaymentPlanVersionServiceTest {
             );
             PaymentPlan__c vB = new PaymentPlan__c(
                 Opportunity__c = opp.Id,
-                Version_Status__c = 'Draft',
+                Status__c = 'Draft',
                 Is_Active__c = false,
                 Version_Number__c = 71,
                 Settlement_Percentage__c = 60,
@@ -476,7 +476,7 @@ private class PaymentPlanVersionServiceTest {
             Opportunity opp = getOpp();
             PaymentPlan__c v1 = new PaymentPlan__c(
                 Opportunity__c = opp.Id,
-                Version_Status__c = 'Draft',
+                Status__c = 'Draft',
                 Is_Active__c = false,
                 Version_Number__c = 72,
                 Settlement_Percentage__c = 55,
@@ -511,8 +511,8 @@ private class PaymentPlanVersionServiceTest {
         User admin = TestPermsUtil.createSysAdminUser();
         System.runAs(admin) {
             Opportunity opp = getOpp();
-            PaymentPlan__c v1 = new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 72);
-            PaymentPlan__c v2 = new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 73);
+            PaymentPlan__c v1 = new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 72);
+            PaymentPlan__c v2 = new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 73);
             insert new List<PaymentPlan__c>{ v1, v2 };
 
             Test.startTest();
@@ -534,23 +534,23 @@ private class PaymentPlanVersionServiceTest {
         System.runAs(admin) {
             Opportunity opp = getOpp();
             // Two currently active versions
-            PaymentPlan__c a1 = new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Active', Is_Active__c = true, Version_Number__c = 85);
-            PaymentPlan__c a2 = new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Active', Is_Active__c = true, Version_Number__c = 86);
+            PaymentPlan__c a1 = new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Active', Is_Active__c = true, Version_Number__c = 85);
+            PaymentPlan__c a2 = new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Active', Is_Active__c = true, Version_Number__c = 86);
             insert new List<PaymentPlan__c>{ a1, a2 };
             // Draft to activate
-            PaymentPlan__c draft = new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 87);
+            PaymentPlan__c draft = new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 87);
             insert draft;
 
             Test.startTest();
             try {
                 PaymentPlan__c res = PaymentPlanVersionService.activateVersion(draft.Id);
                 System.assertEquals(true, res.Is_Active__c);
-                PaymentPlan__c r1 = [SELECT Is_Active__c, Version_Status__c FROM PaymentPlan__c WHERE Id = :a1.Id];
-                PaymentPlan__c r2 = [SELECT Is_Active__c, Version_Status__c FROM PaymentPlan__c WHERE Id = :a2.Id];
+                PaymentPlan__c r1 = [SELECT Is_Active__c, Status__c FROM PaymentPlan__c WHERE Id = :a1.Id];
+                PaymentPlan__c r2 = [SELECT Is_Active__c, Status__c FROM PaymentPlan__c WHERE Id = :a2.Id];
                 System.assertEquals(false, r1.Is_Active__c);
                 System.assertEquals(false, r2.Is_Active__c);
-                System.assertEquals('Archived', r1.Version_Status__c);
-                System.assertEquals('Archived', r2.Version_Status__c);
+                System.assertEquals('Archived', r1.Status__c);
+                System.assertEquals('Archived', r2.Status__c);
             } catch (Exception e) {
                 System.assert(true);
             }
@@ -563,9 +563,9 @@ private class PaymentPlanVersionServiceTest {
         Opportunity opp = getOpp();
         // Batch A for 0-day cutoff
         List<PaymentPlan__c> batchA = new List<PaymentPlan__c>{
-            new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 88),
-            new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 89),
-            new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 90)
+            new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 88),
+            new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 89),
+            new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 90)
         };
         insert batchA;
         // Stagger their created dates
@@ -575,9 +575,9 @@ private class PaymentPlanVersionServiceTest {
 
         // Batch B for 1-day cutoff
         List<PaymentPlan__c> batchB = new List<PaymentPlan__c>{
-            new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 91),
-            new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 92),
-            new PaymentPlan__c(Opportunity__c = opp.Id, Version_Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 93)
+            new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 91),
+            new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 92),
+            new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 93)
         };
         insert batchB;
         Test.setCreatedDate(batchB[0].Id, DateTime.now().addDays(-2));
@@ -652,8 +652,8 @@ private class PaymentPlanVersionServiceTest {
         Test.stopTest();
 
         System.assert(archived >= 0, 'Archive completed');
-        PaymentPlan__c actReload = [SELECT Version_Status__c, Is_Active__c FROM PaymentPlan__c WHERE Id = :active.Id];
-        System.assertEquals('Active', actReload.Version_Status__c, 'Active plan remains Active');
+        PaymentPlan__c actReload = [SELECT Status__c, Is_Active__c FROM PaymentPlan__c WHERE Id = :active.Id];
+        System.assertEquals('Active', actReload.Status__c, 'Active plan remains Active');
         System.assertEquals(true, actReload.Is_Active__c, 'Active plan stays active');
     }
 
@@ -697,7 +697,7 @@ private class PaymentPlanVersionServiceTest {
 
             if (created != null) {
                 System.assertEquals('Revision', created.Version_Type__c, 'Should set Version_Type__c=Revision');
-                System.assertEquals('Draft', created.Version_Status__c, 'Should set Draft status');
+                System.assertEquals('Draft', created.Status__c, 'Should set Draft status');
                 System.assertEquals(false, created.Is_Active__c, 'New version should be inactive');
                 System.assertEquals(base.Id, created.Previous_Version__c, 'Should link to previous version');
                 System.assertEquals('UI', created.Source__c, 'Should stamp Source__c');
@@ -762,12 +762,12 @@ private class PaymentPlanVersionServiceTest {
             insert ax;
             Opportunity otherOpp = new Opportunity(Name='Other Opp', AccountId=ax.Id, StageName='Prospecting', CloseDate=Date.today().addDays(10));
             insert otherOpp;
-            PaymentPlan__c otherActive = new PaymentPlan__c(Opportunity__c=otherOpp.Id, Version_Status__c='Active', Is_Active__c=true, Version_Number__c=9);
+            PaymentPlan__c otherActive = new PaymentPlan__c(Opportunity__c=otherOpp.Id, Status__c='Active', Is_Active__c=true, Version_Number__c=9);
             insert otherActive;
 
             Opportunity opp = getOpp();
-            PaymentPlan__c activeSame = new PaymentPlan__c(Opportunity__c=opp.Id, Version_Status__c='Active', Is_Active__c=true, Version_Number__c=10);
-            PaymentPlan__c draftSame  = new PaymentPlan__c(Opportunity__c=opp.Id, Version_Status__c='Draft',  Is_Active__c=false, Version_Number__c=11);
+            PaymentPlan__c activeSame = new PaymentPlan__c(Opportunity__c=opp.Id, Status__c='Active', Is_Active__c=true, Version_Number__c=10);
+            PaymentPlan__c draftSame  = new PaymentPlan__c(Opportunity__c=opp.Id, Status__c='Draft',  Is_Active__c=false, Version_Number__c=11);
             insert new List<PaymentPlan__c>{ activeSame, draftSame };
 
             Test.startTest();
@@ -778,18 +778,18 @@ private class PaymentPlanVersionServiceTest {
             }
             Test.stopTest();
 
-            PaymentPlan__c otherReload = [SELECT Is_Active__c, Version_Status__c FROM PaymentPlan__c WHERE Id = :otherActive.Id];
+            PaymentPlan__c otherReload = [SELECT Is_Active__c, Status__c FROM PaymentPlan__c WHERE Id = :otherActive.Id];
             System.assertEquals(true,  otherReload.Is_Active__c, 'Other-opp plan must remain active');
-            System.assertEquals('Active', otherReload.Version_Status__c, 'Status unchanged for other opp');
+            System.assertEquals('Active', otherReload.Status__c, 'Status unchanged for other opp');
         }
     }
 
     @IsTest
     static void testArchiveOldDrafts_SkipsActiveAndAlreadyArchived() {
         Opportunity opp = getOpp();
-        PaymentPlan__c oldActive = new PaymentPlan__c(Opportunity__c=opp.Id, Version_Status__c='Active',   Is_Active__c=true,  Version_Number__c=300);
-        PaymentPlan__c oldArch   = new PaymentPlan__c(Opportunity__c=opp.Id, Version_Status__c='Archived', Is_Active__c=false, Version_Number__c=301);
-        PaymentPlan__c oldDraft  = new PaymentPlan__c(Opportunity__c=opp.Id, Version_Status__c='Draft',    Is_Active__c=false, Version_Number__c=302);
+        PaymentPlan__c oldActive = new PaymentPlan__c(Opportunity__c=opp.Id, Status__c='Active',   Is_Active__c=true,  Version_Number__c=300);
+        PaymentPlan__c oldArch   = new PaymentPlan__c(Opportunity__c=opp.Id, Status__c='Archived', Is_Active__c=false, Version_Number__c=301);
+        PaymentPlan__c oldDraft  = new PaymentPlan__c(Opportunity__c=opp.Id, Status__c='Draft',    Is_Active__c=false, Version_Number__c=302);
         insert new List<PaymentPlan__c>{ oldActive, oldArch, oldDraft };
         Test.setCreatedDate(oldActive.Id, DateTime.now().addDays(-100));
         Test.setCreatedDate(oldArch.Id,   DateTime.now().addDays(-100));
@@ -805,11 +805,11 @@ private class PaymentPlanVersionServiceTest {
         Test.stopTest();
 
         System.assert(archivedCount >= 0, 'Archive executed');
-        PaymentPlan__c act = [SELECT Version_Status__c, Is_Active__c FROM PaymentPlan__c WHERE Id = :oldActive.Id];
-        PaymentPlan__c arc = [SELECT Version_Status__c FROM PaymentPlan__c WHERE Id = :oldArch.Id];
-        System.assertEquals('Active',   act.Version_Status__c);
+        PaymentPlan__c act = [SELECT Status__c, Is_Active__c FROM PaymentPlan__c WHERE Id = :oldActive.Id];
+        PaymentPlan__c arc = [SELECT Status__c FROM PaymentPlan__c WHERE Id = :oldArch.Id];
+        System.assertEquals('Active',   act.Status__c);
         System.assertEquals(true,       act.Is_Active__c);
-        System.assertEquals('Archived', arc.Version_Status__c, 'Already archived remains archived');
+        System.assertEquals('Archived', arc.Status__c, 'Already archived remains archived');
     }
 
     @IsTest

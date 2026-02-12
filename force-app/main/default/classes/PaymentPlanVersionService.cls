@@ -26,7 +26,7 @@ public with sharing class PaymentPlanVersionService {
         try {
             // Get the payment plan to activate
             PaymentPlan__c planToActivate = [
-                SELECT Id, Opportunity__c, Version_Number__c, Is_Active__c, Version_Status__c
+                SELECT Id, Opportunity__c, Version_Number__c, Is_Active__c, Status__c
                 FROM PaymentPlan__c
                 WHERE Id = :paymentPlanId
                 WITH USER_MODE
@@ -44,7 +44,7 @@ public with sharing class PaymentPlanVersionService {
             try {
                 // Deactivate all other versions for this opportunity
                 List<PaymentPlan__c> plansToDeactivate = [
-                    SELECT Id, Is_Active__c, Version_Status__c
+                    SELECT Id, Is_Active__c, Status__c
                     FROM PaymentPlan__c
                     WHERE Opportunity__c = :planToActivate.Opportunity__c
                     AND Is_Active__c = true
@@ -54,8 +54,7 @@ public with sharing class PaymentPlanVersionService {
                 
                 for (PaymentPlan__c plan : plansToDeactivate) {
                     plan.Is_Active__c = false;
-                    // Align with Version_Status__c picklist values
-                    plan.Version_Status__c = 'Archived';
+                    plan.Status__c = 'Archived';
                 }
                 
                 if (!plansToDeactivate.isEmpty()) {
@@ -64,7 +63,7 @@ public with sharing class PaymentPlanVersionService {
                 
                 // Activate the selected version
                 planToActivate.Is_Active__c = true;
-                planToActivate.Version_Status__c = 'Active';
+                planToActivate.Status__c = 'Active';
                 Database.update(planToActivate, AccessLevel.USER_MODE);
 
                 System.debug(LOG_PREFIX + ' ' + LOG_EXIT + ' activateVersion | ' + LOG_SUCCESS + ' version=' + planToActivate.Version_Number__c);
@@ -109,7 +108,7 @@ public with sharing class PaymentPlanVersionService {
             newVersion.Opportunity__c = existingPlan.Opportunity__c;
             newVersion.Version_Number__c = maxVersion + 1;
             newVersion.Version_Type__c = 'Revision';
-            newVersion.Version_Status__c = 'Draft';
+            newVersion.Status__c = 'Draft';
             newVersion.Is_Active__c = false;
             newVersion.Previous_Version__c = existingPlanId;
             newVersion.Version_Notes__c = versionNotes;
@@ -148,7 +147,7 @@ public with sharing class PaymentPlanVersionService {
             return new List<PaymentPlan__c>();
         }
         return [
-            SELECT Id, Name, Version_Number__c, Version_Type__c, Version_Status__c,
+            SELECT Id, Name, Version_Number__c, Version_Type__c, Status__c,
                    Is_Active__c, Calculation_Timestamp__c, Version_Notes__c,
                    Total_Program_Cost__c, Weekly_Payment__c, Number_of_Payments__c,
                    CreatedBy.Name, CreatedDate
@@ -233,16 +232,16 @@ public with sharing class PaymentPlanVersionService {
             DateTime cutoffDate = DateTime.now().addDays(-daysOld);
             
             List<PaymentPlan__c> draftsToArchive = [
-                SELECT Id, Version_Status__c
+                SELECT Id, Status__c
                 FROM PaymentPlan__c
                 WHERE Opportunity__c = :opportunityId
-                AND Version_Status__c = 'Draft'
+                AND Status__c = 'Draft'
                 AND Is_Active__c = false
                 AND CreatedDate < :cutoffDate
             ];
             
             for (PaymentPlan__c draft : draftsToArchive) {
-                draft.Version_Status__c = 'Archived';
+                draft.Status__c = 'Archived';
             }
             
             if (!draftsToArchive.isEmpty()) {

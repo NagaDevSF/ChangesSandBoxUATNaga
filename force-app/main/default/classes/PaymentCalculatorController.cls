@@ -1804,8 +1804,6 @@ public with sharing class PaymentCalculatorController {
         paymentPlan.Number_of_Payments__c = calculations.numberOfWeeks;
         paymentPlan.First_Payment_Date__c = Date.valueOf(calculations.firstDraftDate);
         paymentPlan.Status__c = 'Draft';
-        // Align with versioning fields if present in org
-        paymentPlan.Version_Status__c = 'Draft';
         paymentPlan.Version_Number__c = 1;
         
         if (sObjectType == 'Opportunity') {
