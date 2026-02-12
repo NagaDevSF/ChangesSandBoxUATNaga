@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>65.0</apiVersion>
-    <description>Auto-submits the Opportunity Approval Process when Stage changes to Submitted to UW. Fault path silently handles records already in approval.</description>
+    <description>Auto-submits the Opportunity Approval Process when Stage changes to Submitted to UW</description>
     <environments>Default</environments>
     <interviewLabel>Auto Submit Approval - Submitted to UW {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Auto Submit Approval - Submitted to UW</label>
@@ -34,9 +34,6 @@
         <locationY>311</locationY>
         <actionName>submit</actionName>
         <actionType>submit</actionType>
-        <faultConnector>
-            <targetReference>Log_Already_In_Approval</targetReference>
-        </faultConnector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
             <name>objectId</name>
@@ -63,25 +60,5 @@
             </value>
         </inputParameters>
     </actionCalls>
-    <assignments>
-        <name>Log_Already_In_Approval</name>
-        <label>Log Already In Approval</label>
-        <locationX>176</locationX>
-        <locationY>455</locationY>
-        <assignmentItems>
-            <assignToReference>FaultMessage</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>$Flow.FaultMessage</elementReference>
-            </value>
-        </assignmentItems>
-    </assignments>
-    <variables>
-        <name>FaultMessage</name>
-        <dataType>String</dataType>
-        <isCollection>false</isCollection>
-        <isInput>false</isInput>
-        <isOutput>false</isOutput>
-    </variables>
     <status>Active</status>
 </Flow>
