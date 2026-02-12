@@ -1907,4 +1907,98 @@ private class PaymentPlanEditorControllerTest {
         System.assert(exceptionThrown, 'AuraHandledException should have been thrown for invalid field name');
     }
 
+    // ============ DEACTIVATE PAYMENT PLAN TESTS ============
+
+    @IsTest
+    static void testDeactivatePaymentPlan() {
+        PaymentPlan__c plan = [SELECT Id, Status__c, Version_Status__c, Is_Active__c FROM PaymentPlan__c LIMIT 1];
+        // Plan from @TestSetup is Active
+        System.assertEquals('Active', plan.Status__c, 'Plan should start as Active');
+        System.assertEquals('Active', plan.Version_Status__c, 'Version_Status__c should be Active');
+        System.assertEquals(true, plan.Is_Active__c, 'Is_Active__c should be true');
+
+        Test.startTest();
+        PaymentPlanEditorController.PaymentPlanWrapper result =
+            PaymentPlanEditorController.deactivatePaymentPlan(plan.Id);
+        Test.stopTest();
+
+        System.assertNotEquals(null, result, 'Should return wrapper');
+        System.assertEquals('Deactivated', result.paymentPlan.Status__c, 'Status__c should be Deactivated');
+        System.assertEquals('Draft', result.paymentPlan.Version_Status__c, 'Version_Status__c should be Draft');
+
+        // Verify from database
+        PaymentPlan__c updated = [
+            SELECT Status__c, Version_Status__c, Is_Active__c
+            FROM PaymentPlan__c
+            WHERE Id = :plan.Id
+        ];
+        System.assertEquals('Deactivated', updated.Status__c, 'DB Status__c should be Deactivated');
+        System.assertEquals('Draft', updated.Version_Status__c, 'DB Version_Status__c should be Draft');
+        System.assertEquals(false, updated.Is_Active__c, 'DB Is_Active__c should be false');
+    }
+
+    @IsTest
+    static void testDeactivatePaymentPlanNullId() {
+        Boolean exceptionThrown = false;
+        Test.startTest();
+        try {
+            PaymentPlanEditorController.deactivatePaymentPlan(null);
+            System.assert(false, 'Should have thrown exception');
+        } catch (AuraHandledException e) {
+            exceptionThrown = true;
+        }
+        Test.stopTest();
+        System.assert(exceptionThrown, 'AuraHandledException should have been thrown for null ID');
+    }
+
+    @IsTest
+    static void testDeactivateNonActivePlan() {
+        PaymentPlan__c plan = [SELECT Id FROM PaymentPlan__c LIMIT 1];
+        // Set plan to Draft first
+        plan.Status__c = 'Draft';
+        plan.Version_Status__c = 'Draft';
+        plan.Is_Active__c = false;
+        update plan;
+
+        Boolean exceptionThrown = false;
+        Test.startTest();
+        try {
+            PaymentPlanEditorController.deactivatePaymentPlan(plan.Id);
+            System.assert(false, 'Should have thrown exception for non-active plan');
+        } catch (AuraHandledException e) {
+            exceptionThrown = true;
+        }
+        Test.stopTest();
+        System.assert(exceptionThrown, 'AuraHandledException should have been thrown for non-active plan');
+    }
+
+    // ============ GET PLAN STATUS PICKLIST VALUES TEST ============
+
+    @IsTest
+    static void testGetPlanStatusPicklistValues() {
+        Test.startTest();
+        List<Map<String, String>> results = PaymentPlanEditorController.getPlanStatusPicklistValues();
+        Test.stopTest();
+
+        System.assertNotEquals(null, results, 'Should return a list');
+        System.assert(results.size() > 0, 'Should have at least one plan status option');
+
+        // Verify structure of returned data
+        Map<String, String> firstOption = results[0];
+        System.assert(firstOption.containsKey('label'), 'Option should have label key');
+        System.assert(firstOption.containsKey('value'), 'Option should have value key');
+        System.assertNotEquals(null, firstOption.get('label'), 'Label should not be null');
+        System.assertNotEquals(null, firstOption.get('value'), 'Value should not be null');
+
+        // Verify 'Deactivated' is in the picklist values
+        Boolean hasDeactivated = false;
+        for (Map<String, String> option : results) {
+            if (option.get('value') == 'Deactivated') {
+                hasDeactivated = true;
+                break;
+            }
+        }
+        System.assert(hasDeactivated, 'Picklist should contain Deactivated value');
+    }
+
 }
