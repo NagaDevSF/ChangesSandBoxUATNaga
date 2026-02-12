@@ -1474,6 +1474,13 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     async handleActivate() {
+        // eslint-disable-next-line no-alert
+        const confirmed = window.confirm(
+            'Do you want to activate this plan?\n\n' +
+            'This will set the plan as Active and archive all other versions.'
+        );
+        if (!confirmed) return;
+
         this.isLoading = true;
         try {
             const result = await activatePaymentPlan({ planId: this.selectedPlanId });
