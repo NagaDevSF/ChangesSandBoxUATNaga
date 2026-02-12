@@ -53,6 +53,12 @@
                 <stringValue>Auto-submitted for approval: Stage changed to Submitted to UW</stringValue>
             </value>
         </inputParameters>
+        <inputParameters>
+            <name>skipEntryCriteria</name>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputParameters>
     </actionCalls>
     <status>Active</status>
 </Flow>
