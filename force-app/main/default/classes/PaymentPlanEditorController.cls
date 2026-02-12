@@ -375,6 +375,37 @@ public with sharing class PaymentPlanEditorController {
     }
 
     /**
+     * @description Get picklist values for PaymentPlan__c.Status__c dynamically
+     * This ensures the LWC always reflects the latest picklist values from the database
+     * @return List of Maps with 'label' and 'value' keys
+     */
+    @AuraEnabled(cacheable=true)
+    public static List<Map<String, String>> getPlanStatusPicklistValues() {
+        String methodName = 'getPlanStatusPicklistValues';
+        System.debug(LoggingLevel.DEBUG, LOG_ENTRY + ' | ' + CLASS_NAME + '.' + methodName);
+
+        List<Map<String, String>> options = new List<Map<String, String>>();
+
+        Schema.DescribeFieldResult fieldResult = PaymentPlan__c.Status__c.getDescribe();
+        List<Schema.PicklistEntry> picklistEntries = fieldResult.getPicklistValues();
+
+        System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Found ' + picklistEntries.size() + ' picklist entries');
+
+        for (Schema.PicklistEntry entry : picklistEntries) {
+            if (entry.isActive()) {
+                Map<String, String> option = new Map<String, String>();
+                option.put('label', entry.getLabel());
+                option.put('value', entry.getValue());
+                options.add(option);
+            }
+        }
+
+        System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Returning ' + options.size() + ' active plan status options');
+        System.debug(LoggingLevel.DEBUG, LOG_EXIT + ' | ' + CLASS_NAME + '.' + methodName + ' | SUCCESS');
+        return options;
+    }
+
+    /**
      * @description Get the latest active Payment Plan for an Opportunity
      * @param opportunityId The Opportunity ID
      * @return PaymentPlanWrapper containing plan and schedule items

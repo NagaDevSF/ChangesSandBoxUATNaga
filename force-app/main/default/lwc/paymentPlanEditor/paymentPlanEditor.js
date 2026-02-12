@@ -1,5 +1,10 @@
-import { LightningElement, api, track } from 'lwc';
+import { LightningElement, api, track, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { getPicklistValues, getObjectInfo } from 'lightning/uiObjectInfoApi';
+import PAYMENT_PLAN_OBJECT from '@salesforce/schema/PaymentPlan__c';
+import PLAN_STATUS_FIELD from '@salesforce/schema/PaymentPlan__c.Status__c';
+import SCHEDULE_ITEM_OBJECT from '@salesforce/schema/Payment_Schedule_Item__c';
+import ITEM_STATUS_FIELD from '@salesforce/schema/Payment_Schedule_Item__c.Status__c';
 
 import getPaymentPlanVersions from '@salesforce/apex/PaymentPlanEditorController.getPaymentPlanVersions';
 import getPaymentPlanById from '@salesforce/apex/PaymentPlanEditorController.getPaymentPlanById';
@@ -15,7 +20,6 @@ import getWireFeesByPlanId from '@salesforce/apex/PaymentPlanEditorController.ge
 import saveWireFee from '@salesforce/apex/PaymentPlanEditorController.saveWireFee';
 import deleteWireFee from '@salesforce/apex/PaymentPlanEditorController.deleteWireFee';
 import updateWireFee from '@salesforce/apex/PaymentPlanEditorController.updateWireFee';
-import getStatusPicklistValues from '@salesforce/apex/PaymentPlanEditorController.getStatusPicklistValues';
 import updateScheduleItemFlag from '@salesforce/apex/PaymentPlanEditorController.updateScheduleItemFlag';
 
 // Default fallback if dynamic fetch fails
@@ -82,8 +86,68 @@ export default class PaymentPlanEditor extends LightningElement {
     // Previous version comparison state (array needs @track)
     @track previousVersionItems = [];  // Items from previous version for comparison
 
-    // Dynamic picklist values for Status field (array needs @track)
+    // Dynamic picklist values for Schedule Item Status field (array needs @track)
     @track statusPicklistOptions = DEFAULT_STATUS_OPTIONS;
+
+    // Dynamic picklist values for PaymentPlan__c.Status__c (plan-level status)
+    // Populated automatically via uiObjectInfoApi wire adapters
+    @track planStatusPicklistValues = [];
+
+    // Object info for wire adapters (needed to get default record type ID)
+    _paymentPlanRecordTypeId;
+    _scheduleItemRecordTypeId;
+
+    // Wire: Get PaymentPlan__c object info to extract default record type ID
+    @wire(getObjectInfo, { objectApiName: PAYMENT_PLAN_OBJECT })
+    wiredPaymentPlanInfo({ data, error }) {
+        if (data) {
+            this._paymentPlanRecordTypeId = data.defaultRecordTypeId;
+        }
+        if (error) {
+            console.error('Error fetching PaymentPlan__c object info:', error);
+        }
+    }
+
+    // Wire: Get PaymentPlan__c.Status__c picklist values automatically
+    @wire(getPicklistValues, { recordTypeId: '$_paymentPlanRecordTypeId', fieldApiName: PLAN_STATUS_FIELD })
+    wiredPlanStatusPicklist({ data, error }) {
+        if (data) {
+            this.planStatusPicklistValues = data.values.map(item => ({
+                label: item.label,
+                value: item.value
+            }));
+        }
+        if (error) {
+            console.error('Error fetching PaymentPlan__c.Status__c picklist values:', error);
+        }
+    }
+
+    // Wire: Get Payment_Schedule_Item__c object info to extract default record type ID
+    @wire(getObjectInfo, { objectApiName: SCHEDULE_ITEM_OBJECT })
+    wiredScheduleItemInfo({ data, error }) {
+        if (data) {
+            this._scheduleItemRecordTypeId = data.defaultRecordTypeId;
+        }
+        if (error) {
+            console.error('Error fetching Payment_Schedule_Item__c object info:', error);
+        }
+    }
+
+    // Wire: Get Payment_Schedule_Item__c.Status__c picklist values automatically
+    @wire(getPicklistValues, { recordTypeId: '$_scheduleItemRecordTypeId', fieldApiName: ITEM_STATUS_FIELD })
+    wiredItemStatusPicklist({ data, error }) {
+        if (data) {
+            this.statusPicklistOptions = data.values.map(item => ({
+                label: item.label,
+                value: item.value
+            }));
+        }
+        if (error) {
+            // Use default options if wire fails
+            console.error('Error fetching Payment_Schedule_Item__c.Status__c picklist values:', error);
+            this.statusPicklistOptions = DEFAULT_STATUS_OPTIONS;
+        }
+    }
 
     // Debounce timer reference
     _debounceTimer = null;
@@ -98,27 +162,9 @@ export default class PaymentPlanEditor extends LightningElement {
     // ============ LIFECYCLE HOOKS ============
 
     async connectedCallback() {
-        // Load status picklist values and plans in parallel
-        await Promise.all([
-            this.loadStatusPicklistValues(),
-            this.loadPlans()
-        ]);
-    }
-
-    /**
-     * Load status picklist values dynamically from Salesforce schema
-     */
-    async loadStatusPicklistValues() {
-        try {
-            const options = await getStatusPicklistValues();
-            if (options && options.length > 0) {
-                this.statusPicklistOptions = options;
-            }
-        } catch (error) {
-            // Use default options if dynamic fetch fails
-            console.error('Error loading status picklist values:', error);
-            this.statusPicklistOptions = DEFAULT_STATUS_OPTIONS;
-        }
+        // Picklist values are now loaded automatically via @wire(getPicklistValues) adapters
+        // Only need to load plans here
+        await this.loadPlans();
     }
 
     // ============ DATA LOADING METHODS ============
@@ -267,13 +313,13 @@ export default class PaymentPlanEditor extends LightningElement {
     // ============ PLAN SELECTOR HELPERS ============
 
     /**
-     * Build label for dropdown: "PP-00052 v1 (Active)"
-     * Uses Version_Status__c from database to show actual status
+     * Build label for dropdown: "PP-00052 v1 (Active)" or "PP-00052 v1 (Deactivated)"
+     * Uses Status__c from database to show actual plan status (pulled dynamically from picklist)
      */
     buildPlanLabel(wrapper) {
         const name = wrapper.paymentPlan?.Name || 'Plan';
         const version = wrapper.versionNumber || 1;
-        const status = wrapper.paymentPlan?.Version_Status__c || wrapper.versionStatus || '';
+        const status = wrapper.paymentPlan?.Status__c || wrapper.paymentPlan?.Version_Status__c || wrapper.versionStatus || '';
 
         let statusLabel = '';
         if (status) {
@@ -312,13 +358,13 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get planStatus() {
-        return this.paymentPlan?.Version_Status__c || '';
+        return this.paymentPlan?.Status__c || this.paymentPlan?.Version_Status__c || '';
     }
 
     get versionInfo() {
         if (!this.paymentPlan) return '';
         const version = this.paymentPlan.Version_Number__c || 1;
-        const status = this.paymentPlan.Version_Status__c || '';
+        const status = this.paymentPlan.Status__c || this.paymentPlan.Version_Status__c || '';
         return `v${version} - ${status}`;
     }
 
