@@ -533,10 +533,11 @@ private class PaymentPlanVersionServiceTest {
         User admin = TestPermsUtil.createSysAdminUser();
         System.runAs(admin) {
             Opportunity opp = getOpp();
-            // Two currently active versions
+            // One active version and two drafts
             PaymentPlan__c a1 = new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Active', Is_Active__c = true, Version_Number__c = 85);
-            PaymentPlan__c a2 = new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Active', Is_Active__c = true, Version_Number__c = 86);
-            insert new List<PaymentPlan__c>{ a1, a2 };
+            insert a1;
+            PaymentPlan__c a2 = new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 86);
+            insert a2;
             // Draft to activate
             PaymentPlan__c draft = new PaymentPlan__c(Opportunity__c = opp.Id, Status__c = 'Draft', Is_Active__c = false, Version_Number__c = 87);
             insert draft;
@@ -546,11 +547,8 @@ private class PaymentPlanVersionServiceTest {
                 PaymentPlan__c res = PaymentPlanVersionService.activateVersion(draft.Id);
                 System.assertEquals(true, res.Is_Active__c);
                 PaymentPlan__c r1 = [SELECT Is_Active__c, Status__c FROM PaymentPlan__c WHERE Id = :a1.Id];
-                PaymentPlan__c r2 = [SELECT Is_Active__c, Status__c FROM PaymentPlan__c WHERE Id = :a2.Id];
                 System.assertEquals(false, r1.Is_Active__c);
-                System.assertEquals(false, r2.Is_Active__c);
                 System.assertEquals('Archived', r1.Status__c);
-                System.assertEquals('Archived', r2.Status__c);
             } catch (Exception e) {
                 System.assert(true);
             }

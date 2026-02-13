@@ -2889,7 +2889,6 @@ public with sharing class PaymentPlanEditorController {
 
             for (PaymentPlan__c p : allPlans) {
                 p.Status__c = VERSION_STATUS_ARCHIVED;
-                p.Status__c = 'Draft';
                 p.Is_Active__c = false;
             }
 
@@ -2902,7 +2901,6 @@ public with sharing class PaymentPlanEditorController {
             PaymentPlan__c newPlan = previousPlan.clone(false, true, false, false);
             newPlan.Version_Number__c = maxVersion + 1;
             newPlan.Status__c = VERSION_STATUS_ACTIVE;
-            newPlan.Status__c = 'Active';
             newPlan.Is_Active__c = true;
             newPlan.Version_Type__c = VERSION_TYPE_REACTIVATION;
             newPlan.Source__c = SOURCE_UI;
