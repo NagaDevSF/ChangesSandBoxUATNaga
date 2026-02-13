@@ -54,6 +54,7 @@ public with sharing class PaymentPlanVersionService {
                 
                 for (PaymentPlan__c plan : plansToDeactivate) {
                     plan.Is_Active__c = false;
+                    // Align with Status__c picklist values
                     plan.Status__c = 'Archived';
                 }
                 

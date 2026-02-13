@@ -14,6 +14,7 @@ public class PaymentPlanService {
 
 			// Set plan as Draft when created from contract signing
 			thisPP.Status__c = 'Draft';
+			thisPP.Status__c = 'Draft';
 			thisPP.Is_Active__c = false;
 
 			// blend in the paymentdraft data into the PaymentPlan__c record

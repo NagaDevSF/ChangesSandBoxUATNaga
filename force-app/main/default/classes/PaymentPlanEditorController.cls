@@ -587,8 +587,8 @@ public with sharing class PaymentPlanEditorController {
             }
 
             List<PaymentPlan__c> plans = [
-                SELECT Id, Name, Version_Number__c, Is_Active__c,
-                       CreatedDate, LastModifiedDate, Status__c,
+                SELECT Id, Name, Version_Number__c, Status__c, Is_Active__c,
+                       CreatedDate, LastModifiedDate,
                        CreatedBy.Name, LastModifiedBy.Name
                 FROM PaymentPlan__c
                 WHERE Opportunity__c = :opportunityId
@@ -2507,8 +2507,8 @@ public with sharing class PaymentPlanEditorController {
 
             // Get the current plan with all fields
             List<PaymentPlan__c> currentPlans = [
-                SELECT Id, Name, Opportunity__c, Version_Number__c,
-                       Is_Active__c, Status__c, Version_Type__c, Source__c, Version_Notes__c,
+                SELECT Id, Name, Opportunity__c, Version_Number__c, Status__c,
+                       Is_Active__c, Version_Type__c, Source__c, Version_Notes__c,
                        Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
                        Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
                        Calculation_Timestamp__c, Schedule_Item_Count__c,
@@ -2546,7 +2546,7 @@ public with sharing class PaymentPlanEditorController {
             // Archive all other plans for this Opportunity BEFORE inserting the new active plan
             // to avoid the duplicate active Payment Plan trigger validation
             List<PaymentPlan__c> otherPlans = [
-                SELECT Id, Is_Active__c, Status__c
+                SELECT Id, Status__c, Is_Active__c
                 FROM PaymentPlan__c
                 WHERE Opportunity__c = :currentPlan.Opportunity__c
                 LIMIT :MAX_QUERY_LIMIT
@@ -2560,7 +2560,7 @@ public with sharing class PaymentPlanEditorController {
 
             if (!otherPlans.isEmpty()) {
                 update otherPlans;
-                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Archived ' + otherPlans.size() + ' plan(s)');
+                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Archived ' + otherPlans.size() + ' plan(s) and set Status to Draft');
             }
 
             // Create new plan as a clone with incremented version
@@ -2686,7 +2686,7 @@ public with sharing class PaymentPlanEditorController {
 
             // Archive all other versions for this Opportunity and set their Status to Draft
             List<PaymentPlan__c> otherPlans = [
-                SELECT Id, Is_Active__c, Status__c
+                SELECT Id, Status__c, Is_Active__c
                 FROM PaymentPlan__c
                 WHERE Opportunity__c = :planToActivate.Opportunity__c
                   AND Id != :planId
@@ -2703,12 +2703,12 @@ public with sharing class PaymentPlanEditorController {
 
             if (!otherPlans.isEmpty()) {
                 update otherPlans;
-                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Archived ' + otherPlans.size() + ' plan(s)');
+                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Archived ' + otherPlans.size() + ' plan(s) and set Status to Draft');
             }
 
             // Activate the selected plan
             PaymentPlan__c plan = new PaymentPlan__c(Id = planId);
-            plan.Status__c = 'Active';
+            plan.Status__c = VERSION_STATUS_ACTIVE;
             plan.Is_Active__c = true;
             plan.Calculation_Timestamp__c = DateTime.now();
             update plan;
@@ -2811,8 +2811,8 @@ public with sharing class PaymentPlanEditorController {
 
             // Get the suspended plan
             List<PaymentPlan__c> suspendedPlans = [
-                SELECT Id, Name, Opportunity__c, Version_Number__c,
-                       Is_Active__c, Status__c, Version_Type__c, Source__c, Version_Notes__c,
+                SELECT Id, Name, Opportunity__c, Version_Number__c, Status__c,
+                       Is_Active__c, Version_Type__c, Source__c, Version_Notes__c,
                        Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
                        Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
                        Calculation_Timestamp__c, Schedule_Item_Count__c,
@@ -2842,8 +2842,8 @@ public with sharing class PaymentPlanEditorController {
 
             // Find the previous version (highest version number less than the suspended version, same Opportunity)
             List<PaymentPlan__c> previousPlans = [
-                SELECT Id, Name, Opportunity__c, Version_Number__c,
-                       Is_Active__c, Status__c, Version_Type__c, Source__c, Version_Notes__c,
+                SELECT Id, Name, Opportunity__c, Version_Number__c, Status__c,
+                       Is_Active__c, Version_Type__c, Source__c, Version_Notes__c,
                        Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
                        Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
                        Calculation_Timestamp__c, Schedule_Item_Count__c,
@@ -2880,7 +2880,7 @@ public with sharing class PaymentPlanEditorController {
 
             // Archive all existing plans for this Opportunity
             List<PaymentPlan__c> allPlans = [
-                SELECT Id, Is_Active__c, Status__c
+                SELECT Id, Status__c, Is_Active__c
                 FROM PaymentPlan__c
                 WHERE Opportunity__c = :suspendedPlan.Opportunity__c
                 LIMIT :MAX_QUERY_LIMIT
@@ -2889,6 +2889,7 @@ public with sharing class PaymentPlanEditorController {
 
             for (PaymentPlan__c p : allPlans) {
                 p.Status__c = VERSION_STATUS_ARCHIVED;
+                p.Status__c = 'Draft';
                 p.Is_Active__c = false;
             }
 
@@ -2900,6 +2901,7 @@ public with sharing class PaymentPlanEditorController {
             // Clone the PREVIOUS version (not the suspended one) as the new active plan
             PaymentPlan__c newPlan = previousPlan.clone(false, true, false, false);
             newPlan.Version_Number__c = maxVersion + 1;
+            newPlan.Status__c = VERSION_STATUS_ACTIVE;
             newPlan.Status__c = 'Active';
             newPlan.Is_Active__c = true;
             newPlan.Version_Type__c = VERSION_TYPE_REACTIVATION;

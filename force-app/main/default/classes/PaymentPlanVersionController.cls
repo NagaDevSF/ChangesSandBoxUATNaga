@@ -98,12 +98,10 @@ public with sharing class PaymentPlanVersionController {
             
             for (PaymentPlan__c plan : otherPlans) {
                 plan.Is_Active__c = false;
-                plan.Status__c = 'Archived';
             }
-
+            
             // Activate the selected version
             planToActivate.Is_Active__c = true;
-            planToActivate.Status__c = 'Active';
             
             // Update all plans
             List<PaymentPlan__c> plansToUpdate = new List<PaymentPlan__c>();
