@@ -3767,34 +3767,36 @@ public with sharing class PaymentPlanEditorController {
             }
 
             // Settlement percentage picklist - reuses cfg from validation section above
-            try {
-                // Est_Settlement__c picklist
-                if (cfg.settlementPercent != null) {
-                    Integer settlementInt = cfg.settlementPercent.intValue();
-                    Set<Integer> validSettlementValues = new Set<Integer>();
-                    if (String.isNotBlank(cfg.validSettlementValues)) {
-                        for (String valStr : cfg.validSettlementValues.split(',')) {
-                            validSettlementValues.add(Integer.valueOf(valStr.trim()));
+            if (cfg != null) {
+                try {
+                    // Est_Settlement__c picklist
+                    if (cfg.settlementPercent != null) {
+                        Integer settlementInt = cfg.settlementPercent.intValue();
+                        Set<Integer> validSettlementValues = new Set<Integer>();
+                        if (String.isNotBlank(cfg.validSettlementValues)) {
+                            for (String valStr : cfg.validSettlementValues.split(',')) {
+                                validSettlementValues.add(Integer.valueOf(valStr.trim()));
+                            }
+                        }
+                        if (validSettlementValues.contains(settlementInt)) {
+                            opp.Est_Settlement__c = String.valueOf(settlementInt) + '%';
+                            hasUpdates = true;
                         }
                     }
-                    if (validSettlementValues.contains(settlementInt)) {
-                        opp.Est_Settlement__c = String.valueOf(settlementInt) + '%';
-                        hasUpdates = true;
-                    }
-                }
 
-                // Program_Fee__c picklist
-                Decimal programFeePct = noFeeProgram ? cfg.baselineNoFeeProgramFee : cfg.programFeePercent;
-                if (programFeePct != null) {
-                    Decimal minProgramFeePercent = cfg.minProgramFeePercent;
-                    Decimal maxProgramFeePercent = cfg.maxProgramFeePercent;
-                    if (programFeePct >= minProgramFeePercent && programFeePct <= maxProgramFeePercent) {
-                        opp.Program_Fee__c = String.valueOf(programFeePct.intValue()) + '%';
-                        hasUpdates = true;
+                    // Program_Fee__c picklist
+                    Decimal programFeePct = noFeeProgram ? cfg.baselineNoFeeProgramFee : cfg.programFeePercent;
+                    if (programFeePct != null) {
+                        Decimal minProgramFeePercent = cfg.minProgramFeePercent;
+                        Decimal maxProgramFeePercent = cfg.maxProgramFeePercent;
+                        if (programFeePct >= minProgramFeePercent && programFeePct <= maxProgramFeePercent) {
+                            opp.Program_Fee__c = String.valueOf(programFeePct.intValue()) + '%';
+                            hasUpdates = true;
+                        }
                     }
+                } catch (Exception e) {
+                    System.debug('[updateOpportunityOnly] Skipping config-validated fields: ' + e.getMessage());
                 }
-            } catch (PaymentCalcConfigException e) {
-                System.debug('[updateOpportunityOnly] Skipping config-validated fields: ' + e.getMessage());
             }
 
             if (hasUpdates) {
