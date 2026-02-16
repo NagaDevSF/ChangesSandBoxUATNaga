@@ -3753,18 +3753,23 @@ public with sharing class PaymentPlanEditorController {
                 hasUpdates = true;
             }
 
-            // No-Fee Program
-            opp.No_Fee_Program__c = noFeeProgram == true;
-            hasUpdates = true;
-
             // Program Type - convert underscores to spaces and save exactly what user selected
+            String normalizedType = '';
             if (String.isNotBlank(programType)) {
-                String programTypeUpper = programType.toUpperCase();
-                // Convert underscores to spaces for picklist value
-                String picklistValue = programTypeUpper.replace('_', ' ');
-                opp.Program_Type__c = picklistValue;
+                normalizedType = programType.toUpperCase().replace('_', ' ');
+                opp.Program_Type__c = normalizedType;
                 hasUpdates = true;
             }
+
+            // No-Fee Program - only allowed for DCG MOD per validation rule
+            // DCG MOD CA uses no-fee behavior internally for calculations but the
+            // Opportunity field must be false for MOD CA and DEBT program types
+            if (normalizedType == 'DCG MOD') {
+                opp.No_Fee_Program__c = noFeeProgram == true;
+            } else {
+                opp.No_Fee_Program__c = false;
+            }
+            hasUpdates = true;
 
             // Settlement percentage picklist - reuses cfg from validation section above
             if (cfg != null) {
