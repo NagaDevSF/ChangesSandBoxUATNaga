@@ -1455,7 +1455,7 @@ export default class PaymentPlanEditor extends LightningElement {
                 // Trigger confetti celebration
                 this.triggerConfetti();
 
-                this.showToast('Success', 'Payment plan reactivated! Cancelled items restored to Scheduled.', 'success');
+                this.showToast('Success', 'Payment plan reactivated! Future cancelled items restored to Scheduled.', 'success');
             }
         } catch (error) {
             this.showToast('Error', this.reduceErrors(error), 'error');
@@ -1469,7 +1469,7 @@ export default class PaymentPlanEditor extends LightningElement {
             // eslint-disable-next-line no-alert
             const result = window.confirm(
                 'Do you want to reactivate this plan?\n\n' +
-                'This will create a new version from the pre-suspension plan with Cancelled items restored to Scheduled.'
+                'This will create a new version from the pre-suspension plan with future Cancelled items restored to Scheduled. Past items will remain Cancelled.'
             );
             resolve(result);
         });

@@ -349,6 +349,11 @@
 .data-table tbody tr {
     background: linear-gradient(180deg, #ffffff 0%, #f7fafc 100%);
     transition: all 0.2s ease;
+    position: relative;
+}
+
+.data-table tbody tr:focus-within {
+    z-index: 15;
 }
 
 .data-table tbody tr:nth-child(even) {

@@ -2904,7 +2904,7 @@ public with sharing class PaymentPlanEditorController {
             newPlan.Is_Active__c = true;
             newPlan.Version_Type__c = VERSION_TYPE_REACTIVATION;
             newPlan.Source__c = SOURCE_UI;
-            newPlan.Version_Notes__c = 'Plan reactivated on ' + DateTime.now().format() + '. Cancelled items restored to Scheduled.';
+            newPlan.Version_Notes__c = 'Plan reactivated on ' + DateTime.now().format() + '. Future cancelled items restored to Scheduled.';
             newPlan.Calculation_Timestamp__c = DateTime.now();
             insert newPlan;
             System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Created reactivation plan: ' + newPlan.Id);
@@ -2917,22 +2917,29 @@ public with sharing class PaymentPlanEditorController {
             List<Payment_Schedule_Item__c> previousItems = Database.query(query);
             System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + previousItems.size() + ' schedule items from previous version');
 
-            // Clone items to new plan, restoring Cancelled to Scheduled
+            // Clone items to new plan, restoring Cancelled to Scheduled only for future payments
             List<Payment_Schedule_Item__c> newItems = new List<Payment_Schedule_Item__c>();
             Integer restoredCount = 0;
+            Integer pastCancelledCount = 0;
+            Date today = Date.today();
             for (Payment_Schedule_Item__c item : previousItems) {
                 Payment_Schedule_Item__c newItem = item.clone(false, true, false, false);
                 newItem.Payment_Plan__c = newPlan.Id;
 
-                // Restore Cancelled status back to Scheduled
+                // Restore Cancelled status back to Scheduled only for future payments
                 if (item.Status__c == STATUS_CANCELLED) {
-                    newItem.Status__c = STATUS_SCHEDULED;
-                    restoredCount++;
+                    if (item.Payment_Date__c != null && item.Payment_Date__c > today) {
+                        newItem.Status__c = STATUS_SCHEDULED;
+                        restoredCount++;
+                    } else {
+                        pastCancelledCount++;
+                    }
                 }
 
                 newItems.add(newItem);
             }
-            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Restored ' + restoredCount + ' cancelled items to Scheduled');
+            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Restored ' + restoredCount + ' future cancelled items to Scheduled');
+            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Kept ' + pastCancelledCount + ' past cancelled items as Cancelled');
 
             if (!newItems.isEmpty()) {
                 recalculateDraftNumbers(newItems);
