@@ -246,21 +246,6 @@
     opacity: 0.8;
 }
 
-.epps-badge {
-    margin-left: auto;
-    padding: 4px 10px;
-    font-size: 11px;
-    color: #4a5568;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: #e2e8f0;
-    border-radius: 4px;
-}
-
-.epps-badge lightning-icon {
-    --slds-c-icon-color-foreground-default: #4a5568;
-}
 
 /* ============================================
    TABLE CONTAINER - MODERN RICH DESIGN
@@ -1331,10 +1316,6 @@ lightning-spinner {
     .tab {
         padding: 8px 12px;
         font-size: 12px;
-    }
-
-    .epps-badge {
-        display: none;
     }
 
     .plan-selector-btn {

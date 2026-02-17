@@ -587,14 +587,16 @@ export default class PaymentPlanEditor extends LightningElement {
      * Show Suspend button only for Active plans that are not already Suspended
      */
     get showSuspendButton() {
-        return this.paymentPlan?.Status__c === 'Active';
+        const status = this.paymentPlan?.Status__c || '';
+        return status === 'Active';
     }
 
     /**
      * Show De-activate button only for Active plans that are not Suspended
      */
     get showDeactivateButton() {
-        return this.paymentPlan?.Status__c === 'Active';
+        const status = this.paymentPlan?.Status__c || '';
+        return status === 'Active';
     }
 
     /**
