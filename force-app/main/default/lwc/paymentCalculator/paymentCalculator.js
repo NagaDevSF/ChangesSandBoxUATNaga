@@ -93,10 +93,6 @@ export default class PaymentCalculator extends LightningElement {
             { label: 'Set Primary', name: 'set_primary' }
         ];
 
-        if (!row.isPrimary) {
-            actions.push({ label: 'Delete', name: 'delete' });
-        }
-
         doneCallback(actions);
     }
 
@@ -162,6 +158,9 @@ export default class PaymentCalculator extends LightningElement {
     showPaymentSchedule = false;
     // Sequence guard to ignore stale async results (Context7 pattern)
     _calcSeq = 0;
+
+    // Dirty flag: tracks whether calculator state changed since last draft save/load
+    _draftDirty = false;
 
     // Additional Products (UI-only; backend wiring TBD)
     // Stub catalog; replace with backend fetch (e.g., CMDT or Product2 family)
@@ -474,20 +473,19 @@ export default class PaymentCalculator extends LightningElement {
         this.firstDraftDate = cfg.firstDraftDate ?? this.firstDraftDate;
         this.preferredDayOfWeek = cfg.preferredDayOfWeek ?? this.preferredDayOfWeek;
 
-        // Restore additional product selections if present
+        // Restore additional product selections from draft (reset all if none saved)
         const selectedCodes = Array.isArray(cfg.selectedProductCodes) ? cfg.selectedProductCodes : [];
-        if (selectedCodes.length > 0) {
-            const selectedSet = new Set(selectedCodes);
-            this.availableProducts = this.decorateProducts(
-                (this.availableProducts || []).map(p => ({
-                    ...p,
-                    selected: selectedSet.has(p.code)
-                }))
-            );
-        }
+        const selectedSet = new Set(selectedCodes);
+        this.availableProducts = this.decorateProducts(
+            (this.availableProducts || []).map(p => ({
+                ...p,
+                selected: selectedSet.has(p.code)
+            }))
+        );
 
         // Recompute derived values and schedule
         this._enforcePaymentBounds();
+        this._draftDirty = false; // Reset dirty flag on draft load
         this.performCalculations();
         this.showToast('Success', `Loaded draft: ${draftName || ''}`, 'success', false);
     }
@@ -584,6 +582,9 @@ export default class PaymentCalculator extends LightningElement {
                     this.programSplitRatio = 0;
                     this.escrowSplitRatio = 1.0;
                 }
+
+                // Mark as dirty since calculations changed
+                this._draftDirty = true;
 
                 // Update calculations from Apex response
                 this.calculations = {
@@ -1178,6 +1179,7 @@ export default class PaymentCalculator extends LightningElement {
             });
 
             this.showToast('Success', 'Draft saved successfully', 'success', false);
+            this._draftDirty = false; // Reset dirty flag after successful save
             this.selectedDraftId = newId;
             await this.loadSavedDrafts();
             // Try to set current selection to the newly created draft's row
@@ -1266,9 +1268,12 @@ export default class PaymentCalculator extends LightningElement {
                 calculationsOptional: calculationsToSend
             });
 
+            const resolvedId = updatedId || this.selectedDraftId;
             this.showToast('Success', 'Draft updated', 'success', false);
-            this.selectedDraftId = updatedId || this.selectedDraftId;
+            this._draftDirty = false; // Reset dirty flag after successful update
             await this.loadSavedDrafts();
+            // Restore selectedDraftId after loadSavedDrafts clears it
+            this.selectedDraftId = resolvedId;
         } catch (e) {
             this.showToast('Error', e?.body?.message || 'Failed to update draft', 'error', false);
         } finally {
@@ -1287,9 +1292,6 @@ export default class PaymentCalculator extends LightningElement {
                 break;
             case 'set_primary':
                 await this.handleSetPrimaryDraft(row.Id);
-                break;
-            case 'delete':
-                await this.handleDeleteDraft(row.Id);
                 break;
             default:
                 break;
@@ -1330,9 +1332,9 @@ export default class PaymentCalculator extends LightningElement {
         }
     }
 
-    // Disable update button unless a draft is loaded
+    // Disable update button unless a draft is loaded and has unsaved changes
     get isUpdateDisabled() {
-        return this.isLoading || !this.selectedDraftId;
+        return this.isLoading || !this.selectedDraftId || !this._draftDirty;
     }
 
     get selectedDraftRows() {
