@@ -554,8 +554,12 @@ export default class PaymentPlanEditor extends LightningElement {
         return this.paymentPlan?.Status__c === 'Draft';
     }
 
+    get isArchived() {
+        return this.paymentPlan?.Status__c === 'Archived';
+    }
+
     get canActivate() {
-        return this.isDraft && !this.isEditMode;
+        return (this.isDraft || this.isArchived) && !this.isEditMode;
     }
 
     get isActivePlan() {
