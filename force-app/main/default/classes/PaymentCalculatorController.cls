@@ -775,6 +775,11 @@ public with sharing class PaymentCalculatorController {
         if (draft.Calculation_Mode__c != null) configMap.put('calculateBy', draft.Calculation_Mode__c);
         if (draft.Preferred_Day_of_Week__c != null) configMap.put('preferredDayOfWeek', draft.Preferred_Day_of_Week__c);
 
+        // Selected additional product codes (semicolon-separated → List<String>)
+        if (String.isNotBlank(draft.Selected_Product_Codes__c)) {
+            configMap.put('selectedProductCodes', draft.Selected_Product_Codes__c.split(';'));
+        }
+
         return configMap;
     }
 
@@ -978,7 +983,8 @@ public with sharing class PaymentCalculatorController {
                            Program_Type__c, Payment_Frequency__c, No_Fee_Program__c,
                            Settlement_Percentage__c, Program_Fee_Percentage__c,
                            Setup_Fee__c, Setup_Fee_Term__c, Banking_Fee__c, First_Draft_Date__c,
-                           Target_Payment_Percent__c, Calculation_Mode__c, Preferred_Day_of_Week__c
+                           Target_Payment_Percent__c, Calculation_Mode__c, Preferred_Day_of_Week__c,
+                           Selected_Product_Codes__c
                     FROM PaymentDraft__c
                     WHERE Lead__c = :recordId
                     ORDER BY Is_Primary__c DESC, CreatedDate DESC
@@ -993,7 +999,8 @@ public with sharing class PaymentCalculatorController {
                            Program_Type__c, Payment_Frequency__c, No_Fee_Program__c,
                            Settlement_Percentage__c, Program_Fee_Percentage__c,
                            Setup_Fee__c, Setup_Fee_Term__c, Banking_Fee__c, First_Draft_Date__c,
-                           Target_Payment_Percent__c, Calculation_Mode__c, Preferred_Day_of_Week__c
+                           Target_Payment_Percent__c, Calculation_Mode__c, Preferred_Day_of_Week__c,
+                           Selected_Product_Codes__c
                     FROM PaymentDraft__c
                     WHERE Opportunity__c = :recordId
                     ORDER BY Is_Primary__c DESC, CreatedDate DESC
@@ -1060,7 +1067,8 @@ public with sharing class PaymentCalculatorController {
                            Program_Type__c, Payment_Frequency__c, No_Fee_Program__c,
                            Settlement_Percentage__c, Program_Fee_Percentage__c,
                            Setup_Fee__c, Setup_Fee_Term__c, Banking_Fee__c, First_Draft_Date__c,
-                           Target_Payment_Percent__c, Calculation_Mode__c, Preferred_Day_of_Week__c
+                           Target_Payment_Percent__c, Calculation_Mode__c, Preferred_Day_of_Week__c,
+                           Selected_Product_Codes__c
                     FROM PaymentDraft__c
                     WHERE Lead__c = :recordId AND Is_Primary__c = true AND Is_Active__c = true
                     LIMIT 1
@@ -1075,7 +1083,8 @@ public with sharing class PaymentCalculatorController {
                            Program_Type__c, Payment_Frequency__c, No_Fee_Program__c,
                            Settlement_Percentage__c, Program_Fee_Percentage__c,
                            Setup_Fee__c, Setup_Fee_Term__c, Banking_Fee__c, First_Draft_Date__c,
-                           Target_Payment_Percent__c, Calculation_Mode__c, Preferred_Day_of_Week__c
+                           Target_Payment_Percent__c, Calculation_Mode__c, Preferred_Day_of_Week__c,
+                           Selected_Product_Codes__c
                     FROM PaymentDraft__c
                     WHERE Opportunity__c = :recordId AND Is_Primary__c = true AND Is_Active__c = true
                     LIMIT 1
@@ -1762,6 +1771,16 @@ public with sharing class PaymentCalculatorController {
                 draft.Preferred_Day_of_Week__c = (dayOfWeekObj instanceof Integer)
                     ? (Integer)dayOfWeekObj
                     : Integer.valueOf(String.valueOf(dayOfWeekObj));
+            }
+
+            // Selected additional product codes (e.g. LEGAL_MONITORING)
+            Object productCodesObj = config.get('selectedProductCodes');
+            if (productCodesObj instanceof List<Object>) {
+                List<String> codes = new List<String>();
+                for (Object code : (List<Object>) productCodesObj) {
+                    if (code != null) codes.add(String.valueOf(code));
+                }
+                draft.Selected_Product_Codes__c = String.join(codes, ';');
             }
         }
 
