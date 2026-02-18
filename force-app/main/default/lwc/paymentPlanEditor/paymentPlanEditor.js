@@ -1,5 +1,6 @@
 import { LightningElement, api, track, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import LightningConfirm from 'lightning/confirm';
 import { getPicklistValues, getObjectInfo } from 'lightning/uiObjectInfoApi';
 import PAYMENT_PLAN_OBJECT from '@salesforce/schema/PaymentPlan__c';
 import PLAN_STATUS_FIELD from '@salesforce/schema/PaymentPlan__c.Status__c';
@@ -1417,14 +1418,11 @@ export default class PaymentPlanEditor extends LightningElement {
      * Show confirmation dialog for suspend action
      * @returns {Promise<boolean>} true if user confirms, false otherwise
      */
-    confirmSuspend() {
-        return new Promise((resolve) => {
-            // eslint-disable-next-line no-alert
-            const result = window.confirm(
-                'Do you really want to suspend this plan?\n\n' +
-                'This will create a new version with all Scheduled items marked as Cancelled.'
-            );
-            resolve(result);
+    async confirmSuspend() {
+        return LightningConfirm.open({
+            message: 'This will create a new version with all Scheduled items marked as Cancelled.',
+            label: 'Suspend Payment Plan',
+            theme: 'warning'
         });
     }
 
@@ -1468,23 +1466,20 @@ export default class PaymentPlanEditor extends LightningElement {
         }
     }
 
-    confirmReactivate() {
-        return new Promise((resolve) => {
-            // eslint-disable-next-line no-alert
-            const result = window.confirm(
-                'Do you want to reactivate this plan?\n\n' +
-                'This will create a new version from the pre-suspension plan with future Cancelled items restored to Scheduled. Past items will remain Cancelled.'
-            );
-            resolve(result);
+    async confirmReactivate() {
+        return LightningConfirm.open({
+            message: 'This will create a new version from the pre-suspension plan with future Cancelled items restored to Scheduled. Past items will remain Cancelled.',
+            label: 'Reactivate Payment Plan',
+            theme: 'info'
         });
     }
 
     async handleActivate() {
-        // eslint-disable-next-line no-alert
-        const confirmed = window.confirm(
-            'Do you want to activate this plan?\n\n' +
-            'This will set the plan as Active and archive all other versions.'
-        );
+        const confirmed = await LightningConfirm.open({
+            message: 'This will set the plan as Active and archive all other versions.',
+            label: 'Activate Payment Plan',
+            theme: 'info'
+        });
         if (!confirmed) return;
 
         this.isLoading = true;
@@ -1514,11 +1509,11 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     async handleDeactivate() {
-        // eslint-disable-next-line no-alert
-        const confirmed = window.confirm(
-            'Do you want to deactivate this plan?\n\n' +
-            'This will set the plan back to Draft status. No new version will be created.'
-        );
+        const confirmed = await LightningConfirm.open({
+            message: 'This will set the plan back to Draft status. No new version will be created.',
+            label: 'Deactivate Payment Plan',
+            theme: 'warning'
+        });
         if (!confirmed) return;
 
         this.isLoading = true;
@@ -2189,8 +2184,7 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     /**
-     * Deep clone an array of items using spread operator
-     * Follows Salesforce best practices for object cloning in LWC
+     * Deep clone an array of items using structuredClone
      * @param {Array} items - Array of objects to clone
      * @returns {Array} - Deep cloned array
      */
@@ -2198,7 +2192,7 @@ export default class PaymentPlanEditor extends LightningElement {
         if (!items || !Array.isArray(items)) {
             return [];
         }
-        return items.map(item => ({ ...item }));
+        return structuredClone(items);
     }
 
     // ============ FILL HANDLE METHODS ============

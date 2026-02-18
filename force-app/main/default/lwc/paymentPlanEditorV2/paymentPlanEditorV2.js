@@ -207,7 +207,6 @@ export default class PaymentPlanEditorV2 extends LightningElement {
            const state = getFieldValue(data, OPP_ACCOUNT_STATE);
            // CA State Special: Auto-select DCG MOD CA and disable other program types
            if (state === 'CA') {
-               console.log('[PaymentPlanEditorV2] CA state detected, auto-selecting DCG MOD CA');
                this.isCaState = true;
                this.programType = 'DCG_MOD_CA';
                this.noFeeProgram = true;
@@ -340,7 +339,6 @@ export default class PaymentPlanEditorV2 extends LightningElement {
    handleProgramTypeMod() {
        // Disable DCG MOD selection for California accounts
        if (this.isCaState) {
-           console.log('[PaymentPlanEditorV2] DCG MOD disabled for CA state');
            return;
        }
        this.programType = 'DCG_MOD';
@@ -354,7 +352,6 @@ export default class PaymentPlanEditorV2 extends LightningElement {
    handleProgramTypeDebt() {
        // Disable DCG DEBT selection for California accounts
        if (this.isCaState) {
-           console.log('[PaymentPlanEditorV2] DCG DEBT disabled for CA state');
            return;
        }
        this.programType = 'DCG_DEBT';
@@ -561,10 +558,6 @@ export default class PaymentPlanEditorV2 extends LightningElement {
        const raw = event.target.value;
        const val = parseInt(raw, 10);
 
-
-       console.log('[handleNumberOfWeeksInput] raw:', raw, 'val:', val);
-
-
        if (Number.isNaN(val) || val <= 0) return;
 
 
@@ -582,10 +575,6 @@ export default class PaymentPlanEditorV2 extends LightningElement {
        const raw = event.target.value;
        let val = parseInt(raw, 10);
 
-
-       console.log('[handleNumberOfWeeksChange] raw:', raw, 'val:', val);
-
-
        if (Number.isNaN(val) || val <= 0) return;
 
 
@@ -601,10 +590,6 @@ export default class PaymentPlanEditorV2 extends LightningElement {
 
        // Clamp to min/max
        val = Math.max(minWeeks, Math.min(maxWeeks, val));
-
-
-       console.log('[handleNumberOfWeeksChange] original:', originalVal, 'min:', minWeeks, 'max:', maxWeeks, 'clamped:', val);
-
 
        this._targetNumberOfWeeks = val;
 
@@ -623,14 +608,6 @@ export default class PaymentPlanEditorV2 extends LightningElement {
 
    async calculateWeeklyPaymentFromWeeks(numberOfWeeks) {
        if (!numberOfWeeks || numberOfWeeks <= 0) return;
-
-
-       console.log('[calculateWeeklyPaymentFromWeeks] numberOfWeeks:', numberOfWeeks);
-       console.log('[calculateWeeklyPaymentFromWeeks] totalDebt:', this.totalDebt);
-       console.log('[calculateWeeklyPaymentFromWeeks] settlementPercent:', this.settlementPercent);
-       console.log('[calculateWeeklyPaymentFromWeeks] programFeePercent:', this.programFeePercent);
-       console.log('[calculateWeeklyPaymentFromWeeks] bankingFee:', this.bankingFee);
-
 
        // Formula: totalProgramCost = settlementAmount + programFee
        // netPerWeek = totalProgramCost / numberOfWeeks (exact division)
@@ -656,21 +633,10 @@ export default class PaymentPlanEditorV2 extends LightningElement {
            totalProgramCost = settlementAmount + programFee;
        }
 
-
-       console.log('[calculateWeeklyPaymentFromWeeks] settlementAmount:', settlementAmount);
-       console.log('[calculateWeeklyPaymentFromWeeks] programFee:', programFee);
-       console.log('[calculateWeeklyPaymentFromWeeks] totalProgramCost:', totalProgramCost);
-
-
        // Use exact division - bypass Apex's CEIL logic
        // weeklyPayment = (totalProgramCost / numberOfWeeks) + bankingFee
        const netPerWeek = totalProgramCost / numberOfWeeks;
        const weeklyPayment = Math.round((netPerWeek + bankingFee) * 100) / 100; // Round to cents
-
-
-       console.log('[calculateWeeklyPaymentFromWeeks] netPerWeek:', netPerWeek);
-       console.log('[calculateWeeklyPaymentFromWeeks] weeklyPayment:', weeklyPayment);
-
 
        // Update target payment amount - this should update the Desired Payment input
        this.targetPaymentAmount = weeklyPayment;
@@ -678,10 +644,6 @@ export default class PaymentPlanEditorV2 extends LightningElement {
 
        // Sync the percent from the new amount
        this._syncPercentFromAmount(weeklyPayment);
-
-
-       console.log('[calculateWeeklyPaymentFromWeeks] Updated targetPaymentAmount to:', this.targetPaymentAmount);
-
 
        // Trigger recalculation to update summary stats and schedule
        try {
@@ -691,11 +653,9 @@ export default class PaymentPlanEditorV2 extends LightningElement {
            // Override programLength with user-entered weeks (bypass Apex's CEIL)
            if (this.calculations && numberOfWeeks) {
                this.calculations.programLength = numberOfWeeks;
-               console.log('[calculateWeeklyPaymentFromWeeks] Overrode programLength to:', numberOfWeeks);
            }
 
 
-           console.log('[calculateWeeklyPaymentFromWeeks] performCalculations completed');
        } catch (e) {
            console.error('[calculateWeeklyPaymentFromWeeks] Error in performCalculations:', e);
        }
@@ -734,10 +694,6 @@ export default class PaymentPlanEditorV2 extends LightningElement {
 
        // Use CEIL like Apex does
        const weeks = Math.ceil(totalProgramCost / netPerWeek);
-
-
-       console.log('[_calculateWeeksFromPayment] weeklyPayment:', weeklyPayment, 'netPerWeek:', netPerWeek, 'weeks:', weeks);
-
 
        return weeks;
    }
