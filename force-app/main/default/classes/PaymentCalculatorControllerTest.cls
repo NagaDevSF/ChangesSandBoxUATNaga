@@ -1919,4 +1919,101 @@ public class PaymentCalculatorControllerTest {
         Test.stopTest();
     }
 
+    // ========== Tests for selectedProductCodes persistence via Configuration_JSON__c ==========
+
+    /**
+     * Test: saveDraftV2 persists selectedProductCodes in Configuration_JSON__c
+     * and loadDrafts returns them in the config map.
+     */
+    @isTest
+    static void testSelectedProductCodes_SaveAndLoad() {
+        Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
+
+        Map<String, Object> config = new Map<String, Object>{
+            'programType' => 'DCG_MOD',
+            'selectedProductCodes' => new List<String>{ 'LEGAL_MONITORING' }
+        };
+
+        Map<String, Object> calcs = new Map<String, Object>{
+            'totalDebt' => 50000,
+            'weeklyPayment' => 500,
+            'numberOfWeeks' => 50
+        };
+
+        Test.startTest();
+        Id draftId = PaymentCalculatorController.saveDraftV2(opp.Id, 'Product Codes Test', config, null, calcs);
+        Test.stopTest();
+
+        // Verify Configuration_JSON__c contains selectedProductCodes
+        PaymentDraft__c draft = [
+            SELECT Id, Configuration_JSON__c
+            FROM PaymentDraft__c WHERE Id = :draftId
+        ];
+        System.assertNotEquals(null, draft.Configuration_JSON__c, 'Configuration_JSON__c should be populated');
+        System.assert(draft.Configuration_JSON__c.contains('LEGAL_MONITORING'), 'JSON should contain LEGAL_MONITORING');
+
+        // Verify loadDrafts returns selectedProductCodes in config
+        List<Map<String, Object>> loaded = PaymentCalculatorController.loadDrafts(opp.Id);
+        Map<String, Object> loadedConfig = (Map<String, Object>)loaded[0].get('config');
+        Object codes = loadedConfig.get('selectedProductCodes');
+        System.assertNotEquals(null, codes, 'selectedProductCodes should be returned from loadDrafts');
+        List<Object> codeList = (List<Object>) codes;
+        System.assertEquals(1, codeList.size(), 'Should have 1 product code');
+        System.assertEquals('LEGAL_MONITORING', (String) codeList[0], 'Product code should be LEGAL_MONITORING');
+    }
+
+    /**
+     * Test: getPrimaryDraft returns selectedProductCodes from Configuration_JSON__c
+     */
+    @isTest
+    static void testSelectedProductCodes_GetPrimaryDraft() {
+        Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
+
+        PaymentDraft__c draft = new PaymentDraft__c(
+            Opportunity__c = opp.Id,
+            Draft_Name__c = 'Primary With Products',
+            Is_Primary__c = true,
+            Is_Active__c = true,
+            Program_Type__c = 'DCG_MOD',
+            Configuration_JSON__c = '{"programType":"DCG_MOD","selectedProductCodes":["LEGAL_MONITORING"]}',
+            Created_By_Calculator__c = true
+        );
+        insert draft;
+
+        Test.startTest();
+        Map<String, Object> primary = PaymentCalculatorController.getPrimaryDraft(opp.Id);
+        Test.stopTest();
+
+        System.assertNotEquals(null, primary, 'Should return primary draft');
+        Map<String, Object> loadedConfig = (Map<String, Object>)primary.get('config');
+        Object codes = loadedConfig.get('selectedProductCodes');
+        System.assertNotEquals(null, codes, 'selectedProductCodes should be in config');
+        List<Object> codeList = (List<Object>) codes;
+        System.assertEquals('LEGAL_MONITORING', (String) codeList[0], 'Should contain LEGAL_MONITORING');
+    }
+
+    /**
+     * Test: loadDrafts handles missing/empty Configuration_JSON__c gracefully
+     */
+    @isTest
+    static void testSelectedProductCodes_NullConfigJSON() {
+        Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
+
+        PaymentDraft__c draft = new PaymentDraft__c(
+            Opportunity__c = opp.Id,
+            Draft_Name__c = 'No JSON Draft',
+            Is_Active__c = true,
+            Program_Type__c = 'DCG_MOD',
+            Created_By_Calculator__c = true
+        );
+        insert draft;
+
+        Test.startTest();
+        List<Map<String, Object>> loaded = PaymentCalculatorController.loadDrafts(opp.Id);
+        Test.stopTest();
+
+        Map<String, Object> loadedConfig = (Map<String, Object>)loaded[0].get('config');
+        System.assertEquals(null, loadedConfig.get('selectedProductCodes'), 'selectedProductCodes should be null when no JSON');
+    }
+
 }
