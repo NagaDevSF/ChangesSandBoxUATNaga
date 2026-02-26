@@ -94,6 +94,7 @@ export default class PaymentPlanEditor extends LightningElement {
     isModifyPreviewLoading = false;
     isModifySaving = false;
     _modifyDebounceTimer = null;
+    _modifyPreviewRequestId = 0;
 
     // Wire Fees state
     @track wireFeeMap = {};         // Map of Schedule Item ID to array of Wire Fees (object needs @track)
@@ -180,6 +181,12 @@ export default class PaymentPlanEditor extends LightningElement {
         // Picklist values are now loaded automatically via @wire(getPicklistValues) adapters
         // Only need to load plans here
         await this.loadPlans();
+    }
+
+    disconnectedCallback() {
+        if (this._modifyDebounceTimer) {
+            clearTimeout(this._modifyDebounceTimer);
+        }
     }
 
     // ============ DATA LOADING METHODS ============
@@ -1930,12 +1937,15 @@ export default class PaymentPlanEditor extends LightningElement {
             return;
         }
         this.isModifyPreviewLoading = true;
+        const requestId = ++this._modifyPreviewRequestId;
         try {
             const result = await previewPlanModification({
                 planId: this.selectedPlanId,
                 modificationType: this.modifyModalType,
                 newValue: this.modifyModalValue
             });
+            // Ignore stale responses from superseded requests
+            if (requestId !== this._modifyPreviewRequestId) return;
             if (result) {
                 this.modifyPreviewItems = result.scheduleItems || [];
                 this.modifyPreviewSummary = {
@@ -1945,11 +1955,14 @@ export default class PaymentPlanEditor extends LightningElement {
                 };
             }
         } catch (error) {
+            if (requestId !== this._modifyPreviewRequestId) return;
             this.modifyPreviewItems = [];
             this.modifyPreviewSummary = null;
             this.showToast('Warning', this.reduceErrors(error), 'warning');
         } finally {
-            this.isModifyPreviewLoading = false;
+            if (requestId === this._modifyPreviewRequestId) {
+                this.isModifyPreviewLoading = false;
+            }
         }
     }
 

@@ -3873,8 +3873,9 @@ public with sharing class PaymentPlanEditorController {
             result.newPlan.Schedule_Item_Count__c = result.newItems.size();
             update result.newPlan;
 
-            // Update Opportunity field
+            // Update Opportunity fields
             Opportunity oppUpdate = new Opportunity(Id = result.opp.Id);
+            oppUpdate.Number_of_Weeks__c = result.numberOfPayments;
             if (modificationType == 'WEEKLY_PAYMENT') {
                 oppUpdate.Est_weekly_payment__c = newValue;
                 System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Updating Opp Est_weekly_payment__c to ' + newValue);
@@ -4090,7 +4091,7 @@ public with sharing class PaymentPlanEditorController {
 
         // Calculate last payment (absorbs remainder)
         Decimal lastPaymentProgramCost = remainingProgramCost - (baseProgramCostPerPayment * (remainingCount - 1));
-        lastPaymentProgramCost = lastPaymentProgramCost.setScale(2, RoundingMode.HALF_UP);
+        lastPaymentProgramCost = Math.max(0, lastPaymentProgramCost).setScale(2, RoundingMode.HALF_UP);
         Decimal lastWeeklyPayment = lastPaymentProgramCost + bankingFee;
 
         // Clone plan for new version
@@ -4111,6 +4112,7 @@ public with sharing class PaymentPlanEditorController {
         newPlan.Setup_Fee__c = totalSetupFee;
         newPlan.Setup_Fee_Payments__c = setupFeePaymentsTotal;
         newPlan.Program_Fee_Percentage__c = programFeePercentage;
+        newPlan.Total_Program_Cost__c = totalProgramCost;
         newPlan.Program_Type__c = opp.Program_Type__c;
         newPlan.No_Fee_Program__c = opp.No_Fee_Program__c;
 
