@@ -775,6 +775,14 @@ export default class PaymentPlanEditorV2 extends LightningElement {
    }
 
 
+   handleScheduleUpdate(event) {
+       const items = event.detail.items;
+       if (items && items.length > 0) {
+           this.paymentSchedule = [...items];
+       }
+   }
+
+
    async handleRefresh() {
        try {
            this.isLoading = true;

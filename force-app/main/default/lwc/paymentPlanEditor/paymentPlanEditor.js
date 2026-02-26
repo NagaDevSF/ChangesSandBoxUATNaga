@@ -240,6 +240,11 @@ export default class PaymentPlanEditor extends LightningElement {
 
                 // Load Wired Payments for this plan
                 await this.loadWireFees(planId);
+
+                // Notify parent of loaded schedule items so savings reflect actual DB data
+                this.dispatchEvent(new CustomEvent('scheduleupdate', {
+                    detail: { items: this.scheduleItems }
+                }));
             }
         } catch (error) {
             this.showToast('Error', this.reduceErrors(error), 'error');
@@ -1105,6 +1110,11 @@ export default class PaymentPlanEditor extends LightningElement {
                 }
                 return item;
             });
+
+            // Notify parent of fee changes so savings update in real-time
+            this.dispatchEvent(new CustomEvent('scheduleupdate', {
+                detail: { items: this.pendingItems }
+            }));
         }
     }
 
