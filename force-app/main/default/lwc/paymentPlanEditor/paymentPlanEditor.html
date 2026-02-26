@@ -636,6 +636,12 @@
                         <button type="button" class="btn btn-teal" onclick={handleRecalculateRemainingBalance}>
                             Recalculate Remaining
                         </button>
+                        <button type="button" class="btn btn-outline" onclick={handleOpenModifyWeeklyPayment}>
+                            Modify Weekly Payment
+                        </button>
+                        <button type="button" class="btn btn-outline" onclick={handleOpenModifyEstTotalDebt}>
+                            Modify Est Total Debt
+                        </button>
                     </nav>
                     <nav class="footer-right" aria-label="Save actions">
                         <button type="button" class="btn btn-gray" onclick={handleCancelEdit}>
@@ -653,6 +659,12 @@
                         </button>
                         <button type="button" class="btn btn-teal" onclick={handleRecalculateRemainingBalance}>
                             Recalculate Remaining
+                        </button>
+                        <button type="button" class="btn btn-outline" onclick={handleOpenModifyWeeklyPayment}>
+                            Modify Weekly Payment
+                        </button>
+                        <button type="button" class="btn btn-outline" onclick={handleOpenModifyEstTotalDebt}>
+                            Modify Est Total Debt
                         </button>
                     </nav>
                     <nav class="footer-right" aria-label="Version actions">
@@ -724,6 +736,115 @@
                             variant="brand"
                             label="Save"
                             onclick={handleSaveWireFee}>
+                        </lightning-button>
+                    </footer>
+                </section>
+            </article>
+        </dialog>
+        <div class="slds-backdrop slds-backdrop_open" aria-hidden="true"></div>
+    </template>
+
+    <!-- Modify Plan Modal -->
+    <template lwc:if={showModifyModal}>
+        <dialog class="modify-modal slds-modal slds-fade-in-open" open aria-modal="true" aria-labelledby="modify-modal-heading">
+            <article class="slds-modal__container">
+                <header class="slds-modal__header modify-modal-header">
+                    <h2 id="modify-modal-heading" class="slds-modal__title slds-hyphenate">{modifyModalTitle}</h2>
+                    <p class="modify-modal-subtitle">Creates a new Draft version with recalculated schedule</p>
+                </header>
+
+                <section class="slds-modal__content slds-p-around_medium modify-modal-body">
+                    <!-- Input Field -->
+                    <div class="modify-input-row">
+                        <lightning-input
+                            type="number"
+                            label={modifyModalLabel}
+                            value={modifyModalValue}
+                            formatter="currency"
+                            step="0.01"
+                            min="0"
+                            onchange={handleModifyValueChange}
+                            class="modify-value-input">
+                        </lightning-input>
+                    </div>
+
+                    <!-- Summary Metrics -->
+                    <template lwc:if={modifyPreviewSummary}>
+                        <div class="modify-summary-row">
+                            <div class="modify-summary-item">
+                                <span class="modify-summary-label">Number of Payments</span>
+                                <strong class="modify-summary-value">{modifyPreviewNumberOfPayments}</strong>
+                            </div>
+                            <div class="modify-summary-item">
+                                <span class="modify-summary-label">Total Program Cost</span>
+                                <strong class="modify-summary-value">{modifyPreviewTotalProgramCost}</strong>
+                            </div>
+                            <div class="modify-summary-item">
+                                <span class="modify-summary-label">Weekly Payment</span>
+                                <strong class="modify-summary-value">{modifyPreviewWeeklyPayment}</strong>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Loading Spinner for Preview -->
+                    <template lwc:if={isModifyPreviewLoading}>
+                        <div class="modify-preview-loading">
+                            <lightning-spinner alternative-text="Calculating preview..." size="small"></lightning-spinner>
+                            <p class="slds-m-top_small slds-text-body_small">Calculating preview...</p>
+                        </div>
+                    </template>
+
+                    <!-- Preview Table -->
+                    <template lwc:if={hasModifyPreviewItems}>
+                        <div class="modify-preview-table-container">
+                            <table class="modify-preview-table" role="grid" aria-label="Preview schedule items">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" class="th-center th-rownum">#</th>
+                                        <th scope="col" class="th-center th-date">Date</th>
+                                        <th scope="col" class="th-right th-currency">Draft</th>
+                                        <th scope="col" class="th-right th-currency-sm">Setup</th>
+                                        <th scope="col" class="th-right th-currency-sm">Program</th>
+                                        <th scope="col" class="th-right th-currency-sm">Banking</th>
+                                        <th scope="col" class="th-right th-currency">Savings</th>
+                                        <th scope="col" class="th-center th-status">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={modifyPreviewItemsFormatted} for:item="item">
+                                        <tr key={item.tempId}>
+                                            <td class="td-center">{item.rowNumber}</td>
+                                            <td class="td-center">{item.paymentDateDisplay}</td>
+                                            <td class="td-right td-currency">
+                                                <data class={item.draftAmountClass}>{item.draftAmountFormatted}</data>
+                                            </td>
+                                            <td class="td-right td-currency">{item.setupFeeFormatted}</td>
+                                            <td class="td-right td-currency">{item.programFeeFormatted}</td>
+                                            <td class="td-right td-currency">{item.bankingFeeFormatted}</td>
+                                            <td class="td-right td-currency">{item.savingsBalanceFormatted}</td>
+                                            <td class="td-center">
+                                                <mark class={item.statusBadgeClass}>{item.status}</mark>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </template>
+
+                    <!-- Footer Buttons -->
+                    <footer class="modify-modal-footer slds-m-top_medium">
+                        <lightning-button
+                            variant="neutral"
+                            label="Cancel"
+                            onclick={handleCloseModifyModal}
+                            class="slds-m-right_x-small">
+                        </lightning-button>
+                        <lightning-button
+                            variant="brand"
+                            label="Save as New Payment Plan Version"
+                            onclick={handleSaveModification}
+                            disabled={isSaveModificationDisabled}>
                         </lightning-button>
                     </footer>
                 </section>

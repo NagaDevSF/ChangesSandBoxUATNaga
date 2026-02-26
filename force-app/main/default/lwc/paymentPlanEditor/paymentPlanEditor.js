@@ -22,6 +22,8 @@ import saveWireFee from '@salesforce/apex/PaymentPlanEditorController.saveWireFe
 import deleteWireFee from '@salesforce/apex/PaymentPlanEditorController.deleteWireFee';
 import updateWireFee from '@salesforce/apex/PaymentPlanEditorController.updateWireFee';
 import updateScheduleItemFlag from '@salesforce/apex/PaymentPlanEditorController.updateScheduleItemFlag';
+import previewPlanModification from '@salesforce/apex/PaymentPlanEditorController.previewPlanModification';
+import savePlanModification from '@salesforce/apex/PaymentPlanEditorController.savePlanModification';
 
 // Default fallback if dynamic fetch fails
 const DEFAULT_STATUS_OPTIONS = [
@@ -36,6 +38,7 @@ const EDITABLE_STATUS = 'Scheduled';
 
 // Debounce delay in milliseconds
 const DEBOUNCE_DELAY = 300;
+const MODIFY_DEBOUNCE_DELAY = 500;
 
 const CURRENCY_FORMATTER = new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -80,6 +83,17 @@ export default class PaymentPlanEditor extends LightningElement {
     wireModalRowNumber = null;
     wireFeeType = 'Wire Fee';       // Default wire fee type
     wireFeeAmount = null;           // Wire fee amount (optional)
+
+    // Modify Plan Modal state
+    showModifyModal = false;
+    modifyModalType = null;              // 'WEEKLY_PAYMENT' or 'EST_TOTAL_DEBT'
+    modifyModalValue = null;
+    modifyModalOriginalValue = null;
+    @track modifyPreviewItems = [];
+    modifyPreviewSummary = null;
+    isModifyPreviewLoading = false;
+    isModifySaving = false;
+    _modifyDebounceTimer = null;
 
     // Wire Fees state
     @track wireFeeMap = {};         // Map of Schedule Item ID to array of Wire Fees (object needs @track)
@@ -1824,6 +1838,177 @@ export default class PaymentPlanEditor extends LightningElement {
             this.showToast('Error', 'Failed to update wire fee: ' + errorMessage, 'error');
             // Refresh to get the original value back
             this.loadWireFees(this.selectedPlanId);
+        }
+    }
+
+    // ============ MODIFY PLAN MODAL METHODS ============
+
+    get modifyModalTitle() {
+        return this.modifyModalType === 'WEEKLY_PAYMENT'
+            ? 'Modify Weekly Payment'
+            : 'Modify Estimated Total Debt';
+    }
+
+    get modifyModalLabel() {
+        return this.modifyModalType === 'WEEKLY_PAYMENT'
+            ? 'Weekly Payment Amount'
+            : 'Estimated Total Debt';
+    }
+
+    get modifyPreviewItemsFormatted() {
+        return (this.modifyPreviewItems || []).map((item, index) => ({
+            ...item,
+            rowNumber: item.rowNumber || index + 1,
+            draftAmountFormatted: this.formatCurrency(item.draftAmount || 0),
+            setupFeeFormatted: this.formatCurrency(item.setupFee || 0),
+            programFeeFormatted: this.formatCurrency(item.programFee || 0),
+            bankingFeeFormatted: this.formatCurrency(item.bankingFee || 0),
+            savingsBalanceFormatted: this.formatCurrency(item.savingsBalance || 0),
+            paymentDateDisplay: this.formatDate(item.paymentDate),
+            statusBadgeClass: this.getStatusBadgeClass(item.status || 'Scheduled'),
+            draftAmountClass: this.getAmountClass(item.draftAmount || 0),
+            tempId: `preview_${index}`
+        }));
+    }
+
+    get hasModifyPreviewItems() {
+        return this.modifyPreviewItems && this.modifyPreviewItems.length > 0;
+    }
+
+    get modifyPreviewNumberOfPayments() {
+        return this.modifyPreviewSummary?.numberOfPayments || 0;
+    }
+
+    get modifyPreviewTotalProgramCost() {
+        return this.formatCurrency(this.modifyPreviewSummary?.totalProgramCost || 0);
+    }
+
+    get modifyPreviewWeeklyPayment() {
+        return this.formatCurrency(this.modifyPreviewSummary?.weeklyPayment || 0);
+    }
+
+    get isSaveModificationDisabled() {
+        return !this.hasModifyPreviewItems || this.isModifyPreviewLoading || this.isModifySaving;
+    }
+
+    handleOpenModifyWeeklyPayment() {
+        this.modifyModalType = 'WEEKLY_PAYMENT';
+        this.modifyModalOriginalValue = this.paymentPlan?.Weekly_Payment__c || 0;
+        this.modifyModalValue = this.modifyModalOriginalValue;
+        this.modifyPreviewItems = [];
+        this.modifyPreviewSummary = null;
+        this.showModifyModal = true;
+        this._triggerModifyPreview();
+    }
+
+    handleOpenModifyEstTotalDebt() {
+        this.modifyModalType = 'EST_TOTAL_DEBT';
+        this.modifyModalOriginalValue = this.paymentPlan?.Total_Debt__c || 0;
+        this.modifyModalValue = this.modifyModalOriginalValue;
+        this.modifyPreviewItems = [];
+        this.modifyPreviewSummary = null;
+        this.showModifyModal = true;
+        this._triggerModifyPreview();
+    }
+
+    handleModifyValueChange(event) {
+        this.modifyModalValue = Number(event.target.value) || 0;
+        if (this._modifyDebounceTimer) {
+            // eslint-disable-next-line @lwc/lwc/no-async-operation
+            clearTimeout(this._modifyDebounceTimer);
+        }
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        this._modifyDebounceTimer = setTimeout(() => {
+            this._triggerModifyPreview();
+        }, MODIFY_DEBOUNCE_DELAY);
+    }
+
+    async _triggerModifyPreview() {
+        if (!this.modifyModalValue || this.modifyModalValue <= 0) {
+            this.modifyPreviewItems = [];
+            this.modifyPreviewSummary = null;
+            return;
+        }
+        this.isModifyPreviewLoading = true;
+        try {
+            const result = await previewPlanModification({
+                planId: this.selectedPlanId,
+                modificationType: this.modifyModalType,
+                newValue: this.modifyModalValue
+            });
+            if (result) {
+                this.modifyPreviewItems = result.scheduleItems || [];
+                this.modifyPreviewSummary = {
+                    numberOfPayments: result.numberOfPayments,
+                    totalProgramCost: result.totalProgramCost,
+                    weeklyPayment: result.weeklyPayment
+                };
+            }
+        } catch (error) {
+            this.modifyPreviewItems = [];
+            this.modifyPreviewSummary = null;
+            this.showToast('Warning', this.reduceErrors(error), 'warning');
+        } finally {
+            this.isModifyPreviewLoading = false;
+        }
+    }
+
+    handleCloseModifyModal() {
+        this.showModifyModal = false;
+        this.modifyModalType = null;
+        this.modifyModalValue = null;
+        this.modifyModalOriginalValue = null;
+        this.modifyPreviewItems = [];
+        this.modifyPreviewSummary = null;
+        if (this._modifyDebounceTimer) {
+            clearTimeout(this._modifyDebounceTimer);
+        }
+    }
+
+    async handleSaveModification() {
+        if (this.isModifySaving) return;
+        this.isModifySaving = true;
+        this.isLoading = true;
+        try {
+            const result = await savePlanModification({
+                planId: this.selectedPlanId,
+                modificationType: this.modifyModalType,
+                newValue: this.modifyModalValue
+            });
+
+            if (result) {
+                const newPlanId = result.paymentPlan.Id;
+
+                // Update local state (same pattern as handleRecalculateRemainingBalance)
+                this.selectedPlanId = newPlanId;
+                this.paymentPlan = result.paymentPlan;
+                this.scheduleItems = this.processItems(result.scheduleItems || []);
+                this.originalItems = this.deepCloneItems(this.scheduleItems);
+
+                this.pendingItems = [];
+                this.hasPendingChanges = false;
+                this.isEditMode = false;
+                this.activeTab = 'Active';
+
+                // Close modal first
+                const typeLabel = this.modifyModalType === 'WEEKLY_PAYMENT'
+                    ? 'Weekly Payment' : 'Estimated Total Debt';
+                this.handleCloseModifyModal();
+
+                // Refresh plans list and select the new plan
+                await this.refreshPlans(newPlanId);
+
+                this.showToast(
+                    'Success',
+                    typeLabel + ' modified. New version saved as Draft. Click Activate to make it active.',
+                    'success'
+                );
+            }
+        } catch (error) {
+            this.showToast('Error', this.reduceErrors(error), 'error');
+        } finally {
+            this.isModifySaving = false;
+            this.isLoading = false;
         }
     }
 
