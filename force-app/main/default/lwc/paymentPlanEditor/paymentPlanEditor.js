@@ -1437,10 +1437,7 @@ export default class PaymentPlanEditor extends LightningElement {
             const result = await reactivatePaymentPlan({ suspendedPlanId: this.selectedPlanId });
 
             if (result) {
-                const newPlanId = result.paymentPlan.Id;
-
-                // Update local state with new reactivated plan
-                this.selectedPlanId = newPlanId;
+                // Update local state — same plan, now Active
                 this.paymentPlan = result.paymentPlan;
                 this.scheduleItems = this.processItems(result.scheduleItems || []);
                 this.originalItems = this.deepCloneItems(this.scheduleItems);
@@ -1451,8 +1448,8 @@ export default class PaymentPlanEditor extends LightningElement {
                 this.isEditMode = false;
                 this.activeTab = 'Active';
 
-                // Refresh plans list and select the new plan
-                await this.refreshPlans(newPlanId);
+                // Refresh plans list
+                await this.refreshPlans(this.selectedPlanId);
 
                 // Trigger confetti celebration
                 this.triggerConfetti();
@@ -1468,7 +1465,7 @@ export default class PaymentPlanEditor extends LightningElement {
 
     async confirmReactivate() {
         return LightningConfirm.open({
-            message: 'This will create a new version from the pre-suspension plan with future Cancelled items restored to Scheduled. Past items will remain Cancelled.',
+            message: 'This will set the plan back to Active and restore all future Cancelled items to Scheduled.',
             label: 'Reactivate Payment Plan',
             theme: 'info'
         });

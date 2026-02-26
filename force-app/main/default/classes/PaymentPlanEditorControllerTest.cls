@@ -1795,8 +1795,12 @@ private class PaymentPlanEditorControllerTest {
             System.assertNotEquals(null, reactivateResult, 'Reactivate should return wrapper');
             System.assertEquals('Active', reactivateResult.paymentPlan.Status__c,
                 'Reactivated plan should have Active status');
-            System.assertEquals('Reactivation', reactivateResult.paymentPlan.Version_Type__c,
-                'Reactivated plan should have Reactivation version type');
+
+            // Verify the same plan was reactivated (no new plan created)
+            System.assertEquals(suspendedPlanId, reactivateResult.paymentPlan.Id,
+                'Should reactivate the same plan, not create a new one');
+            System.assertEquals(true, reactivateResult.paymentPlan.Is_Active__c,
+                'Reactivated plan should be marked active');
 
             // Verify that Cancelled items were restored to Scheduled
             Boolean hasScheduledItems = false;
@@ -1807,17 +1811,6 @@ private class PaymentPlanEditorControllerTest {
                 }
             }
             System.assert(hasScheduledItems, 'Reactivated plan should have Scheduled items');
-
-            // Verify the suspended plan was archived
-            PaymentPlan__c archivedSuspended = [
-                SELECT Status__c, Is_Active__c
-                FROM PaymentPlan__c
-                WHERE Id = :suspendedPlanId
-            ];
-            System.assertEquals('Archived', archivedSuspended.Status__c,
-                'Suspended plan should be archived after reactivation');
-            System.assertEquals(false, archivedSuspended.Is_Active__c,
-                'Suspended plan should not be active after reactivation');
         } catch (AuraHandledException e) {
             // Some orgs may have validation rules that prevent this flow
             System.assert(true, 'Exception caught - may be due to org-specific validation');

@@ -2791,8 +2791,7 @@ public with sharing class PaymentPlanEditorController {
 
     /**
      * @description Reactivate a suspended payment plan
-     * Finds the previous (pre-suspension) version, clones it as a new Active version,
-     * and restores Cancelled items back to Scheduled.
+     * Sets the plan back to Active and restores future Cancelled items to Scheduled.
      * @param suspendedPlanId The suspended Payment Plan ID
      * @return Updated PaymentPlanWrapper
      */
@@ -2840,124 +2839,36 @@ public with sharing class PaymentPlanEditorController {
 
             System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Reactivating plan: ' + suspendedPlan.Name + ' | Version: ' + suspendedPlan.Version_Number__c);
 
-            // Find the previous version (highest version number less than the suspended version, same Opportunity)
-            List<PaymentPlan__c> previousPlans = [
-                SELECT Id, Name, Opportunity__c, Version_Number__c, Status__c,
-                       Is_Active__c, Version_Type__c, Source__c, Version_Notes__c,
-                       Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
-                       Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
-                       Calculation_Timestamp__c, Schedule_Item_Count__c,
-                       Weekly_Payment__c, Monthly_Payment__c, Number_of_Payments__c,
-                       Total_Debt__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
-                       Total_Program_Cost__c, Settlement_Amount__c, Program_Fee_Amount__c,
-                       First_Payment_Date__c, Program_Type__c, Contract__c
-                FROM PaymentPlan__c
-                WHERE Opportunity__c = :suspendedPlan.Opportunity__c
-                  AND Version_Number__c < :suspendedPlan.Version_Number__c
-                ORDER BY Version_Number__c DESC
-                LIMIT 1
-            ];
+            // Simply set the plan back to Active
+            suspendedPlan.Status__c = VERSION_STATUS_ACTIVE;
+            suspendedPlan.Is_Active__c = true;
+            suspendedPlan.Version_Notes__c = 'Plan reactivated on ' + DateTime.now().format() + '.';
+            update suspendedPlan;
+            System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Plan status set to Active');
 
-            if (previousPlans.isEmpty()) {
-                System.debug(LoggingLevel.WARN, LOG_WARN + ' | ' + methodName + ' | No previous version found');
-                throw new AuraHandledException(VALIDATION_SYMBOL + 'No previous version found to reactivate from.');
-            }
-
-            PaymentPlan__c previousPlan = previousPlans[0];
-            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Previous version: ' + previousPlan.Name + ' | Version: ' + previousPlan.Version_Number__c);
-
-            // Get the next version number
-            Integer maxVersion = 0;
-            List<AggregateResult> maxVersionResult = [
-                SELECT MAX(Version_Number__c) maxVer
-                FROM PaymentPlan__c
-                WHERE Opportunity__c = :suspendedPlan.Opportunity__c
-            ];
-            if (maxVersionResult.size() > 0 && maxVersionResult[0].get('maxVer') != null) {
-                maxVersion = Integer.valueOf(maxVersionResult[0].get('maxVer'));
-            }
-            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Max existing version: ' + maxVersion + ' | New version: ' + (maxVersion + 1));
-
-            // Archive all existing plans for this Opportunity
-            List<PaymentPlan__c> allPlans = [
-                SELECT Id, Status__c, Is_Active__c
-                FROM PaymentPlan__c
-                WHERE Opportunity__c = :suspendedPlan.Opportunity__c
+            // Restore future Cancelled items back to Scheduled
+            Date today = Date.today();
+            List<Payment_Schedule_Item__c> cancelledItems = [
+                SELECT Id, Status__c, Payment_Date__c
+                FROM Payment_Schedule_Item__c
+                WHERE Payment_Plan__c = :suspendedPlanId
+                  AND Status__c = :STATUS_CANCELLED
+                  AND Payment_Date__c > :today
                 LIMIT :MAX_QUERY_LIMIT
             ];
-            System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + allPlans.size() + ' plan(s) to archive');
+            System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + cancelledItems.size() + ' future cancelled items to restore');
 
-            for (PaymentPlan__c p : allPlans) {
-                p.Status__c = VERSION_STATUS_ARCHIVED;
-                p.Is_Active__c = false;
+            for (Payment_Schedule_Item__c item : cancelledItems) {
+                item.Status__c = STATUS_SCHEDULED;
             }
 
-            if (!allPlans.isEmpty()) {
-                update allPlans;
-                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Archived ' + allPlans.size() + ' plan(s)');
+            if (!cancelledItems.isEmpty()) {
+                update cancelledItems;
+                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Restored ' + cancelledItems.size() + ' items to Scheduled');
             }
 
-            // Clone the PREVIOUS version (not the suspended one) as the new active plan
-            PaymentPlan__c newPlan = previousPlan.clone(false, true, false, false);
-            newPlan.Version_Number__c = maxVersion + 1;
-            newPlan.Status__c = VERSION_STATUS_ACTIVE;
-            newPlan.Is_Active__c = true;
-            newPlan.Version_Type__c = VERSION_TYPE_REACTIVATION;
-            newPlan.Source__c = SOURCE_UI;
-            newPlan.Version_Notes__c = 'Plan reactivated on ' + DateTime.now().format() + '. Future items set to Scheduled, past items kept as-is.';
-            newPlan.Calculation_Timestamp__c = DateTime.now();
-            insert newPlan;
-            System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Created reactivation plan: ' + newPlan.Id);
-
-            // Get schedule items from the previous version (not the suspended one)
-            Id previousPlanId = previousPlan.Id;
-            String fields = getScheduleItemQueryFields();
-            String query = 'SELECT ' + fields +
-                ' FROM Payment_Schedule_Item__c WHERE Payment_Plan__c = :previousPlanId ORDER BY Payment_Number__c ASC LIMIT ' + MAX_QUERY_LIMIT;
-            List<Payment_Schedule_Item__c> previousItems = Database.query(query);
-            System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + previousItems.size() + ' schedule items from previous version');
-
-            // Clone items to new plan; past items keep their original status,
-            // only future Scheduled items are restored to Scheduled
-            List<Payment_Schedule_Item__c> newItems = new List<Payment_Schedule_Item__c>();
-            Integer futureScheduledCount = 0;
-            Integer pastKeptCount = 0;
-            Date today = Date.today();
-            for (Payment_Schedule_Item__c item : previousItems) {
-                Payment_Schedule_Item__c newItem = item.clone(false, true, false, false);
-                newItem.Payment_Plan__c = newPlan.Id;
-
-                // Past items: keep their original status as-is
-                // Future items: ensure Scheduled status is set
-                if (item.Payment_Date__c != null && item.Payment_Date__c > today) {
-                    if (item.Status__c == STATUS_CANCELLED) {
-                        newItem.Status__c = STATUS_SCHEDULED;
-                    }
-                    futureScheduledCount++;
-                } else {
-                    pastKeptCount++;
-                }
-
-                newItems.add(newItem);
-            }
-            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Future items: ' + futureScheduledCount);
-            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Past items kept as-is: ' + pastKeptCount);
-
-            if (!newItems.isEmpty()) {
-                recalculateDraftNumbers(newItems);
-                insert newItems;
-                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted ' + newItems.size() + ' schedule items');
-
-                createFeeRecordsForScheduleItems(newItems);
-                carryOverWireFees(previousItems, newItems);
-            }
-
-            // Update the new plan's item count
-            newPlan.Schedule_Item_Count__c = newItems.size();
-            update newPlan;
-
-            // Re-query the newPlan to get the user relationship fields
-            newPlan = [
+            // Re-query the plan to get relationship fields
+            suspendedPlan = [
                 SELECT Id, Name, Opportunity__c, Contract__c, Program_Type__c,
                        Total_Debt__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
                        Total_Program_Cost__c, Weekly_Payment__c, Monthly_Payment__c,
@@ -2969,13 +2880,13 @@ public with sharing class PaymentPlanEditorController {
                        Version_Type__c, Version_Notes__c, Schedule_Item_Count__c,
                        CreatedBy.Name, LastModifiedBy.Name
                 FROM PaymentPlan__c
-                WHERE Id = :newPlan.Id
+                WHERE Id = :suspendedPlanId
                 LIMIT 1
             ];
 
             System.debug(LoggingLevel.DEBUG, LOG_SUCCESS + ' | ' + methodName + ' | Plan reactivated successfully');
             System.debug(LoggingLevel.DEBUG, LOG_EXIT + ' | ' + CLASS_NAME + '.' + methodName + ' | SUCCESS');
-            return buildPaymentPlanWrapper(newPlan, true);
+            return buildPaymentPlanWrapper(suspendedPlan, true);
 
         } catch (Exception e) {
             Database.rollback(sp);
