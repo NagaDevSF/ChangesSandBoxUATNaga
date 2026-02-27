@@ -3992,7 +3992,12 @@ public with sharing class PaymentPlanEditorController {
 
         if (modType == 'EST_TOTAL_DEBT') {
             estimatedTotalDebt = newValue;
-            weeklyPayment = currentPlan.Weekly_Payment__c != null ? currentPlan.Weekly_Payment__c : 0;
+            // Get weekly payment from plan, fall back to Opportunity, then calculate from scheduled items
+            weeklyPayment = currentPlan.Weekly_Payment__c != null && currentPlan.Weekly_Payment__c > 0
+                ? currentPlan.Weekly_Payment__c
+                : (opp.Est_weekly_payment__c != null && opp.Est_weekly_payment__c > 0
+                    ? opp.Est_weekly_payment__c : 0);
+            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | EST_TOTAL_DEBT: weeklyPayment sourced as ' + weeklyPayment);
         } else {
             // WEEKLY_PAYMENT
             estimatedTotalDebt = opp.Estimated_Total_Debt__c != null ? opp.Estimated_Total_Debt__c : 0;
@@ -4070,29 +4075,45 @@ public with sharing class PaymentPlanEditorController {
             throw new AuraHandledException(VALIDATION_SYMBOL + 'Debt is already paid off. Remaining program cost: $' + remainingProgramCost.setScale(2));
         }
 
-        // Calculate remaining count (number of payments adjusts based on new values)
-        Integer remainingCount = (Integer) Math.ceil(remainingProgramCost / baseProgramCostPerPayment);
+        // Calculate remaining count and last payment based on modification type
+        Integer remainingCount;
+        Decimal lastWeeklyPayment;
 
-        // Cap at max program weeks
-        Integer maxWeeks = config.maxProgramWeeks != null ? config.maxProgramWeeks.intValue() : 260;
-        if ((nonScheduledItems.size() + remainingCount) > maxWeeks) {
-            remainingCount = maxWeeks - nonScheduledItems.size();
-        }
+        if (modType == 'WEEKLY_PAYMENT') {
+            // WEEKLY_PAYMENT: Keep same number of scheduled payments, all use the new weekly payment
+            remainingCount = scheduledItems.size();
+            if (remainingCount <= 0) {
+                throw new AuraHandledException(VALIDATION_SYMBOL + 'No scheduled payments found to modify.');
+            }
+            // All payments use the same weekly payment - no last payment adjustment
+            lastWeeklyPayment = weeklyPayment;
+            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | WEEKLY_PAYMENT: Fixed remainingCount=' + remainingCount + ' from existing scheduled items');
+        } else {
+            // EST_TOTAL_DEBT: Number of payments adjusts based on new debt values
+            remainingCount = (Integer) Math.ceil(remainingProgramCost / baseProgramCostPerPayment);
 
-        if (remainingCount <= 0) {
-            throw new AuraHandledException(VALIDATION_SYMBOL + 'No remaining payments can be scheduled.');
+            // Cap at max program weeks
+            Integer maxWeeks = config.maxProgramWeeks != null ? config.maxProgramWeeks.intValue() : 260;
+            if ((nonScheduledItems.size() + remainingCount) > maxWeeks) {
+                remainingCount = maxWeeks - nonScheduledItems.size();
+            }
+
+            if (remainingCount <= 0) {
+                throw new AuraHandledException(VALIDATION_SYMBOL + 'No remaining payments can be scheduled.');
+            }
+
+            // Recalculate baseProgramCostPerPayment for even distribution (CEILING rounding)
+            baseProgramCostPerPayment = (remainingProgramCost / remainingCount).setScale(2, RoundingMode.CEILING);
+
+            // Calculate last payment (absorbs remainder)
+            Decimal lastPaymentProgramCost = remainingProgramCost - (baseProgramCostPerPayment * (remainingCount - 1));
+            lastPaymentProgramCost = Math.max(0, lastPaymentProgramCost).setScale(2, RoundingMode.HALF_UP);
+            lastWeeklyPayment = lastPaymentProgramCost + bankingFee;
+            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | EST_TOTAL_DEBT: Calculated remainingCount=' + remainingCount);
         }
 
         Integer numberOfPayments = nonScheduledItems.size() + remainingCount;
         System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Remaining Count: ' + remainingCount + ' | Total Payments: ' + numberOfPayments);
-
-        // Recalculate baseProgramCostPerPayment for even distribution (CEILING rounding)
-        baseProgramCostPerPayment = (remainingProgramCost / remainingCount).setScale(2, RoundingMode.CEILING);
-
-        // Calculate last payment (absorbs remainder)
-        Decimal lastPaymentProgramCost = remainingProgramCost - (baseProgramCostPerPayment * (remainingCount - 1));
-        lastPaymentProgramCost = Math.max(0, lastPaymentProgramCost).setScale(2, RoundingMode.HALF_UP);
-        Decimal lastWeeklyPayment = lastPaymentProgramCost + bankingFee;
 
         // Clone plan for new version
         Decimal newVersionNumber = currentPlan.Version_Number__c != null ? currentPlan.Version_Number__c + 1 : 2;
