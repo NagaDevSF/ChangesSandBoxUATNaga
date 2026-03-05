@@ -944,15 +944,27 @@ export default class PaymentPlanEditorV2 extends LightningElement {
 
 
    get summaryWeeklyPayment() {
-       // Always use the value from the last input the user touched
-       // (slider, desired payment, or weeks) — this ensures Save matches what the user sees
-       if (this._lastEditSource === 'slider' && this.targetPaymentAmount > 0) {
-           return this.targetPaymentAmount;
+       // When slider was last used (PERCENT mode), save the same value shown in the display
+       // Display shows: first schedule item's (payment - setup fee)
+       if (this._lastEditSource === 'slider' && this.paymentSchedule && this.paymentSchedule.length > 0) {
+           const first = this.paymentSchedule[0] || {};
+           const payment = first.paymentAmount ?? first.totalPayment ?? first.draftAmount ?? 0;
+           const setup = first.setupFee ?? first.setupFeePortion ?? 0;
+           return Math.max(0, payment - setup);
        }
+       // In Desired Mode or when desired input was last used, use the user's entered value
        if (this._lastEditSource === 'desired' && this.targetPaymentAmount > 0) {
            return this.targetPaymentAmount;
        }
+       // When user manually edits weeks, use the locally calculated payment
        if (this._lastEditSource === 'weeks' && this.targetPaymentAmount > 0) {
+           return this.targetPaymentAmount;
+       }
+       // Fallback for Desired Mode (no _lastEditSource set yet)
+       if (this.isDesiredMode && this.targetPaymentAmount > 0) {
+           return this.targetPaymentAmount;
+       }
+       if (this._isEditingWeeks && this.targetPaymentAmount > 0) {
            return this.targetPaymentAmount;
        }
        // Fallback: use Apex calculation or local computation
