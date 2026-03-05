@@ -760,6 +760,7 @@ export default class PaymentPlanEditorV2 extends LightningElement {
            const weeksToSave = this.summaryProgramLength;
 
 
+
            await updateOpportunityOnly({
                recordId: this.recordId,
                numberOfWeeks: weeksToSave,
