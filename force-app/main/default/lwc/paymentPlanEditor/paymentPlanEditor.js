@@ -2648,23 +2648,61 @@ export default class PaymentPlanEditor extends LightningElement {
         // Get filtered pending items (non-deleted)
         const activeItems = this.pendingItems.filter(item => !item.isDeleted);
 
-        // Update each target row with the source value
+        // Check if the filled field affects savings calculation
+        const affectsSavings = field === 'draftAmount' || field === 'setupFee' ||
+            field === 'programFee' || field === 'bankingFee';
+
+        // Update each target row with the source value and recalculate savings
         this.pendingItems = this.pendingItems.map((item, idx) => {
             // Find the display index (among non-deleted items)
             const displayIndex = activeItems.findIndex(ai => ai.tempId === item.tempId);
 
             if (displayIndex !== -1 && this.fillTargetRows.includes(displayIndex)) {
-                return {
+                const updatedItem = {
                     ...item,
                     [field]: sourceValue,
                     isModified: true
                 };
+
+                // Recalculate savings when a fee/draft field is filled
+                if (affectsSavings) {
+                    const draftAmount = parseFloat(updatedItem.draftAmount) || 0;
+                    const bankingFee = parseFloat(updatedItem.bankingFee) || 0;
+                    const programFee = parseFloat(updatedItem.programFee) || 0;
+                    const setupFee = parseFloat(updatedItem.setupFee) || 0;
+                    const savings = Math.round((draftAmount - bankingFee - programFee - setupFee) * 100) / 100;
+                    updatedItem.savingsBalance = savings;
+                    updatedItem.toEscrowAmount = savings;
+                    updatedItem.savingsBalanceFormatted = this.formatCurrency(savings);
+                    updatedItem.savingsBalanceEdit = this.safeToFixed(savings);
+                    updatedItem.savingsClass = savings < 0 ? 'savings-negative' : 'savings-positive';
+                }
+
+                // Update the edit field for the filled column so the input reflects the new value
+                const editFieldMap = {
+                    'draftAmount': 'draftAmountEdit',
+                    'setupFee': 'setupFeeEdit',
+                    'programFee': 'programFeeEdit',
+                    'bankingFee': 'bankingFeeEdit'
+                };
+                if (editFieldMap[field]) {
+                    updatedItem[editFieldMap[field]] = this.safeToFixed(sourceValue);
+                }
+
+                return updatedItem;
             }
             return item;
         });
 
         // Re-process items to update formatted values
         this.pendingItems = this.processItems(this.pendingItems, true);
+
+        // Notify parent of changes so summary stats update
+        if (affectsSavings) {
+            this.dispatchEvent(new CustomEvent('scheduleupdate', {
+                detail: { items: this.pendingItems }
+            }));
+        }
 
         const count = this.fillTargetRows.length;
         this.showToast('Success', `Filled ${count} cell${count > 1 ? 's' : ''}`, 'success');
