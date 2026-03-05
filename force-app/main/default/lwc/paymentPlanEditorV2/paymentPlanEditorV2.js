@@ -75,6 +75,7 @@ export default class PaymentPlanEditorV2 extends LightningElement {
 
    // Flag to track which field user is editing (prevents infinite loop)
    _isEditingWeeks = false;
+   _lastEditSource = null; // 'slider' | 'desired' | 'weeks' — tracks which input was last changed
 
 
    // Calculation Results
@@ -421,6 +422,8 @@ export default class PaymentPlanEditorV2 extends LightningElement {
    handleTargetPaymentInput(event) {
        const percent = this._setTargetPaymentPercent(parseInt(event.target.value, 10));
        event.target.value = percent;
+       this._lastEditSource = 'slider';
+       this._isEditingWeeks = false;
        if (this.calculateBy === 'PERCENT') {
            const weeklyFromCurrent = (this.currentPayment || 0) * (percent / 100);
            const boundedWeekly = Math.max(this._minimumWeeklyTarget(), weeklyFromCurrent);
@@ -433,6 +436,8 @@ export default class PaymentPlanEditorV2 extends LightningElement {
    handleTargetPaymentChange(event) {
        const percent = this._setTargetPaymentPercent(parseInt(event.target.value, 10));
        event.target.value = percent;
+       this._lastEditSource = 'slider';
+       this._isEditingWeeks = false;
        this._enforcePaymentBounds();
        if (this.recalcTimer) {
            clearTimeout(this.recalcTimer);
@@ -479,6 +484,7 @@ export default class PaymentPlanEditorV2 extends LightningElement {
 
        // User is editing payment, not weeks
        this._isEditingWeeks = false;
+       this._lastEditSource = 'desired';
 
 
        this.targetPaymentAmount = val;
@@ -506,6 +512,7 @@ export default class PaymentPlanEditorV2 extends LightningElement {
 
        // User is editing payment, not weeks
        this._isEditingWeeks = false;
+       this._lastEditSource = 'desired';
 
 
        // Round to cents for comparison to avoid floating point issues
@@ -563,6 +570,7 @@ export default class PaymentPlanEditorV2 extends LightningElement {
 
        // Set flag - user is editing weeks
        this._isEditingWeeks = true;
+       this._lastEditSource = 'weeks';
 
 
        this._targetNumberOfWeeks = val;
@@ -580,6 +588,7 @@ export default class PaymentPlanEditorV2 extends LightningElement {
 
        // Set flag - user is editing weeks
        this._isEditingWeeks = true;
+       this._lastEditSource = 'weeks';
 
 
        // Log before clamping
@@ -935,14 +944,18 @@ export default class PaymentPlanEditorV2 extends LightningElement {
 
 
    get summaryWeeklyPayment() {
-       // In Desired Mode, always use the user's entered value
-       if (this.isDesiredMode && this.targetPaymentAmount > 0) {
+       // Always use the value from the last input the user touched
+       // (slider, desired payment, or weeks) — this ensures Save matches what the user sees
+       if (this._lastEditSource === 'slider' && this.targetPaymentAmount > 0) {
            return this.targetPaymentAmount;
        }
-       // When user manually edits weeks, use the locally calculated payment
-       if (this._isEditingWeeks && this.targetPaymentAmount > 0) {
+       if (this._lastEditSource === 'desired' && this.targetPaymentAmount > 0) {
            return this.targetPaymentAmount;
        }
+       if (this._lastEditSource === 'weeks' && this.targetPaymentAmount > 0) {
+           return this.targetPaymentAmount;
+       }
+       // Fallback: use Apex calculation or local computation
        const calc = this.calculations?.weeklyPayment;
        if (calc && !Number.isNaN(calc) && calc > 0) return calc;
        return this.displayWeeklyTarget;
@@ -1027,16 +1040,15 @@ export default class PaymentPlanEditorV2 extends LightningElement {
        let displayAmount = 0;
 
 
-       // In Desired Mode, always show the user's entered value
-       if (this.isDesiredMode) {
-           displayAmount = this.targetPaymentAmount || 0;
+       // Always show the value from the last input the user touched
+       // This ensures the display matches what will be saved
+       if (this.targetPaymentAmount > 0) {
+           displayAmount = this.targetPaymentAmount;
        } else if (this.paymentSchedule && this.paymentSchedule.length > 0) {
            const first = this.paymentSchedule[0] || {};
            const payment = first.paymentAmount ?? first.totalPayment ?? first.draftAmount ?? 0;
            const setup = first.setupFee ?? first.setupFeePortion ?? 0;
            displayAmount = Math.max(0, payment - setup);
-       } else {
-           displayAmount = this.targetPaymentAmount || 0;
        }
 
 
