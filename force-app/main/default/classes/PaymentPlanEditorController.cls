@@ -3036,9 +3036,31 @@ public with sharing class PaymentPlanEditorController {
             }
             System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Validation passed');
 
-            // Create all schedule items for the new plan
+            // Query ALL fields from old schedule items using dynamic describe (gets all 48+ fields)
+            String fields = getScheduleItemQueryFields();
+            String query = 'SELECT ' + fields +
+                ' FROM Payment_Schedule_Item__c WHERE Payment_Plan__c = :currentPlanId ORDER BY Payment_Number__c ASC LIMIT ' + MAX_QUERY_LIMIT;
+            List<Payment_Schedule_Item__c> oldItems = Database.query(query);
+            System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + oldItems.size() + ' old schedule items');
+
+            // Build map: Payment_Number__c -> old Payment_Schedule_Item__c
+            Map<Decimal, Payment_Schedule_Item__c> paymentNumToOldItem = new Map<Decimal, Payment_Schedule_Item__c>();
+            Set<Id> oldItemIds = new Set<Id>();
+            for (Payment_Schedule_Item__c oldItem : oldItems) {
+                if (oldItem.Payment_Number__c != null) {
+                    paymentNumToOldItem.put(oldItem.Payment_Number__c, oldItem);
+                }
+                oldItemIds.add(oldItem.Id);
+            }
+
+            // Query ALL fees from old schedule items (all types: standard + wire + any other)
+            Map<Id, List<Payment_Fee__c>> oldFeeMap = PaymentFeeService.getAllFeesByScheduleItemIds(oldItemIds);
+
+            // Create all schedule items for the new plan using clone
             List<Payment_Schedule_Item__c> newItems = new List<Payment_Schedule_Item__c>();
             List<ScheduleItemWrapper> itemWrappers = new List<ScheduleItemWrapper>();
+            // Track which new items are truly new (no old item match) for fresh fee creation
+            List<Boolean> isNewItemList = new List<Boolean>();
 
             // Count items by status for logging
             Integer newCount = 0, modifiedCount = 0, deletedCount = 0, frozenCount = 0;
@@ -3053,33 +3075,57 @@ public with sharing class PaymentPlanEditorController {
             for (ScheduleItemWrapper item : items) {
                 if (item.isDeleted) continue; // Skip deleted items
 
-                Payment_Schedule_Item__c newItem = new Payment_Schedule_Item__c();
-                newItem.Payment_Plan__c = newPlan.Id;
-                newItem.Payment_Number__c = item.rowNumber;
-                newItem.Draft_Number__c = item.draftNumber;
-                newItem.Payment_Date__c = item.paymentDate;
-                newItem.Total_Payment__c = item.draftAmount != null ? item.draftAmount : 0;
-                newItem.Retainer_Fee_Amount__c = item.retainerFee != null ? item.retainerFee : 0;
-                newItem.Setup_Fee_Amount__c = item.setupFee != null ? item.setupFee : 0;
-                newItem.Program_Fee_Amount__c = item.programFee != null ? item.programFee : 0;
-                newItem.Banking_Fee_Amount__c = item.bankingFee != null ? item.bankingFee : 0;
-                newItem.Bank2_Fee_Amount__c = item.banking2Fee != null ? item.banking2Fee : 0;
+                Payment_Schedule_Item__c oldItem = paymentNumToOldItem.get(Decimal.valueOf(item.rowNumber));
+                Payment_Schedule_Item__c newItem;
 
-                // Preserve valid statuses from LWC (like 'Failed to EPPS', 'Sent to EPPS', 'Processing', etc.)
-                // Invalid or blank statuses default to 'Scheduled'
-                newItem.Status__c = validateStatus(item.status);
+                if (oldItem != null) {
+                    // Clone the old record to preserve ALL fields (48+ fields)
+                    newItem = oldItem.clone(false, true, false, false);
+                    newItem.Payment_Plan__c = newPlan.Id;
+                    newItem.Payment_Number__c = item.rowNumber;
 
-                // Preserve Savings Balance and To Escrow Amount
-                newItem.Savings_Balance__c = item.savingsBalance != null ? item.savingsBalance : 0;
-                newItem.To_Escrow_Amount__c = item.toEscrowAmount != null ? item.toEscrowAmount : 0;
+                    // For frozen items (non-Scheduled), clone exactly as-is
+                    // For editable items, apply user edits on top of the clone
+                    if (!item.isFrozen) {
+                        newItem.Payment_Date__c = item.paymentDate;
+                        newItem.Total_Payment__c = item.draftAmount != null ? item.draftAmount : 0;
+                        newItem.Retainer_Fee_Amount__c = item.retainerFee != null ? item.retainerFee : 0;
+                        newItem.Setup_Fee_Amount__c = item.setupFee != null ? item.setupFee : 0;
+                        newItem.Program_Fee_Amount__c = item.programFee != null ? item.programFee : 0;
+                        newItem.Banking_Fee_Amount__c = item.bankingFee != null ? item.bankingFee : 0;
+                        newItem.Bank2_Fee_Amount__c = item.banking2Fee != null ? item.banking2Fee : 0;
+                        newItem.Status__c = validateStatus(item.status);
+                        newItem.Savings_Balance__c = item.savingsBalance != null ? item.savingsBalance : 0;
+                        newItem.To_Escrow_Amount__c = item.toEscrowAmount != null ? item.toEscrowAmount : 0;
+                        newItem.Draft_Number__c = item.draftNumber;
+                    }
 
-                // Preserve EPPS fields from processed payments
-                newItem.EPPS_EFT_Status__c = item.eppsEftStatus;
-                newItem.EPPS_EFT_Transaction_Id__c = item.eppsEftTransactionId;
-                newItem.EPPS_NSF_Return_Code__c = item.eppsNsfReturnCode;
-                newItem.EPPS_Returned_Date__c = item.eppsReturnedDate;
-                newItem.EPPS_Settlement_Date__c = item.eppsSettlementDate;
-                newItem.EPPS_Status_Date__c = item.eppsStatusDate;
+                    isNewItemList.add(false);
+                } else {
+                    // Truly new row added during edit - create fresh record
+                    newItem = new Payment_Schedule_Item__c();
+                    newItem.Payment_Plan__c = newPlan.Id;
+                    newItem.Payment_Number__c = item.rowNumber;
+                    newItem.Draft_Number__c = item.draftNumber;
+                    newItem.Payment_Date__c = item.paymentDate;
+                    newItem.Total_Payment__c = item.draftAmount != null ? item.draftAmount : 0;
+                    newItem.Retainer_Fee_Amount__c = item.retainerFee != null ? item.retainerFee : 0;
+                    newItem.Setup_Fee_Amount__c = item.setupFee != null ? item.setupFee : 0;
+                    newItem.Program_Fee_Amount__c = item.programFee != null ? item.programFee : 0;
+                    newItem.Banking_Fee_Amount__c = item.bankingFee != null ? item.bankingFee : 0;
+                    newItem.Bank2_Fee_Amount__c = item.banking2Fee != null ? item.banking2Fee : 0;
+                    newItem.Status__c = validateStatus(item.status);
+                    newItem.Savings_Balance__c = item.savingsBalance != null ? item.savingsBalance : 0;
+                    newItem.To_Escrow_Amount__c = item.toEscrowAmount != null ? item.toEscrowAmount : 0;
+                    newItem.EPPS_EFT_Status__c = item.eppsEftStatus;
+                    newItem.EPPS_EFT_Transaction_Id__c = item.eppsEftTransactionId;
+                    newItem.EPPS_NSF_Return_Code__c = item.eppsNsfReturnCode;
+                    newItem.EPPS_Returned_Date__c = item.eppsReturnedDate;
+                    newItem.EPPS_Settlement_Date__c = item.eppsSettlementDate;
+                    newItem.EPPS_Status_Date__c = item.eppsStatusDate;
+
+                    isNewItemList.add(true);
+                }
 
                 newItems.add(newItem);
                 itemWrappers.add(item);
@@ -3091,30 +3137,61 @@ public with sharing class PaymentPlanEditorController {
                 insert newItems;
                 System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted ' + newItems.size() + ' schedule items');
 
-                // Create Payment_Fee__c records for all new schedule items
-                Map<Id, ScheduleItemWrapper> wrapperMap = new Map<Id, ScheduleItemWrapper>();
+                // Clone ALL fees from old items and re-parent to new items;
+                // For truly new rows, create fresh fee records
+                List<Payment_Fee__c> allNewFees = new List<Payment_Fee__c>();
+                List<Payment_Schedule_Item__c> trulyNewItems = new List<Payment_Schedule_Item__c>();
+                List<ScheduleItemWrapper> trulyNewWrappers = new List<ScheduleItemWrapper>();
+
                 for (Integer i = 0; i < newItems.size(); i++) {
-                    wrapperMap.put(newItems[i].Id, itemWrappers[i]);
+                    ScheduleItemWrapper wrapper = itemWrappers[i];
+                    Boolean isTrulyNew = isNewItemList[i];
+
+                    if (!isTrulyNew) {
+                        // Find old item to get its fees
+                        Payment_Schedule_Item__c matchedOldItem = paymentNumToOldItem.get(Decimal.valueOf(wrapper.rowNumber));
+                        if (matchedOldItem != null && oldFeeMap.containsKey(matchedOldItem.Id)) {
+                            List<Payment_Fee__c> oldFees = oldFeeMap.get(matchedOldItem.Id);
+                            for (Payment_Fee__c oldFee : oldFees) {
+                                Payment_Fee__c clonedFee = oldFee.clone(false, true, false, false);
+                                clonedFee.Payment_Schedule_Item__c = newItems[i].Id;
+
+                                // For non-frozen items, update standard fee amounts if user changed them
+                                if (!wrapper.isFrozen) {
+                                    if (oldFee.Type__c == PaymentFeeService.FEE_TYPE_BANKING) {
+                                        clonedFee.Amount__c = wrapper.bankingFee != null ? wrapper.bankingFee : 0;
+                                    } else if (oldFee.Type__c == PaymentFeeService.FEE_TYPE_PROGRAM) {
+                                        clonedFee.Amount__c = wrapper.programFee != null ? wrapper.programFee : 0;
+                                    } else if (oldFee.Type__c == PaymentFeeService.FEE_TYPE_SETUP) {
+                                        clonedFee.Amount__c = wrapper.setupFee != null ? wrapper.setupFee : 0;
+                                    }
+                                    // Wire fees and other types keep their original Amount__c
+                                }
+
+                                allNewFees.add(clonedFee);
+                            }
+                        }
+                    } else {
+                        // Truly new row - collect for fresh fee creation
+                        trulyNewItems.add(newItems[i]);
+                        trulyNewWrappers.add(wrapper);
+                    }
                 }
-                List<Payment_Fee__c> feeRecords = PaymentFeeService.createFeeRecordsForItems(newItems, wrapperMap);
-                if (!feeRecords.isEmpty()) {
-                    insert feeRecords;
-                    System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted ' + feeRecords.size() + ' fee record(s)');
+
+                // Create fresh fee records for truly new items
+                if (!trulyNewItems.isEmpty()) {
+                    Map<Id, ScheduleItemWrapper> newWrapperMap = new Map<Id, ScheduleItemWrapper>();
+                    for (Integer i = 0; i < trulyNewItems.size(); i++) {
+                        newWrapperMap.put(trulyNewItems[i].Id, trulyNewWrappers[i]);
+                    }
+                    allNewFees.addAll(PaymentFeeService.createFeeRecordsForItems(trulyNewItems, newWrapperMap));
+                }
+
+                if (!allNewFees.isEmpty()) {
+                    insert allNewFees;
+                    System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted ' + allNewFees.size() + ' fee record(s) (cloned + new)');
                 }
             }
-
-            // Get old schedule items for wired payments carryover
-            List<Payment_Schedule_Item__c> oldScheduleItems = [
-                SELECT Id, Payment_Number__c
-                FROM Payment_Schedule_Item__c
-                WHERE Payment_Plan__c = :currentPlanId
-                LIMIT :MAX_QUERY_LIMIT
-            ];
-            System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + oldScheduleItems.size() + ' old schedule items for wired payment carryover');
-
-            // Carry over wired payments from old plan to new plan
-            System.debug(LoggingLevel.DEBUG, LOG_INFO + ' | ' + methodName + ' | Carrying over wired payments...');
-            carryOverWireFees(oldScheduleItems, newItems);
 
             // Update plan item count
             newPlan.Schedule_Item_Count__c = newItems.size();

@@ -382,6 +382,46 @@ public with sharing class PaymentFeeService {
     }
 
     /**
+     * @description Retrieve ALL Payment_Fee__c records (all types) grouped by Payment_Schedule_Item__c Id.
+     * Unlike getFeesByScheduleItemIds (standard fees only) or getWireFeesByScheduleItemIds (wire fees only),
+     * this method returns every fee record regardless of Type__c.
+     * Used by saveAsNewVersion to clone all fees with their metadata intact.
+     *
+     * @param scheduleItemIds Set of Payment_Schedule_Item__c Ids to query fees for
+     * @return Map<Id, List<Payment_Fee__c>> - Map keyed by PSI Id containing list of all fees
+     */
+    public static Map<Id, List<Payment_Fee__c>> getAllFeesByScheduleItemIds(Set<Id> scheduleItemIds) {
+        Map<Id, List<Payment_Fee__c>> resultMap = new Map<Id, List<Payment_Fee__c>>();
+
+        if (scheduleItemIds == null || scheduleItemIds.isEmpty()) {
+            return resultMap;
+        }
+
+        // Initialize empty lists for each schedule item
+        for (Id psiId : scheduleItemIds) {
+            resultMap.put(psiId, new List<Payment_Fee__c>());
+        }
+
+        // Query ALL fee records (no Type filter)
+        List<Payment_Fee__c> allFees = [
+            SELECT Id, Payment_Schedule_Item__c, Type__c, Amount__c,
+                   Fee_Id__c, Status_Code__c, Status__c, Transaction_Id__c
+            FROM Payment_Fee__c
+            WHERE Payment_Schedule_Item__c IN :scheduleItemIds
+            ORDER BY Type__c ASC, CreatedDate ASC
+        ];
+
+        // Group by PSI Id
+        for (Payment_Fee__c fee : allFees) {
+            if (fee.Payment_Schedule_Item__c != null && resultMap.containsKey(fee.Payment_Schedule_Item__c)) {
+                resultMap.get(fee.Payment_Schedule_Item__c).add(fee);
+            }
+        }
+
+        return resultMap;
+    }
+
+    /**
      * @description Delete wire fee records for given Payment_Schedule_Item__c Ids.
      *
      * @param scheduleItemIds Set of Payment_Schedule_Item__c Ids
