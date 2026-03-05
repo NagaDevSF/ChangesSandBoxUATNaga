@@ -1040,15 +1040,16 @@ export default class PaymentPlanEditorV2 extends LightningElement {
        let displayAmount = 0;
 
 
-       // Always show the value from the last input the user touched
-       // This ensures the display matches what will be saved
-       if (this.targetPaymentAmount > 0) {
-           displayAmount = this.targetPaymentAmount;
+       // In Desired Mode, always show the user's entered value
+       if (this.isDesiredMode) {
+           displayAmount = this.targetPaymentAmount || 0;
        } else if (this.paymentSchedule && this.paymentSchedule.length > 0) {
            const first = this.paymentSchedule[0] || {};
            const payment = first.paymentAmount ?? first.totalPayment ?? first.draftAmount ?? 0;
            const setup = first.setupFee ?? first.setupFeePortion ?? 0;
            displayAmount = Math.max(0, payment - setup);
+       } else {
+           displayAmount = this.targetPaymentAmount || 0;
        }
 
 
