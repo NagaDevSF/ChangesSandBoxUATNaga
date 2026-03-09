@@ -1,5 +1,5 @@
 /**
- * @description Schedulable class to automatically reassign NXDS leads every 2 minutes
+ * @description Schedulable class to automatically reassign NXDS leads every 1 hour
  *              This class queries leads based on specified criteria and reassigns them to a target owner
  * @author Salesforce Developer
  * @date 2025
@@ -12,8 +12,8 @@ public class ScheduledLeadReassignmentNXDS implements Schedulable, Database.Batc
     private String targetOwnerUsername;
     private static final Integer BATCH_SIZE = 200;
 
-    // Interval in seconds (2 minutes = 120 seconds)
-    private static final Integer RESCHEDULE_INTERVAL_SECONDS = 120;
+    // Interval in seconds (1 hour = 3600 seconds)
+    private static final Integer RESCHEDULE_INTERVAL_SECONDS = 3600;
     private static final String JOB_NAME = 'Lead Reassignment Auto NXDS';
 
     /**
@@ -83,7 +83,7 @@ public class ScheduledLeadReassignmentNXDS implements Schedulable, Database.Batc
     public void finish(Database.BatchableContext bc) {
         System.debug('Lead reassignment batch NXDS completed');
 
-        // Reschedule the job for the next interval (2 min from now)
+        // Reschedule the job for the next interval (1 hour from now)
         scheduleNextRun();
     }
 
@@ -127,32 +127,32 @@ public class ScheduledLeadReassignmentNXDS implements Schedulable, Database.Batc
     }
 
     /**
-     * @description Schedule this job to run every 2 minutes
+     * @description Schedule this job to run every 1 hour
      *              Call this method from Anonymous Apex or another class
      */
-    public static void scheduleEvery2Minutes() {
+    public static void scheduleEveryHour() {
         // Abort any existing jobs first
         abortExistingJobs();
 
-        // Schedule jobs every 2 minutes for the next hour
+        // Schedule jobs every 1 hour for the next 24 hours
         // Note: Salesforce has a limit of 100 scheduled jobs
-        for (Integer i = 0; i < 30; i++) {
-            String cronExp = generateCronExpression(i * 2);
-            String jobName = 'Lead Reassignment NXDS - ' + String.valueOf(i * 2) + ' min';
+        for (Integer i = 0; i < 24; i++) {
+            String cronExp = generateCronExpression(i);
+            String jobName = 'Lead Reassignment NXDS - Hour ' + String.valueOf(i);
             System.schedule(jobName, cronExp, new ScheduledLeadReassignmentNXDS());
         }
 
-        System.debug('Scheduled 30 jobs to run every 2 minutes');
+        System.debug('Scheduled 24 jobs to run every 1 hour');
     }
 
     /**
-     * @description Generate CRON expression for specific minute offset
-     * @param minuteOffset Minute offset from current time
+     * @description Generate CRON expression for specific hour offset
+     * @param hourOffset Hour offset from current time
      * @return String CRON expression
      */
-    private static String generateCronExpression(Integer minuteOffset) {
-        DateTime now = DateTime.now().addMinutes(minuteOffset);
-        return '0 ' + now.minute() + ' * * * ?';
+    private static String generateCronExpression(Integer hourOffset) {
+        DateTime now = DateTime.now().addHours(hourOffset);
+        return '0 ' + now.minute() + ' ' + now.hour() + ' * * ?';
     }
 
     /**
@@ -171,7 +171,7 @@ public class ScheduledLeadReassignmentNXDS implements Schedulable, Database.Batc
     }
 
     /**
-     * @description Start the self-rescheduling job that runs every 2 min
+     * @description Start the self-rescheduling job that runs every 1 hour
      *              Call this method from Anonymous Apex to start the recurring job
      */
     public static void startAutoSchedule() {
@@ -188,20 +188,20 @@ public class ScheduledLeadReassignmentNXDS implements Schedulable, Database.Batc
     }
 
     /**
-     * @description Schedule this job to run at specific intervals throughout the hour
-     *              This creates jobs that run every 2 minutes
+     * @description Schedule this job to run at specific intervals throughout the day
+     *              This creates jobs that run every 1 hour
      */
     public static void scheduleRecurring() {
         // Abort any existing jobs first
         abortExistingJobs();
 
-        // Schedule jobs at 0, 2, 4, 6, ..., 58 minutes of every hour
-        for (Integer minute = 0; minute < 60; minute += 2) {
-            String cronExp = '0 ' + minute + ' * * * ?';
-            String jobName = 'Lead Reassignment NXDS - Minute ' + minute;
+        // Schedule jobs at hour 0, 1, 2, ..., 23 of every day
+        for (Integer hour = 0; hour < 24; hour++) {
+            String cronExp = '0 0 ' + hour + ' * * ?';
+            String jobName = 'Lead Reassignment NXDS - Hour ' + hour;
             System.schedule(jobName, cronExp, new ScheduledLeadReassignmentNXDS());
         }
 
-        System.debug('Scheduled 30 recurring jobs to run every 2 minutes');
+        System.debug('Scheduled 24 recurring jobs to run every 1 hour');
     }
 }

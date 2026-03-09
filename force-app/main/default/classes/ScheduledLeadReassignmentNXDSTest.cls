@@ -159,12 +159,12 @@ private class ScheduledLeadReassignmentNXDSTest {
     }
 
     /**
-     * Test scheduleEvery2Minutes method
+     * Test scheduleEveryHour method
      */
     @isTest
-    static void testScheduleEvery2Minutes() {
+    static void testScheduleEveryHour() {
         Test.startTest();
-        ScheduledLeadReassignmentNXDS.scheduleEvery2Minutes();
+        ScheduledLeadReassignmentNXDS.scheduleEveryHour();
         Test.stopTest();
 
         // Verify jobs were scheduled
@@ -225,13 +225,13 @@ private class ScheduledLeadReassignmentNXDSTest {
     }
 
     /**
-     * Test generateCronExpression method (indirectly through scheduleEvery2Minutes)
+     * Test generateCronExpression method (indirectly through scheduleEveryHour)
      */
     @isTest
     static void testGenerateCronExpression() {
         Test.startTest();
         // This will call generateCronExpression internally
-        ScheduledLeadReassignmentNXDS.scheduleEvery2Minutes();
+        ScheduledLeadReassignmentNXDS.scheduleEveryHour();
         Test.stopTest();
 
         // Verify jobs were created with valid cron expressions
