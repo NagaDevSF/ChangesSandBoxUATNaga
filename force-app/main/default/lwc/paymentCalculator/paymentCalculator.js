@@ -1188,7 +1188,9 @@ export default class PaymentCalculator extends LightningElement {
                 this.applyDraft(createdRow);
             }
         } catch (error) {
-            this.showToast('Error', 'Failed to save draft', 'error', false);
+            const detail = error?.body?.message || error?.message || 'Unknown error';
+            console.error('[PaymentCalculator] saveDraft error:', JSON.stringify(error));
+            this.showToast('Error', 'Failed to save draft: ' + detail, 'error', false);
         } finally {
             this.isLoading = false;
         }
