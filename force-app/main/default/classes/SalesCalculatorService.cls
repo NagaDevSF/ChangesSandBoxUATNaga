@@ -301,13 +301,16 @@ public with sharing class SalesCalculatorService {
             item.Bank2_Fee_Amount__c = plan.Bank2_Fee__c;
             
             // Calculate program fee for this payment
-            if (programFeeTotal > 0 && !plan.No_Fee_Program__c) {
+            // For DCG Debt: skip program fee on first payment — all goes to escrow
+            Boolean skipFeeThisPayment = (i == 1 && plan.Program_Type__c == 'DCG DEBT');
+
+            if (programFeeTotal > 0 && !plan.No_Fee_Program__c && !skipFeeThisPayment) {
                 Decimal basePayment = calc.weeklyPayment;
                 item.Program_Fee_Amount__c = Math.min(basePayment * programSplitRatio, programFeeTotal);
                 item.To_Escrow_Amount__c = basePayment - item.Program_Fee_Amount__c;
                 programFeeTotal -= item.Program_Fee_Amount__c;
             } else {
-                // All to escrow after program fees exhausted or no-fee program
+                // All to escrow after program fees exhausted, no-fee program, or first payment DCG Debt
                 item.Program_Fee_Amount__c = 0;
                 item.To_Escrow_Amount__c = calc.weeklyPayment;
             }

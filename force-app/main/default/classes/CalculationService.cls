@@ -678,12 +678,19 @@ public with sharing class CalculationService {
         List<Decimal> escrowAmounts = new List<Decimal>();
         Decimal remainingProgramFees = programFee;
 
+        // Determine if first payment program fee should be excluded (DCG Debt only)
+        String schedProgramType = config.get('programType') != null ? (String)config.get('programType') : '';
+        Boolean excludeFirstPaymentFee = schedProgramType.equalsIgnoreCase('DCG_DEBT');
+
         for (Integer i = 0; i < netPaymentAmounts.size(); i++) {
             Decimal netAmount = netPaymentAmounts[i];
             Decimal programPayment = 0;
             Decimal escrowPayment = 0;
 
-            if (remainingProgramFees > 0) {
+            // For DCG Debt: skip program fee on first payment — all goes to escrow
+            Boolean skipFeeThisPayment = (i == 0 && excludeFirstPaymentFee);
+
+            if (remainingProgramFees > 0 && !skipFeeThisPayment) {
                 Decimal desiredProgram = netAmount * programSplitRatio;
                 programPayment = Math.min(desiredProgram, remainingProgramFees);
                 escrowPayment = netAmount - programPayment;
