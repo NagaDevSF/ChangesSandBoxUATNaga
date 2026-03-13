@@ -686,7 +686,9 @@ public with sharing class PaymentPlanEditorController {
                        Version_Number__c, Is_Active__c,
                        Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
                        Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
-                       Schedule_Item_Count__c
+                       Schedule_Item_Count__c,
+                       Target_Payment_Percent__c, Calculation_Mode__c, Payment_Frequency__c,
+                       Total_Savings__c, Total_Banking_Fee__c
                 FROM PaymentPlan__c
                 WHERE Id = :currentPlanId
                 LIMIT 1
@@ -1425,7 +1427,9 @@ public with sharing class PaymentPlanEditorController {
             // Get current plan to find Opportunity and version number
             List<PaymentPlan__c> currentPlans = [
                 SELECT Id, Name, Opportunity__c, Version_Number__c, Program_Type__c,
-                       Banking_Fee__c, Bank2_Fee__c
+                       Banking_Fee__c, Bank2_Fee__c,
+                       Target_Payment_Percent__c, Calculation_Mode__c, Payment_Frequency__c,
+                       Total_Savings__c, Total_Banking_Fee__c
                 FROM PaymentPlan__c
                 WHERE Id = :planId
                 LIMIT 1
@@ -1456,7 +1460,7 @@ public with sharing class PaymentPlanEditorController {
                        Est_weekly_payment__c, Estimated_Current_Payment__c,
                        Estimated_Total_Debt__c, Estimated_Settlement_to_Creditors__c,
                        Est_Settlement__c, Number_of_Weeks__c, First_Draft_Date__c,
-                       No_Fee_Program__c
+                       No_Fee_Program__c, Payment_Frequency__c
                 FROM Opportunity
                 WHERE Id = :currentPlan.Opportunity__c
                 LIMIT 1
@@ -1550,6 +1554,18 @@ public with sharing class PaymentPlanEditorController {
             newPlan.Source__c = SOURCE_UI;
             newPlan.Version_Notes__c = 'Recalculated from Opportunity on ' + DateTime.now().format();
             newPlan.Calculation_Timestamp__c = DateTime.now();
+
+            // Carry forward calculator settings from previous plan
+            newPlan.Target_Payment_Percent__c = currentPlan.Target_Payment_Percent__c;
+            newPlan.Calculation_Mode__c = currentPlan.Calculation_Mode__c;
+            newPlan.Payment_Frequency__c = opp.Payment_Frequency__c != null ? opp.Payment_Frequency__c : currentPlan.Payment_Frequency__c;
+            // Calculate Total Savings and Total Banking Fee
+            Decimal totalProgram = (newPlan.Settlement_Amount__c != null ? newPlan.Settlement_Amount__c : 0)
+                + (newPlan.Program_Fee_Amount__c != null ? newPlan.Program_Fee_Amount__c : 0)
+                + (newPlan.Setup_Fee__c != null ? newPlan.Setup_Fee__c : 0)
+                + (bankingFee * (newPlan.Number_of_Payments__c != null ? newPlan.Number_of_Payments__c : 0));
+            newPlan.Total_Savings__c = (newPlan.Total_Debt__c != null ? newPlan.Total_Debt__c : 0) - totalProgram;
+            newPlan.Total_Banking_Fee__c = bankingFee * (newPlan.Number_of_Payments__c != null ? newPlan.Number_of_Payments__c : 0);
 
             insert newPlan;
             System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted new plan: ' + newPlan.Id + ' | Weekly: ' + newPlan.Weekly_Payment__c + ' | Payments: ' + newPlan.Number_of_Payments__c);
@@ -1646,7 +1662,9 @@ public with sharing class PaymentPlanEditorController {
                        Program_Fee_Percentage__c, Total_Program_Cost__c, Weekly_Payment__c,
                        Monthly_Payment__c, Contract__c, Status__c, Is_Active__c,
                        Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
-                       Schedule_Item_Count__c
+                       Schedule_Item_Count__c,
+                       Target_Payment_Percent__c, Calculation_Mode__c, Payment_Frequency__c,
+                       Total_Savings__c, Total_Banking_Fee__c
                 FROM PaymentPlan__c
                 WHERE Id = :planId
                 LIMIT 1
@@ -1673,7 +1691,7 @@ public with sharing class PaymentPlanEditorController {
                        No_Fee_Program__c, Program_Type__c,
                        Setup_Fee__c, Setup_Fee_Term__c,
                        Total_Program__c, Program_Fee__c,
-                       Est_weekly_payment__c
+                       Est_weekly_payment__c, Payment_Frequency__c
                 FROM Opportunity
                 WHERE Id = :currentPlan.Opportunity__c
                 LIMIT 1
@@ -1915,6 +1933,14 @@ public with sharing class PaymentPlanEditorController {
             newPlan.No_Fee_Program__c = opp.No_Fee_Program__c;
             newPlan.Number_of_Payments__c = opp.Number_of_Weeks__c;
 
+            // Carry forward calculator settings (clone copies them, but recalculate banking/savings)
+            newPlan.Payment_Frequency__c = opp.Payment_Frequency__c != null ? opp.Payment_Frequency__c : currentPlan.Payment_Frequency__c;
+            newPlan.Total_Banking_Fee__c = bankingFee * (newPlan.Number_of_Payments__c != null ? newPlan.Number_of_Payments__c : 0);
+            Decimal recalcTotalProgram = (remainingProgramCost != null ? remainingProgramCost : 0)
+                + (totalSetupFee != null ? totalSetupFee : 0)
+                + (bankingFee * (newPlan.Number_of_Payments__c != null ? newPlan.Number_of_Payments__c : 0));
+            newPlan.Total_Savings__c = (totalDebt != null ? totalDebt : 0) - recalcTotalProgram;
+
             insert newPlan;
             System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted new plan: ' + newPlan.Id);
 
@@ -1991,7 +2017,10 @@ public with sharing class PaymentPlanEditorController {
                 Decimal thisProgramFee = 0;
                 Decimal toEscrow = 0;
 
-                if (trackingRemainingProgramFee > 0) {
+                // For DCG Debt: skip program fee on first payment — all goes to escrow
+                Boolean skipFeeThisPayment = (paymentNumber == 1 && normalizedProgramType == 'DCG_DEBT');
+
+                if (trackingRemainingProgramFee > 0 && !skipFeeThisPayment) {
                     // Desired program amount based on split ratio
                     Decimal desiredProgramFee = netAmount * programSplitRatio;
                     // Cap at remaining program fee
@@ -2236,7 +2265,10 @@ public with sharing class PaymentPlanEditorController {
             Decimal thisProgramFee = 0;
             Decimal toEscrow = 0;
 
-            if (remainingProgramFee > 0) {
+            // For DCG Debt: skip program fee on first payment — all goes to escrow
+            Boolean skipFeeThisPayment = (paymentNumber == 1 && plan.Program_Type__c == 'DCG DEBT');
+
+            if (remainingProgramFee > 0 && !skipFeeThisPayment) {
                 // Desired program amount based on split ratio
                 Decimal desiredProgramFee = netAmount * programSplitRatio;
                 // Cap at remaining program fee
@@ -2336,7 +2368,10 @@ public with sharing class PaymentPlanEditorController {
             Decimal thisProgramFee = 0;
             Decimal toEscrow = 0;
 
-            if (remainingProgramFee > 0) {
+            // For DCG Debt: skip program fee on first payment — all goes to escrow
+            Boolean skipFeeThisPayment = (i == 1 && plan.Program_Type__c == 'DCG DEBT');
+
+            if (remainingProgramFee > 0 && !skipFeeThisPayment) {
                 Decimal desiredProgramFee = netAmount * programSplitRatio;
                 thisProgramFee = Math.min(desiredProgramFee, remainingProgramFee);
                 toEscrow = netAmount - thisProgramFee;

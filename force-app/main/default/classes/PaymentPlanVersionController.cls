@@ -136,7 +136,12 @@ public with sharing class PaymentPlanVersionController {
                        No_Fee_Program__c,
                        First_Payment_Date__c,
                        Preferred_Day_of_Week__c,
-                       Version_Number__c
+                       Version_Number__c,
+                       Target_Payment_Percent__c,
+                       Calculation_Mode__c,
+                       Payment_Frequency__c,
+                       Total_Savings__c,
+                       Total_Banking_Fee__c
                 FROM PaymentPlan__c
                 WHERE Id = :basePaymentPlanId
                 LIMIT 1

@@ -30,6 +30,12 @@ public class PaymentPlanService {
 				thisPP.Bank2_Fee__c = thisDraft.Banking_Fee__c != null ? thisDraft.Banking_Fee__c : 55;
 				// Setup Fee Payments from Setup_Fee_Term__c (number of payments), not Setup_Fee__c (dollar amount)
 				thisPP.Setup_Fee_Payments__c = thisDraft.Setup_Fee_Term__c != null ? thisDraft.Setup_Fee_Term__c : 4;
+				// Map calculator settings from draft to plan
+				thisPP.Target_Payment_Percent__c = thisDraft.Target_Payment_Percent__c;
+				thisPP.Calculation_Mode__c = thisDraft.Calculation_Mode__c;
+				thisPP.Payment_Frequency__c = thisDraft.Payment_Frequency__c;
+				thisPP.Total_Savings__c = thisDraft.Total_Savings__c;
+				thisPP.Total_Banking_Fee__c = thisDraft.Total_Banking_Fee__c;
 			} else {
 				// No primary draft found - use default values
 				thisPP.Settlement_Percentage__c = 30;

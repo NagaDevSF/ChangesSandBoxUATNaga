@@ -94,7 +94,9 @@ public with sharing class PaymentPlanVersionService {
                 SELECT Id, Opportunity__c, Version_Number__c,
                        Program_Type__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
                        Setup_Fee__c, Setup_Fee_Payments__c, Banking_Fee__c, Bank2_Fee__c,
-                       First_Payment_Date__c, Preferred_Day_of_Week__c, No_Fee_Program__c
+                       First_Payment_Date__c, Preferred_Day_of_Week__c, No_Fee_Program__c,
+                       Target_Payment_Percent__c, Calculation_Mode__c, Payment_Frequency__c,
+                       Total_Savings__c, Total_Banking_Fee__c
                 FROM PaymentPlan__c
                 WHERE Id = :existingPlanId
                 WITH USER_MODE
@@ -127,7 +129,12 @@ public with sharing class PaymentPlanVersionService {
             newVersion.First_Payment_Date__c = existingPlan.First_Payment_Date__c;
             newVersion.Preferred_Day_of_Week__c = existingPlan.Preferred_Day_of_Week__c;
             newVersion.No_Fee_Program__c = existingPlan.No_Fee_Program__c;
-            
+            newVersion.Target_Payment_Percent__c = existingPlan.Target_Payment_Percent__c;
+            newVersion.Calculation_Mode__c = existingPlan.Calculation_Mode__c;
+            newVersion.Payment_Frequency__c = existingPlan.Payment_Frequency__c;
+            newVersion.Total_Savings__c = existingPlan.Total_Savings__c;
+            newVersion.Total_Banking_Fee__c = existingPlan.Total_Banking_Fee__c;
+
             Database.insert(newVersion, AccessLevel.USER_MODE);
 
             System.debug(LOG_PREFIX + ' ' + LOG_EXIT + ' createNewVersion | ' + LOG_SUCCESS + ' newId=' + newVersion.Id + ', version=' + newVersion.Version_Number__c);

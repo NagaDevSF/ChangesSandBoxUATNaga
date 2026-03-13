@@ -1825,7 +1825,27 @@ public with sharing class PaymentCalculatorController {
         paymentPlan.First_Payment_Date__c = Date.valueOf(calculations.firstDraftDate);
         paymentPlan.Status__c = 'Draft';
         paymentPlan.Version_Number__c = 1;
-        
+
+        // Map calculator settings
+        if (config != null) {
+            Object targetPct = config.get('targetPaymentPercentage');
+            if (targetPct != null) {
+                paymentPlan.Target_Payment_Percent__c = (targetPct instanceof Decimal) ? (Decimal)targetPct : Decimal.valueOf(String.valueOf(targetPct));
+            }
+            String calcMode = config.get('calculationMode') != null ? String.valueOf(config.get('calculationMode')) : null;
+            if (calcMode == 'percentage') {
+                paymentPlan.Calculation_Mode__c = 'PERCENT';
+            } else if (calcMode == 'desired_payment') {
+                paymentPlan.Calculation_Mode__c = 'DESIRED';
+            }
+            Object payFreq = config.get('paymentFrequency');
+            if (payFreq != null) {
+                paymentPlan.Payment_Frequency__c = String.valueOf(payFreq);
+            }
+        }
+        paymentPlan.Total_Savings__c = calculations.totalSavings;
+        paymentPlan.Total_Banking_Fee__c = calculations.bankingFeeTotal;
+
         if (sObjectType == 'Opportunity') {
             paymentPlan.Opportunity__c = recordId;
         }
