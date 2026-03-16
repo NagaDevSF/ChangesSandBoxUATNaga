@@ -668,7 +668,8 @@ dialog.wire-modal {
 }
 
 .modify-modal .slds-modal__container {
-    max-width: 900px;
+    max-width: 95vw;
+    width: 95vw;
     margin: 0 auto;
     background: transparent;
     padding: 0;
@@ -683,7 +684,7 @@ dialog.modify-modal {
 .modify-modal .slds-modal__content {
     border-radius: 0 0 8px 8px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15);
-    max-height: 80vh;
+    max-height: 85vh;
     overflow-y: auto;
 }
 
@@ -750,16 +751,18 @@ dialog.modify-modal {
 }
 
 .modify-preview-table-container {
-    max-height: 400px;
-    overflow-y: auto;
+    max-height: 60vh;
+    overflow: auto;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
 }
 
 .modify-preview-table {
     width: 100%;
-    font-size: 12px;
+    font-size: 13px;
     border-collapse: collapse;
+    table-layout: auto;
+    white-space: nowrap;
 }
 
 .modify-preview-table th {
@@ -776,8 +779,9 @@ dialog.modify-modal {
 }
 
 .modify-preview-table td {
-    padding: 4px 8px;
+    padding: 6px 12px;
     border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
 }
 
 .modify-preview-table tr:hover {
