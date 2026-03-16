@@ -354,6 +354,11 @@ public with sharing class PaymentPlanEditorController {
         @AuraEnabled public Decimal weeklyPayment { get; set; }
         @AuraEnabled public Decimal totalProgramFee { get; set; }
         @AuraEnabled public Decimal estimatedTotalDebt { get; set; }
+        @AuraEnabled public Decimal settlementAmount { get; set; }
+        @AuraEnabled public Decimal programFeeAmount { get; set; }
+        @AuraEnabled public Decimal totalSavings { get; set; }
+        @AuraEnabled public Decimal totalBankingFee { get; set; }
+        @AuraEnabled public String paymentFrequency { get; set; }
         @AuraEnabled public List<ScheduleItemWrapper> scheduleItems { get; set; }
 
         public PlanModificationPreview() {
@@ -375,6 +380,8 @@ public with sharing class PaymentPlanEditorController {
         PlanModificationPreview preview;
         Decimal weeklyPayment;
         Integer numberOfPayments;
+        Decimal settlementAmount;
+        Decimal programFeeAmount;
     }
 
     /**
@@ -4037,7 +4044,7 @@ public with sharing class PaymentPlanEditorController {
             throw new AuraHandledException(VALIDATION_SYMBOL + 'Value must be greater than zero.');
         }
 
-        // Query current plan (same fields as recalculateRemainingBalance)
+        // Query current plan — all stored config fields used for formula calculations
         List<PaymentPlan__c> currentPlans = [
             SELECT Id, Name, Opportunity__c, Version_Number__c, Program_Type__c,
                    Number_of_Payments__c, First_Payment_Date__c, Banking_Fee__c, Bank2_Fee__c,
@@ -4045,7 +4052,9 @@ public with sharing class PaymentPlanEditorController {
                    Program_Fee_Percentage__c, Total_Program_Cost__c, Weekly_Payment__c,
                    Monthly_Payment__c, Contract__c, Status__c, Is_Active__c,
                    Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
-                   Schedule_Item_Count__c
+                   Schedule_Item_Count__c, Settlement_Amount__c, Program_Fee_Amount__c,
+                   Target_Payment_Percent__c, Calculation_Mode__c, Payment_Frequency__c,
+                   Total_Savings__c, Total_Banking_Fee__c
             FROM PaymentPlan__c
             WHERE Id = :planId
             LIMIT 1
@@ -4061,13 +4070,13 @@ public with sharing class PaymentPlanEditorController {
             throw new AuraHandledException(VALIDATION_SYMBOL + 'Payment Plan is not linked to an Opportunity.');
         }
 
-        // Query Opportunity (same fields as recalculateRemainingBalance)
+        // Query Opportunity (for fields not stored on plan and for Opp updates)
         List<Opportunity> opportunities = [
             SELECT Id, Name, Estimated_Total_Debt__c, Number_of_Weeks__c, First_Draft_Date__c,
                    No_Fee_Program__c, Program_Type__c,
                    Setup_Fee__c, Setup_Fee_Term__c,
                    Total_Program__c, Program_Fee__c,
-                   Est_weekly_payment__c
+                   Est_weekly_payment__c, Payment_Frequency__c
             FROM Opportunity
             WHERE Id = :currentPlan.Opportunity__c
             LIMIT 1
@@ -4079,8 +4088,8 @@ public with sharing class PaymentPlanEditorController {
 
         Opportunity opp = opportunities[0];
 
-        // Load CMDT config (same as recalculateRemainingBalance)
-        String programType = opp.Program_Type__c != null ? opp.Program_Type__c : currentPlan.Program_Type__c;
+        // Load CMDT config for split ratios
+        String programType = currentPlan.Program_Type__c != null ? currentPlan.Program_Type__c : opp.Program_Type__c;
         String normalizedProgramType = programType != null ? programType.replace(' ', '_').toUpperCase() : 'DCG_MOD';
 
         PaymentCalcConfigSvc.ConfigDTO config;
@@ -4091,12 +4100,31 @@ public with sharing class PaymentPlanEditorController {
             config = PaymentCalcConfigSvc.getRequiredConfig();
         }
 
-        // Get split ratios
+        // Get split ratios from CMDT
         Decimal programSplitRatio = config.programSplitRatio != null ? config.programSplitRatio : DEFAULT_SPLIT_RATIO;
-        Boolean isNoFeeProgram = opp.No_Fee_Program__c != null && opp.No_Fee_Program__c;
+        Boolean isNoFeeProgram = currentPlan.No_Fee_Program__c != null && currentPlan.No_Fee_Program__c;
         if (isNoFeeProgram) {
             programSplitRatio = 0;
         }
+
+        // ==================================================================================
+        // SOURCE ALL FORMULA INPUTS FROM PAYMENT PLAN (matching saveDraft / SalesCalculatorService)
+        // ==================================================================================
+        Decimal settlementPercentage = currentPlan.Settlement_Percentage__c != null
+            ? currentPlan.Settlement_Percentage__c
+            : (config.settlementPercent != null ? config.settlementPercent : 60);
+        Decimal programFeePercentage = currentPlan.Program_Fee_Percentage__c != null
+            ? currentPlan.Program_Fee_Percentage__c
+            : (config.programFeePercent != null ? config.programFeePercent : 35);
+        Decimal bankingFee = currentPlan.Banking_Fee__c != null ? currentPlan.Banking_Fee__c : DEFAULT_BANKING_FEE;
+        Decimal bank2Fee = currentPlan.Bank2_Fee__c != null ? currentPlan.Bank2_Fee__c : 0;
+        Decimal totalSetupFee = currentPlan.Setup_Fee__c != null ? currentPlan.Setup_Fee__c : 0;
+        Decimal setupFeePaymentsTotal = currentPlan.Setup_Fee_Payments__c != null && currentPlan.Setup_Fee_Payments__c > 0
+            ? currentPlan.Setup_Fee_Payments__c
+            : DEFAULT_SETUP_FEE_PAYMENTS;
+        Decimal perPaymentSetupFee = setupFeePaymentsTotal > 0 ? (totalSetupFee / setupFeePaymentsTotal) : 0;
+
+        System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Plan config — Settlement%: ' + settlementPercentage + ' | ProgramFee%: ' + programFeePercentage + ' | BankingFee: ' + bankingFee + ' | SetupFee: ' + totalSetupFee + '/' + setupFeePaymentsTotal + ' payments');
 
         // Determine values based on modification type
         Decimal estimatedTotalDebt;
@@ -4104,47 +4132,43 @@ public with sharing class PaymentPlanEditorController {
 
         if (modType == 'EST_TOTAL_DEBT') {
             estimatedTotalDebt = newValue;
-            // Get weekly payment from plan, fall back to Opportunity, then calculate from scheduled items
+            // Keep weekly payment from current plan
             weeklyPayment = currentPlan.Weekly_Payment__c != null && currentPlan.Weekly_Payment__c > 0
                 ? currentPlan.Weekly_Payment__c
                 : (opp.Est_weekly_payment__c != null && opp.Est_weekly_payment__c > 0
                     ? opp.Est_weekly_payment__c : 0);
-            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | EST_TOTAL_DEBT: weeklyPayment sourced as ' + weeklyPayment);
+            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | EST_TOTAL_DEBT: newDebt=' + estimatedTotalDebt + ' | weeklyPayment from plan=' + weeklyPayment);
         } else {
-            // WEEKLY_PAYMENT
-            estimatedTotalDebt = opp.Estimated_Total_Debt__c != null ? opp.Estimated_Total_Debt__c : 0;
+            // WEEKLY_PAYMENT: keep same total debt from current plan
+            estimatedTotalDebt = currentPlan.Total_Debt__c != null && currentPlan.Total_Debt__c > 0
+                ? currentPlan.Total_Debt__c
+                : (opp.Estimated_Total_Debt__c != null ? opp.Estimated_Total_Debt__c : 0);
             weeklyPayment = newValue;
+            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | WEEKLY_PAYMENT: newWeekly=' + weeklyPayment + ' | totalDebt from plan=' + estimatedTotalDebt);
         }
 
         if (estimatedTotalDebt <= 0) {
             throw new AuraHandledException(VALIDATION_SYMBOL + 'Estimated Total Debt must be greater than zero.');
         }
 
-        // Calculate total program cost and program fee (same formula as recalculateRemainingBalance)
-        Decimal totalProgramCost = estimatedTotalDebt * 0.95;
-        Decimal programFeePercentage = parsePercentageToDecimal(opp.Program_Fee__c);
-        if (programFeePercentage == null) {
-            programFeePercentage = config.programFeePercent != null ? config.programFeePercent : 35;
-        }
-        Decimal totalProgramFee = estimatedTotalDebt * (programFeePercentage / 100);
+        // ==================================================================================
+        // CALCULATE USING PLAN'S STORED PERCENTAGES (matching SalesCalculatorService formula)
+        // settlementAmount = totalDebt × (Settlement_Percentage__c / 100)
+        // programFeeAmount = totalDebt × (Program_Fee_Percentage__c / 100)
+        // totalProgramCost = settlementAmount + programFeeAmount + setupFee
+        // ==================================================================================
+        Decimal settlementAmount = estimatedTotalDebt * (settlementPercentage / 100);
+        Decimal programFeeAmount = isNoFeeProgram ? 0 : estimatedTotalDebt * (programFeePercentage / 100);
+        Decimal totalProgramCost = settlementAmount + programFeeAmount + totalSetupFee;
+        Decimal totalProgramFee = programFeeAmount;
 
-        // Get banking fee
-        Decimal bankingFee = currentPlan.Banking_Fee__c != null ? currentPlan.Banking_Fee__c : DEFAULT_BANKING_FEE;
-        Decimal bank2Fee = currentPlan.Bank2_Fee__c != null ? currentPlan.Bank2_Fee__c : 0;
+        System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Settlement: ' + settlementAmount + ' | ProgramFee: ' + programFeeAmount + ' | SetupFee: ' + totalSetupFee + ' | TotalProgramCost: ' + totalProgramCost);
 
-        // Calculate base program cost per payment
+        // Validate weekly payment exceeds banking fee
         Decimal baseProgramCostPerPayment = weeklyPayment - bankingFee;
         if (baseProgramCostPerPayment <= 0) {
             throw new AuraHandledException(VALIDATION_SYMBOL + 'Weekly payment ($' + weeklyPayment.setScale(2) + ') must exceed the banking fee ($' + bankingFee.setScale(2) + ').');
         }
-
-        // Get setup fee parameters from Opportunity
-        Decimal totalSetupFee = opp.Setup_Fee__c != null ? opp.Setup_Fee__c : 0;
-        Decimal setupFeePaymentsTotal = parsePercentageToDecimal(opp.Setup_Fee_Term__c);
-        if (setupFeePaymentsTotal == null || setupFeePaymentsTotal <= 0) {
-            setupFeePaymentsTotal = DEFAULT_SETUP_FEE_PAYMENTS;
-        }
-        Decimal perPaymentSetupFee = setupFeePaymentsTotal > 0 ? (totalSetupFee / setupFeePaymentsTotal) : 0;
 
         // Query existing schedule items
         String fields = getScheduleItemQueryFields();
@@ -4178,56 +4202,46 @@ public with sharing class PaymentPlanEditorController {
         System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Non-Scheduled: ' + nonScheduledItems.size() + ' | Scheduled: ' + scheduledItems.size());
         System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Paid Program Cost: ' + paidProgramCostSum + ' | Paid Program Fee: ' + paidProgramFeeSum);
 
-        // Calculate remaining amounts
-        Decimal remainingProgramCost = Math.max(0, totalProgramCost - paidProgramCostSum);
+        // Remaining amounts — remainingProgramCost uses settlement + programFee (not setup fee, which is tracked separately)
+        Decimal remainingProgramCost = Math.max(0, (settlementAmount + programFeeAmount) - paidProgramCostSum);
         Decimal remainingProgramFee = Math.max(0, totalProgramFee - paidProgramFeeSum);
         Integer remainingSetupFeePayments = Math.max(0, setupFeePaymentsTotal.intValue() - paidSetupFeeCount);
+
+        System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Remaining Program Cost: ' + remainingProgramCost + ' | Remaining Program Fee: ' + remainingProgramFee + ' | Remaining Setup Fee Payments: ' + remainingSetupFeePayments);
 
         if (remainingProgramCost <= 0) {
             throw new AuraHandledException(VALIDATION_SYMBOL + 'Debt is already paid off. Remaining program cost: $' + remainingProgramCost.setScale(2));
         }
 
-        // Calculate remaining count and last payment based on modification type
-        Integer remainingCount;
-        Decimal lastWeeklyPayment;
+        // ==================================================================================
+        // DYNAMICALLY CALCULATE REMAINING COUNT (both modes use same logic)
+        // ==================================================================================
+        Integer remainingCount = (Integer) Math.ceil(remainingProgramCost / baseProgramCostPerPayment);
 
-        if (modType == 'WEEKLY_PAYMENT') {
-            // WEEKLY_PAYMENT: Keep same number of scheduled payments, all use the new weekly payment
-            remainingCount = scheduledItems.size();
-            if (remainingCount <= 0) {
-                throw new AuraHandledException(VALIDATION_SYMBOL + 'No scheduled payments found to modify.');
-            }
-            // All payments use the same weekly payment - no last payment adjustment
-            lastWeeklyPayment = weeklyPayment;
-            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | WEEKLY_PAYMENT: Fixed remainingCount=' + remainingCount + ' from existing scheduled items');
-        } else {
-            // EST_TOTAL_DEBT: Number of payments adjusts based on new debt values
-            remainingCount = (Integer) Math.ceil(remainingProgramCost / baseProgramCostPerPayment);
-
-            // Cap at max program weeks
-            Integer maxWeeks = config.maxProgramWeeks != null ? config.maxProgramWeeks.intValue() : 260;
-            if ((nonScheduledItems.size() + remainingCount) > maxWeeks) {
-                remainingCount = maxWeeks - nonScheduledItems.size();
-            }
-
-            if (remainingCount <= 0) {
-                throw new AuraHandledException(VALIDATION_SYMBOL + 'No remaining payments can be scheduled.');
-            }
-
-            // Recalculate baseProgramCostPerPayment for even distribution (CEILING rounding)
-            baseProgramCostPerPayment = (remainingProgramCost / remainingCount).setScale(2, RoundingMode.CEILING);
-
-            // Calculate last payment (absorbs remainder)
-            Decimal lastPaymentProgramCost = remainingProgramCost - (baseProgramCostPerPayment * (remainingCount - 1));
-            lastPaymentProgramCost = Math.max(0, lastPaymentProgramCost).setScale(2, RoundingMode.HALF_UP);
-            lastWeeklyPayment = lastPaymentProgramCost + bankingFee;
-            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | EST_TOTAL_DEBT: Calculated remainingCount=' + remainingCount);
+        // Cap at max program weeks
+        Integer maxWeeks = config.maxProgramWeeks != null ? config.maxProgramWeeks.intValue() : 260;
+        if ((nonScheduledItems.size() + remainingCount) > maxWeeks) {
+            remainingCount = maxWeeks - nonScheduledItems.size();
         }
 
-        Integer numberOfPayments = nonScheduledItems.size() + remainingCount;
-        System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Remaining Count: ' + remainingCount + ' | Total Payments: ' + numberOfPayments);
+        if (remainingCount <= 0) {
+            throw new AuraHandledException(VALIDATION_SYMBOL + 'No remaining payments can be scheduled.');
+        }
 
-        // Clone plan for new version
+        // Recalculate baseProgramCostPerPayment for even distribution (CEILING rounding)
+        baseProgramCostPerPayment = (remainingProgramCost / remainingCount).setScale(2, RoundingMode.CEILING);
+
+        // Calculate last payment (absorbs remainder — will be <= base weekly payment)
+        Decimal lastPaymentProgramCost = remainingProgramCost - (baseProgramCostPerPayment * (remainingCount - 1));
+        lastPaymentProgramCost = Math.max(0, lastPaymentProgramCost).setScale(2, RoundingMode.HALF_UP);
+        Decimal lastWeeklyPayment = lastPaymentProgramCost + bankingFee;
+
+        Integer numberOfPayments = nonScheduledItems.size() + remainingCount;
+        System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | ' + modType + ': remainingCount=' + remainingCount + ' | Total Payments: ' + numberOfPayments + ' | Weekly: ' + weeklyPayment + ' | LastWeekly: ' + lastWeeklyPayment);
+
+        // ==================================================================================
+        // BUILD NEW PLAN VERSION
+        // ==================================================================================
         Decimal newVersionNumber = currentPlan.Version_Number__c != null ? currentPlan.Version_Number__c + 1 : 2;
         PaymentPlan__c newPlan = currentPlan.clone(false, true, false, false);
         newPlan.Version_Number__c = newVersionNumber;
@@ -4237,26 +4251,42 @@ public with sharing class PaymentPlanEditorController {
         newPlan.Version_Type__c = VERSION_TYPE_REVISION;
         newPlan.Source__c = SOURCE_UI;
         newPlan.Calculation_Timestamp__c = DateTime.now();
+
+        // Core calculated fields
         newPlan.Weekly_Payment__c = weeklyPayment;
         newPlan.Number_of_Payments__c = numberOfPayments;
         newPlan.Total_Debt__c = estimatedTotalDebt;
-
-        // Update setup fee and program fee
+        newPlan.Settlement_Amount__c = settlementAmount;
+        newPlan.Program_Fee_Amount__c = programFeeAmount;
+        newPlan.Total_Program_Cost__c = totalProgramCost;
+        newPlan.Settlement_Percentage__c = settlementPercentage;
+        newPlan.Program_Fee_Percentage__c = programFeePercentage;
         newPlan.Setup_Fee__c = totalSetupFee;
         newPlan.Setup_Fee_Payments__c = setupFeePaymentsTotal;
-        newPlan.Program_Fee_Percentage__c = programFeePercentage;
-        newPlan.Total_Program_Cost__c = totalProgramCost;
-        newPlan.Program_Type__c = opp.Program_Type__c;
-        newPlan.No_Fee_Program__c = opp.No_Fee_Program__c;
+        newPlan.Program_Type__c = currentPlan.Program_Type__c;
+        newPlan.No_Fee_Program__c = currentPlan.No_Fee_Program__c;
+
+        // Carry forward calculator settings from plan
+        newPlan.Target_Payment_Percent__c = currentPlan.Target_Payment_Percent__c;
+        newPlan.Calculation_Mode__c = currentPlan.Calculation_Mode__c;
+        newPlan.Payment_Frequency__c = opp.Payment_Frequency__c != null ? opp.Payment_Frequency__c : currentPlan.Payment_Frequency__c;
+
+        // Calculated summary fields
+        Decimal totalBankingFeeCalc = bankingFee * numberOfPayments;
+        newPlan.Total_Banking_Fee__c = totalBankingFeeCalc;
+        newPlan.Total_Savings__c = estimatedTotalDebt - (settlementAmount + programFeeAmount + totalSetupFee + totalBankingFeeCalc);
 
         String modLabel = modType == 'WEEKLY_PAYMENT' ? 'Weekly Payment' : 'Estimated Total Debt';
         newPlan.Version_Notes__c = modLabel + ' modified to $' + newValue.setScale(2) + ' on ' + DateTime.now().format() +
-            '. Payments: ' + numberOfPayments + ', Weekly: $' + weeklyPayment.setScale(2) + '.';
+            '. Payments: ' + numberOfPayments + ', Weekly: $' + weeklyPayment.setScale(2) +
+            ' (Settlement ' + settlementPercentage + '%, ProgramFee ' + programFeePercentage + '%).';
 
-        // Build new items list
+        // ==================================================================================
+        // BUILD SCHEDULE ITEMS
+        // ==================================================================================
         List<Payment_Schedule_Item__c> newItems = new List<Payment_Schedule_Item__c>();
 
-        // Clone non-scheduled items
+        // Clone non-scheduled items (preserve Cleared/NSF/Cancelled)
         for (Payment_Schedule_Item__c item : nonScheduledItems) {
             newItems.add(cloneItemForNewPlan(item, null)); // Plan ID set later in save
         }
@@ -4294,17 +4324,17 @@ public with sharing class PaymentPlanEditorController {
             newItem.Draft_Number__c = String.valueOf(paymentNumber);
             newItem.Payment_Date__c = scheduledStartDate.addDays((i - 1) * PAYMENT_INTERVAL_DAYS);
 
-            // Last payment uses remainder amount
+            // Last payment uses remainder amount (will be <= base weekly payment)
             Decimal thisWeeklyPayment = (i == remainingCount) ? lastWeeklyPayment : weeklyPayment;
 
-            // Setup fee
+            // Setup fee (only for remaining setup fee payments)
             Decimal thisSetupFee = 0;
             if (setupFeePaymentsMade < remainingSetupFeePayments) {
                 thisSetupFee = perPaymentSetupFee;
                 setupFeePaymentsMade++;
             }
 
-            // Banking fees
+            // Banking fees: flat rate from plan config
             Decimal thisBankingFee = bankingFee;
             Decimal thisBank2Fee = bank2Fee;
 
@@ -4315,12 +4345,16 @@ public with sharing class PaymentPlanEditorController {
             Decimal thisProgramFee = 0;
             Decimal toEscrow = 0;
 
-            if (trackingRemainingProgramFee > 0) {
+            // For DCG Debt: skip program fee on first payment — all goes to escrow
+            Boolean skipFeeThisPayment = (paymentNumber == 1 && normalizedProgramType == 'DCG_DEBT');
+
+            if (trackingRemainingProgramFee > 0 && !skipFeeThisPayment) {
                 Decimal desiredProgramFee = netAmount * programSplitRatio;
                 thisProgramFee = Math.min(desiredProgramFee, trackingRemainingProgramFee);
                 toEscrow = netAmount - thisProgramFee;
                 trackingRemainingProgramFee -= thisProgramFee;
             } else {
+                // All program fees collected, no-fee program, or first payment DCG Debt
                 toEscrow = netAmount;
             }
 
@@ -4341,13 +4375,20 @@ public with sharing class PaymentPlanEditorController {
             newItems.add(newItem);
         }
 
-        // Build preview wrapper
+        // ==================================================================================
+        // BUILD PREVIEW AND RESULT
+        // ==================================================================================
         PlanModificationPreview preview = new PlanModificationPreview();
         preview.numberOfPayments = numberOfPayments;
         preview.totalProgramCost = totalProgramCost;
         preview.weeklyPayment = weeklyPayment;
         preview.totalProgramFee = totalProgramFee;
         preview.estimatedTotalDebt = estimatedTotalDebt;
+        preview.settlementAmount = settlementAmount;
+        preview.programFeeAmount = programFeeAmount;
+        preview.totalSavings = newPlan.Total_Savings__c;
+        preview.totalBankingFee = totalBankingFeeCalc;
+        preview.paymentFrequency = newPlan.Payment_Frequency__c;
 
         // Convert all items to ScheduleItemWrapper for preview
         for (Payment_Schedule_Item__c item : newItems) {
@@ -4381,6 +4422,8 @@ public with sharing class PaymentPlanEditorController {
         result.preview = preview;
         result.weeklyPayment = weeklyPayment;
         result.numberOfPayments = numberOfPayments;
+        result.settlementAmount = settlementAmount;
+        result.programFeeAmount = programFeeAmount;
 
         System.debug(LoggingLevel.DEBUG, LOG_EXIT + ' | ' + CLASS_NAME + '.' + methodName + ' | Items: ' + newItems.size());
         return result;
