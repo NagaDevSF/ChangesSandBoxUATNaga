@@ -1880,7 +1880,7 @@ export default class PaymentPlanEditor extends LightningElement {
             setupFeeFormatted: this.formatCurrency(item.setupFee || 0),
             programFeeFormatted: this.formatCurrency(item.programFee || 0),
             bankingFeeFormatted: this.formatCurrency(item.bankingFee || 0),
-            savingsBalanceFormatted: this.formatCurrency(item.savingsBalance || 0),
+            savingsBalanceFormatted: this.formatCurrency(item.toEscrowAmount || 0),
             paymentDateDisplay: this.formatDate(item.paymentDate),
             statusBadgeClass: this.getStatusBadgeClass(item.status || 'Scheduled'),
             draftAmountClass: this.getAmountClass(item.draftAmount || 0),
