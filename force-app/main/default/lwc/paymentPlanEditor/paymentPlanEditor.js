@@ -86,7 +86,7 @@ export default class PaymentPlanEditor extends LightningElement {
 
     // Modify Plan Modal state
     showModifyModal = false;
-    modifyModalType = null;              // 'WEEKLY_PAYMENT' or 'EST_TOTAL_DEBT'
+    modifyModalType = null;              // 'EST_CURRENT_PAYMENT' or 'EST_TOTAL_DEBT'
     modifyModalValue = null;
     modifyModalOriginalValue = null;
     @track modifyPreviewItems = [];
@@ -408,7 +408,7 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get hasActivatedBy() {
-        return !!this.activatedByName;
+        return !!this.activatedByName && this.planStatus === 'Active';
     }
 
     // Active tab label shows the selected version name
@@ -1056,10 +1056,18 @@ export default class PaymentPlanEditor extends LightningElement {
         if (field === 'status') {
             this.pendingItems = this.pendingItems.map(item => {
                 if (item.id === itemId || item.tempId === itemId) {
+                    const newStatusOptions = this.statusPicklistOptions.map(opt => ({
+                        label: opt.label,
+                        value: opt.value,
+                        selected: opt.value === rawValue
+                    }));
                     return {
                         ...item,
                         status: rawValue,
                         statusBadgeClass: this.getStatusBadgeClass(rawValue),
+                        statusOptionsWithSelection: newStatusOptions,
+                        isRowEditable: rawValue === EDITABLE_STATUS,
+                        rowClass: this.getRowClass({ ...item, status: rawValue, isModified: true }),
                         isModified: true
                     };
                 }
@@ -1254,13 +1262,15 @@ export default class PaymentPlanEditor extends LightningElement {
         try {
             // IMPORTANT: Non-Scheduled items are FROZEN - preserve their exact data
             // Only 'Scheduled' items can be modified or have their status defaulted
+            // BUT: if the user modified the item (e.g. changed status from Scheduled to Cleared),
+            // it must NOT be frozen — the user's changes need to be applied by the backend.
             const itemsToSave = this.pendingItems
                 .filter(item => !item.isDeleted)
                 .map((item, index) => {
                     // Check if this is a non-Scheduled (frozen) item
-                    // Any status that is NOT 'Scheduled' must be preserved exactly as-is
+                    // Only freeze items that are non-Scheduled AND were NOT modified by the user
                     const isScheduledItem = item.status === EDITABLE_STATUS;
-                    const isFrozenItem = item.status && !isScheduledItem;
+                    const isFrozenItem = item.status && !isScheduledItem && !item.isModified;
 
                     return {
                         // Preserve original ID for frozen items so they're recognized by backend
@@ -1851,14 +1861,14 @@ export default class PaymentPlanEditor extends LightningElement {
     // ============ MODIFY PLAN MODAL METHODS ============
 
     get modifyModalTitle() {
-        return this.modifyModalType === 'WEEKLY_PAYMENT'
-            ? 'Modify Weekly Payment'
+        return this.modifyModalType === 'EST_CURRENT_PAYMENT'
+            ? 'Modify Estimated Current Payment'
             : 'Modify Estimated Total Debt';
     }
 
     get modifyModalLabel() {
-        return this.modifyModalType === 'WEEKLY_PAYMENT'
-            ? 'Weekly Payment Amount'
+        return this.modifyModalType === 'EST_CURRENT_PAYMENT'
+            ? 'Estimated Current Payment'
             : 'Estimated Total Debt';
     }
 
@@ -1898,9 +1908,10 @@ export default class PaymentPlanEditor extends LightningElement {
         return !this.hasModifyPreviewItems || this.isModifyPreviewLoading || this.isModifySaving;
     }
 
+    @api
     handleOpenModifyWeeklyPayment() {
-        this.modifyModalType = 'WEEKLY_PAYMENT';
-        this.modifyModalOriginalValue = this.paymentPlan?.Weekly_Payment__c || 0;
+        this.modifyModalType = 'EST_CURRENT_PAYMENT';
+        this.modifyModalOriginalValue = this.paymentPlan?.Current_Payment__c || 0;
         this.modifyModalValue = this.modifyModalOriginalValue;
         this.modifyPreviewItems = [];
         this.modifyPreviewSummary = null;
@@ -1908,6 +1919,7 @@ export default class PaymentPlanEditor extends LightningElement {
         this._triggerModifyPreview();
     }
 
+    @api
     handleOpenModifyEstTotalDebt() {
         this.modifyModalType = 'EST_TOTAL_DEBT';
         this.modifyModalOriginalValue = this.paymentPlan?.Total_Debt__c || 0;
@@ -2004,8 +2016,8 @@ export default class PaymentPlanEditor extends LightningElement {
                 this.activeTab = 'Active';
 
                 // Close modal first
-                const typeLabel = this.modifyModalType === 'WEEKLY_PAYMENT'
-                    ? 'Weekly Payment' : 'Estimated Total Debt';
+                const typeLabel = this.modifyModalType === 'EST_CURRENT_PAYMENT'
+                    ? 'Estimated Current Payment' : 'Estimated Total Debt';
                 this.handleCloseModifyModal();
 
                 // Refresh plans list and select the new plan
@@ -2645,8 +2657,16 @@ export default class PaymentPlanEditor extends LightningElement {
         const field = this.fillSourceCell.field;
         const sourceValue = this.fillSourceCell.value;
 
-        // Get filtered pending items (non-deleted)
-        const activeItems = this.pendingItems.filter(item => !item.isDeleted);
+        // Use displayItems (sorted by date) to resolve target row indices to tempIds.
+        // fillTargetRows contains indices from the display-sorted order, so we must
+        // look up tempIds from displayItems — not from unsorted pendingItems.
+        const displayed = this.displayItems;
+        const targetTempIds = new Set();
+        for (const rowIdx of this.fillTargetRows) {
+            if (displayed[rowIdx]) {
+                targetTempIds.add(displayed[rowIdx].tempId);
+            }
+        }
 
         // Check if the filled field affects savings calculation
         const affectsSavings = field === 'draftAmount' || field === 'setupFee' ||
@@ -2654,10 +2674,7 @@ export default class PaymentPlanEditor extends LightningElement {
 
         // Update each target row with the source value and recalculate savings
         this.pendingItems = this.pendingItems.map((item, idx) => {
-            // Find the display index (among non-deleted items)
-            const displayIndex = activeItems.findIndex(ai => ai.tempId === item.tempId);
-
-            if (displayIndex !== -1 && this.fillTargetRows.includes(displayIndex)) {
+            if (targetTempIds.has(item.tempId)) {
                 const updatedItem = {
                     ...item,
                     [field]: sourceValue,

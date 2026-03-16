@@ -429,6 +429,19 @@ input[type="range"]::-moz-range-thumb {
 }
 
 
+/* Modify Plan Buttons */
+.modify-button-container {
+   margin-top: 16px;
+   display: flex;
+   gap: 12px;
+   justify-content: center;
+}
+
+.modify-btn {
+   min-width: 180px;
+}
+
+
 /* Responsive Design */
 @media (max-width: 768px) {
    .selection-cards {

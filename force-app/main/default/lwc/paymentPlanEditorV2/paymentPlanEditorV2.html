@@ -179,6 +179,16 @@
                        icon-name="utility:save" class="save-opportunity-btn">
                    </lightning-button>
                </div>
+
+               <!-- Modify Plan Buttons -->
+               <div class="settings-group modify-button-container">
+                   <lightning-button label="Modify Est Current Payment" variant="neutral" onclick={handleModifyWeeklyPayment}
+                       icon-name="utility:currency" class="modify-btn">
+                   </lightning-button>
+                   <lightning-button label="Modify Est Total Debt" variant="neutral" onclick={handleModifyEstTotalDebt}
+                       icon-name="utility:trending" class="modify-btn">
+                   </lightning-button>
+               </div>
            </div>
        </div>
    </lightning-card>
@@ -186,6 +196,6 @@
 
    <!-- Payment Plan Editor Section (embedded unchanged) -->
    <div class="slds-m-top_medium">
-       <c-payment-plan-editor record-id={recordId} onscheduleupdate={handleScheduleUpdate}></c-payment-plan-editor>
+       <c-payment-plan-editor class="plan-editor-child" record-id={recordId} onscheduleupdate={handleScheduleUpdate}></c-payment-plan-editor>
    </div>
 </template>

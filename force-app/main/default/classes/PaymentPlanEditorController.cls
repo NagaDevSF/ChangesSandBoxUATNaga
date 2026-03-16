@@ -3925,7 +3925,7 @@ public with sharing class PaymentPlanEditorController {
      * Calculates the new schedule items based on the modified field value
      * using the same formula as recalculateRemainingBalance.
      * @param planId The current Payment Plan ID
-     * @param modificationType 'WEEKLY_PAYMENT' or 'EST_TOTAL_DEBT'
+     * @param modificationType 'EST_CURRENT_PAYMENT' or 'EST_TOTAL_DEBT'
      * @param newValue The new value for the modified field
      * @return PlanModificationPreview with summary metrics and projected schedule items
      */
@@ -3952,7 +3952,7 @@ public with sharing class PaymentPlanEditorController {
      * Creates a new plan version with recalculated schedule items and updates the Opportunity field.
      * Uses the same formula as recalculateRemainingBalance but with the user-provided value override.
      * @param planId The current Payment Plan ID
-     * @param modificationType 'WEEKLY_PAYMENT' or 'EST_TOTAL_DEBT'
+     * @param modificationType 'EST_CURRENT_PAYMENT' or 'EST_TOTAL_DEBT'
      * @param newValue The new value for the modified field
      * @return PaymentPlanWrapper for the newly created plan version
      */
@@ -3995,9 +3995,10 @@ public with sharing class PaymentPlanEditorController {
             // Update Opportunity fields
             Opportunity oppUpdate = new Opportunity(Id = result.opp.Id);
             oppUpdate.Number_of_Weeks__c = result.numberOfPayments;
-            if (modificationType == 'WEEKLY_PAYMENT') {
-                oppUpdate.Est_weekly_payment__c = newValue;
-                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Updating Opp Est_weekly_payment__c to ' + newValue);
+            oppUpdate.Est_weekly_payment__c = result.weeklyPayment;
+            if (modificationType == 'EST_CURRENT_PAYMENT') {
+                oppUpdate.Estimated_Current_Payment__c = newValue;
+                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Updating Opp Estimated_Current_Payment__c to ' + newValue + ' | Est_weekly_payment__c to ' + result.weeklyPayment);
             } else if (modificationType == 'EST_TOTAL_DEBT') {
                 oppUpdate.Estimated_Total_Debt__c = newValue;
                 System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Updating Opp Estimated_Total_Debt__c to ' + newValue);
@@ -4022,10 +4023,10 @@ public with sharing class PaymentPlanEditorController {
      * @description Shared calculation engine for plan modification (preview + save).
      * Follows the same formula as recalculateRemainingBalance but allows overriding
      * either the weekly payment or the estimated total debt.
-     * For WEEKLY_PAYMENT: user provides new weekly payment, number of payments adjusts.
+     * For EST_CURRENT_PAYMENT: user provides new estimated current payment, weekly payment calculated from Target_Payment_Percent__c, number of payments adjusts.
      * For EST_TOTAL_DEBT: user provides new total debt, weekly payment stays the same, number of payments adjusts.
      * @param planId The current Payment Plan ID
-     * @param modType 'WEEKLY_PAYMENT' or 'EST_TOTAL_DEBT'
+     * @param modType 'EST_CURRENT_PAYMENT' or 'EST_TOTAL_DEBT'
      * @param newValue The new value for the modified field
      * @return PlanModificationResult with all calculated data (no DML performed)
      */
@@ -4037,8 +4038,8 @@ public with sharing class PaymentPlanEditorController {
         if (planId == null) {
             throw new AuraHandledException(VALIDATION_SYMBOL + 'Plan ID is required.');
         }
-        if (String.isBlank(modType) || (modType != 'WEEKLY_PAYMENT' && modType != 'EST_TOTAL_DEBT')) {
-            throw new AuraHandledException(VALIDATION_SYMBOL + 'Invalid modification type. Must be WEEKLY_PAYMENT or EST_TOTAL_DEBT.');
+        if (String.isBlank(modType) || (modType != 'EST_CURRENT_PAYMENT' && modType != 'EST_TOTAL_DEBT')) {
+            throw new AuraHandledException(VALIDATION_SYMBOL + 'Invalid modification type. Must be EST_CURRENT_PAYMENT or EST_TOTAL_DEBT.');
         }
         if (newValue == null || newValue <= 0) {
             throw new AuraHandledException(VALIDATION_SYMBOL + 'Value must be greater than zero.');
@@ -4076,7 +4077,7 @@ public with sharing class PaymentPlanEditorController {
                    No_Fee_Program__c, Program_Type__c,
                    Setup_Fee__c, Setup_Fee_Term__c,
                    Total_Program__c, Program_Fee__c,
-                   Est_weekly_payment__c, Payment_Frequency__c
+                   Est_weekly_payment__c, Estimated_Current_Payment__c, Payment_Frequency__c
             FROM Opportunity
             WHERE Id = :currentPlan.Opportunity__c
             LIMIT 1
@@ -4129,9 +4130,16 @@ public with sharing class PaymentPlanEditorController {
         // Determine values based on modification type
         Decimal estimatedTotalDebt;
         Decimal weeklyPayment;
+        Decimal estimatedCurrentPayment;
+
+        // Get target payment percent from plan (used for EST_CURRENT_PAYMENT calculation)
+        Decimal targetPaymentPercent = currentPlan.Target_Payment_Percent__c != null && currentPlan.Target_Payment_Percent__c > 0
+            ? currentPlan.Target_Payment_Percent__c
+            : (config.targetPaymentPercentage != null ? config.targetPaymentPercentage : 59);
 
         if (modType == 'EST_TOTAL_DEBT') {
             estimatedTotalDebt = newValue;
+            estimatedCurrentPayment = currentPlan.Current_Payment__c;
             // Keep weekly payment from current plan
             weeklyPayment = currentPlan.Weekly_Payment__c != null && currentPlan.Weekly_Payment__c > 0
                 ? currentPlan.Weekly_Payment__c
@@ -4139,12 +4147,14 @@ public with sharing class PaymentPlanEditorController {
                     ? opp.Est_weekly_payment__c : 0);
             System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | EST_TOTAL_DEBT: newDebt=' + estimatedTotalDebt + ' | weeklyPayment from plan=' + weeklyPayment);
         } else {
-            // WEEKLY_PAYMENT: keep same total debt from current plan
+            // EST_CURRENT_PAYMENT: user provides new current payment, calculate weekly from target %
+            estimatedCurrentPayment = newValue;
             estimatedTotalDebt = currentPlan.Total_Debt__c != null && currentPlan.Total_Debt__c > 0
                 ? currentPlan.Total_Debt__c
                 : (opp.Estimated_Total_Debt__c != null ? opp.Estimated_Total_Debt__c : 0);
-            weeklyPayment = newValue;
-            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | WEEKLY_PAYMENT: newWeekly=' + weeklyPayment + ' | totalDebt from plan=' + estimatedTotalDebt);
+            // Weekly payment = Estimated Current Payment × (Target Payment % / 100)
+            weeklyPayment = (estimatedCurrentPayment * (targetPaymentPercent / 100)).setScale(2, RoundingMode.HALF_UP);
+            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | EST_CURRENT_PAYMENT: newCurrentPayment=' + estimatedCurrentPayment + ' | targetPercent=' + targetPaymentPercent + ' | calculatedWeekly=' + weeklyPayment + ' | totalDebt from plan=' + estimatedTotalDebt);
         }
 
         if (estimatedTotalDebt <= 0) {
@@ -4270,13 +4280,17 @@ public with sharing class PaymentPlanEditorController {
         newPlan.Target_Payment_Percent__c = currentPlan.Target_Payment_Percent__c;
         newPlan.Calculation_Mode__c = currentPlan.Calculation_Mode__c;
         newPlan.Payment_Frequency__c = opp.Payment_Frequency__c != null ? opp.Payment_Frequency__c : currentPlan.Payment_Frequency__c;
+        // Update current payment on the new plan
+        if (estimatedCurrentPayment != null) {
+            newPlan.Current_Payment__c = estimatedCurrentPayment;
+        }
 
         // Calculated summary fields
         Decimal totalBankingFeeCalc = bankingFee * numberOfPayments;
         newPlan.Total_Banking_Fee__c = totalBankingFeeCalc;
         newPlan.Total_Savings__c = estimatedTotalDebt - (settlementAmount + programFeeAmount + totalSetupFee + totalBankingFeeCalc);
 
-        String modLabel = modType == 'WEEKLY_PAYMENT' ? 'Weekly Payment' : 'Estimated Total Debt';
+        String modLabel = modType == 'EST_CURRENT_PAYMENT' ? 'Estimated Current Payment' : 'Estimated Total Debt';
         newPlan.Version_Notes__c = modLabel + ' modified to $' + newValue.setScale(2) + ' on ' + DateTime.now().format() +
             '. Payments: ' + numberOfPayments + ', Weekly: $' + weeklyPayment.setScale(2) +
             ' (Settlement ' + settlementPercentage + '%, ProgramFee ' + programFeePercentage + '%).';

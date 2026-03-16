@@ -793,6 +793,23 @@ export default class PaymentPlanEditorV2 extends LightningElement {
    }
 
 
+   // ============ MODIFY PLAN HANDLERS ============
+
+   handleModifyWeeklyPayment() {
+       const editor = this.template.querySelector('c-payment-plan-editor');
+       if (editor) {
+           editor.handleOpenModifyWeeklyPayment();
+       }
+   }
+
+   handleModifyEstTotalDebt() {
+       const editor = this.template.querySelector('c-payment-plan-editor');
+       if (editor) {
+           editor.handleOpenModifyEstTotalDebt();
+       }
+   }
+
+
    async handleRefresh() {
        try {
            this.isLoading = true;

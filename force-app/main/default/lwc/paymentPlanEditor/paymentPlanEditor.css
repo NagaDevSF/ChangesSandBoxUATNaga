@@ -1042,6 +1042,26 @@ dialog.modify-modal {
     background-color: #1aa179;
 }
 
+.btn-orange {
+    background-color: #e67e22;
+    color: white;
+    border: 1px solid #d35400;
+}
+
+.btn-orange:hover:not(:disabled) {
+    background-color: #d35400;
+}
+
+.btn-purple {
+    background-color: #8e44ad;
+    color: white;
+    border: 1px solid #732d91;
+}
+
+.btn-purple:hover:not(:disabled) {
+    background-color: #732d91;
+}
+
 .btn-outline {
     background: transparent;
     border: 1px solid #cbd5e0;

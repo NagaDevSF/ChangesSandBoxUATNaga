@@ -591,26 +591,6 @@
                                     <td class="td-center" role="gridcell"></td>
                                 </template>
                             </tr>
-                            <!-- Wires Row - Shows total of all wired payments -->
-                            <tr class="aggregate-row wires-row">
-                                <td class="td-center" role="gridcell"></td>
-                                <td class="td-center" role="gridcell"></td>
-                                <td class="td-center aggregate-label" role="gridcell">
-                                    <strong>Wires</strong>
-                                </td>
-                                <td class="td-right aggregate-value wires-value" role="gridcell">
-                                    <output>{totalWiresReceivedFormatted}</output>
-                                </td>
-                                <td class="td-center" role="gridcell"></td>
-                                <td class="td-center" role="gridcell"></td>
-                                <td class="td-center" role="gridcell"></td>
-                                <td class="td-center" role="gridcell"></td>
-                                <td class="td-center" role="gridcell"></td>
-                                <td class="td-center" role="gridcell"></td>
-                                <template lwc:if={canEdit}>
-                                    <td class="td-center" role="gridcell"></td>
-                                </template>
-                            </tr>
                         </tfoot>
                     </template>
                 </table>
@@ -636,12 +616,6 @@
                         <button type="button" class="btn btn-teal" onclick={handleRecalculateRemainingBalance}>
                             Recalculate Remaining
                         </button>
-                        <button type="button" class="btn btn-outline" onclick={handleOpenModifyWeeklyPayment}>
-                            Modify Weekly Payment
-                        </button>
-                        <button type="button" class="btn btn-outline" onclick={handleOpenModifyEstTotalDebt}>
-                            Modify Est Total Debt
-                        </button>
                     </nav>
                     <nav class="footer-right" aria-label="Save actions">
                         <button type="button" class="btn btn-gray" onclick={handleCancelEdit}>
@@ -659,12 +633,6 @@
                         </button>
                         <button type="button" class="btn btn-teal" onclick={handleRecalculateRemainingBalance}>
                             Recalculate Remaining
-                        </button>
-                        <button type="button" class="btn btn-outline" onclick={handleOpenModifyWeeklyPayment}>
-                            Modify Weekly Payment
-                        </button>
-                        <button type="button" class="btn btn-outline" onclick={handleOpenModifyEstTotalDebt}>
-                            Modify Est Total Debt
                         </button>
                     </nav>
                     <nav class="footer-right" aria-label="Version actions">

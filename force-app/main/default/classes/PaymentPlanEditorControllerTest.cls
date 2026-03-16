@@ -1992,23 +1992,29 @@ private class PaymentPlanEditorControllerTest {
     // ============ PLAN MODIFICATION TESTS ============
 
     @IsTest
-    static void testPreviewModifyWeeklyPayment() {
-        PaymentPlan__c plan = [SELECT Id FROM PaymentPlan__c LIMIT 1];
+    static void testPreviewModifyEstCurrentPayment() {
+        PaymentPlan__c plan = [SELECT Id, Target_Payment_Percent__c FROM PaymentPlan__c LIMIT 1];
         Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
         opp.Estimated_Total_Debt__c = 50000;
         opp.Number_of_Weeks__c = 52;
         update opp;
 
+        // Set Target_Payment_Percent__c on plan for weekly payment calculation
+        plan.Target_Payment_Percent__c = 50;
+        update plan;
+
         Integer planCountBefore = [SELECT COUNT() FROM PaymentPlan__c];
 
         Test.startTest();
         try {
+            // User enters new Estimated Current Payment of 1000
+            // Weekly = 1000 * (50 / 100) = 500
             PaymentPlanEditorController.PlanModificationPreview result =
-                PaymentPlanEditorController.previewPlanModification(plan.Id, 'WEEKLY_PAYMENT', 600);
+                PaymentPlanEditorController.previewPlanModification(plan.Id, 'EST_CURRENT_PAYMENT', 1000);
 
             System.assertNotEquals(null, result, 'Should return preview');
             System.assert(result.scheduleItems.size() > 0, 'Should have schedule items');
-            System.assertEquals(600, result.weeklyPayment, 'Weekly payment should match input');
+            System.assertEquals(500, result.weeklyPayment, 'Weekly payment should be currentPayment * targetPercent%');
             System.assert(result.numberOfPayments > 0, 'Should have positive number of payments');
 
             // Verify NO DML occurred
@@ -2055,27 +2061,34 @@ private class PaymentPlanEditorControllerTest {
     }
 
     @IsTest
-    static void testSaveModifyWeeklyPayment() {
+    static void testSaveModifyEstCurrentPayment() {
         PaymentPlan__c plan = [SELECT Id, Version_Number__c FROM PaymentPlan__c LIMIT 1];
         Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
         opp.Estimated_Total_Debt__c = 50000;
         opp.Number_of_Weeks__c = 52;
         update opp;
 
+        // Set Target_Payment_Percent__c on plan
+        plan.Target_Payment_Percent__c = 50;
+        update plan;
+
         Test.startTest();
         try {
+            // User enters new Estimated Current Payment of 1200
+            // Weekly = 1200 * (50 / 100) = 600
             PaymentPlanEditorController.PaymentPlanWrapper result =
-                PaymentPlanEditorController.savePlanModification(plan.Id, 'WEEKLY_PAYMENT', 600);
+                PaymentPlanEditorController.savePlanModification(plan.Id, 'EST_CURRENT_PAYMENT', 1200);
 
             System.assertNotEquals(null, result, 'Should return wrapper');
             System.assertEquals(2, result.versionNumber, 'New version should be 2');
             System.assertEquals('Draft', result.versionStatus, 'New version should be Draft');
-            System.assertEquals(600, result.paymentPlan.Weekly_Payment__c, 'Weekly payment should be updated');
+            System.assertEquals(600, result.paymentPlan.Weekly_Payment__c, 'Weekly payment should be 1200 * 50% = 600');
             System.assert(result.scheduleItems.size() > 0, 'Should have schedule items');
 
-            // Verify Opportunity updated
-            Opportunity updatedOpp = [SELECT Est_weekly_payment__c FROM Opportunity WHERE Id = :opp.Id];
-            System.assertEquals(600, updatedOpp.Est_weekly_payment__c, 'Opp weekly payment should be updated');
+            // Verify Opportunity updated with new current payment
+            Opportunity updatedOpp = [SELECT Estimated_Current_Payment__c, Est_weekly_payment__c FROM Opportunity WHERE Id = :opp.Id];
+            System.assertEquals(1200, updatedOpp.Estimated_Current_Payment__c, 'Opp current payment should be updated');
+            System.assertEquals(600, updatedOpp.Est_weekly_payment__c, 'Opp weekly payment should be calculated from current payment');
 
             // Verify cleared items preserved
             Integer clearedCount = 0;
@@ -2123,7 +2136,7 @@ private class PaymentPlanEditorControllerTest {
         Boolean exceptionThrown = false;
         Test.startTest();
         try {
-            PaymentPlanEditorController.previewPlanModification(null, 'WEEKLY_PAYMENT', 600);
+            PaymentPlanEditorController.previewPlanModification(null, 'EST_CURRENT_PAYMENT', 600);
             System.assert(false, 'Should have thrown exception');
         } catch (AuraHandledException e) {
             exceptionThrown = true;
@@ -2138,7 +2151,7 @@ private class PaymentPlanEditorControllerTest {
         Boolean exceptionThrown = false;
         Test.startTest();
         try {
-            PaymentPlanEditorController.previewPlanModification(plan.Id, 'WEEKLY_PAYMENT', 0);
+            PaymentPlanEditorController.previewPlanModification(plan.Id, 'EST_CURRENT_PAYMENT', 0);
             System.assert(false, 'Should have thrown exception');
         } catch (AuraHandledException e) {
             exceptionThrown = true;
@@ -2159,7 +2172,7 @@ private class PaymentPlanEditorControllerTest {
         Test.startTest();
         try {
             // Plan has Banking_Fee__c = 15, so 10 is below it
-            PaymentPlanEditorController.previewPlanModification(plan.Id, 'WEEKLY_PAYMENT', 10);
+            PaymentPlanEditorController.previewPlanModification(plan.Id, 'EST_CURRENT_PAYMENT', 10);
             System.assert(false, 'Should have thrown exception');
         } catch (AuraHandledException e) {
             exceptionThrown = true;
@@ -2187,7 +2200,7 @@ private class PaymentPlanEditorControllerTest {
         Boolean exceptionThrown = false;
         Test.startTest();
         try {
-            PaymentPlanEditorController.savePlanModification(planNoOpp.Id, 'WEEKLY_PAYMENT', 600);
+            PaymentPlanEditorController.savePlanModification(planNoOpp.Id, 'EST_CURRENT_PAYMENT', 600);
             System.assert(false, 'Should have thrown exception');
         } catch (AuraHandledException e) {
             exceptionThrown = true;
