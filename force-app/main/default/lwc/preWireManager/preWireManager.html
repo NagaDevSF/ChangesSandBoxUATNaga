@@ -1,0 +1,173 @@
+<template>
+    <lightning-card title="Pre Wires" icon-name="standard:currency">
+        <!-- Header Actions -->
+        <div slot="actions">
+            <lightning-button
+                label="Insert"
+                variant="brand"
+                icon-name="utility:add"
+                onclick={handleInsert}
+                disabled={isLoading}
+            ></lightning-button>
+        </div>
+
+        <!-- Loading Spinner -->
+        <template lwc:if={isLoading}>
+            <div class="slds-is-relative slds-p-around_large">
+                <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Content -->
+        <template lwc:if={isReady}>
+            <!-- Empty State -->
+            <template lwc:if={hasNoRecords}>
+                <div class="slds-p-around_large slds-align_absolute-center">
+                    <div class="slds-text-align_center">
+                        <lightning-icon
+                            icon-name="standard:empty_state"
+                            size="large"
+                            class="slds-m-bottom_small"
+                        ></lightning-icon>
+                        <p class="slds-text-heading_small slds-m-top_small slds-text-color_weak">
+                            No Pre Wire records found for this Opportunity.
+                        </p>
+                        <p class="slds-text-body_small slds-text-color_weak slds-m-top_x-small">
+                            Click <strong>Insert</strong> to add a new wire.
+                        </p>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Data Table -->
+            <template lwc:if={hasRecords}>
+                <div class="slds-scrollable_x">
+                    <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                        <thead>
+                            <tr class="slds-line-height_reset">
+                                <th class="slds-text-title_caps" scope="col">
+                                    <div class="slds-truncate" title="Business Name">Business Name</div>
+                                </th>
+                                <th class="slds-text-title_caps" scope="col">
+                                    <div class="slds-truncate" title="Date Value">Date Value</div>
+                                </th>
+                                <th class="slds-text-title_caps" scope="col">
+                                    <div class="slds-truncate" title="Amount">Amount</div>
+                                </th>
+                                <th class="slds-text-title_caps" scope="col" style="width: 12rem;">
+                                    <div class="slds-truncate" title="Actions">Actions</div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={rows} for:item="row">
+                                <tr key={row.clientKey}>
+                                    <!-- Business Name (always read-only) -->
+                                    <td data-label="Business Name">
+                                        <div class="slds-truncate" title={row.businessName}>
+                                            {row.businessName}
+                                        </div>
+                                    </td>
+
+                                    <!-- Date Value -->
+                                    <td data-label="Date Value">
+                                        <template lwc:if={row.isEditing}>
+                                            <lightning-input
+                                                type="date"
+                                                value={row.dateValue}
+                                                data-field="dateValue"
+                                                data-key={row.clientKey}
+                                                onchange={handleFieldChange}
+                                                variant="label-hidden"
+                                                required
+                                            ></lightning-input>
+                                        </template>
+                                        <template lwc:else>
+                                            <div class="slds-truncate">
+                                                {row.formattedDate}
+                                            </div>
+                                        </template>
+                                    </td>
+
+                                    <!-- Amount -->
+                                    <td data-label="Amount">
+                                        <template lwc:if={row.isEditing}>
+                                            <lightning-input
+                                                type="number"
+                                                value={row.amount}
+                                                data-field="amount"
+                                                data-key={row.clientKey}
+                                                onchange={handleFieldChange}
+                                                variant="label-hidden"
+                                                formatter="currency"
+                                                step="0.01"
+                                                min="0.01"
+                                                required
+                                            ></lightning-input>
+                                        </template>
+                                        <template lwc:else>
+                                            <div class="slds-truncate">
+                                                {row.formattedAmount}
+                                            </div>
+                                        </template>
+                                    </td>
+
+                                    <!-- Actions -->
+                                    <td data-label="Actions">
+                                        <template lwc:if={row.isEditing}>
+                                            <lightning-button-group>
+                                                <lightning-button
+                                                    label="Save"
+                                                    variant="brand"
+                                                    data-key={row.clientKey}
+                                                    onclick={handleSave}
+                                                    disabled={isSaving}
+                                                ></lightning-button>
+                                                <lightning-button
+                                                    label="Cancel"
+                                                    data-key={row.clientKey}
+                                                    onclick={handleCancel}
+                                                    disabled={isSaving}
+                                                ></lightning-button>
+                                            </lightning-button-group>
+                                        </template>
+                                        <template lwc:else>
+                                            <lightning-button-group>
+                                                <lightning-button-icon
+                                                    icon-name="utility:edit"
+                                                    alternative-text="Edit"
+                                                    title="Edit"
+                                                    data-key={row.clientKey}
+                                                    onclick={handleEdit}
+                                                ></lightning-button-icon>
+                                                <lightning-button-icon
+                                                    icon-name="utility:delete"
+                                                    alternative-text="Delete"
+                                                    title="Delete"
+                                                    data-key={row.clientKey}
+                                                    onclick={handleDelete}
+                                                    variant="destructive"
+                                                ></lightning-button-icon>
+                                            </lightning-button-group>
+                                        </template>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </template>
+        </template>
+
+        <!-- Error State -->
+        <template lwc:if={errorMessage}>
+            <div class="slds-p-around_medium">
+                <div class="slds-notify slds-notify_alert slds-alert_error slds-theme_alert-texture" role="alert">
+                    <span class="slds-assistive-text">error</span>
+                    <lightning-icon icon-name="utility:error" size="x-small" variant="inverse" class="slds-m-right_x-small"></lightning-icon>
+                    {errorMessage}
+                </div>
+            </div>
+        </template>
+    </lightning-card>
+</template>

@@ -1,0 +1,24 @@
+:host {
+    display: block;
+}
+
+.slds-table {
+    width: 100%;
+}
+
+.slds-table th {
+    background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
+    white-space: nowrap;
+}
+
+.slds-table td {
+    vertical-align: middle;
+}
+
+.slds-table lightning-input {
+    min-width: 8rem;
+}
+
+.slds-table lightning-button-group {
+    white-space: nowrap;
+}
