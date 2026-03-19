@@ -3981,8 +3981,53 @@ public with sharing class PaymentPlanEditorController {
                 insert result.newItems;
                 System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted ' + result.newItems.size() + ' schedule items');
 
-                // Create Payment_Fee__c records
-                createFeeRecordsForScheduleItems(result.newItems);
+                // Clone fees for non-scheduled items (preserves EPPS data: Fee_Id__c, Transaction_Id__c, Status_Code__c, Status__c)
+                // Create fresh fees for new scheduled items
+                Set<Id> oldNonScheduledIds = new Set<Id>();
+                Map<Decimal, Id> paymentNumToOldId = new Map<Decimal, Id>();
+                for (Payment_Schedule_Item__c oldItem : result.nonScheduledItems) {
+                    oldNonScheduledIds.add(oldItem.Id);
+                    if (oldItem.Payment_Number__c != null) {
+                        paymentNumToOldId.put(oldItem.Payment_Number__c, oldItem.Id);
+                    }
+                }
+
+                // Query standard fees (Banking, Program, Setup) for old non-scheduled items
+                Map<Id, Map<String, Payment_Fee__c>> oldFeeMap = oldNonScheduledIds.isEmpty()
+                    ? new Map<Id, Map<String, Payment_Fee__c>>()
+                    : PaymentFeeService.getFeesByScheduleItemIds(oldNonScheduledIds);
+
+                List<Payment_Fee__c> clonedFees = new List<Payment_Fee__c>();
+                List<Payment_Schedule_Item__c> newScheduledItems = new List<Payment_Schedule_Item__c>();
+
+                for (Payment_Schedule_Item__c newItem : result.newItems) {
+                    if (newItem.Status__c != STATUS_SCHEDULED && newItem.Payment_Number__c != null) {
+                        // Non-scheduled item: clone fee records from original item
+                        Id oldItemId = paymentNumToOldId.get(newItem.Payment_Number__c);
+                        if (oldItemId != null && oldFeeMap.containsKey(oldItemId)) {
+                            Map<String, Payment_Fee__c> feesByType = oldFeeMap.get(oldItemId);
+                            for (Payment_Fee__c oldFee : feesByType.values()) {
+                                Payment_Fee__c clonedFee = oldFee.clone(false, true, false, false);
+                                clonedFee.Payment_Schedule_Item__c = newItem.Id;
+                                clonedFees.add(clonedFee);
+                            }
+                        }
+                    } else {
+                        // Scheduled item: collect for fresh fee creation
+                        newScheduledItems.add(newItem);
+                    }
+                }
+
+                // Insert cloned fees for non-scheduled items
+                if (!clonedFees.isEmpty()) {
+                    insert clonedFees;
+                    System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Cloned ' + clonedFees.size() + ' fee record(s) for non-scheduled items');
+                }
+
+                // Create fresh fee records for new scheduled items
+                if (!newScheduledItems.isEmpty()) {
+                    createFeeRecordsForScheduleItems(newScheduledItems);
+                }
             }
 
             // Carry over wire fees
