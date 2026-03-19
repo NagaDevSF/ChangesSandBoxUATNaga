@@ -35,7 +35,8 @@ private class PaymentPlanServiceTest {
             No_Fee_Program__c = false,
             Calculation_Mode__c = 'PERCENT',
             Target_Payment_Percent__c = 2.5,
-            Setup_Fee_Term__c = 6
+            Setup_Fee_Term__c = 6,
+            Total_Program__c = 42500.00
         );
         insert primaryDraft;
 
@@ -215,7 +216,8 @@ private class PaymentPlanServiceTest {
 
         // Verify PaymentPlan__c was created
         List<PaymentPlan__c> plans = [SELECT Id, Opportunity__c, Settlement_Percentage__c,
-                                       Program_Fee_Percentage__c, Setup_Fee__c, Banking_Fee__c
+                                       Program_Fee_Percentage__c, Setup_Fee__c, Banking_Fee__c,
+                                       Total_Program_Cost__c
                                        FROM PaymentPlan__c WHERE Opportunity__c = :testOpp.Id];
         System.assertEquals(1, plans.size(), 'Should create one payment plan');
 
@@ -224,6 +226,7 @@ private class PaymentPlanServiceTest {
         System.assertEquals(25, plan.Program_Fee_Percentage__c, 'Program fee percentage should match draft');
         System.assertEquals(995, plan.Setup_Fee__c, 'Setup fee should match draft');
         System.assertEquals(10, plan.Banking_Fee__c, 'Banking fee should match draft');
+        System.assertEquals(42500.00, plan.Total_Program_Cost__c, 'Total program cost should match draft Total_Program__c');
 
         // Verify Payment_Schedule_Item__c records were created
         List<Payment_Schedule_Item__c> scheduleItems = [

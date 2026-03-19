@@ -36,6 +36,7 @@ public class PaymentPlanService {
 				thisPP.Payment_Frequency__c = thisDraft.Payment_Frequency__c;
 				thisPP.Total_Savings__c = thisDraft.Total_Savings__c;
 				thisPP.Total_Banking_Fee__c = thisDraft.Total_Banking_Fee__c;
+				thisPP.Total_Program_Cost__c = thisDraft.Total_Program__c;
 			} else {
 				// No primary draft found - use default values
 				thisPP.Settlement_Percentage__c = 30;
