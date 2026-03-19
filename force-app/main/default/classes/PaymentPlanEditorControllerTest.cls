@@ -73,6 +73,54 @@ private class PaymentPlanEditorControllerTest {
             paymentDate = paymentDate.addDays(7);
         }
         insert items;
+
+        // Create Payment_Fee__c records for all items
+        List<Payment_Fee__c> feeRecords = new List<Payment_Fee__c>();
+        for (Payment_Schedule_Item__c psi : items) {
+            // Banking Fee
+            Payment_Fee__c bankingFee = new Payment_Fee__c(
+                Payment_Schedule_Item__c = psi.Id,
+                Type__c = 'Banking Fee',
+                Amount__c = psi.Banking_Fee_Amount__c
+            );
+            // For cleared items, set EPPS data to verify cloning preserves it
+            if (psi.Status__c == 'Cleared') {
+                bankingFee.Fee_Id__c = 'EPPS-BNK-' + String.valueOf(psi.Payment_Number__c.intValue());
+                bankingFee.Transaction_Id__c = 'TXN-BNK-' + String.valueOf(psi.Payment_Number__c.intValue());
+                bankingFee.Status_Code__c = '00';
+                bankingFee.Status__c = 'Settled';
+            }
+            feeRecords.add(bankingFee);
+
+            // Program Fee
+            Payment_Fee__c programFee = new Payment_Fee__c(
+                Payment_Schedule_Item__c = psi.Id,
+                Type__c = 'Program Fee',
+                Amount__c = psi.Program_Fee_Amount__c
+            );
+            if (psi.Status__c == 'Cleared') {
+                programFee.Fee_Id__c = 'EPPS-PGM-' + String.valueOf(psi.Payment_Number__c.intValue());
+                programFee.Transaction_Id__c = 'TXN-PGM-' + String.valueOf(psi.Payment_Number__c.intValue());
+                programFee.Status_Code__c = '00';
+                programFee.Status__c = 'Settled';
+            }
+            feeRecords.add(programFee);
+
+            // Setup Fee
+            Payment_Fee__c setupFee = new Payment_Fee__c(
+                Payment_Schedule_Item__c = psi.Id,
+                Type__c = 'Setup Fee',
+                Amount__c = psi.Setup_Fee_Amount__c
+            );
+            if (psi.Status__c == 'Cleared') {
+                setupFee.Fee_Id__c = 'EPPS-STU-' + String.valueOf(psi.Payment_Number__c.intValue());
+                setupFee.Transaction_Id__c = 'TXN-STU-' + String.valueOf(psi.Payment_Number__c.intValue());
+                setupFee.Status_Code__c = '00';
+                setupFee.Status__c = 'Settled';
+            }
+            feeRecords.add(setupFee);
+        }
+        insert feeRecords;
     }
 
     @IsTest
@@ -2098,6 +2146,49 @@ private class PaymentPlanEditorControllerTest {
                 }
             }
             System.assertEquals(3, clearedCount, 'Should preserve 3 cleared items');
+
+            // Verify Payment_Fee__c records exist for ALL items on the new plan
+            Set<Id> newPsiIds = new Set<Id>();
+            for (PaymentPlanEditorController.ScheduleItemWrapper item : result.scheduleItems) {
+                newPsiIds.add(item.id);
+            }
+            List<Payment_Fee__c> newFees = [
+                SELECT Id, Payment_Schedule_Item__c, Type__c, Amount__c,
+                       Fee_Id__c, Transaction_Id__c, Status_Code__c, Status__c
+                FROM Payment_Fee__c
+                WHERE Payment_Schedule_Item__c IN :newPsiIds
+                ORDER BY Payment_Schedule_Item__c, Type__c
+            ];
+            System.assert(newFees.size() >= newPsiIds.size() * 3,
+                'Every PSI should have at least 3 fee records (Banking, Program, Setup). Found: ' + newFees.size());
+
+            // Verify cloned fees for cleared items preserve EPPS data
+            List<Payment_Schedule_Item__c> clearedPsis = [
+                SELECT Id, Payment_Number__c
+                FROM Payment_Schedule_Item__c
+                WHERE Payment_Plan__c = :result.paymentPlan.Id
+                AND Status__c = 'Cleared'
+                ORDER BY Payment_Number__c
+            ];
+            for (Payment_Schedule_Item__c clearedPsi : clearedPsis) {
+                List<Payment_Fee__c> clearedFees = [
+                    SELECT Type__c, Fee_Id__c, Transaction_Id__c, Status_Code__c, Status__c
+                    FROM Payment_Fee__c
+                    WHERE Payment_Schedule_Item__c = :clearedPsi.Id
+                ];
+                System.assertEquals(3, clearedFees.size(),
+                    'Cleared PSI #' + clearedPsi.Payment_Number__c + ' should have 3 cloned fee records');
+                for (Payment_Fee__c fee : clearedFees) {
+                    System.assertNotEquals(null, fee.Fee_Id__c,
+                        'Cloned fee (' + fee.Type__c + ') on cleared PSI #' + clearedPsi.Payment_Number__c + ' should preserve Fee_Id__c');
+                    System.assertNotEquals(null, fee.Transaction_Id__c,
+                        'Cloned fee (' + fee.Type__c + ') on cleared PSI #' + clearedPsi.Payment_Number__c + ' should preserve Transaction_Id__c');
+                    System.assertEquals('00', fee.Status_Code__c,
+                        'Cloned fee (' + fee.Type__c + ') on cleared PSI #' + clearedPsi.Payment_Number__c + ' should preserve Status_Code__c');
+                    System.assertEquals('Settled', fee.Status__c,
+                        'Cloned fee (' + fee.Type__c + ') on cleared PSI #' + clearedPsi.Payment_Number__c + ' should preserve Status__c');
+                }
+            }
         } catch (AuraHandledException e) {
             System.assert(true, 'Exception caught - may be due to CMDT config: ' + e.getMessage());
         }
@@ -2125,6 +2216,43 @@ private class PaymentPlanEditorControllerTest {
             // Verify Opportunity updated
             Opportunity updatedOpp = [SELECT Estimated_Total_Debt__c FROM Opportunity WHERE Id = :opp.Id];
             System.assertEquals(75000, updatedOpp.Estimated_Total_Debt__c, 'Opp debt should be updated');
+
+            // Verify Payment_Fee__c records created for all items
+            Set<Id> newPsiIds = new Set<Id>();
+            for (PaymentPlanEditorController.ScheduleItemWrapper item : result.scheduleItems) {
+                newPsiIds.add(item.id);
+            }
+            List<Payment_Fee__c> newFees = [
+                SELECT Id FROM Payment_Fee__c
+                WHERE Payment_Schedule_Item__c IN :newPsiIds
+            ];
+            System.assert(newFees.size() >= newPsiIds.size() * 3,
+                'Every PSI should have at least 3 fee records. Found: ' + newFees.size());
+
+            // Verify cloned fees for cleared items preserve EPPS data
+            List<Payment_Schedule_Item__c> clearedPsis = [
+                SELECT Id, Payment_Number__c
+                FROM Payment_Schedule_Item__c
+                WHERE Payment_Plan__c = :result.paymentPlan.Id
+                AND Status__c = 'Cleared'
+            ];
+            for (Payment_Schedule_Item__c clearedPsi : clearedPsis) {
+                List<Payment_Fee__c> clearedFees = [
+                    SELECT Fee_Id__c, Transaction_Id__c, Status_Code__c, Status__c
+                    FROM Payment_Fee__c
+                    WHERE Payment_Schedule_Item__c = :clearedPsi.Id
+                ];
+                System.assertEquals(3, clearedFees.size(),
+                    'Cleared PSI #' + clearedPsi.Payment_Number__c + ' should have 3 cloned fee records');
+                for (Payment_Fee__c fee : clearedFees) {
+                    System.assertNotEquals(null, fee.Fee_Id__c,
+                        'Cloned fee should preserve Fee_Id__c');
+                    System.assertNotEquals(null, fee.Transaction_Id__c,
+                        'Cloned fee should preserve Transaction_Id__c');
+                    System.assertEquals('Settled', fee.Status__c,
+                        'Cloned fee should preserve Status__c');
+                }
+            }
         } catch (AuraHandledException e) {
             System.assert(true, 'Exception caught - may be due to CMDT config: ' + e.getMessage());
         }
