@@ -2242,6 +2242,9 @@ public with sharing class PaymentPlanEditorController {
         Decimal runningEscrowBalance = paidSums.savingsBalance;
         Integer setupFeePaymentsMade = 0;
 
+        // Normalize program type for consistent comparison (space→underscore, uppercase)
+        String normalizedProgramType = plan.Program_Type__c != null ? plan.Program_Type__c.replace(' ', '_').toUpperCase() : 'DCG_MOD';
+
         // Create scheduled items based on Number_of_Weeks__c (smart continuation)
         // This replaces the old logic that only iterated over existing scheduled items
         for (Integer i = 1; i <= scheduledItemsNeeded; i++) {
@@ -2273,7 +2276,7 @@ public with sharing class PaymentPlanEditorController {
             Decimal toEscrow = 0;
 
             // For DCG Debt: skip program fee on first payment — all goes to escrow
-            Boolean skipFeeThisPayment = (paymentNumber == 1 && plan.Program_Type__c == 'DCG DEBT');
+            Boolean skipFeeThisPayment = (paymentNumber == 1 && normalizedProgramType == 'DCG_DEBT');
 
             if (remainingProgramFee > 0 && !skipFeeThisPayment) {
                 // Desired program amount based on split ratio
@@ -2362,6 +2365,9 @@ public with sharing class PaymentPlanEditorController {
         Decimal remainingProgramFee = totalProgramFee;
         Decimal runningEscrowBalance = 0;
 
+        // Normalize program type for consistent comparison (space→underscore, uppercase)
+        String normalizedProgramType = plan.Program_Type__c != null ? plan.Program_Type__c.replace(' ', '_').toUpperCase() : 'DCG_MOD';
+
         for (Integer i = 1; i <= numberOfPayments; i++) {
             Payment_Schedule_Item__c item = new Payment_Schedule_Item__c();
             item.Payment_Plan__c = plan.Id;
@@ -2376,7 +2382,7 @@ public with sharing class PaymentPlanEditorController {
             Decimal toEscrow = 0;
 
             // For DCG Debt: skip program fee on first payment — all goes to escrow
-            Boolean skipFeeThisPayment = (i == 1 && plan.Program_Type__c == 'DCG DEBT');
+            Boolean skipFeeThisPayment = (i == 1 && normalizedProgramType == 'DCG_DEBT');
 
             if (remainingProgramFee > 0 && !skipFeeThisPayment) {
                 Decimal desiredProgramFee = netAmount * programSplitRatio;

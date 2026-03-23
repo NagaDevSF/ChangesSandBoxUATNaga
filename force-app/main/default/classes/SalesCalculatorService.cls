@@ -281,10 +281,13 @@ public with sharing class SalesCalculatorService {
         PaymentCalcConfigSvc.ConfigDTO cfgOffset = PaymentCalcConfigSvc.getRequiredConfig();
         Integer firstPaymentDaysOffset = cfgOffset.firstPaymentDaysOffset.intValue();
 
+        // Normalize program type for consistent comparison (space→underscore, uppercase)
+        String normalizedProgramType = plan.Program_Type__c != null ? plan.Program_Type__c.replace(' ', '_').toUpperCase() : 'DCG_MOD';
+
         // Start date
         Date paymentDate = plan.First_Payment_Date__c != null ?
             plan.First_Payment_Date__c : Date.today().addDays(firstPaymentDaysOffset);
-        
+
         // Generate schedule items
         for (Integer i = 1; i <= calc.numberOfWeeks; i++) {
             Payment_Schedule_Item__c item = new Payment_Schedule_Item__c();
@@ -292,17 +295,17 @@ public with sharing class SalesCalculatorService {
             item.Payment_Number__c = i;
             item.Draft_Number__c = 'DFT-' + String.valueOf(i).leftPad(4, '0');
             item.Payment_Date__c = paymentDate;
-            
+
             // Setup fee (first N payments only)
             item.Setup_Fee_Amount__c = (i <= plan.Setup_Fee_Payments__c) ? setupFeePerPayment : 0;
-            
+
             // Banking fees
             item.Banking_Fee_Amount__c = plan.Banking_Fee__c;
             item.Bank2_Fee_Amount__c = plan.Bank2_Fee__c;
-            
+
             // Calculate program fee for this payment
             // For DCG Debt: skip program fee on first payment — all goes to escrow
-            Boolean skipFeeThisPayment = (i == 1 && plan.Program_Type__c == 'DCG DEBT');
+            Boolean skipFeeThisPayment = (i == 1 && normalizedProgramType == 'DCG_DEBT');
 
             if (programFeeTotal > 0 && !plan.No_Fee_Program__c && !skipFeeThisPayment) {
                 Decimal basePayment = calc.weeklyPayment;
