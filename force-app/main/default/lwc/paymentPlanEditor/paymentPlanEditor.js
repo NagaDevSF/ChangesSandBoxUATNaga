@@ -1987,7 +1987,9 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get modifyTargetPaymentPercent() {
-        return this.paymentPlan?.Target_Payment_Percent__c || 59;
+        return this.paymentPlan?.Target_Payment_Percent__c
+            || this.modifyPreviewSummary?.targetPaymentPercent
+            || 59;
     }
 
     get modifyTargetPaymentPercentFormatted() {
@@ -2088,7 +2090,8 @@ export default class PaymentPlanEditor extends LightningElement {
                 this.modifyPreviewSummary = {
                     numberOfPayments: result.numberOfPayments,
                     totalProgramCost: result.totalProgramCost,
-                    weeklyPayment: result.weeklyPayment
+                    weeklyPayment: result.weeklyPayment,
+                    targetPaymentPercent: result.targetPaymentPercent
                 };
             }
         } catch (error) {

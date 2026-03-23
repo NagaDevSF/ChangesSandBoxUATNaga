@@ -1845,13 +1845,51 @@ public with sharing class PaymentCalculatorController {
         }
         paymentPlan.Total_Savings__c = calculations.totalSavings;
         paymentPlan.Total_Banking_Fee__c = calculations.bankingFeeTotal;
+        paymentPlan.Version_Type__c = 'Initial';
+        paymentPlan.Source__c = 'UI';
+        paymentPlan.Calculation_Timestamp__c = DateTime.now();
+
+        // Map calculated fields that downstream methods depend on
+        paymentPlan.Settlement_Amount__c = calculations.settlementAmount;
+        paymentPlan.Program_Fee_Amount__c = calculations.programFee;
+        paymentPlan.Current_Payment__c = calculations.currentPayment;
+        paymentPlan.Monthly_Payment__c = calculations.monthlyPayment;
+
+        // Map config-based fields
+        if (config != null) {
+            Object setupFeeObj = config.get('setupFee');
+            if (setupFeeObj == null) setupFeeObj = config.get('setupFeeTotal');
+            if (setupFeeObj != null) {
+                paymentPlan.Setup_Fee__c = (setupFeeObj instanceof Decimal) ? (Decimal)setupFeeObj : Decimal.valueOf(String.valueOf(setupFeeObj));
+            }
+            Object setupFeeTermObj = config.get('setupFeePayments');
+            if (setupFeeTermObj != null) {
+                paymentPlan.Setup_Fee_Payments__c = (setupFeeTermObj instanceof Decimal) ? (Decimal)setupFeeTermObj : Decimal.valueOf(String.valueOf(setupFeeTermObj));
+            }
+            Object bankingFeeObj = config.get('bankingFee');
+            if (bankingFeeObj != null) {
+                paymentPlan.Banking_Fee__c = (bankingFeeObj instanceof Decimal) ? (Decimal)bankingFeeObj : Decimal.valueOf(String.valueOf(bankingFeeObj));
+            }
+            Object bank2FeeObj = config.get('bank2Fee');
+            if (bank2FeeObj != null) {
+                paymentPlan.Bank2_Fee__c = (bank2FeeObj instanceof Decimal) ? (Decimal)bank2FeeObj : Decimal.valueOf(String.valueOf(bank2FeeObj));
+            }
+            Object noFeeProgramObj = config.get('noFeeProgram');
+            if (noFeeProgramObj != null) {
+                paymentPlan.No_Fee_Program__c = (noFeeProgramObj instanceof Boolean) ? (Boolean)noFeeProgramObj : Boolean.valueOf(String.valueOf(noFeeProgramObj));
+            }
+            Object dayOfWeekObj = config.get('preferredDayOfWeek');
+            if (dayOfWeekObj != null) {
+                paymentPlan.Preferred_Day_of_Week__c = (dayOfWeekObj instanceof Decimal) ? (Decimal)dayOfWeekObj : Decimal.valueOf(String.valueOf(dayOfWeekObj));
+            }
+        }
 
         if (sObjectType == 'Opportunity') {
             paymentPlan.Opportunity__c = recordId;
         }
-        // Note: PaymentPlan__c currently only supports Opportunity. 
+        // Note: PaymentPlan__c currently only supports Opportunity.
         // For Lead support, need to add Lead__c lookup field or convert Lead to Opportunity first
-        
+
         Database.insert(paymentPlan, AccessLevel.USER_MODE);
         return paymentPlan.Id;
     }

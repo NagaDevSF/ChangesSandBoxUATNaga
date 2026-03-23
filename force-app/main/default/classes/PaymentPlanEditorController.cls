@@ -203,6 +203,26 @@ public with sharing class PaymentPlanEditorController {
         return String.join(fieldNames, ', ');
     }
 
+    /**
+     * @description Returns a comma-separated list of all accessible PaymentPlan__c fields
+     * using Schema.describe so new custom fields are automatically included in queries.
+     * This ensures clone() and field reads always have complete data.
+     */
+    private static String getPaymentPlanQueryFields() {
+        Map<String, Schema.SObjectField> fieldMap =
+            Schema.SObjectType.PaymentPlan__c.fields.getMap();
+        List<String> fieldNames = new List<String>();
+        fieldNames.add('Id');
+        for (String fieldName : fieldMap.keySet()) {
+            if (fieldName == 'id') continue;
+            Schema.DescribeFieldResult fd = fieldMap.get(fieldName).getDescribe();
+            if (!fd.isAccessible()) continue;
+            fieldNames.add(fieldName);
+        }
+        fieldNames.sort();
+        return String.join(fieldNames, ', ');
+    }
+
     // ==================================================================================
     // WRAPPER CLASSES - Data Transfer Objects for LWC Communication
     // ==================================================================================
@@ -359,6 +379,7 @@ public with sharing class PaymentPlanEditorController {
         @AuraEnabled public Decimal totalSavings { get; set; }
         @AuraEnabled public Decimal totalBankingFee { get; set; }
         @AuraEnabled public String paymentFrequency { get; set; }
+        @AuraEnabled public Decimal targetPaymentPercent { get; set; }
         @AuraEnabled public List<ScheduleItemWrapper> scheduleItems { get; set; }
 
         public PlanModificationPreview() {
@@ -1431,16 +1452,11 @@ public with sharing class PaymentPlanEditorController {
                 throw new AuraHandledException(VALIDATION_SYMBOL + 'Plan ID is required.');
             }
 
-            // Get current plan to find Opportunity and version number
-            List<PaymentPlan__c> currentPlans = [
-                SELECT Id, Name, Opportunity__c, Version_Number__c, Program_Type__c,
-                       Banking_Fee__c, Bank2_Fee__c,
-                       Target_Payment_Percent__c, Calculation_Mode__c, Payment_Frequency__c,
-                       Total_Savings__c, Total_Banking_Fee__c
-                FROM PaymentPlan__c
-                WHERE Id = :planId
-                LIMIT 1
-            ];
+            // Get current plan with all fields via describe (ensures clone/copy never misses a field)
+            String ppFields = getPaymentPlanQueryFields();
+            List<PaymentPlan__c> currentPlans = Database.query(
+                'SELECT ' + ppFields + ' FROM PaymentPlan__c WHERE Id = :planId LIMIT 1'
+            );
 
             System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + currentPlans.size() + ' current plan(s)');
 
@@ -1566,6 +1582,7 @@ public with sharing class PaymentPlanEditorController {
             newPlan.Target_Payment_Percent__c = currentPlan.Target_Payment_Percent__c;
             newPlan.Calculation_Mode__c = currentPlan.Calculation_Mode__c;
             newPlan.Payment_Frequency__c = opp.Payment_Frequency__c != null ? opp.Payment_Frequency__c : currentPlan.Payment_Frequency__c;
+            newPlan.Preferred_Day_of_Week__c = currentPlan.Preferred_Day_of_Week__c;
             // Calculate Total Program Cost, Total Savings, and Total Banking Fee
             Decimal totalProgram = (newPlan.Settlement_Amount__c != null ? newPlan.Settlement_Amount__c : 0)
                 + (newPlan.Program_Fee_Amount__c != null ? newPlan.Program_Fee_Amount__c : 0)
@@ -1574,6 +1591,7 @@ public with sharing class PaymentPlanEditorController {
             newPlan.Total_Program_Cost__c = totalProgram;
             newPlan.Total_Savings__c = (newPlan.Total_Debt__c != null ? newPlan.Total_Debt__c : 0) - totalProgram;
             newPlan.Total_Banking_Fee__c = bankingFee * (newPlan.Number_of_Payments__c != null ? newPlan.Number_of_Payments__c : 0);
+            newPlan.Monthly_Payment__c = newPlan.Weekly_Payment__c != null ? (newPlan.Weekly_Payment__c * 4.33).setScale(2, RoundingMode.HALF_UP) : null;
 
             insert newPlan;
             System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted new plan: ' + newPlan.Id + ' | Weekly: ' + newPlan.Weekly_Payment__c + ' | Payments: ' + newPlan.Number_of_Payments__c);
@@ -1662,21 +1680,11 @@ public with sharing class PaymentPlanEditorController {
                 throw new AuraHandledException(VALIDATION_SYMBOL + 'Plan ID is required.');
             }
 
-            // Get current plan with Opportunity reference
-            List<PaymentPlan__c> currentPlans = [
-                SELECT Id, Name, Opportunity__c, Version_Number__c, Program_Type__c,
-                       Number_of_Payments__c, First_Payment_Date__c, Banking_Fee__c, Bank2_Fee__c,
-                       Setup_Fee__c, Setup_Fee_Payments__c, Total_Debt__c, Settlement_Percentage__c,
-                       Program_Fee_Percentage__c, Total_Program_Cost__c, Weekly_Payment__c,
-                       Monthly_Payment__c, Contract__c, Status__c, Is_Active__c,
-                       Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
-                       Schedule_Item_Count__c,
-                       Target_Payment_Percent__c, Calculation_Mode__c, Payment_Frequency__c,
-                       Total_Savings__c, Total_Banking_Fee__c
-                FROM PaymentPlan__c
-                WHERE Id = :planId
-                LIMIT 1
-            ];
+            // Get current plan with all fields via describe (ensures clone never misses a field)
+            String ppFields = getPaymentPlanQueryFields();
+            List<PaymentPlan__c> currentPlans = Database.query(
+                'SELECT ' + ppFields + ' FROM PaymentPlan__c WHERE Id = :planId LIMIT 1'
+            );
 
             System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + currentPlans.size() + ' current plan(s)');
 
@@ -1699,7 +1707,8 @@ public with sharing class PaymentPlanEditorController {
                        No_Fee_Program__c, Program_Type__c,
                        Setup_Fee__c, Setup_Fee_Term__c,
                        Total_Program__c, Program_Fee__c,
-                       Est_weekly_payment__c, Payment_Frequency__c
+                       Est_weekly_payment__c, Payment_Frequency__c,
+                       Estimated_Current_Payment__c
                 FROM Opportunity
                 WHERE Id = :currentPlan.Opportunity__c
                 LIMIT 1
@@ -1950,6 +1959,13 @@ public with sharing class PaymentPlanEditorController {
                 + (bankingFee * (newPlan.Number_of_Payments__c != null ? newPlan.Number_of_Payments__c : 0));
             newPlan.Total_Program_Cost__c = recalcTotalProgram;
             newPlan.Total_Savings__c = (totalDebt != null ? totalDebt : 0) - recalcTotalProgram;
+
+            // Ensure calculated plan fields are populated (may be NULL if plan was created before these were mapped)
+            Decimal settlementPct = currentPlan.Settlement_Percentage__c != null ? currentPlan.Settlement_Percentage__c : 30;
+            newPlan.Settlement_Amount__c = (totalDebt * (settlementPct / 100)).setScale(2, RoundingMode.HALF_UP);
+            newPlan.Program_Fee_Amount__c = totalProgramFee;
+            newPlan.Current_Payment__c = opp.Estimated_Current_Payment__c;
+            newPlan.Monthly_Payment__c = (weeklyPayment * 4.33).setScale(2, RoundingMode.HALF_UP);
 
             insert newPlan;
             System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Inserted new plan: ' + newPlan.Id);
@@ -2591,21 +2607,11 @@ public with sharing class PaymentPlanEditorController {
                 throw new AuraHandledException(VALIDATION_SYMBOL + 'Plan ID is required.');
             }
 
-            // Get the current plan with all fields
-            List<PaymentPlan__c> currentPlans = [
-                SELECT Id, Name, Opportunity__c, Version_Number__c, Status__c,
-                       Is_Active__c, Version_Type__c, Source__c, Version_Notes__c,
-                       Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
-                       Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
-                       Calculation_Timestamp__c, Schedule_Item_Count__c,
-                       Weekly_Payment__c, Monthly_Payment__c, Number_of_Payments__c,
-                       Total_Debt__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
-                       Total_Program_Cost__c, Settlement_Amount__c, Program_Fee_Amount__c,
-                       First_Payment_Date__c, Program_Type__c, Contract__c
-                FROM PaymentPlan__c
-                WHERE Id = :planId
-                LIMIT 1
-            ];
+            // Get the current plan with all fields via describe (ensures clone never misses a field)
+            String ppFields = getPaymentPlanQueryFields();
+            List<PaymentPlan__c> currentPlans = Database.query(
+                'SELECT ' + ppFields + ' FROM PaymentPlan__c WHERE Id = :planId LIMIT 1'
+            );
 
             System.debug(LoggingLevel.DEBUG, LOG_QUERY + ' | ' + methodName + ' | Found ' + currentPlans.size() + ' current plan(s)');
 
@@ -4100,21 +4106,11 @@ public with sharing class PaymentPlanEditorController {
             throw new AuraHandledException(VALIDATION_SYMBOL + 'Value must be greater than zero.');
         }
 
-        // Query current plan — all stored config fields used for formula calculations
-        List<PaymentPlan__c> currentPlans = [
-            SELECT Id, Name, Opportunity__c, Version_Number__c, Program_Type__c,
-                   Number_of_Payments__c, First_Payment_Date__c, Banking_Fee__c, Bank2_Fee__c,
-                   Setup_Fee__c, Setup_Fee_Payments__c, Total_Debt__c, Settlement_Percentage__c,
-                   Program_Fee_Percentage__c, Total_Program_Cost__c, Weekly_Payment__c,
-                   Monthly_Payment__c, Contract__c, Status__c, Is_Active__c,
-                   Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
-                   Schedule_Item_Count__c, Settlement_Amount__c, Program_Fee_Amount__c,
-                   Target_Payment_Percent__c, Calculation_Mode__c, Payment_Frequency__c,
-                   Total_Savings__c, Total_Banking_Fee__c
-            FROM PaymentPlan__c
-            WHERE Id = :planId
-            LIMIT 1
-        ];
+        // Query current plan with all fields via describe (ensures clone never misses a field)
+        String ppFields = getPaymentPlanQueryFields();
+        List<PaymentPlan__c> currentPlans = Database.query(
+            'SELECT ' + ppFields + ' FROM PaymentPlan__c WHERE Id = :planId LIMIT 1'
+        );
 
         if (currentPlans.isEmpty()) {
             throw new AuraHandledException(NOT_FOUND_SYMBOL + 'Payment Plan not found.');
@@ -4342,6 +4338,11 @@ public with sharing class PaymentPlanEditorController {
             newPlan.Current_Payment__c = estimatedCurrentPayment;
         }
 
+        // Per-payment fee fields
+        newPlan.Banking_Fee__c = bankingFee;
+        newPlan.Bank2_Fee__c = bank2Fee;
+        newPlan.Monthly_Payment__c = (weeklyPayment * 4.33).setScale(2, RoundingMode.HALF_UP);
+
         // Calculated summary fields
         Decimal totalBankingFeeCalc = bankingFee * numberOfPayments;
         newPlan.Total_Banking_Fee__c = totalBankingFeeCalc;
@@ -4459,6 +4460,7 @@ public with sharing class PaymentPlanEditorController {
         preview.programFeeAmount = programFeeAmount;
         preview.totalSavings = newPlan.Total_Savings__c;
         preview.totalBankingFee = totalBankingFeeCalc;
+        preview.targetPaymentPercent = targetPaymentPercent;
         preview.paymentFrequency = newPlan.Payment_Frequency__c;
 
         // Convert all items to ScheduleItemWrapper for preview

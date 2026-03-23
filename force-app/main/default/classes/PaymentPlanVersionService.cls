@@ -89,26 +89,46 @@ public with sharing class PaymentPlanVersionService {
     public static PaymentPlan__c createNewVersion(Id existingPlanId, String versionNotes) {
         System.debug(LOG_PREFIX + ' ' + LOG_ENTRY + ' createNewVersion | existingPlanId=' + existingPlanId);
         try {
-            // Get existing plan
-            PaymentPlan__c existingPlan = [
-                SELECT Id, Opportunity__c, Version_Number__c,
-                       Program_Type__c, Settlement_Percentage__c, Program_Fee_Percentage__c,
-                       Setup_Fee__c, Setup_Fee_Payments__c, Banking_Fee__c, Bank2_Fee__c,
-                       First_Payment_Date__c, Preferred_Day_of_Week__c, No_Fee_Program__c,
-                       Target_Payment_Percent__c, Calculation_Mode__c, Payment_Frequency__c,
-                       Total_Savings__c, Total_Banking_Fee__c
-                FROM PaymentPlan__c
-                WHERE Id = :existingPlanId
-                WITH USER_MODE
-                LIMIT 1
-            ];
-            
+            // Get existing plan with ALL fields via describe (ensures no field is missed)
+            Map<String, Schema.SObjectField> fieldMap =
+                Schema.SObjectType.PaymentPlan__c.fields.getMap();
+            List<String> fieldNames = new List<String>();
+            fieldNames.add('Id');
+            for (String fieldName : fieldMap.keySet()) {
+                if (fieldName == 'id') continue;
+                Schema.DescribeFieldResult fd = fieldMap.get(fieldName).getDescribe();
+                if (!fd.isAccessible()) continue;
+                fieldNames.add(fieldName);
+            }
+            fieldNames.sort();
+            String allFields = String.join(fieldNames, ', ');
+
+            List<PaymentPlan__c> plans = Database.queryWithBinds(
+                'SELECT ' + allFields + ' FROM PaymentPlan__c WHERE Id = :planId LIMIT 1',
+                new Map<String, Object>{ 'planId' => existingPlanId },
+                AccessLevel.USER_MODE
+            );
+            if (plans.isEmpty()) {
+                throw new AuraHandledException('Payment Plan not found.');
+            }
+            PaymentPlan__c existingPlan = plans[0];
+
             // Get highest version number
             Integer maxVersion = getMaxVersionNumber(existingPlan.Opportunity__c);
-            
-            // Create new version
+
+            // Create new version and copy ALL createable fields from existing plan
             PaymentPlan__c newVersion = new PaymentPlan__c();
-            newVersion.Opportunity__c = existingPlan.Opportunity__c;
+            Set<String> excludeFields = new Set<String>{'id', 'createddate', 'lastmodifieddate', 'systemmodstamp',
+                'createdbyid', 'lastmodifiedbyid', 'isdeleted', 'name'};
+            for (String fieldName : fieldMap.keySet()) {
+                if (excludeFields.contains(fieldName)) continue;
+                Schema.DescribeFieldResult fd = fieldMap.get(fieldName).getDescribe();
+                if (fd.isCalculated()) continue;
+                if (!fd.isCreateable()) continue;
+                newVersion.put(fieldName, existingPlan.get(fieldName));
+            }
+
+            // Override version-specific fields
             newVersion.Version_Number__c = maxVersion + 1;
             newVersion.Version_Type__c = 'Revision';
             newVersion.Status__c = 'Draft';
@@ -117,23 +137,6 @@ public with sharing class PaymentPlanVersionService {
             newVersion.Version_Notes__c = versionNotes;
             newVersion.Calculation_Timestamp__c = DateTime.now();
             newVersion.Source__c = 'UI';
-            
-            // Copy configuration
-            newVersion.Program_Type__c = existingPlan.Program_Type__c;
-            newVersion.Settlement_Percentage__c = existingPlan.Settlement_Percentage__c;
-            newVersion.Program_Fee_Percentage__c = existingPlan.Program_Fee_Percentage__c;
-            newVersion.Setup_Fee__c = existingPlan.Setup_Fee__c;
-            newVersion.Setup_Fee_Payments__c = existingPlan.Setup_Fee_Payments__c;
-            newVersion.Banking_Fee__c = existingPlan.Banking_Fee__c;
-            newVersion.Bank2_Fee__c = existingPlan.Bank2_Fee__c;
-            newVersion.First_Payment_Date__c = existingPlan.First_Payment_Date__c;
-            newVersion.Preferred_Day_of_Week__c = existingPlan.Preferred_Day_of_Week__c;
-            newVersion.No_Fee_Program__c = existingPlan.No_Fee_Program__c;
-            newVersion.Target_Payment_Percent__c = existingPlan.Target_Payment_Percent__c;
-            newVersion.Calculation_Mode__c = existingPlan.Calculation_Mode__c;
-            newVersion.Payment_Frequency__c = existingPlan.Payment_Frequency__c;
-            newVersion.Total_Savings__c = existingPlan.Total_Savings__c;
-            newVersion.Total_Banking_Fee__c = existingPlan.Total_Banking_Fee__c;
 
             Database.insert(newVersion, AccessLevel.USER_MODE);
 

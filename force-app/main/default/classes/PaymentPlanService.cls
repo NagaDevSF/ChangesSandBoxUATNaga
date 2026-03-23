@@ -37,6 +37,19 @@ public class PaymentPlanService {
 				thisPP.Total_Savings__c = thisDraft.Total_Savings__c;
 				thisPP.Total_Banking_Fee__c = thisDraft.Total_Banking_Fee__c;
 				thisPP.Total_Program_Cost__c = thisDraft.Total_Program__c;
+				// Map calculated plan fields from draft to ensure downstream methods have accurate data
+				thisPP.Weekly_Payment__c = thisDraft.Weekly_Payment__c;
+				thisPP.Monthly_Payment__c = thisDraft.Monthly_Payment__c;
+				thisPP.Current_Payment__c = thisDraft.Estimated_Current_Payment__c;
+				thisPP.Total_Debt__c = thisDraft.Estimated_Total_Debt__c;
+				thisPP.Settlement_Amount__c = thisDraft.Settlement_Amount__c;
+				thisPP.Number_of_Payments__c = thisDraft.Number_of_Weeks__c;
+				thisPP.Program_Fee_Amount__c = thisDraft.Program_Fee_Amount__c;
+				thisPP.First_Payment_Date__c = thisDraft.First_Draft_Date__c;
+				// Draft stores underscored format (DCG_MOD), Plan picklist requires spaces (DCG MOD)
+				thisPP.Program_Type__c = thisDraft.Program_Type__c != null ? thisDraft.Program_Type__c.replace('_', ' ') : null;
+				thisPP.No_Fee_Program__c = thisDraft.No_Fee_Program__c;
+				thisPP.Preferred_Day_of_Week__c = thisDraft.Preferred_Day_of_Week__c;
 			} else {
 				// No primary draft found - use default values
 				thisPP.Settlement_Percentage__c = 30;
