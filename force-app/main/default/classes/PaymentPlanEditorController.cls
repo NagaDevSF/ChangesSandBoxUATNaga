@@ -1566,11 +1566,12 @@ public with sharing class PaymentPlanEditorController {
             newPlan.Target_Payment_Percent__c = currentPlan.Target_Payment_Percent__c;
             newPlan.Calculation_Mode__c = currentPlan.Calculation_Mode__c;
             newPlan.Payment_Frequency__c = opp.Payment_Frequency__c != null ? opp.Payment_Frequency__c : currentPlan.Payment_Frequency__c;
-            // Calculate Total Savings and Total Banking Fee
+            // Calculate Total Program Cost, Total Savings, and Total Banking Fee
             Decimal totalProgram = (newPlan.Settlement_Amount__c != null ? newPlan.Settlement_Amount__c : 0)
                 + (newPlan.Program_Fee_Amount__c != null ? newPlan.Program_Fee_Amount__c : 0)
                 + (newPlan.Setup_Fee__c != null ? newPlan.Setup_Fee__c : 0)
                 + (bankingFee * (newPlan.Number_of_Payments__c != null ? newPlan.Number_of_Payments__c : 0));
+            newPlan.Total_Program_Cost__c = totalProgram;
             newPlan.Total_Savings__c = (newPlan.Total_Debt__c != null ? newPlan.Total_Debt__c : 0) - totalProgram;
             newPlan.Total_Banking_Fee__c = bankingFee * (newPlan.Number_of_Payments__c != null ? newPlan.Number_of_Payments__c : 0);
 
@@ -1947,6 +1948,7 @@ public with sharing class PaymentPlanEditorController {
             Decimal recalcTotalProgram = (remainingProgramCost != null ? remainingProgramCost : 0)
                 + (totalSetupFee != null ? totalSetupFee : 0)
                 + (bankingFee * (newPlan.Number_of_Payments__c != null ? newPlan.Number_of_Payments__c : 0));
+            newPlan.Total_Program_Cost__c = recalcTotalProgram;
             newPlan.Total_Savings__c = (totalDebt != null ? totalDebt : 0) - recalcTotalProgram;
 
             insert newPlan;
