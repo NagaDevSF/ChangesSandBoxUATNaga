@@ -2018,7 +2018,19 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get modifyOriginalWeeklyPayment() {
-        return this.formatCurrency(this.paymentPlan?.Weekly_Payment__c || 0);
+        // Try Weekly_Payment__c first, then derive from schedule items or Current_Payment × Target %
+        let weekly = this.paymentPlan?.Weekly_Payment__c;
+        if (!weekly && this.scheduleItems && this.scheduleItems.length > 0) {
+            // Use the first scheduled item's draft amount as the weekly payment
+            const scheduled = this.scheduleItems.find(i => i.status === 'Scheduled');
+            weekly = scheduled ? scheduled.draftAmount : this.scheduleItems[0].draftAmount;
+        }
+        if (!weekly) {
+            const current = this.paymentPlan?.Current_Payment__c || 0;
+            const targetPct = this.modifyTargetPaymentPercent;
+            weekly = current * (targetPct / 100);
+        }
+        return this.formatCurrency(weekly || 0);
     }
 
     @api
