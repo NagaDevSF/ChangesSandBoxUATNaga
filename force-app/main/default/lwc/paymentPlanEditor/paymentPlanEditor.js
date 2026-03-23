@@ -1988,7 +1988,15 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get modifyOriginalTotalProgramCost() {
-        return this.formatCurrency(this.paymentPlan?.Total_Program_Cost__c || 0);
+        // Use Total_Program_Cost__c if available, otherwise calculate from components
+        let cost = this.paymentPlan?.Total_Program_Cost__c;
+        if (!cost) {
+            const settlement = this.paymentPlan?.Settlement_Amount__c || 0;
+            const programFee = this.paymentPlan?.Program_Fee_Amount__c || 0;
+            const setupFee = this.paymentPlan?.Setup_Fee__c || 0;
+            cost = settlement + programFee + setupFee;
+        }
+        return this.formatCurrency(cost || 0);
     }
 
     get modifyOriginalWeeklyPayment() {

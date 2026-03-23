@@ -864,6 +864,23 @@ dialog.modify-modal {
     font-weight: bold;
 }
 
+/* Close button (X) on modal header */
+.modify-close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    z-index: 1;
+}
+
+.modify-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
 .modify-comparison-heading {
     font-size: 12px;
     font-weight: 700;

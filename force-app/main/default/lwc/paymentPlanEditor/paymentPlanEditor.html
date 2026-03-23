@@ -725,6 +725,12 @@
         <dialog class="modify-modal slds-modal slds-fade-in-open" open aria-modal="true" aria-labelledby="modify-modal-heading">
             <article class="slds-modal__container">
                 <header class="slds-modal__header modify-modal-header">
+                    <button class="slds-button slds-button_icon slds-modal__close modify-close-btn"
+                            title="Close"
+                            onclick={handleCloseModifyModal}>
+                        <lightning-icon icon-name="utility:close" size="small" variant="inverse"
+                                        alternative-text="Close"></lightning-icon>
+                    </button>
                     <h2 id="modify-modal-heading" class="slds-modal__title slds-hyphenate">{modifyModalTitle}</h2>
                     <p class="modify-modal-subtitle">Creates a new Draft version with recalculated schedule</p>
                 </header>
