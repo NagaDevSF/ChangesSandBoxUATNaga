@@ -4213,13 +4213,27 @@ public with sharing class PaymentPlanEditorController {
         }
 
         // ==================================================================================
-        // CALCULATE USING PLAN'S STORED PERCENTAGES (matching SalesCalculatorService formula)
-        // settlementAmount = totalDebt × (Settlement_Percentage__c / 100)
-        // programFeeAmount = totalDebt × (Program_Fee_Percentage__c / 100)
-        // totalProgramCost = settlementAmount + programFeeAmount + setupFee
+        // CALCULATE SETTLEMENT & PROGRAM FEE
+        // For EST_CURRENT_PAYMENT: debt unchanged — use plan's stored amounts (percentages may be stale)
+        // For EST_TOTAL_DEBT: debt changed — recalculate from percentages
         // ==================================================================================
-        Decimal settlementAmount = estimatedTotalDebt * (settlementPercentage / 100);
-        Decimal programFeeAmount = isNoFeeProgram ? 0 : estimatedTotalDebt * (programFeePercentage / 100);
+        Decimal settlementAmount;
+        Decimal programFeeAmount;
+
+        if (modType == 'EST_CURRENT_PAYMENT'
+            && currentPlan.Settlement_Amount__c != null && currentPlan.Settlement_Amount__c > 0
+            && currentPlan.Program_Fee_Amount__c != null) {
+            // Debt unchanged — preserve plan's actual amounts
+            settlementAmount = currentPlan.Settlement_Amount__c;
+            programFeeAmount = isNoFeeProgram ? 0 : currentPlan.Program_Fee_Amount__c;
+            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Using plan stored amounts — Settlement: ' + settlementAmount + ' | ProgramFee: ' + programFeeAmount);
+        } else {
+            // Debt changed or stored amounts missing — recalculate from percentages
+            settlementAmount = (estimatedTotalDebt * (settlementPercentage / 100)).setScale(2, RoundingMode.HALF_UP);
+            programFeeAmount = isNoFeeProgram ? 0 : (estimatedTotalDebt * (programFeePercentage / 100)).setScale(2, RoundingMode.HALF_UP);
+            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Recalculated from percentages — Settlement: ' + settlementAmount + ' (' + settlementPercentage + '%) | ProgramFee: ' + programFeeAmount + ' (' + programFeePercentage + '%)');
+        }
+
         Decimal totalProgramCost = settlementAmount + programFeeAmount + totalSetupFee;
         Decimal totalProgramFee = programFeeAmount;
 
