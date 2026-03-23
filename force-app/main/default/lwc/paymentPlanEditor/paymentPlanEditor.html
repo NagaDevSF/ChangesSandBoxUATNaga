@@ -274,22 +274,30 @@
                                 <td class="td-right td-currency" role="gridcell">
                                     <template lwc:if={canEdit}>
                                         <template lwc:if={item.isRowEditable}>
-                                            <div class="fill-cell"
-                                                 data-field="programFee"
-                                                 data-id={item.tempId}
-                                                 data-row-index={index}
-                                                 onclick={handleCellSelect}>
-                                                <input type="text"
-                                                       inputmode="decimal"
-                                                       value={item.programFeeEdit}
-                                                       class="edit-input edit-input-currency"
-                                                       data-field="programFee"
-                                                       data-id={item.tempId}
-                                                       oninput={handleFieldChange}
-                                                       onblur={handleFieldBlur}
-                                                       aria-label="Program fee">
-                                                <span class="fill-handle" onmousedown={handleFillHandleMouseDown} aria-hidden="true"></span>
-                                            </div>
+                                            <template lwc:if={item.isProgramFeeEditable}>
+                                                <div class="fill-cell"
+                                                     data-field="programFee"
+                                                     data-id={item.tempId}
+                                                     data-row-index={index}
+                                                     onclick={handleCellSelect}>
+                                                    <input type="text"
+                                                           inputmode="decimal"
+                                                           value={item.programFeeEdit}
+                                                           class="edit-input edit-input-currency"
+                                                           data-field="programFee"
+                                                           data-id={item.tempId}
+                                                           oninput={handleFieldChange}
+                                                           onblur={handleFieldBlur}
+                                                           aria-label="Program fee">
+                                                    <span class="fill-handle" onmousedown={handleFillHandleMouseDown} aria-hidden="true"></span>
+                                                </div>
+                                            </template>
+                                            <template lwc:else>
+                                                <!-- DCG Debt first payment: program fee locked to $0 -->
+                                                <span class="fee-with-status" title="DCG Debt: Program fee is $0 on first payment">
+                                                    <data class="value-zero" value="0">{item.programFeeFormatted}</data>
+                                                </span>
+                                            </template>
                                         </template>
                                         <template lwc:else>
                                             <span class="fee-with-status">

@@ -403,6 +403,16 @@ export default class PaymentPlanEditor extends LightningElement {
         return this.paymentPlan?.LastModifiedBy?.Name || '';
     }
 
+    /**
+     * @description Check if current plan is DCG Debt program type.
+     * Normalizes the program type string (space→underscore, uppercase) for consistent comparison.
+     */
+    get isDcgDebtPlan() {
+        const programType = this.paymentPlan?.Program_Type__c;
+        if (!programType) return false;
+        return programType.replace(/ /g, '_').toUpperCase() === 'DCG_DEBT';
+    }
+
     get hasCreatedBy() {
         return !!this.createdByName;
     }
@@ -1010,6 +1020,16 @@ export default class PaymentPlanEditor extends LightningElement {
             value = value.replace(/[^0-9.-]/g, '').replace(',', '.');
             value = parseFloat(value) || 0;
 
+            // DCG Debt validation: block program fee on first payment
+            if (field === 'programFee' && value > 0 && this.isDcgDebtPlan) {
+                const targetItem = this.pendingItems.find(i => i.id === itemId || i.tempId === itemId);
+                if (targetItem && targetItem.rowNumber === 1) {
+                    value = 0;
+                    event.target.value = '0.00';
+                    this.showToast('Validation', 'DCG Debt: Program fee must be $0 on the first payment', 'warning');
+                }
+            }
+
             // Update the input display with formatted value
             event.target.value = value.toFixed(2);
         }
@@ -1100,7 +1120,18 @@ export default class PaymentPlanEditor extends LightningElement {
         if (affectsSavings) {
             // Parse the current input value (allow partial input like "10." or "10.5")
             const cleanValue = rawValue.replace(/[^0-9.-]/g, '');
-            const numericValue = parseFloat(cleanValue) || 0;
+            let numericValue = parseFloat(cleanValue) || 0;
+
+            // DCG Debt validation: block program fee on first payment during typing
+            if (field === 'programFee' && numericValue > 0 && this.isDcgDebtPlan) {
+                const targetItem = this.pendingItems.find(i => i.id === itemId || i.tempId === itemId);
+                if (targetItem && targetItem.rowNumber === 1) {
+                    numericValue = 0;
+                    event.target.value = '0';
+                    this.showToast('Validation', 'DCG Debt: Program fee must be $0 on the first payment', 'warning');
+                    return;
+                }
+            }
 
             // Map field to its edit field name
             const editFieldMap = {
@@ -2097,6 +2128,9 @@ export default class PaymentPlanEditor extends LightningElement {
             // Show star if: currently modified in edit mode OR was modified from previous version
             const showModifiedStar = isModified || wasModifiedFromPrevious;
 
+            // DCG Debt: first payment row program fee is not editable (must stay $0)
+            const isProgramFeeEditable = !(rowNumber === 1 && this.isDcgDebtPlan);
+
             return {
                 ...item,
                 id: item.id || null,
@@ -2118,6 +2152,7 @@ export default class PaymentPlanEditor extends LightningElement {
                 programFeeEdit: this.getEditValue(item, 'programFee', programFee),
                 programFeeFormatted: this.formatCurrency(programFee),
                 programFeeClass: this.getAmountClass(programFee),
+                isProgramFeeEditable: isProgramFeeEditable,
                 bankingFee: bankingFee,
                 bankingFeeEdit: this.getEditValue(item, 'bankingFee', bankingFee),
                 bankingFeeFormatted: this.formatCurrency(bankingFee),
@@ -2675,9 +2710,15 @@ export default class PaymentPlanEditor extends LightningElement {
         // Update each target row with the source value and recalculate savings
         this.pendingItems = this.pendingItems.map((item, idx) => {
             if (targetTempIds.has(item.tempId)) {
+                // DCG Debt: skip filling program fee onto first payment row
+                let fillValue = sourceValue;
+                if (field === 'programFee' && item.rowNumber === 1 && this.isDcgDebtPlan) {
+                    fillValue = 0;
+                }
+
                 const updatedItem = {
                     ...item,
-                    [field]: sourceValue,
+                    [field]: fillValue,
                     isModified: true
                 };
 
