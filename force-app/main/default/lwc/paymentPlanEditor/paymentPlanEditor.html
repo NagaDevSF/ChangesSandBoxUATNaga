@@ -753,12 +753,15 @@
                     <!-- Target Payment % info (EST_CURRENT_PAYMENT only) -->
                     <template lwc:if={isEstCurrentPaymentMode}>
                         <div class="modify-target-info">
+                            <span class="modify-target-label">Current Weekly:</span>
+                            <strong class="modify-target-value">{modifyOriginalWeeklyPayment}</strong>
+                            <span class="modify-target-separator">|</span>
                             <span class="modify-target-label">Target Payment %:</span>
                             <strong class="modify-target-value">{modifyTargetPaymentPercentFormatted}</strong>
                             <template lwc:if={modifyCalculatedWeeklyPayment}>
                                 <span class="modify-target-separator">|</span>
-                                <span class="modify-target-label">Calculated Weekly Payment:</span>
-                                <strong class="modify-target-value">{modifyCalculatedWeeklyPayment}</strong>
+                                <span class="modify-target-label">New Weekly:</span>
+                                <strong class="modify-target-value modify-value-new">{modifyCalculatedWeeklyPayment}</strong>
                             </template>
                         </div>
                     </template>
