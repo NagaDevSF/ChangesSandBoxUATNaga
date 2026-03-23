@@ -1904,19 +1904,62 @@ export default class PaymentPlanEditor extends LightningElement {
     }
 
     get modifyPreviewItemsFormatted() {
-        return (this.modifyPreviewItems || []).map((item, index) => ({
-            ...item,
-            rowNumber: item.rowNumber || index + 1,
-            draftAmountFormatted: this.formatCurrency(item.draftAmount || 0),
-            setupFeeFormatted: this.formatCurrency(item.setupFee || 0),
-            programFeeFormatted: this.formatCurrency(item.programFee || 0),
-            bankingFeeFormatted: this.formatCurrency(item.bankingFee || 0),
-            savingsBalanceFormatted: this.formatCurrency(item.toEscrowAmount || 0),
-            paymentDateDisplay: this.formatDate(item.paymentDate),
-            statusBadgeClass: this.getStatusBadgeClass(item.status || 'Scheduled'),
-            draftAmountClass: this.getAmountClass(item.draftAmount || 0),
-            tempId: `preview_${index}`
-        }));
+        // Build a map of original items by rowNumber for comparison
+        const originalMap = {};
+        if (this.scheduleItems && this.scheduleItems.length > 0) {
+            this.scheduleItems.forEach(item => {
+                originalMap[item.rowNumber] = item;
+            });
+        }
+        const originalCount = this.scheduleItems ? this.scheduleItems.length : 0;
+
+        return (this.modifyPreviewItems || []).map((item, index) => {
+            const rowNum = item.rowNumber || index + 1;
+            const orig = originalMap[rowNum];
+            const isNewRow = rowNum > originalCount;
+
+            // Compare each field to original — mark as changed if different
+            const draftChanged = !isNewRow && orig && Math.abs((item.draftAmount || 0) - (orig.draftAmount || 0)) > 0.005;
+            const setupChanged = !isNewRow && orig && Math.abs((item.setupFee || 0) - (orig.setupFee || 0)) > 0.005;
+            const programChanged = !isNewRow && orig && Math.abs((item.programFee || 0) - (orig.programFee || 0)) > 0.005;
+            const bankingChanged = !isNewRow && orig && Math.abs((item.bankingFee || 0) - (orig.bankingFee || 0)) > 0.005;
+            const escrowChanged = !isNewRow && orig && Math.abs((item.toEscrowAmount || 0) - (orig.toEscrowAmount || 0)) > 0.005;
+
+            // CSS classes: red for changed values, red background for new rows
+            const changedClass = 'value-changed';
+            const newRowClass = 'modify-row-new';
+
+            return {
+                ...item,
+                rowNumber: rowNum,
+                draftAmountFormatted: this.formatCurrency(item.draftAmount || 0),
+                setupFeeFormatted: this.formatCurrency(item.setupFee || 0),
+                programFeeFormatted: this.formatCurrency(item.programFee || 0),
+                bankingFeeFormatted: this.formatCurrency(item.bankingFee || 0),
+                savingsBalanceFormatted: this.formatCurrency(item.toEscrowAmount || 0),
+                paymentDateDisplay: this.formatDate(item.paymentDate),
+                statusBadgeClass: this.getStatusBadgeClass(item.status || 'Scheduled'),
+                draftAmountClass: (isNewRow || draftChanged) ? changedClass : this.getAmountClass(item.draftAmount || 0),
+                setupFeeClass: (isNewRow || setupChanged) ? changedClass : this.getAmountClass(item.setupFee || 0),
+                programFeeClass: (isNewRow || programChanged) ? changedClass : this.getAmountClass(item.programFee || 0),
+                bankingFeeClass: (isNewRow || bankingChanged) ? changedClass : this.getAmountClass(item.bankingFee || 0),
+                escrowClass: (isNewRow || escrowChanged) ? changedClass : this.getAmountClass(item.toEscrowAmount || 0),
+                rowClass: isNewRow ? newRowClass : '',
+                isNewRow: isNewRow,
+                // Original values for comparison display
+                origDraftFormatted: orig ? this.formatCurrency(orig.draftAmount || 0) : '',
+                origSetupFormatted: orig ? this.formatCurrency(orig.setupFee || 0) : '',
+                origProgramFormatted: orig ? this.formatCurrency(orig.programFee || 0) : '',
+                origBankingFormatted: orig ? this.formatCurrency(orig.bankingFee || 0) : '',
+                origEscrowFormatted: orig ? this.formatCurrency(orig.toEscrowAmount || 0) : '',
+                showOrigDraft: draftChanged,
+                showOrigSetup: setupChanged,
+                showOrigProgram: programChanged,
+                showOrigBanking: bankingChanged,
+                showOrigEscrow: escrowChanged,
+                tempId: `preview_${index}`
+            };
+        });
     }
 
     get hasModifyPreviewItems() {
@@ -1937,6 +1980,19 @@ export default class PaymentPlanEditor extends LightningElement {
 
     get isSaveModificationDisabled() {
         return !this.hasModifyPreviewItems || this.isModifyPreviewLoading || this.isModifySaving;
+    }
+
+    // Comparison summary: original plan stats
+    get modifyOriginalNumberOfPayments() {
+        return this.scheduleItems ? this.scheduleItems.length : 0;
+    }
+
+    get modifyOriginalTotalProgramCost() {
+        return this.formatCurrency(this.paymentPlan?.Total_Program_Cost__c || 0);
+    }
+
+    get modifyOriginalWeeklyPayment() {
+        return this.formatCurrency(this.paymentPlan?.Weekly_Payment__c || 0);
     }
 
     @api

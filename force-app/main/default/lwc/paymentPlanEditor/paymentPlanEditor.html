@@ -744,20 +744,45 @@
                         </lightning-input>
                     </div>
 
-                    <!-- Summary Metrics -->
+                    <!-- Comparison Summary: Original vs New -->
                     <template lwc:if={modifyPreviewSummary}>
-                        <div class="modify-summary-row">
-                            <div class="modify-summary-item">
-                                <span class="modify-summary-label">Number of Payments</span>
-                                <strong class="modify-summary-value">{modifyPreviewNumberOfPayments}</strong>
-                            </div>
-                            <div class="modify-summary-item">
-                                <span class="modify-summary-label">Total Program Cost</span>
-                                <strong class="modify-summary-value">{modifyPreviewTotalProgramCost}</strong>
-                            </div>
-                            <div class="modify-summary-item">
-                                <span class="modify-summary-label">Weekly Payment</span>
-                                <strong class="modify-summary-value">{modifyPreviewWeeklyPayment}</strong>
+                        <div class="modify-comparison-container">
+                            <div class="modify-comparison-row">
+                                <div class="modify-comparison-col modify-comparison-original">
+                                    <h3 class="modify-comparison-heading">Current Plan</h3>
+                                    <div class="modify-summary-row">
+                                        <div class="modify-summary-item">
+                                            <span class="modify-summary-label">Payments</span>
+                                            <strong class="modify-summary-value">{modifyOriginalNumberOfPayments}</strong>
+                                        </div>
+                                        <div class="modify-summary-item">
+                                            <span class="modify-summary-label">Total Program Cost</span>
+                                            <strong class="modify-summary-value">{modifyOriginalTotalProgramCost}</strong>
+                                        </div>
+                                        <div class="modify-summary-item">
+                                            <span class="modify-summary-label">Weekly Payment</span>
+                                            <strong class="modify-summary-value">{modifyOriginalWeeklyPayment}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modify-comparison-arrow">&#8594;</div>
+                                <div class="modify-comparison-col modify-comparison-new">
+                                    <h3 class="modify-comparison-heading">New Plan (Preview)</h3>
+                                    <div class="modify-summary-row">
+                                        <div class="modify-summary-item">
+                                            <span class="modify-summary-label">Payments</span>
+                                            <strong class="modify-summary-value modify-value-new">{modifyPreviewNumberOfPayments}</strong>
+                                        </div>
+                                        <div class="modify-summary-item">
+                                            <span class="modify-summary-label">Total Program Cost</span>
+                                            <strong class="modify-summary-value modify-value-new">{modifyPreviewTotalProgramCost}</strong>
+                                        </div>
+                                        <div class="modify-summary-item">
+                                            <span class="modify-summary-label">Weekly Payment</span>
+                                            <strong class="modify-summary-value modify-value-new">{modifyPreviewWeeklyPayment}</strong>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </template>
@@ -788,16 +813,44 @@
                                 </thead>
                                 <tbody>
                                     <template for:each={modifyPreviewItemsFormatted} for:item="item">
-                                        <tr key={item.tempId}>
-                                            <td class="td-center">{item.rowNumber}</td>
+                                        <tr key={item.tempId} class={item.rowClass}>
+                                            <td class="td-center">
+                                                {item.rowNumber}
+                                                <template lwc:if={item.isNewRow}>
+                                                    <span class="modify-new-badge">NEW</span>
+                                                </template>
+                                            </td>
                                             <td class="td-center">{item.paymentDateDisplay}</td>
                                             <td class="td-right td-currency">
                                                 <data class={item.draftAmountClass}>{item.draftAmountFormatted}</data>
+                                                <template lwc:if={item.showOrigDraft}>
+                                                    <span class="modify-orig-value">was {item.origDraftFormatted}</span>
+                                                </template>
                                             </td>
-                                            <td class="td-right td-currency">{item.setupFeeFormatted}</td>
-                                            <td class="td-right td-currency">{item.programFeeFormatted}</td>
-                                            <td class="td-right td-currency">{item.bankingFeeFormatted}</td>
-                                            <td class="td-right td-currency">{item.savingsBalanceFormatted}</td>
+                                            <td class="td-right td-currency">
+                                                <data class={item.setupFeeClass}>{item.setupFeeFormatted}</data>
+                                                <template lwc:if={item.showOrigSetup}>
+                                                    <span class="modify-orig-value">was {item.origSetupFormatted}</span>
+                                                </template>
+                                            </td>
+                                            <td class="td-right td-currency">
+                                                <data class={item.programFeeClass}>{item.programFeeFormatted}</data>
+                                                <template lwc:if={item.showOrigProgram}>
+                                                    <span class="modify-orig-value">was {item.origProgramFormatted}</span>
+                                                </template>
+                                            </td>
+                                            <td class="td-right td-currency">
+                                                <data class={item.bankingFeeClass}>{item.bankingFeeFormatted}</data>
+                                                <template lwc:if={item.showOrigBanking}>
+                                                    <span class="modify-orig-value">was {item.origBankingFormatted}</span>
+                                                </template>
+                                            </td>
+                                            <td class="td-right td-currency">
+                                                <data class={item.escrowClass}>{item.savingsBalanceFormatted}</data>
+                                                <template lwc:if={item.showOrigEscrow}>
+                                                    <span class="modify-orig-value">was {item.origEscrowFormatted}</span>
+                                                </template>
+                                            </td>
                                             <td class="td-center">
                                                 <mark class={item.statusBadgeClass}>{item.status}</mark>
                                             </td>

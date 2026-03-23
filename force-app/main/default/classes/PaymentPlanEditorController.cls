@@ -1806,10 +1806,11 @@ public with sharing class PaymentPlanEditorController {
                         Decimal toEscrow = item.To_Escrow_Amount__c != null ? item.To_Escrow_Amount__c : 0;
                         clearedProgramCostSum += (programFee + toEscrow);
                         paidEscrowSum += toEscrow;
-                        // Only count setup fees from CLEARED items as actually paid
-                        if (item.Setup_Fee_Amount__c != null && item.Setup_Fee_Amount__c > 0) {
-                            paidSetupFeeCount++;
-                        }
+                    }
+                    // Count setup fees from ALL non-scheduled items (Cleared, NSF, Processing, Cancelled)
+                    // Setup fees were already allocated — do not re-add them in the new schedule
+                    if (item.Setup_Fee_Amount__c != null && item.Setup_Fee_Amount__c > 0) {
+                        paidSetupFeeCount++;
                     }
                     // Track program fees already collected (from Cleared items only)
                     if (item.Status__c == STATUS_CLEARED && item.Program_Fee_Amount__c != null && item.Program_Fee_Amount__c > 0) {
@@ -1841,8 +1842,8 @@ public with sharing class PaymentPlanEditorController {
             // included in the remaining (they were never counted as "paid"), so NO additional addition needed
             Decimal remainingProgramFee = Math.max(0, totalProgramFee - paidProgramFeeSum);
             // Calculate remaining setup fee payments
-            // Since paidSetupFeeCount only counts CLEARED items, NSF setup fees are already in the "remaining"
-            // NO additional extension needed - same logic as Program Fee
+            // paidSetupFeeCount includes ALL non-scheduled items with setup fee (Cleared, NSF, Processing, Cancelled)
+            // Setup fees were already allocated to those items — do not redistribute
             Integer remainingSetupFeePayments = Math.max(0, setupFeePaymentsTotal.intValue() - paidSetupFeeCount);
             System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Remaining Program Fee: ' + remainingProgramFee);
             System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Remaining Setup Fee Payments: ' + remainingSetupFeePayments);
@@ -2198,11 +2199,12 @@ public with sharing class PaymentPlanEditorController {
         // Calculate remaining program fee (cap reduced by already collected from CLEARED items)
         Decimal remainingProgramFee = Math.max(0, totalProgramFee - paidSums.programFee);
 
-        // Calculate remaining setup fee payments (only count CLEARED items as actually paid)
-        // NSF and Cancelled items were never collected, so their setup fees still need to be collected
+        // Calculate remaining setup fee payments — count ALL non-scheduled items with setup fee
+        // (Cleared, NSF, Processing, Cancelled). Setup fees were already allocated to these items;
+        // do not re-add them in the new schedule regardless of collection status.
         Integer paidSetupFeeCount = 0;
         for (Payment_Schedule_Item__c item : nonScheduledItems) {
-            if (item.Status__c == STATUS_CLEARED && item.Setup_Fee_Amount__c != null && item.Setup_Fee_Amount__c > 0) {
+            if (item.Setup_Fee_Amount__c != null && item.Setup_Fee_Amount__c > 0) {
                 paidSetupFeeCount++;
             }
         }
@@ -4254,9 +4256,11 @@ public with sharing class PaymentPlanEditorController {
                     Decimal toEscrow = item.To_Escrow_Amount__c != null ? item.To_Escrow_Amount__c : 0;
                     paidProgramCostSum += (programFee + toEscrow);
                     paidProgramFeeSum += programFee;
-                    if (item.Setup_Fee_Amount__c != null && item.Setup_Fee_Amount__c > 0) {
-                        paidSetupFeeCount++;
-                    }
+                }
+                // Count setup fees from ALL non-scheduled items (Cleared, NSF, Processing, Cancelled)
+                // These items already had setup fees allocated — do not re-add them in new schedule
+                if (item.Setup_Fee_Amount__c != null && item.Setup_Fee_Amount__c > 0) {
+                    paidSetupFeeCount++;
                 }
             }
         }
