@@ -827,6 +827,32 @@ dialog.modify-modal {
     line-height: 1.2;
 }
 
+/* Target Payment % info bar */
+.modify-target-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    background: #edf2f7;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.modify-target-label {
+    color: #718096;
+}
+
+.modify-target-value {
+    color: #2d3748;
+    font-size: 14px;
+}
+
+.modify-target-separator {
+    color: #cbd5e0;
+    margin: 0 4px;
+}
+
 /* Comparison summary layout */
 .modify-comparison-container {
     margin-bottom: 16px;

@@ -750,6 +750,19 @@
                         </lightning-input>
                     </div>
 
+                    <!-- Target Payment % info (EST_CURRENT_PAYMENT only) -->
+                    <template lwc:if={isEstCurrentPaymentMode}>
+                        <div class="modify-target-info">
+                            <span class="modify-target-label">Target Payment %:</span>
+                            <strong class="modify-target-value">{modifyTargetPaymentPercentFormatted}</strong>
+                            <template lwc:if={modifyCalculatedWeeklyPayment}>
+                                <span class="modify-target-separator">|</span>
+                                <span class="modify-target-label">Calculated Weekly Payment:</span>
+                                <strong class="modify-target-value">{modifyCalculatedWeeklyPayment}</strong>
+                            </template>
+                        </div>
+                    </template>
+
                     <!-- Comparison Summary: Original vs New -->
                     <template lwc:if={modifyPreviewSummary}>
                         <div class="modify-comparison-container">

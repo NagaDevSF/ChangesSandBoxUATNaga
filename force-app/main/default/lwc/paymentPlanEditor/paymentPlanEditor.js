@@ -1982,6 +1982,24 @@ export default class PaymentPlanEditor extends LightningElement {
         return !this.hasModifyPreviewItems || this.isModifyPreviewLoading || this.isModifySaving;
     }
 
+    get isEstCurrentPaymentMode() {
+        return this.modifyModalType === 'EST_CURRENT_PAYMENT';
+    }
+
+    get modifyTargetPaymentPercent() {
+        return this.paymentPlan?.Target_Payment_Percent__c || 59;
+    }
+
+    get modifyTargetPaymentPercentFormatted() {
+        return `${this.modifyTargetPaymentPercent}%`;
+    }
+
+    get modifyCalculatedWeeklyPayment() {
+        if (!this.isEstCurrentPaymentMode || !this.modifyModalValue) return '';
+        const weekly = (this.modifyModalValue * (this.modifyTargetPaymentPercent / 100));
+        return this.formatCurrency(Math.round(weekly * 100) / 100);
+    }
+
     // Comparison summary: original plan stats
     get modifyOriginalNumberOfPayments() {
         return this.scheduleItems ? this.scheduleItems.length : 0;
