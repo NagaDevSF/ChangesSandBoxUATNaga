@@ -4148,7 +4148,7 @@ public with sharing class PaymentPlanEditorController {
             SELECT Id, Name, Estimated_Total_Debt__c, Number_of_Weeks__c, First_Draft_Date__c,
                    No_Fee_Program__c, Program_Type__c,
                    Setup_Fee__c, Setup_Fee_Term__c,
-                   Total_Program__c, Program_Fee__c,
+                   Total_Program__c, Program_Fee__c, Est_Settlement__c,
                    Est_weekly_payment__c, Estimated_Current_Payment__c, Payment_Frequency__c
             FROM Opportunity
             WHERE Id = :currentPlan.Opportunity__c
@@ -4181,14 +4181,17 @@ public with sharing class PaymentPlanEditorController {
         }
 
         // ==================================================================================
-        // SOURCE ALL FORMULA INPUTS FROM PAYMENT PLAN (matching saveDraft / SalesCalculatorService)
+        // SOURCE PERCENTAGES: Opportunity first (authoritative), then Plan, then Config
+        // Plan percentage fields may be stale — Opportunity is the source of truth
         // ==================================================================================
-        Decimal settlementPercentage = currentPlan.Settlement_Percentage__c != null
-            ? currentPlan.Settlement_Percentage__c
-            : (config.settlementPercent != null ? config.settlementPercent : 60);
-        Decimal programFeePercentage = currentPlan.Program_Fee_Percentage__c != null
-            ? currentPlan.Program_Fee_Percentage__c
-            : (config.programFeePercent != null ? config.programFeePercent : 35);
+        Decimal oppSettlementPct = parsePercentageToDecimal(opp.Est_Settlement__c);
+        Decimal oppProgramFeePct = parsePercentageToDecimal(opp.Program_Fee__c);
+        Decimal settlementPercentage = oppSettlementPct != null ? oppSettlementPct
+            : (currentPlan.Settlement_Percentage__c != null ? currentPlan.Settlement_Percentage__c
+            : (config.settlementPercent != null ? config.settlementPercent : 60));
+        Decimal programFeePercentage = oppProgramFeePct != null ? oppProgramFeePct
+            : (currentPlan.Program_Fee_Percentage__c != null ? currentPlan.Program_Fee_Percentage__c
+            : (config.programFeePercent != null ? config.programFeePercent : 35));
         Decimal bankingFee = currentPlan.Banking_Fee__c != null ? currentPlan.Banking_Fee__c : DEFAULT_BANKING_FEE;
         Decimal bank2Fee = currentPlan.Bank2_Fee__c != null ? currentPlan.Bank2_Fee__c : 0;
         Decimal totalSetupFee = currentPlan.Setup_Fee__c != null ? currentPlan.Setup_Fee__c : 0;
