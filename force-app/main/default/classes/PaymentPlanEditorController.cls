@@ -4369,10 +4369,12 @@ public with sharing class PaymentPlanEditorController {
         newPlan.Bank2_Fee__c = bank2Fee;
         newPlan.Monthly_Payment__c = (weeklyPayment * 4.33).setScale(2, RoundingMode.HALF_UP);
 
-        // Calculated summary fields
+        // Calculated summary fields — include banking in Total Program Cost (matches recalculatePaymentPlan)
         Decimal totalBankingFeeCalc = bankingFee * numberOfPayments;
         newPlan.Total_Banking_Fee__c = totalBankingFeeCalc;
-        newPlan.Total_Savings__c = estimatedTotalDebt - (settlementAmount + programFeeAmount + totalSetupFee + totalBankingFeeCalc);
+        totalProgramCost = settlementAmount + programFeeAmount + totalSetupFee + totalBankingFeeCalc;
+        newPlan.Total_Program_Cost__c = totalProgramCost;
+        newPlan.Total_Savings__c = estimatedTotalDebt - totalProgramCost;
 
         String modLabel = modType == 'EST_CURRENT_PAYMENT' ? 'Estimated Current Payment' : 'Estimated Total Debt';
         newPlan.Version_Notes__c = modLabel + ' modified to $' + newValue.setScale(2) + ' on ' + DateTime.now().format() +
