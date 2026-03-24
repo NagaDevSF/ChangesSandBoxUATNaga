@@ -1706,7 +1706,7 @@ public with sharing class PaymentPlanEditorController {
                 SELECT Id, Name, Estimated_Total_Debt__c, Number_of_Weeks__c, First_Draft_Date__c,
                        No_Fee_Program__c, Program_Type__c,
                        Setup_Fee__c, Setup_Fee_Term__c,
-                       Total_Program__c, Program_Fee__c,
+                       Total_Program__c, Program_Fee__c, Est_Settlement__c,
                        Est_weekly_payment__c, Payment_Frequency__c,
                        Estimated_Current_Payment__c
                 FROM Opportunity
@@ -1760,28 +1760,35 @@ public with sharing class PaymentPlanEditorController {
             }
             System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Program Split Ratio: ' + programSplitRatio + ' | No Fee Program: ' + isNoFeeProgram);
 
-            // Step 1: Calculate Total Program Cost = Estimated_Total_Debt__c × 0.95
+            // Step 1: Calculate Settlement + Program Fee from actual percentages (NOT hardcoded 0.95)
             Decimal estimatedTotalDebt = opp.Estimated_Total_Debt__c != null ? opp.Estimated_Total_Debt__c : 0;
-            Decimal totalProgramCost = estimatedTotalDebt * 0.95;
-            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Total Program Cost (Debt × 0.95): ' + totalProgramCost);
+            Decimal totalDebt = estimatedTotalDebt;
 
-            // Get setup fee parameters from OPPORTUNITY (same as recalculatePaymentPlan)
+            // Settlement percentage from Opportunity, fallback to config, then default 60%
+            Decimal settlementPercentage = parsePercentageToDecimal(opp.Est_Settlement__c);
+            if (settlementPercentage == null) {
+                settlementPercentage = config.settlementPercent != null ? config.settlementPercent : 60;
+            }
+            Decimal settlementAmount = (totalDebt * (settlementPercentage / 100)).setScale(2, RoundingMode.HALF_UP);
+
+            // Program fee percentage from Opportunity, fallback to config, then default 35%
+            Decimal programFeePercentage = parsePercentageToDecimal(opp.Program_Fee__c);
+            if (programFeePercentage == null) {
+                programFeePercentage = config.programFeePercent != null ? config.programFeePercent : 35;
+            }
+            Decimal totalProgramFee = (totalDebt * (programFeePercentage / 100)).setScale(2, RoundingMode.HALF_UP);
+
+            // Total Program Cost = Settlement + Program Fee (each from its own percentage)
+            Decimal totalProgramCost = settlementAmount + totalProgramFee;
+            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Settlement: ' + settlementAmount + ' (' + settlementPercentage + '%) | ProgramFee: ' + totalProgramFee + ' (' + programFeePercentage + '%) | TotalProgramCost: ' + totalProgramCost);
+
+            // Get setup fee parameters from OPPORTUNITY
             Decimal totalSetupFee = opp.Setup_Fee__c != null ? opp.Setup_Fee__c : 0;
             Decimal setupFeePaymentsTotal = parsePercentageToDecimal(opp.Setup_Fee_Term__c);
             if (setupFeePaymentsTotal == null || setupFeePaymentsTotal <= 0) {
                 setupFeePaymentsTotal = DEFAULT_SETUP_FEE_PAYMENTS;
             }
-            Decimal perPaymentSetupFee = setupFeePaymentsTotal > 0 ? (totalSetupFee / setupFeePaymentsTotal) : 0;
-            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Setup Fee (from Opp): ' + totalSetupFee + ' over ' + setupFeePaymentsTotal + ' payments = ' + perPaymentSetupFee + ' per payment');
-
-            // Get program fee parameters from OPPORTUNITY (same as recalculatePaymentPlan)
-            Decimal totalDebt = estimatedTotalDebt;
-            Decimal programFeePercentage = parsePercentageToDecimal(opp.Program_Fee__c);
-            if (programFeePercentage == null) {
-                programFeePercentage = config.programFeePercent != null ? config.programFeePercent : 35;
-            }
-            Decimal totalProgramFee = totalDebt * (programFeePercentage / 100);
-            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Total Program Fee (from Opp): ' + totalProgramFee + ' (' + programFeePercentage + '% of ' + totalDebt + ')');
+            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Setup Fee (from Opp): ' + totalSetupFee + ' over ' + setupFeePaymentsTotal + ' payments');
 
             // Get existing schedule items
             String fields = getScheduleItemQueryFields();
@@ -1797,6 +1804,7 @@ public with sharing class PaymentPlanEditorController {
             Decimal paidProgramFeeSum = 0;
             Decimal paidEscrowSum = 0;
             Integer paidSetupFeeCount = 0;
+            Decimal paidSetupFeeAmount = 0;
             // Track lost fees from NSF items for logging/reporting purposes
             // Note: Banking fees are NOT recovered (no cascading) per business requirement
             Decimal lostSetupFeeFromNSF = 0;
@@ -1817,10 +1825,11 @@ public with sharing class PaymentPlanEditorController {
                         clearedProgramCostSum += (programFee + toEscrow);
                         paidEscrowSum += toEscrow;
                     }
-                    // Count setup fees from ALL non-scheduled items (Cleared, NSF, Processing, Cancelled)
+                    // Count and sum setup fees from ALL non-scheduled items (Cleared, NSF, Processing, Cancelled)
                     // Setup fees were already allocated — do not re-add them in the new schedule
                     if (item.Setup_Fee_Amount__c != null && item.Setup_Fee_Amount__c > 0) {
                         paidSetupFeeCount++;
+                        paidSetupFeeAmount += item.Setup_Fee_Amount__c;
                     }
                     // Track program fees already collected (from Cleared items only)
                     if (item.Status__c == STATUS_CLEARED && item.Program_Fee_Amount__c != null && item.Program_Fee_Amount__c > 0) {
@@ -1960,10 +1969,11 @@ public with sharing class PaymentPlanEditorController {
             newPlan.Total_Program_Cost__c = recalcTotalProgram;
             newPlan.Total_Savings__c = (totalDebt != null ? totalDebt : 0) - recalcTotalProgram;
 
-            // Ensure calculated plan fields are populated (may be NULL if plan was created before these were mapped)
-            Decimal settlementPct = currentPlan.Settlement_Percentage__c != null ? currentPlan.Settlement_Percentage__c : 30;
-            newPlan.Settlement_Amount__c = (totalDebt * (settlementPct / 100)).setScale(2, RoundingMode.HALF_UP);
+            // Ensure calculated plan fields are populated using the actual percentages calculated above
+            newPlan.Settlement_Percentage__c = settlementPercentage;
+            newPlan.Settlement_Amount__c = settlementAmount;
             newPlan.Program_Fee_Amount__c = totalProgramFee;
+            newPlan.Program_Fee_Percentage__c = programFeePercentage;
             newPlan.Current_Payment__c = opp.Estimated_Current_Payment__c;
             newPlan.Monthly_Payment__c = (weeklyPayment * 4.33).setScale(2, RoundingMode.HALF_UP);
 
@@ -2008,6 +2018,16 @@ public with sharing class PaymentPlanEditorController {
             Integer setupFeePaymentsMade = 0;
             Decimal trackingRemainingProgramFee = remainingProgramFee;
 
+            // Setup fee: use FLOOR rounding with last-payment-remainder to ensure exact total
+            Decimal remainingSetupFeeAmount = Math.max(0, totalSetupFee - paidSetupFeeAmount);
+            Decimal baseSetupFeePerPayment = remainingSetupFeePayments > 0
+                ? (remainingSetupFeeAmount / remainingSetupFeePayments).setScale(2, RoundingMode.FLOOR)
+                : 0;
+            Decimal lastSetupFeePaymentAmt = remainingSetupFeePayments > 0
+                ? (remainingSetupFeeAmount - (baseSetupFeePerPayment * (remainingSetupFeePayments - 1))).setScale(2, RoundingMode.HALF_UP)
+                : 0;
+            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Setup fee distribution: base=' + baseSetupFeePerPayment + ' x ' + (remainingSetupFeePayments - 1) + ' + last=' + lastSetupFeePaymentAmt + ' = ' + remainingSetupFeeAmount);
+
             for (Integer i = 1; i <= remainingCount; i++) {
                 Integer paymentNumber = nonScheduledItems.size() + i;
 
@@ -2024,10 +2044,11 @@ public with sharing class PaymentPlanEditorController {
                     thisWeeklyPayment = lastWeeklyPayment;
                 }
 
-                // Calculate setup fee for this payment (only for remaining setup fee payments)
+                // Setup fee: last setup fee payment absorbs remainder to keep total exact
                 Decimal thisSetupFee = 0;
                 if (setupFeePaymentsMade < remainingSetupFeePayments) {
-                    thisSetupFee = perPaymentSetupFee;
+                    Boolean isLastSetupPayment = (setupFeePaymentsMade == remainingSetupFeePayments - 1);
+                    thisSetupFee = isLastSetupPayment ? lastSetupFeePaymentAmt : baseSetupFeePerPayment;
                     setupFeePaymentsMade++;
                 }
 
@@ -4258,6 +4279,7 @@ public with sharing class PaymentPlanEditorController {
         Decimal paidProgramFeeSum = 0;
         Integer paidSetupFeeCount = 0;
 
+        Decimal paidSetupFeeAmount = 0;
         for (Payment_Schedule_Item__c item : existingItems) {
             if (item.Status__c == STATUS_SCHEDULED) {
                 scheduledItems.add(item);
@@ -4269,10 +4291,11 @@ public with sharing class PaymentPlanEditorController {
                     paidProgramCostSum += (programFee + toEscrow);
                     paidProgramFeeSum += programFee;
                 }
-                // Count setup fees from ALL non-scheduled items (Cleared, NSF, Processing, Cancelled)
+                // Count and sum setup fees from ALL non-scheduled items (Cleared, NSF, Processing, Cancelled)
                 // These items already had setup fees allocated — do not re-add them in new schedule
                 if (item.Setup_Fee_Amount__c != null && item.Setup_Fee_Amount__c > 0) {
                     paidSetupFeeCount++;
+                    paidSetupFeeAmount += item.Setup_Fee_Amount__c;
                 }
             }
         }
@@ -4305,11 +4328,10 @@ public with sharing class PaymentPlanEditorController {
             throw new AuraHandledException(VALIDATION_SYMBOL + 'No remaining payments can be scheduled.');
         }
 
-        // Recalculate baseProgramCostPerPayment for even distribution (CEILING rounding)
-        baseProgramCostPerPayment = (remainingProgramCost / remainingCount).setScale(2, RoundingMode.CEILING);
-
-        // Calculate last payment (absorbs remainder — will be <= base weekly payment)
-        Decimal lastPaymentProgramCost = remainingProgramCost - (baseProgramCostPerPayment * (remainingCount - 1));
+        // Calculate last payment using ACTUAL per-payment net (weeklyPayment - bankingFee)
+        // This ensures total net = exactly remainingProgramCost, so savings = exactly settlement amount
+        Decimal actualNetPerPayment = weeklyPayment - bankingFee;
+        Decimal lastPaymentProgramCost = remainingProgramCost - (actualNetPerPayment * (remainingCount - 1));
         lastPaymentProgramCost = Math.max(0, lastPaymentProgramCost).setScale(2, RoundingMode.HALF_UP);
         Decimal lastWeeklyPayment = lastPaymentProgramCost + bankingFee;
 
@@ -4402,6 +4424,16 @@ public with sharing class PaymentPlanEditorController {
         Integer setupFeePaymentsMade = 0;
         Decimal trackingRemainingProgramFee = remainingProgramFee;
 
+        // Setup fee: use FLOOR rounding with last-payment-remainder to ensure exact total
+        Decimal remainingSetupFeeAmount = Math.max(0, totalSetupFee - paidSetupFeeAmount);
+        Decimal baseSetupFeePerPayment = remainingSetupFeePayments > 0
+            ? (remainingSetupFeeAmount / remainingSetupFeePayments).setScale(2, RoundingMode.FLOOR)
+            : 0;
+        Decimal lastSetupFeePayment = remainingSetupFeePayments > 0
+            ? (remainingSetupFeeAmount - (baseSetupFeePerPayment * (remainingSetupFeePayments - 1))).setScale(2, RoundingMode.HALF_UP)
+            : 0;
+        System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | Setup fee distribution: base=' + baseSetupFeePerPayment + ' × ' + (remainingSetupFeePayments - 1) + ' + last=' + lastSetupFeePayment + ' = ' + remainingSetupFeeAmount);
+
         for (Integer i = 1; i <= remainingCount; i++) {
             Integer paymentNumber = nonScheduledItems.size() + i;
 
@@ -4413,10 +4445,11 @@ public with sharing class PaymentPlanEditorController {
             // Last payment uses remainder amount (will be <= base weekly payment)
             Decimal thisWeeklyPayment = (i == remainingCount) ? lastWeeklyPayment : weeklyPayment;
 
-            // Setup fee (only for remaining setup fee payments)
+            // Setup fee: last setup fee payment absorbs remainder to keep total exact
             Decimal thisSetupFee = 0;
             if (setupFeePaymentsMade < remainingSetupFeePayments) {
-                thisSetupFee = perPaymentSetupFee;
+                Boolean isLastSetupPayment = (setupFeePaymentsMade == remainingSetupFeePayments - 1);
+                thisSetupFee = isLastSetupPayment ? lastSetupFeePayment : baseSetupFeePerPayment;
                 setupFeePaymentsMade++;
             }
 

@@ -1966,6 +1966,62 @@ export default class PaymentPlanEditor extends LightningElement {
         return this.modifyPreviewItems && this.modifyPreviewItems.length > 0;
     }
 
+    // ============ MODIFY PREVIEW AGGREGATE ROWS ============
+
+    _sumItems(items) {
+        return {
+            draft: items.reduce((s, i) => s + (Number(i.draftAmount) || 0), 0),
+            setup: items.reduce((s, i) => s + (Number(i.setupFee) || 0), 0),
+            program: items.reduce((s, i) => s + (Number(i.programFee) || 0), 0),
+            banking: items.reduce((s, i) => s + (Number(i.bankingFee) || 0), 0),
+            escrow: items.reduce((s, i) => s + (Number(i.toEscrowAmount) || 0), 0)
+        };
+    }
+
+    _buildAggRow(newSums, origSums) {
+        const changed = (a, b) => Math.abs(a - b) > 0.005 ? 'value-changed' : '';
+        return {
+            draftFormatted: this.formatCurrency(newSums.draft),
+            setupFormatted: this.formatCurrency(newSums.setup),
+            programFormatted: this.formatCurrency(newSums.program),
+            bankingFormatted: this.formatCurrency(newSums.banking),
+            escrowFormatted: this.formatCurrency(newSums.escrow),
+            origDraftFormatted: this.formatCurrency(origSums.draft),
+            origSetupFormatted: this.formatCurrency(origSums.setup),
+            origProgramFormatted: this.formatCurrency(origSums.program),
+            origBankingFormatted: this.formatCurrency(origSums.banking),
+            origEscrowFormatted: this.formatCurrency(origSums.escrow),
+            draftChanged: changed(newSums.draft, origSums.draft),
+            setupChanged: changed(newSums.setup, origSums.setup),
+            programChanged: changed(newSums.program, origSums.program),
+            bankingChanged: changed(newSums.banking, origSums.banking),
+            escrowChanged: changed(newSums.escrow, origSums.escrow)
+        };
+    }
+
+    get modifyAggregates() {
+        const newItems = this.modifyPreviewItems || [];
+        const origItems = this.scheduleItems || [];
+
+        // Total
+        const newTotal = this._sumItems(newItems);
+        const origTotal = this._sumItems(origItems);
+
+        // Cleared
+        const newCleared = this._sumItems(newItems.filter(i => i.status === 'Cleared'));
+        const origCleared = this._sumItems(origItems.filter(i => i.status === 'Cleared'));
+
+        // NSF
+        const newNsf = this._sumItems(newItems.filter(i => i.status === 'NSF'));
+        const origNsf = this._sumItems(origItems.filter(i => i.status === 'NSF'));
+
+        return {
+            total: this._buildAggRow(newTotal, origTotal),
+            cleared: this._buildAggRow(newCleared, origCleared),
+            nsf: this._buildAggRow(newNsf, origNsf)
+        };
+    }
+
     get modifyPreviewNumberOfPayments() {
         return this.modifyPreviewSummary?.numberOfPayments || 0;
     }

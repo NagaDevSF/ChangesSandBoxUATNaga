@@ -827,6 +827,76 @@ dialog.modify-modal {
     line-height: 1.2;
 }
 
+/* ============================================
+   MODIFY PREVIEW TABLE - AGGREGATE FOOTER
+   ============================================ */
+.modify-aggregate-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+}
+
+.modify-aggregate-row {
+    background: linear-gradient(135deg, #1a365d 0%, #2a4a7f 50%, #2c5282 100%);
+    border-top: 2px solid #4299e1;
+}
+
+.modify-aggregate-row td {
+    padding: 10px 12px;
+}
+
+.modify-aggregate-label {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modify-aggregate-value {
+    color: #90cdf4;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+/* Cleared Row */
+.modify-cleared-row {
+    background: linear-gradient(135deg, #1a4731 0%, #276749 50%, #2f855a 100%) !important;
+    border-top: 2px solid #68d391;
+}
+
+.modify-cleared-row:hover {
+    background: linear-gradient(135deg, #1a4731 0%, #276749 50%, #2f855a 100%) !important;
+}
+
+.modify-cleared-value {
+    color: #9ae6b4 !important;
+}
+
+/* NSF Row */
+.modify-nsf-row {
+    background: linear-gradient(135deg, #742a2a 0%, #9b2c2c 50%, #c53030 100%) !important;
+    border-top: 2px solid #fc8181;
+}
+
+.modify-nsf-row:hover {
+    background: linear-gradient(135deg, #742a2a 0%, #9b2c2c 50%, #c53030 100%) !important;
+}
+
+.modify-nsf-value {
+    color: #feb2b2 !important;
+}
+
+/* "was" original value in aggregate rows */
+.modify-agg-orig {
+    display: block;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+    line-height: 1.2;
+    margin-top: 2px;
+}
+
 /* Target Payment % info bar */
 .modify-target-info {
     display: flex;

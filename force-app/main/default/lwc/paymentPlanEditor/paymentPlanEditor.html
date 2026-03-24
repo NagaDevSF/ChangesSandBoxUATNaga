@@ -879,6 +879,86 @@
                                         </tr>
                                     </template>
                                 </tbody>
+                                <tfoot class="modify-aggregate-footer">
+                                    <!-- Total Row -->
+                                    <tr class="modify-aggregate-row">
+                                        <td class="td-center"></td>
+                                        <td class="td-center modify-aggregate-label"><strong>Total</strong></td>
+                                        <td class="td-right modify-aggregate-value">
+                                            <output class={modifyAggregates.total.draftChanged}>{modifyAggregates.total.draftFormatted}</output>
+                                            <span class="modify-agg-orig">was {modifyAggregates.total.origDraftFormatted}</span>
+                                        </td>
+                                        <td class="td-right modify-aggregate-value">
+                                            <output class={modifyAggregates.total.setupChanged}>{modifyAggregates.total.setupFormatted}</output>
+                                            <span class="modify-agg-orig">was {modifyAggregates.total.origSetupFormatted}</span>
+                                        </td>
+                                        <td class="td-right modify-aggregate-value">
+                                            <output class={modifyAggregates.total.programChanged}>{modifyAggregates.total.programFormatted}</output>
+                                            <span class="modify-agg-orig">was {modifyAggregates.total.origProgramFormatted}</span>
+                                        </td>
+                                        <td class="td-right modify-aggregate-value">
+                                            <output class={modifyAggregates.total.bankingChanged}>{modifyAggregates.total.bankingFormatted}</output>
+                                            <span class="modify-agg-orig">was {modifyAggregates.total.origBankingFormatted}</span>
+                                        </td>
+                                        <td class="td-right modify-aggregate-value">
+                                            <output class={modifyAggregates.total.escrowChanged}>{modifyAggregates.total.escrowFormatted}</output>
+                                            <span class="modify-agg-orig">was {modifyAggregates.total.origEscrowFormatted}</span>
+                                        </td>
+                                        <td class="td-center"></td>
+                                    </tr>
+                                    <!-- Cleared Row -->
+                                    <tr class="modify-aggregate-row modify-cleared-row">
+                                        <td class="td-center"></td>
+                                        <td class="td-center modify-aggregate-label"><strong>Cleared</strong></td>
+                                        <td class="td-right modify-aggregate-value modify-cleared-value">
+                                            <output class={modifyAggregates.cleared.draftChanged}>{modifyAggregates.cleared.draftFormatted}</output>
+                                            <span class="modify-agg-orig">was {modifyAggregates.cleared.origDraftFormatted}</span>
+                                        </td>
+                                        <td class="td-right modify-aggregate-value modify-cleared-value">
+                                            <output class={modifyAggregates.cleared.setupChanged}>{modifyAggregates.cleared.setupFormatted}</output>
+                                            <span class="modify-agg-orig">was {modifyAggregates.cleared.origSetupFormatted}</span>
+                                        </td>
+                                        <td class="td-right modify-aggregate-value modify-cleared-value">
+                                            <output class={modifyAggregates.cleared.programChanged}>{modifyAggregates.cleared.programFormatted}</output>
+                                            <span class="modify-agg-orig">was {modifyAggregates.cleared.origProgramFormatted}</span>
+                                        </td>
+                                        <td class="td-right modify-aggregate-value modify-cleared-value">
+                                            <output class={modifyAggregates.cleared.bankingChanged}>{modifyAggregates.cleared.bankingFormatted}</output>
+                                            <span class="modify-agg-orig">was {modifyAggregates.cleared.origBankingFormatted}</span>
+                                        </td>
+                                        <td class="td-right modify-aggregate-value modify-cleared-value">
+                                            <output class={modifyAggregates.cleared.escrowChanged}>{modifyAggregates.cleared.escrowFormatted}</output>
+                                            <span class="modify-agg-orig">was {modifyAggregates.cleared.origEscrowFormatted}</span>
+                                        </td>
+                                        <td class="td-center"></td>
+                                    </tr>
+                                    <!-- NSF Row -->
+                                    <tr class="modify-aggregate-row modify-nsf-row">
+                                        <td class="td-center"></td>
+                                        <td class="td-center modify-aggregate-label"><strong>NSF</strong></td>
+                                        <td class="td-right modify-aggregate-value modify-nsf-value">
+                                            <output class={modifyAggregates.nsf.draftChanged}>{modifyAggregates.nsf.draftFormatted}</output>
+                                            <span class="modify-agg-orig">was {modifyAggregates.nsf.origDraftFormatted}</span>
+                                        </td>
+                                        <td class="td-right modify-aggregate-value modify-nsf-value">
+                                            <output class={modifyAggregates.nsf.setupChanged}>{modifyAggregates.nsf.setupFormatted}</output>
+                                            <span class="modify-agg-orig">was {modifyAggregates.nsf.origSetupFormatted}</span>
+                                        </td>
+                                        <td class="td-right modify-aggregate-value modify-nsf-value">
+                                            <output class={modifyAggregates.nsf.programChanged}>{modifyAggregates.nsf.programFormatted}</output>
+                                            <span class="modify-agg-orig">was {modifyAggregates.nsf.origProgramFormatted}</span>
+                                        </td>
+                                        <td class="td-right modify-aggregate-value modify-nsf-value">
+                                            <output class={modifyAggregates.nsf.bankingChanged}>{modifyAggregates.nsf.bankingFormatted}</output>
+                                            <span class="modify-agg-orig">was {modifyAggregates.nsf.origBankingFormatted}</span>
+                                        </td>
+                                        <td class="td-right modify-aggregate-value modify-nsf-value">
+                                            <output class={modifyAggregates.nsf.escrowChanged}>{modifyAggregates.nsf.escrowFormatted}</output>
+                                            <span class="modify-agg-orig">was {modifyAggregates.nsf.origEscrowFormatted}</span>
+                                        </td>
+                                        <td class="td-center"></td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                     </template>
