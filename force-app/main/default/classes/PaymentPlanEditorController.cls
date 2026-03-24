@@ -4284,12 +4284,13 @@ public with sharing class PaymentPlanEditorController {
                 scheduledItems.add(item);
             } else {
                 nonScheduledItems.add(item);
-                if (item.Status__c == STATUS_CLEARED) {
-                    Decimal programFee = item.Program_Fee_Amount__c != null ? item.Program_Fee_Amount__c : 0;
-                    Decimal toEscrow = item.To_Escrow_Amount__c != null ? item.To_Escrow_Amount__c : 0;
-                    paidProgramCostSum += (programFee + toEscrow);
-                    paidProgramFeeSum += programFee;
-                }
+                // All non-scheduled items are preserved/cloned in the new plan with their amounts.
+                // Subtract their program cost from the remaining total to avoid double-counting.
+                // Only scheduled items are rebuilt — remaining cost covers only what scheduled items need.
+                Decimal programFee = item.Program_Fee_Amount__c != null ? item.Program_Fee_Amount__c : 0;
+                Decimal toEscrow = item.To_Escrow_Amount__c != null ? item.To_Escrow_Amount__c : 0;
+                paidProgramCostSum += (programFee + toEscrow);
+                paidProgramFeeSum += programFee;
                 // Count and sum setup fees from ALL non-scheduled items (Cleared, NSF, Processing, Cancelled)
                 // These items already had setup fees allocated — do not re-add them in new schedule
                 if (item.Setup_Fee_Amount__c != null && item.Setup_Fee_Amount__c > 0) {
