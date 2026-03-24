@@ -4207,7 +4207,7 @@ public with sharing class PaymentPlanEditorController {
         Decimal weeklyPayment;
         Decimal estimatedCurrentPayment;
 
-        // Get target payment percent from plan (used for EST_CURRENT_PAYMENT calculation)
+        // Target payment percent: back-calculated for display only (not used for weekly calculation)
         Decimal targetPaymentPercent = currentPlan.Target_Payment_Percent__c != null && currentPlan.Target_Payment_Percent__c > 0
             ? currentPlan.Target_Payment_Percent__c
             : (config.targetPaymentPercentage != null ? config.targetPaymentPercentage : 59);
@@ -4222,14 +4222,23 @@ public with sharing class PaymentPlanEditorController {
                     ? opp.Est_weekly_payment__c : 0);
             System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | EST_TOTAL_DEBT: newDebt=' + estimatedTotalDebt + ' | weeklyPayment from plan=' + weeklyPayment);
         } else {
-            // EST_CURRENT_PAYMENT: user provides new current payment, calculate weekly from target %
+            // EST_CURRENT_PAYMENT: scale weekly proportionally from plan's actual values
+            // newWeekly = currentWeekly × (newCurrentPayment / originalCurrentPayment)
+            // Same input → same weekly (no changes). Different input → proportional change.
             estimatedCurrentPayment = newValue;
             estimatedTotalDebt = currentPlan.Total_Debt__c != null && currentPlan.Total_Debt__c > 0
                 ? currentPlan.Total_Debt__c
                 : (opp.Estimated_Total_Debt__c != null ? opp.Estimated_Total_Debt__c : 0);
-            // Weekly payment = Estimated Current Payment × (Target Payment % / 100)
-            weeklyPayment = (estimatedCurrentPayment * (targetPaymentPercent / 100)).setScale(2, RoundingMode.HALF_UP);
-            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | EST_CURRENT_PAYMENT: newCurrentPayment=' + estimatedCurrentPayment + ' | targetPercent=' + targetPaymentPercent + ' | calculatedWeekly=' + weeklyPayment + ' | totalDebt from plan=' + estimatedTotalDebt);
+            Decimal originalCurrentPayment = currentPlan.Current_Payment__c != null && currentPlan.Current_Payment__c > 0
+                ? currentPlan.Current_Payment__c
+                : (opp.Estimated_Current_Payment__c != null && opp.Estimated_Current_Payment__c > 0
+                    ? opp.Estimated_Current_Payment__c : 1);
+            Decimal originalWeekly = currentPlan.Weekly_Payment__c != null && currentPlan.Weekly_Payment__c > 0
+                ? currentPlan.Weekly_Payment__c
+                : (opp.Est_weekly_payment__c != null && opp.Est_weekly_payment__c > 0
+                    ? opp.Est_weekly_payment__c : 0);
+            weeklyPayment = (originalWeekly * (estimatedCurrentPayment / originalCurrentPayment)).setScale(2, RoundingMode.HALF_UP);
+            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | EST_CURRENT_PAYMENT: newCurrentPayment=' + estimatedCurrentPayment + ' | originalCurrentPayment=' + originalCurrentPayment + ' | originalWeekly=' + originalWeekly + ' | newWeekly=' + weeklyPayment);
         }
 
         if (estimatedTotalDebt <= 0) {
