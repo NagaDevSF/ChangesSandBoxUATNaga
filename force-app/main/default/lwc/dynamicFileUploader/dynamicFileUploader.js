@@ -664,7 +664,7 @@ export default class DynamicFileUploader extends LightningElement {
     }
 
     autoDetectResolutionColumns() {
-        const eppsAliases = ['cardholderid', 'cardholder id', 'cardholder_id', 'epps id', 'eppsid', 'epps_id', 'accountholderid', 'accountholder id'];
+        const eppsAliases = ['accountholderid', 'accountholder id', 'accountholder_id', 'account holder id', 'epps id', 'eppsid', 'epps_id'];
         const dateAliases = ['fee date', 'feedate', 'fee_date', 'feedate'];
 
         for (const header of this.parsedHeaders) {
