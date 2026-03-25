@@ -7,6 +7,7 @@ import getAvailableObjects from '@salesforce/apex/DynamicFileUploadController.ge
 import getObjectFields from '@salesforce/apex/DynamicFileUploadController.getObjectFields';
 import validateMappedData from '@salesforce/apex/DynamicFileUploadController.validateMappedData';
 import createMappedRecords from '@salesforce/apex/DynamicFileUploadController.createMappedRecords';
+import resolveScheduleItems from '@salesforce/apex/DynamicFileUploadController.resolveScheduleItems';
 
 // ============================================================
 // Constants
@@ -67,6 +68,8 @@ export default class DynamicFileUploader extends LightningElement {
     @track validationResults = [];
     @track creationResults = [];
     @track processingProgress = { processed: 0, total: 0, success: 0, failed: 0 };
+    @track selectedEppsIdColumn = '';
+    @track selectedFeeDateColumn = '';
 
     // ============================================================
     // Regular Properties
@@ -240,19 +243,14 @@ export default class DynamicFileUploader extends LightningElement {
     }
 
     get availableFieldOptions() {
-        const mappedFields = new Set(this.fieldMappings.filter((m) => m.salesforceField).map((m) => m.salesforceField));
-
         const options = [{ label: '-- None --', value: '' }];
         this.objectFields.forEach((field) => {
-            if (!mappedFields.has(field.apiName)) {
-                const reqLabel = field.required ? ' *' : '';
-                options.push({
-                    label: field.label + ' (' + field.apiName + ')' + reqLabel,
-                    value: field.apiName
-                });
-            }
+            const reqLabel = field.isRequired ? ' *' : '';
+            options.push({
+                label: field.label + ' (' + field.apiName + ')' + reqLabel,
+                value: field.apiName
+            });
         });
-
         return options;
     }
 
@@ -262,6 +260,18 @@ export default class DynamicFileUploader extends LightningElement {
 
     get cannotProceedToPreview() {
         return !this.canProceedToPreview;
+    }
+
+    get excelColumnOptions() {
+        const options = [{ label: '-- None --', value: '' }];
+        this.parsedHeaders.forEach((header) => {
+            options.push({ label: header, value: header });
+        });
+        return options;
+    }
+
+    get hasResolutionColumns() {
+        return this.selectedEppsIdColumn && this.selectedFeeDateColumn;
     }
 
     // ============================================================
@@ -671,6 +681,14 @@ export default class DynamicFileUploader extends LightningElement {
         this.showToast('Mappings Cleared', 'All field mappings have been removed.', 'info');
     }
 
+    handleEppsIdColumnChange(event) {
+        this.selectedEppsIdColumn = event.detail.value;
+    }
+
+    handleFeeDateColumnChange(event) {
+        this.selectedFeeDateColumn = event.detail.value;
+    }
+
     handleBackToUpload() {
         this.currentStep = 'upload';
     }
@@ -698,6 +716,12 @@ export default class DynamicFileUploader extends LightningElement {
         this.currentPage = 1;
         this.previewFilter = 'all';
         this.isValidated = false;
+
+        // Resolve EPPS ID + Fee Date → PSI if resolution columns are selected
+        if (this.hasResolutionColumns) {
+            await this.resolveRows();
+        }
+
         this.currentStep = 'preview';
     }
 
@@ -784,6 +808,82 @@ export default class DynamicFileUploader extends LightningElement {
         this.previewColumns = columns;
     }
 
+    async resolveRows() {
+        this.isLoading = true;
+        try {
+            // Build resolution inputs from raw parsed data
+            const inputs = this.previewData.map((row) => ({
+                rowIndex: row.rowIndex,
+                eppsId: String(this.parsedRows[row.rowIndex - 1][this.selectedEppsIdColumn] || '').trim(),
+                feeDate: this.parseExcelDate(this.parsedRows[row.rowIndex - 1][this.selectedFeeDateColumn])
+            }));
+
+            // Call Apex in chunks
+            const allResolved = [];
+            for (let i = 0; i < inputs.length; i += CHUNK_SIZE) {
+                const chunk = inputs.slice(i, i + CHUNK_SIZE);
+                const chunkResults = await resolveScheduleItems({ rowsJson: JSON.stringify(chunk) });
+                allResolved.push(...chunkResults);
+            }
+
+            // Build resolution map by rowIndex
+            const resolutionMap = {};
+            allResolved.forEach((r) => {
+                resolutionMap[r.rowIndex] = r;
+            });
+
+            // Merge resolution into preview data
+            let resolvedCount = 0;
+            let unresolvedCount = 0;
+            this.previewData = this.previewData.map((row) => {
+                const resolution = resolutionMap[row.rowIndex];
+                const updated = { ...row };
+
+                if (resolution && resolution.isResolved) {
+                    updated.Payment_Schedule_Item__c = resolution.psiId;
+                    updated.Type__c = 'Wire';
+                    updated._resolution = resolution.psiName + ' (' + resolution.paymentDate + ')';
+                    updated._resolutionClass = 'slds-text-color_success';
+                    updated._isResolved = true;
+                    updated._oppName = resolution.opportunityName;
+                    resolvedCount++;
+                } else {
+                    updated._resolution = resolution ? resolution.errorMessage : 'Unresolved';
+                    updated._resolutionClass = 'slds-text-color_error';
+                    updated._isResolved = false;
+                    unresolvedCount++;
+                }
+                return updated;
+            });
+
+            // Add resolution column to preview columns
+            const resolutionCol = {
+                label: 'Matched PSI',
+                fieldName: '_resolution',
+                type: 'text',
+                initialWidth: 220,
+                editable: false,
+                cellAttributes: {
+                    class: { fieldName: '_resolutionClass' }
+                }
+            };
+            // Insert before the Status column (last column)
+            const cols = [...this.previewColumns];
+            cols.splice(cols.length - 1, 0, resolutionCol);
+            this.previewColumns = cols;
+
+            this.showToast(
+                'Resolution Complete',
+                `Resolved ${resolvedCount} of ${resolvedCount + unresolvedCount} rows to Payment Schedule Items.`,
+                resolvedCount > 0 ? 'success' : 'warning'
+            );
+        } catch (error) {
+            this.showToast('Resolution Error', this.reduceError(error), 'error');
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
     handleCellChange(event) {
         const draftValues = event.detail.draftValues;
         const updatedData = [...this.previewData];
@@ -845,6 +945,13 @@ export default class DynamicFileUploader extends LightningElement {
                     const val = row[fn];
                     fieldValues[fn] = val !== null && val !== undefined ? String(val) : '';
                 });
+                // Include resolved PSI ID and Type for wire resolution
+                if (row.Payment_Schedule_Item__c) {
+                    fieldValues['Payment_Schedule_Item__c'] = row.Payment_Schedule_Item__c;
+                }
+                if (row.Type__c) {
+                    fieldValues['Type__c'] = row.Type__c;
+                }
                 return { rowIndex: row.rowIndex, fieldValues };
             });
 
@@ -941,6 +1048,13 @@ export default class DynamicFileUploader extends LightningElement {
                 const val = row[fn];
                 fieldValues[fn] = val !== null && val !== undefined ? String(val) : '';
             });
+            // Include resolved PSI ID and Type for wire resolution
+            if (row.Payment_Schedule_Item__c) {
+                fieldValues['Payment_Schedule_Item__c'] = row.Payment_Schedule_Item__c;
+            }
+            if (row.Type__c) {
+                fieldValues['Type__c'] = row.Type__c;
+            }
             return { rowIndex: row.rowIndex, fieldValues };
         });
 
@@ -1180,5 +1294,7 @@ export default class DynamicFileUploader extends LightningElement {
         this.isValidated = false;
         this.isProcessing = false;
         this.isCancelled = false;
+        this.selectedEppsIdColumn = '';
+        this.selectedFeeDateColumn = '';
     }
 }

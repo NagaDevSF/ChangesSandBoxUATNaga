@@ -731,8 +731,228 @@ public with sharing class DynamicFileUploadController {
     }
 
     // ============================================================
+    // Resolution DTOs
+    // ============================================================
+
+    /**
+     * @description Input row for resolving EPPS ID + Fee Date to a Payment Schedule Item.
+     */
+    public class ResolutionInput {
+        public Integer rowIndex;
+        public String eppsId;
+        public String feeDate; // yyyy-MM-dd
+    }
+
+    /**
+     * @description Result of resolving a single row to a Payment Schedule Item.
+     */
+    public class ResolvedRow {
+        @AuraEnabled public Integer rowIndex;
+        @AuraEnabled public String psiId;
+        @AuraEnabled public String psiName;
+        @AuraEnabled public String opportunityId;
+        @AuraEnabled public String opportunityName;
+        @AuraEnabled public String planId;
+        @AuraEnabled public String planName;
+        @AuraEnabled public String paymentDate;
+        @AuraEnabled public Boolean isResolved;
+        @AuraEnabled public String errorMessage;
+    }
+
+    // ============================================================
+    // resolveScheduleItems
+    // ============================================================
+
+    /**
+     * @description Resolves EPPS ID + Fee Date pairs to Payment Schedule Items.
+     *              Matches the Fee Date to the Sunday-Saturday week range of each PSI's
+     *              Payment_Date__c on the active Payment Plan for the Opportunity.
+     * @param       rowsJson JSON string of List<ResolutionInput>
+     * @return      List<ResolvedRow> with per-row resolution results
+     */
+    @AuraEnabled
+    public static List<ResolvedRow> resolveScheduleItems(String rowsJson) {
+        System.debug(LOG_ENTRY + ' resolveScheduleItems — entering');
+        try {
+            if (String.isBlank(rowsJson)) {
+                throw new AuraHandledException('Resolution data is required.');
+            }
+
+            List<ResolutionInput> inputs = (List<ResolutionInput>) JSON.deserialize(rowsJson, List<ResolutionInput>.class);
+            System.debug(LOG_INFO + ' resolveScheduleItems — ' + inputs.size() + ' rows to resolve');
+
+            // 1. Extract unique EPPS IDs
+            Set<String> eppsIds = new Set<String>();
+            for (ResolutionInput input : inputs) {
+                if (String.isNotBlank(input.eppsId)) {
+                    eppsIds.add(input.eppsId.trim());
+                }
+            }
+
+            // 2. Query Opportunities by EPPS_ID__c
+            System.debug(LOG_QUERY + ' resolveScheduleItems — querying Opportunities for ' + eppsIds.size() + ' EPPS IDs');
+            Map<String, Opportunity> oppByEppsId = new Map<String, Opportunity>();
+            if (!eppsIds.isEmpty()) {
+                for (Opportunity opp : [SELECT Id, Name, EPPS_ID__c FROM Opportunity WHERE EPPS_ID__c IN :eppsIds]) {
+                    oppByEppsId.put(opp.EPPS_ID__c, opp);
+                }
+            }
+
+            // 3. Query active Payment Plans for matched Opportunities
+            Set<Id> oppIds = new Set<Id>();
+            for (Opportunity opp : oppByEppsId.values()) {
+                oppIds.add(opp.Id);
+            }
+
+            Map<Id, PaymentPlan__c> planByOppId = new Map<Id, PaymentPlan__c>();
+            if (!oppIds.isEmpty()) {
+                System.debug(LOG_QUERY + ' resolveScheduleItems — querying active Payment Plans');
+                for (PaymentPlan__c plan : [
+                    SELECT Id, Name, Opportunity__c
+                    FROM PaymentPlan__c
+                    WHERE Opportunity__c IN :oppIds AND Is_Active__c = true
+                ]) {
+                    planByOppId.put(plan.Opportunity__c, plan);
+                }
+            }
+
+            // 4. Query PSIs for matched Plans, grouped by Plan Id
+            Set<Id> planIds = new Set<Id>();
+            for (PaymentPlan__c plan : planByOppId.values()) {
+                planIds.add(plan.Id);
+            }
+
+            Map<Id, List<Payment_Schedule_Item__c>> psisByPlanId = new Map<Id, List<Payment_Schedule_Item__c>>();
+            if (!planIds.isEmpty()) {
+                System.debug(LOG_QUERY + ' resolveScheduleItems — querying Payment Schedule Items');
+                for (Payment_Schedule_Item__c psi : [
+                    SELECT Id, Name, Payment_Plan__c, Payment_Date__c
+                    FROM Payment_Schedule_Item__c
+                    WHERE Payment_Plan__c IN :planIds
+                    ORDER BY Payment_Date__c ASC
+                ]) {
+                    if (!psisByPlanId.containsKey(psi.Payment_Plan__c)) {
+                        psisByPlanId.put(psi.Payment_Plan__c, new List<Payment_Schedule_Item__c>());
+                    }
+                    psisByPlanId.get(psi.Payment_Plan__c).add(psi);
+                }
+            }
+
+            // 5. Resolve each row
+            List<ResolvedRow> results = new List<ResolvedRow>();
+            for (ResolutionInput input : inputs) {
+                ResolvedRow rr = new ResolvedRow();
+                rr.rowIndex = input.rowIndex;
+                rr.isResolved = false;
+
+                // a. Check EPPS ID
+                if (String.isBlank(input.eppsId)) {
+                    rr.errorMessage = 'EPPS ID is blank.';
+                    results.add(rr);
+                    continue;
+                }
+
+                // b. Find Opportunity
+                Opportunity opp = oppByEppsId.get(input.eppsId.trim());
+                if (opp == null) {
+                    rr.errorMessage = 'No Opportunity for EPPS ID: ' + input.eppsId;
+                    results.add(rr);
+                    continue;
+                }
+                rr.opportunityId = opp.Id;
+                rr.opportunityName = opp.Name;
+
+                // c. Find active Plan
+                PaymentPlan__c plan = planByOppId.get(opp.Id);
+                if (plan == null) {
+                    rr.errorMessage = 'No active Payment Plan for: ' + opp.Name;
+                    results.add(rr);
+                    continue;
+                }
+                rr.planId = plan.Id;
+                rr.planName = plan.Name;
+
+                // d. Parse fee date
+                Date feeDate;
+                try {
+                    feeDate = Date.valueOf(input.feeDate);
+                } catch (Exception ex) {
+                    rr.errorMessage = 'Invalid fee date: ' + input.feeDate;
+                    results.add(rr);
+                    continue;
+                }
+
+                // e. Find PSI where fee date falls in Sun-Sat week of PSI.Payment_Date__c
+                List<Payment_Schedule_Item__c> psiList = psisByPlanId.get(plan.Id);
+                if (psiList == null || psiList.isEmpty()) {
+                    rr.errorMessage = 'No PSIs found for plan: ' + plan.Name;
+                    results.add(rr);
+                    continue;
+                }
+
+                Payment_Schedule_Item__c matchedPsi = null;
+                for (Payment_Schedule_Item__c psi : psiList) {
+                    if (psi.Payment_Date__c == null) {
+                        continue;
+                    }
+                    Date weekStart = getWeekStartSunday(psi.Payment_Date__c);
+                    Date weekEnd = weekStart.addDays(6);
+                    if (feeDate >= weekStart && feeDate <= weekEnd) {
+                        matchedPsi = psi;
+                        break;
+                    }
+                }
+
+                if (matchedPsi == null) {
+                    rr.errorMessage = 'No PSI matches fee date ' + String.valueOf(feeDate) + ' for plan: ' + plan.Name;
+                    results.add(rr);
+                    continue;
+                }
+
+                rr.psiId = matchedPsi.Id;
+                rr.psiName = matchedPsi.Name;
+                rr.paymentDate = String.valueOf(matchedPsi.Payment_Date__c);
+                rr.isResolved = true;
+                results.add(rr);
+            }
+
+            Integer resolvedCount = 0;
+            for (ResolvedRow rr : results) {
+                if (rr.isResolved) {
+                    resolvedCount++;
+                }
+            }
+            System.debug(LOG_SUCCESS + ' resolveScheduleItems — resolved ' + resolvedCount + '/' + results.size() + ' rows');
+            System.debug(LOG_EXIT + ' resolveScheduleItems — exiting');
+            return results;
+
+        } catch (AuraHandledException ahe) {
+            throw ahe;
+        } catch (Exception ex) {
+            System.debug(LOG_ERROR + ' resolveScheduleItems — ' + ex.getMessage() + ' | ' + ex.getStackTraceString());
+            throw new AuraHandledException('Resolution error: ' + ex.getMessage());
+        }
+    }
+
+    // ============================================================
     // Private Utility Methods
     // ============================================================
+
+    /**
+     * @description Returns the Sunday (start) of the week containing the given date.
+     *              Uses Jan 1, 2023 (a known Sunday) as a reference point.
+     * @param       d The date to calculate from
+     * @return      Date The Sunday of that week
+     */
+    private static Date getWeekStartSunday(Date d) {
+        Date knownSunday = Date.newInstance(2023, 1, 1);
+        Integer daysSince = knownSunday.daysBetween(d);
+        Integer dayOfWeek = Math.mod(daysSince, 7);
+        if (dayOfWeek < 0) {
+            dayOfWeek += 7;
+        }
+        return d.addDays(-dayOfWeek);
+    }
 
     /**
      * @description Converts a string value from Excel to the appropriate Apex type

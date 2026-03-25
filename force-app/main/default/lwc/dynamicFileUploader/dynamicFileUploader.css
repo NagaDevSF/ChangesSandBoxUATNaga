@@ -339,6 +339,22 @@
 }
 
 /* ============================================================
+   Wire Resolution Settings
+   ============================================================ */
+.resolution-settings {
+    background: #f7f9fb;
+    border: 1px solid #d8dde6;
+    border-radius: 8px;
+    border-left: 4px solid #0070d2;
+}
+
+.resolution-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* ============================================================
    Mapping Grid
    ============================================================ */
 .mapping-header {
