@@ -274,6 +274,14 @@ export default class DynamicFileUploader extends LightningElement {
         return this.selectedEppsIdColumn && this.selectedFeeDateColumn;
     }
 
+    get resolutionRoleOptions() {
+        return [
+            { label: '-- None --', value: '' },
+            { label: 'EPPS ID (Wire Resolution)', value: 'eppsId' },
+            { label: 'Fee Date (Wire Resolution)', value: 'feeDate' }
+        ];
+    }
+
     // ============================================================
     // Computed Properties — Preview Step
     // ============================================================
@@ -669,6 +677,7 @@ export default class DynamicFileUploader extends LightningElement {
                 this.selectedFeeDateColumn = header;
             }
         }
+        this.refreshResolutionFlags();
     }
 
     handleFieldMappingChange(event) {
@@ -714,10 +723,52 @@ export default class DynamicFileUploader extends LightningElement {
 
     handleEppsIdColumnChange(event) {
         this.selectedEppsIdColumn = event.detail.value;
+        this.refreshResolutionFlags();
     }
 
     handleFeeDateColumnChange(event) {
         this.selectedFeeDateColumn = event.detail.value;
+        this.refreshResolutionFlags();
+    }
+
+    handleResolutionRoleChange(event) {
+        const columnName = event.target.dataset.column;
+        const role = event.detail.value;
+
+        // Clear previous assignment for this role
+        if (role === 'eppsId') {
+            this.selectedEppsIdColumn = columnName;
+        } else if (role === 'feeDate') {
+            this.selectedFeeDateColumn = columnName;
+        } else {
+            // Clearing — figure out which role this column had
+            if (this.selectedEppsIdColumn === columnName) {
+                this.selectedEppsIdColumn = '';
+            }
+            if (this.selectedFeeDateColumn === columnName) {
+                this.selectedFeeDateColumn = '';
+            }
+        }
+        this.refreshResolutionFlags();
+    }
+
+    refreshResolutionFlags() {
+        const resolutionClass = 'mapping-row mapping-row-resolution slds-grid slds-p-around_small slds-grid_vertical-align-center';
+        const autoClass = 'mapping-row mapping-row-auto slds-grid slds-p-around_small slds-grid_vertical-align-center';
+        const baseClass = 'mapping-row slds-grid slds-p-around_small slds-grid_vertical-align-center';
+
+        this.fieldMappings = this.fieldMappings.map((mapping) => {
+            const isEpps = this.selectedEppsIdColumn === mapping.excelColumn;
+            const isFeeDate = this.selectedFeeDateColumn === mapping.excelColumn;
+            const isRes = isEpps || isFeeDate;
+
+            return {
+                ...mapping,
+                isResolutionColumn: isRes,
+                resolutionRole: isEpps ? 'eppsId' : isFeeDate ? 'feeDate' : '',
+                rowClass: isRes ? resolutionClass : mapping.isAutoMapped ? autoClass : baseClass
+            };
+        });
     }
 
     handleBackToUpload() {

@@ -162,35 +162,6 @@
         <template lwc:if={isMappingStep}>
             <div class="step-content slds-p-around_large">
 
-                <!-- Wire Resolution Settings -->
-                <div class="resolution-settings slds-p-around_medium slds-m-bottom_medium">
-                    <div class="resolution-header slds-p-bottom_small">
-                        <lightning-icon icon-name="utility:link" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                        <strong>Wire Resolution</strong>
-                        <span class="slds-text-body_small slds-text-color_weak slds-m-left_small">Auto-resolve EPPS ID + Fee Date to Payment Schedule Items</span>
-                    </div>
-                    <div class="slds-grid slds-wrap slds-gutters">
-                        <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12">
-                            <lightning-combobox
-                                label="EPPS ID Column"
-                                value={selectedEppsIdColumn}
-                                options={excelColumnOptions}
-                                onchange={handleEppsIdColumnChange}
-                                placeholder="Select EPPS ID column..."
-                            ></lightning-combobox>
-                        </div>
-                        <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12">
-                            <lightning-combobox
-                                label="Fee Date Column"
-                                value={selectedFeeDateColumn}
-                                options={excelColumnOptions}
-                                onchange={handleFeeDateColumnChange}
-                                placeholder="Select Fee Date column..."
-                            ></lightning-combobox>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Header -->
                 <div class="slds-grid slds-grid_align-spread slds-p-bottom_medium mapping-header">
                     <div>
@@ -245,18 +216,33 @@
                                 <lightning-icon icon-name="utility:forward" size="xx-small" class="mapping-arrow"></lightning-icon>
                             </div>
                             <div class="slds-col slds-size_4-of-12" role="cell">
-                                <lightning-combobox
-                                    label="Salesforce field mapping"
-                                    variant="label-hidden"
-                                    value={mapping.salesforceField}
-                                    options={availableFieldOptions}
-                                    onchange={handleFieldMappingChange}
-                                    data-column={mapping.excelColumn}
-                                    placeholder="Select a field..."
-                                ></lightning-combobox>
+                                <template lwc:if={mapping.isResolutionColumn}>
+                                    <lightning-combobox
+                                        label="Resolution mapping"
+                                        variant="label-hidden"
+                                        value={mapping.resolutionRole}
+                                        options={resolutionRoleOptions}
+                                        onchange={handleResolutionRoleChange}
+                                        data-column={mapping.excelColumn}
+                                    ></lightning-combobox>
+                                </template>
+                                <template lwc:else>
+                                    <lightning-combobox
+                                        label="Salesforce field mapping"
+                                        variant="label-hidden"
+                                        value={mapping.salesforceField}
+                                        options={availableFieldOptions}
+                                        onchange={handleFieldMappingChange}
+                                        data-column={mapping.excelColumn}
+                                        placeholder="Select a field..."
+                                    ></lightning-combobox>
+                                </template>
                             </div>
                             <div class="slds-col slds-size_1-of-12 slds-text-align_center" role="cell">
-                                <template lwc:if={mapping.salesforceField}>
+                                <template lwc:if={mapping.isResolutionColumn}>
+                                    <lightning-icon icon-name="utility:link" size="x-small" variant="success" alternative-text="Resolution"></lightning-icon>
+                                </template>
+                                <template lwc:elseif={mapping.salesforceField}>
                                     <lightning-icon icon-name="utility:success" size="x-small" variant="success" alternative-text="Mapped"></lightning-icon>
                                 </template>
                                 <template lwc:else>
