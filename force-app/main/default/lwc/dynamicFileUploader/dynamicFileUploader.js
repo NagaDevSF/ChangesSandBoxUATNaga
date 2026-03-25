@@ -857,7 +857,7 @@ export default class DynamicFileUploader extends LightningElement {
         activeMappings.forEach((mapping) => {
             const dtType = SF_TYPE_TO_DT_TYPE[mapping.fieldType] || 'text';
             const col = {
-                label: mapping.salesforceLabel,
+                label: `${mapping.excelColumn} → ${mapping.salesforceLabel}`,
                 fieldName: mapping.salesforceField,
                 type: dtType,
                 editable: true
