@@ -1,0 +1,602 @@
+/* ============================================================
+   Dynamic File Uploader — Premium Styles
+   ============================================================ */
+
+/* ============================================================
+   Container
+   ============================================================ */
+.uploader-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    font-family: 'Salesforce Sans', Arial, sans-serif;
+}
+
+/* ============================================================
+   Step Indicator
+   ============================================================ */
+.step-indicator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    background: linear-gradient(135deg, #1b2631 0%, #2c3e50 100%);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+}
+
+.step-item {
+    display: flex;
+    align-items: center;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.step-circle {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.step-circle-active {
+    background: #0070d2;
+    color: white;
+    box-shadow: 0 0 0 4px rgba(0, 112, 210, 0.3);
+}
+
+.step-circle-completed {
+    background: #04844b;
+    color: white;
+}
+
+.step-circle-pending {
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.step-number {
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.step-label {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    margin-left: 8px;
+    margin-right: 24px;
+    white-space: nowrap;
+    transition: color 0.3s ease;
+}
+
+.step-label-active {
+    color: white;
+    font-weight: 600;
+}
+
+.step-label-completed {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.step-connector {
+    width: 40px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 0 8px;
+    flex-shrink: 0;
+    transition: background 0.3s ease;
+}
+
+.step-connector-completed {
+    background: #04844b;
+}
+
+/* ============================================================
+   Step Content Card
+   ============================================================ */
+.step-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e5e5e5;
+    position: relative;
+}
+
+/* ============================================================
+   Loading Overlay
+   ============================================================ */
+.loading-overlay {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+
+/* ============================================================
+   Drop Zone
+   ============================================================ */
+.drop-zone {
+    border: 2px dashed #d8dde6;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    background: #fafbfc;
+    cursor: pointer;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.drop-zone:hover {
+    border-color: #0070d2;
+    background: #f0f7ff;
+}
+
+.drop-zone-active {
+    border-color: #0070d2;
+    background: #e8f4fd;
+    box-shadow: 0 0 0 4px rgba(0, 112, 210, 0.15);
+    transform: scale(1.01);
+}
+
+.drop-zone-has-file {
+    border-style: solid;
+    border-color: #d8dde6;
+    background: #fafbfc;
+    cursor: default;
+    min-height: auto;
+    padding: 1.5rem;
+}
+
+.drop-zone-has-file:hover {
+    border-color: #d8dde6;
+    background: #fafbfc;
+}
+
+.file-input-hidden {
+    display: none;
+}
+
+.file-browse-btn {
+    cursor: pointer;
+}
+
+.upload-icon {
+    --lwc-colorTextIconDefault: #b0adab;
+}
+
+/* ============================================================
+   File Info Card
+   ============================================================ */
+.file-info-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: white;
+    border: 1px solid #d8dde6;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    max-width: 500px;
+}
+
+.file-details {
+    flex: 1;
+    text-align: left;
+}
+
+.file-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #16325c;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.file-meta {
+    font-size: 0.8rem;
+    color: #706e6b;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.remove-file-btn {
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   Mapping Grid
+   ============================================================ */
+.mapping-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.mapping-grid {
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    overflow: hidden;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.mapping-header-row {
+    background: #f3f3f3;
+    border-bottom: 2px solid #d8dde6;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.mapping-row {
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s ease;
+}
+
+.mapping-row:hover {
+    background: #f7f9fb;
+}
+
+.mapping-row:last-child {
+    border-bottom: none;
+}
+
+.excel-column-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    background: #eef1f6;
+    border-radius: 4px;
+    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    color: #16325c;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.column-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sample-values {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+}
+
+.sample-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #f3f2f2;
+    border-radius: 12px;
+    font-size: 11px;
+    color: #706e6b;
+    margin: 2px 0;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mapping-arrow {
+    --lwc-colorTextIconDefault: #b0adab;
+}
+
+/* ============================================================
+   Stat Cards
+   ============================================================ */
+.stat-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-total {
+    background: linear-gradient(135deg, #16325c, #1a3a6c);
+    color: white;
+}
+
+.stat-valid {
+    background: linear-gradient(135deg, #04844b, #058a50);
+    color: white;
+}
+
+.stat-invalid {
+    background: linear-gradient(135deg, #c23934, #d03530);
+    color: white;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    opacity: 0.85;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ============================================================
+   Datatable Container
+   ============================================================ */
+.datatable-container {
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* ============================================================
+   Pagination
+   ============================================================ */
+.page-label {
+    font-size: 0.85rem;
+    color: #706e6b;
+    line-height: 32px;
+}
+
+/* ============================================================
+   Processing Progress
+   ============================================================ */
+.processing-container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 2rem 0;
+}
+
+.progress-ring-container {
+    display: flex;
+    justify-content: center;
+}
+
+.progress-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0070d2, #1589ee);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    box-shadow: 0 4px 12px rgba(0, 112, 210, 0.3);
+    animation: pulse-ring 2s ease-in-out infinite;
+}
+
+@keyframes pulse-ring {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(0, 112, 210, 0.3);
+    }
+    50% {
+        box-shadow: 0 4px 24px rgba(0, 112, 210, 0.5);
+    }
+}
+
+.progress-percent {
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+}
+
+.progress-bar-container {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.progress-bar-track {
+    height: 8px;
+    background: #e5e5e5;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0070d2, #1589ee);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.processing-stat {
+    padding: 0.5rem 1rem;
+}
+
+.stat-number-lg {
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: block;
+    color: #16325c;
+}
+
+.stat-label-sm {
+    font-size: 0.75rem;
+    color: #706e6b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.processing-stat-success .stat-number-lg {
+    color: #04844b;
+}
+
+.processing-stat-failed .stat-number-lg {
+    color: #c23934;
+}
+
+/* ============================================================
+   Result Cards
+   ============================================================ */
+.result-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.result-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.result-total {
+    background: linear-gradient(135deg, #1b2631, #2c3e50);
+    color: white;
+}
+
+.result-success {
+    background: linear-gradient(135deg, #04844b, #2e844a);
+    color: white;
+}
+
+.result-failed {
+    background: linear-gradient(135deg, #c23934, #ea001e);
+    color: white;
+}
+
+.result-icon {
+    margin-bottom: 4px;
+}
+
+.result-number {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+    margin: 8px 0;
+}
+
+.result-label {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ============================================================
+   Alert / Warning Banner
+   ============================================================ */
+.slds-alert_warning {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    background: #fef0cd;
+    border: 1px solid #f0c355;
+}
+
+/* ============================================================
+   Responsive Adjustments
+   ============================================================ */
+@media (max-width: 768px) {
+    .step-indicator {
+        padding: 1rem;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 0.5rem;
+    }
+
+    .step-label {
+        display: none;
+    }
+
+    .step-connector {
+        width: 20px;
+        margin: 0 4px;
+    }
+
+    .mapping-grid {
+        max-height: 400px;
+    }
+
+    .mapping-row .slds-col {
+        font-size: 0.85rem;
+    }
+
+    .result-number {
+        font-size: 1.8rem;
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+    }
+
+    .progress-circle {
+        width: 90px;
+        height: 90px;
+    }
+
+    .progress-percent {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .step-connector {
+        display: none;
+    }
+
+    .step-item {
+        margin: 2px;
+    }
+
+    .file-info-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .file-details {
+        text-align: center;
+    }
+}
+
+/* ============================================================
+   Scrollbar Styling (Mapping Grid)
+   ============================================================ */
+.mapping-grid::-webkit-scrollbar {
+    width: 6px;
+}
+
+.mapping-grid::-webkit-scrollbar-track {
+    background: #f3f3f3;
+    border-radius: 3px;
+}
+
+.mapping-grid::-webkit-scrollbar-thumb {
+    background: #c9c7c5;
+    border-radius: 3px;
+}
+
+.mapping-grid::-webkit-scrollbar-thumb:hover {
+    background: #a8a6a4;
+}

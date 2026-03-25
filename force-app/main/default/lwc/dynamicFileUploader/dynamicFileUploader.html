@@ -1,0 +1,413 @@
+<template>
+    <div class="uploader-container">
+
+        <!-- ============================================================ -->
+        <!-- Step Indicator / Progress Path                               -->
+        <!-- ============================================================ -->
+        <div class="step-indicator slds-p-horizontal_large slds-p-vertical_medium">
+            <template for:each={stepIndicator} for:item="step">
+                <div key={step.value} class={step.className}>
+                    <div class={step.circleClass}>
+                        <template lwc:if={step.isCompleted}>
+                            <lightning-icon icon-name="utility:check" size="x-small" variant="inverse"></lightning-icon>
+                        </template>
+                        <template lwc:elseif={step.isActive}>
+                            <span class="step-number">{step.number}</span>
+                        </template>
+                        <template lwc:else>
+                            <span class="step-number">{step.number}</span>
+                        </template>
+                    </div>
+                    <span class={step.labelClass}>{step.label}</span>
+                    <template lwc:if={step.hasConnector}>
+                        <div class={step.connectorClass}></div>
+                    </template>
+                </div>
+            </template>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- Loading Overlay                                              -->
+        <!-- ============================================================ -->
+        <template lwc:if={isLoading}>
+            <div class="loading-overlay">
+                <lightning-spinner alternative-text="Loading" size="large"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- ============================================================ -->
+        <!-- Step 1: Upload File                                          -->
+        <!-- ============================================================ -->
+        <template lwc:if={isUploadStep}>
+            <div class="step-content slds-p-around_large">
+                <div class="slds-grid slds-wrap slds-gutters">
+                    <!-- Object Selector -->
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-bottom_medium">
+                        <lightning-combobox
+                            label="Target Object"
+                            value={selectedObject}
+                            options={objectOptions}
+                            onchange={handleObjectChange}
+                            placeholder="Select an object..."
+                            required
+                        ></lightning-combobox>
+                    </div>
+                </div>
+
+                <!-- Drop Zone -->
+                <div class={dropZoneClass}
+                     ondragover={handleDragOver}
+                     ondragleave={handleDragLeave}
+                     ondrop={handleDrop}
+                     role="region"
+                     aria-label="File upload area">
+                    <template lwc:if={hasFile}>
+                        <!-- File Info Card -->
+                        <div class="file-info-card">
+                            <lightning-icon icon-name="doctype:excel" size="large"></lightning-icon>
+                            <div class="file-details">
+                                <p class="file-name">{fileName}</p>
+                                <p class="file-meta">{formattedFileSize} &bull; {totalRows} rows detected</p>
+                            </div>
+                            <lightning-button-icon
+                                icon-name="utility:close"
+                                variant="bare"
+                                onclick={handleRemoveFile}
+                                alternative-text="Remove file"
+                                class="remove-file-btn"
+                            ></lightning-button-icon>
+                        </div>
+                    </template>
+                    <template lwc:else>
+                        <!-- Upload Prompt -->
+                        <lightning-icon icon-name="utility:upload" size="large" class="upload-icon"></lightning-icon>
+                        <h3 class="slds-text-heading_medium slds-p-top_small">Drop your file here</h3>
+                        <p class="slds-text-body_regular slds-text-color_weak slds-p-top_xx-small">or</p>
+                        <label class="file-browse-btn slds-p-top_small">
+                            <input type="file" accept=".xlsx,.csv" onchange={handleFileInputChange} class="file-input-hidden" />
+                            <span class="slds-button slds-button_brand">Browse Files</span>
+                        </label>
+                        <p class="slds-text-body_small slds-text-color_weak slds-p-top_small">Supports .xlsx and .csv (up to 10,000 rows)</p>
+                    </template>
+                </div>
+
+                <!-- Next Button -->
+                <div class="slds-p-top_medium slds-text-align_right">
+                    <lightning-button
+                        label="Next: Map Fields"
+                        variant="brand"
+                        onclick={handleProceedToMapping}
+                        disabled={isNextDisabled}
+                        icon-name="utility:forward"
+                        icon-position="right"
+                    ></lightning-button>
+                </div>
+            </div>
+        </template>
+
+        <!-- ============================================================ -->
+        <!-- Step 2: Map Fields                                           -->
+        <!-- ============================================================ -->
+        <template lwc:if={isMappingStep}>
+            <div class="step-content slds-p-around_large">
+                <!-- Header -->
+                <div class="slds-grid slds-grid_align-spread slds-p-bottom_medium mapping-header">
+                    <div>
+                        <h2 class="slds-text-heading_medium">Map Your Columns</h2>
+                        <p class="slds-text-body_small slds-text-color_weak slds-p-top_xx-small">
+                            {mappedFieldCount} of {totalMappings} columns mapped
+                        </p>
+                    </div>
+                    <div class="slds-button-group">
+                        <lightning-button label="Auto-Map" onclick={handleAutoMap} icon-name="utility:magicwand"></lightning-button>
+                        <lightning-button label="Clear All" onclick={handleClearMappings} icon-name="utility:clear"></lightning-button>
+                    </div>
+                </div>
+
+                <!-- Required Fields Warning -->
+                <template lwc:if={hasRequiredUnmapped}>
+                    <div class="slds-notify slds-notify_alert slds-alert_warning slds-m-bottom_medium" role="alert">
+                        <span class="slds-assistive-text">Warning</span>
+                        <lightning-icon icon-name="utility:warning" variant="warning" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                        <span>Required fields not mapped: {unmappedRequiredFieldsList}</span>
+                    </div>
+                </template>
+
+                <!-- Mapping Grid -->
+                <div class="mapping-grid" role="table" aria-label="Column mapping grid">
+                    <!-- Header Row -->
+                    <div class="mapping-header-row slds-grid slds-p-around_small" role="row">
+                        <div class="slds-col slds-size_4-of-12" role="columnheader"><strong>Excel Column</strong></div>
+                        <div class="slds-col slds-size_2-of-12" role="columnheader"><strong>Sample Data</strong></div>
+                        <div class="slds-col slds-size_1-of-12 slds-text-align_center" role="columnheader"></div>
+                        <div class="slds-col slds-size_4-of-12" role="columnheader"><strong>Salesforce Field</strong></div>
+                        <div class="slds-col slds-size_1-of-12 slds-text-align_center" role="columnheader"><strong>Status</strong></div>
+                    </div>
+
+                    <!-- Mapping Rows -->
+                    <template for:each={fieldMappings} for:item="mapping">
+                        <div key={mapping.excelColumn} class="mapping-row slds-grid slds-p-around_small slds-grid_vertical-align-center" role="row">
+                            <div class="slds-col slds-size_4-of-12" role="cell">
+                                <div class="excel-column-badge">
+                                    <lightning-icon icon-name="utility:table" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                    <span class="column-name">{mapping.excelColumn}</span>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-size_2-of-12" role="cell">
+                                <div class="sample-values">
+                                    <template for:each={mapping.sampleValues} for:item="sample">
+                                        <span key={sample.id} class="sample-pill" title={sample.value}>{sample.value}</span>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-12 slds-text-align_center" role="cell">
+                                <lightning-icon icon-name="utility:forward" size="xx-small" class="mapping-arrow"></lightning-icon>
+                            </div>
+                            <div class="slds-col slds-size_4-of-12" role="cell">
+                                <lightning-combobox
+                                    label="Salesforce field mapping"
+                                    variant="label-hidden"
+                                    value={mapping.salesforceField}
+                                    options={availableFieldOptions}
+                                    onchange={handleFieldMappingChange}
+                                    data-column={mapping.excelColumn}
+                                    placeholder="Select a field..."
+                                ></lightning-combobox>
+                            </div>
+                            <div class="slds-col slds-size_1-of-12 slds-text-align_center" role="cell">
+                                <template lwc:if={mapping.salesforceField}>
+                                    <lightning-icon icon-name="utility:success" size="x-small" variant="success" alternative-text="Mapped"></lightning-icon>
+                                </template>
+                                <template lwc:else>
+                                    <lightning-icon icon-name="utility:dash" size="x-small" alternative-text="Not mapped"></lightning-icon>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Navigation -->
+                <div class="slds-grid slds-grid_align-spread slds-p-top_medium">
+                    <lightning-button label="Back" onclick={handleBackToUpload} icon-name="utility:back"></lightning-button>
+                    <lightning-button
+                        label="Next: Preview Data"
+                        variant="brand"
+                        onclick={handleProceedToPreview}
+                        disabled={cannotProceedToPreview}
+                        icon-name="utility:forward"
+                        icon-position="right"
+                    ></lightning-button>
+                </div>
+            </div>
+        </template>
+
+        <!-- ============================================================ -->
+        <!-- Step 3: Preview & Edit                                       -->
+        <!-- ============================================================ -->
+        <template lwc:if={isPreviewStep}>
+            <div class="step-content slds-p-around_large">
+                <!-- Stats Bar -->
+                <div class="slds-grid slds-wrap slds-gutters slds-p-bottom_medium">
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-12">
+                        <div class="stat-card stat-total">
+                            <span class="stat-number">{totalRows}</span>
+                            <span class="stat-label">Total Rows</span>
+                        </div>
+                    </div>
+                    <template lwc:if={isValidated}>
+                        <div class="slds-col slds-size_1-of-2 slds-medium-size_4-of-12">
+                            <div class="stat-card stat-valid">
+                                <span class="stat-number">{validRowCount}</span>
+                                <span class="stat-label">Valid</span>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-medium-size_4-of-12">
+                            <div class="stat-card stat-invalid">
+                                <span class="stat-number">{invalidRowCount}</span>
+                                <span class="stat-label">Invalid</span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Filter + Pagination Info -->
+                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-p-bottom_small">
+                    <template lwc:if={isValidated}>
+                        <lightning-radio-group
+                            label="Filter rows"
+                            variant="label-hidden"
+                            options={filterOptions}
+                            value={previewFilter}
+                            onchange={handleFilterChange}
+                            type="button"
+                        ></lightning-radio-group>
+                    </template>
+                    <div lwc:else></div>
+                    <span class="slds-text-body_small slds-text-color_weak page-label">{pageInfo}</span>
+                </div>
+
+                <!-- Datatable -->
+                <div class="datatable-container">
+                    <lightning-datatable
+                        key-field="rowIndex"
+                        data={currentPageData}
+                        columns={previewColumns}
+                        onsave={handleCellChange}
+                        hide-checkbox-column
+                        suppress-bottom-bar
+                    ></lightning-datatable>
+                </div>
+
+                <!-- Pagination -->
+                <div class="slds-grid slds-grid_align-center slds-p-top_small">
+                    <lightning-button-icon
+                        icon-name="utility:chevronleft"
+                        onclick={handlePrevPage}
+                        disabled={noPrevPage}
+                        alternative-text="Previous page"
+                        class="slds-m-right_small"
+                    ></lightning-button-icon>
+                    <span class="slds-p-horizontal_medium slds-align-middle page-label">{pageInfo}</span>
+                    <lightning-button-icon
+                        icon-name="utility:chevronright"
+                        onclick={handleNextPage}
+                        disabled={noNextPage}
+                        alternative-text="Next page"
+                        class="slds-m-left_small"
+                    ></lightning-button-icon>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="slds-grid slds-grid_align-spread slds-p-top_medium">
+                    <lightning-button label="Back: Map Fields" onclick={handleBackToMapping} icon-name="utility:back"></lightning-button>
+                    <div class="slds-button-group">
+                        <lightning-button
+                            label="Validate"
+                            onclick={handleValidate}
+                            icon-name="utility:check"
+                            variant="neutral"
+                        ></lightning-button>
+                        <lightning-button
+                            label="Create Records"
+                            onclick={handleProcess}
+                            variant="brand"
+                            icon-name="utility:upload"
+                            icon-position="right"
+                        ></lightning-button>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- ============================================================ -->
+        <!-- Step 4: Processing                                           -->
+        <!-- ============================================================ -->
+        <template lwc:if={isProcessingStep}>
+            <div class="step-content slds-p-around_large">
+                <div class="processing-container slds-text-align_center">
+                    <!-- Progress Circle -->
+                    <div class="progress-ring-container slds-p-bottom_large">
+                        <div class="progress-circle" role="progressbar" aria-valuenow={progressPercent} aria-valuemin="0" aria-valuemax="100">
+                            <span class="progress-percent">{progressPercent}%</span>
+                        </div>
+                    </div>
+                    <h2 class="slds-text-heading_medium slds-p-bottom_small">{progressLabel}</h2>
+
+                    <!-- Progress Bar -->
+                    <div class="progress-bar-container slds-p-bottom_medium">
+                        <div class="progress-bar-track">
+                            <div class="progress-bar-fill" style={progressBarStyle}></div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="slds-grid slds-grid_align-center slds-gutters slds-p-bottom_large">
+                        <div class="slds-col">
+                            <div class="processing-stat">
+                                <span class="stat-number-lg">{processingProgress.processed}</span>
+                                <span class="stat-label-sm">Processed</span>
+                            </div>
+                        </div>
+                        <div class="slds-col">
+                            <div class="processing-stat processing-stat-success">
+                                <span class="stat-number-lg">{processingProgress.success}</span>
+                                <span class="stat-label-sm">Success</span>
+                            </div>
+                        </div>
+                        <div class="slds-col">
+                            <div class="processing-stat processing-stat-failed">
+                                <span class="stat-number-lg">{processingProgress.failed}</span>
+                                <span class="stat-label-sm">Failed</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <lightning-button
+                        label="Cancel"
+                        variant="destructive-text"
+                        onclick={handleCancelProcessing}
+                    ></lightning-button>
+                </div>
+            </div>
+        </template>
+
+        <!-- ============================================================ -->
+        <!-- Step 5: Results                                              -->
+        <!-- ============================================================ -->
+        <template lwc:if={isResultsStep}>
+            <div class="step-content slds-p-around_large">
+                <!-- Summary Cards -->
+                <div class="slds-grid slds-wrap slds-gutters slds-p-bottom_large">
+                    <div class="slds-col slds-size_1-of-3">
+                        <div class="result-card result-total">
+                            <span class="result-number">{resultsSummary.total}</span>
+                            <span class="result-label">Total Processed</span>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-3">
+                        <div class="result-card result-success">
+                            <lightning-icon icon-name="utility:success" variant="inverse" size="small" class="result-icon"></lightning-icon>
+                            <span class="result-number">{resultsSummary.success}</span>
+                            <span class="result-label">Created</span>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-3">
+                        <div class="result-card result-failed">
+                            <lightning-icon icon-name="utility:error" variant="inverse" size="small" class="result-icon"></lightning-icon>
+                            <span class="result-number">{resultsSummary.failed}</span>
+                            <span class="result-label">Failed</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Datatable -->
+                <template lwc:if={hasResults}>
+                    <div class="datatable-container">
+                        <lightning-datatable
+                            key-field="rowIndex"
+                            data={creationResults}
+                            columns={resultsColumns}
+                            hide-checkbox-column
+                        ></lightning-datatable>
+                    </div>
+                </template>
+
+                <!-- Actions -->
+                <div class="slds-grid slds-grid_align-spread slds-p-top_medium">
+                    <lightning-button
+                        label="Download Results"
+                        onclick={handleDownloadResults}
+                        icon-name="utility:download"
+                    ></lightning-button>
+                    <lightning-button
+                        label="Upload Another File"
+                        variant="brand"
+                        onclick={handleUploadAnother}
+                        icon-name="utility:refresh"
+                    ></lightning-button>
+                </div>
+            </div>
+        </template>
+
+    </div>
+</template>

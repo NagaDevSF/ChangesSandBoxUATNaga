@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>65.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Dynamic File Uploader</masterLabel>
+    <description>Upload Excel/CSV files and map columns to Salesforce fields with preview and inline editing</description>
+    <targets>
+        <target>lightning__AppPage</target>
+        <target>lightning__HomePage</target>
+        <target>lightning__Tab</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__AppPage,lightning__HomePage">
+            <property name="defaultObjectApiName" type="String" default="Payment_Fee__c" label="Default Object API Name" description="Default Salesforce object to map fields to" />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>
