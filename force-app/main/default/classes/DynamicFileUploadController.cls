@@ -122,6 +122,68 @@ public with sharing class DynamicFileUploadController {
         @AuraEnabled public String recordName;
     }
 
+    /**
+     * @description Input for creating an upload log entry.
+     */
+    public class UploadLogInput {
+        @AuraEnabled public String fileName;
+        @AuraEnabled public String targetObject;
+        @AuraEnabled public String uploadMode;
+        @AuraEnabled public Integer totalRows;
+        @AuraEnabled public Integer successCount;
+        @AuraEnabled public Integer failureCount;
+        @AuraEnabled public String status;
+        @AuraEnabled public String errorDetails;
+        @AuraEnabled public String fieldMappings;
+    }
+
+    // ============================================================
+    // createUploadLog
+    // ============================================================
+
+    /**
+     * @description Creates an audit log record for a file upload session.
+     * @param       logJson JSON string of UploadLogInput
+     * @return      Id of the created File_Upload_Log__c record
+     */
+    @AuraEnabled
+    public static Id createUploadLog(String logJson) {
+        System.debug(LOG_ENTRY + ' createUploadLog — entering');
+        try {
+            if (String.isBlank(logJson)) {
+                throw new AuraHandledException('Upload log data is required.');
+            }
+
+            UploadLogInput input = (UploadLogInput) JSON.deserialize(logJson, UploadLogInput.class);
+
+            File_Upload_Log__c log = new File_Upload_Log__c();
+            log.File_Name__c       = input.fileName;
+            log.Target_Object__c   = input.targetObject;
+            log.Upload_Mode__c     = input.uploadMode;
+            log.Total_Rows__c      = input.totalRows;
+            log.Success_Count__c   = input.successCount;
+            log.Failure_Count__c   = input.failureCount;
+            log.Status__c          = input.status;
+            log.Upload_DateTime__c = DateTime.now();
+            log.Uploaded_By__c     = UserInfo.getName();
+            log.Error_Details__c   = input.errorDetails;
+            log.Field_Mappings__c  = input.fieldMappings;
+
+            System.debug(LOG_DML + ' createUploadLog — inserting log record');
+            insert log;
+
+            System.debug(LOG_SUCCESS + ' createUploadLog — created log: ' + log.Id);
+            System.debug(LOG_EXIT + ' createUploadLog — exiting');
+            return log.Id;
+
+        } catch (AuraHandledException ahe) {
+            throw ahe;
+        } catch (Exception ex) {
+            System.debug(LOG_ERROR + ' createUploadLog — ' + ex.getMessage() + ' | ' + ex.getStackTraceString());
+            throw new AuraHandledException('Error creating upload log: ' + ex.getMessage());
+        }
+    }
+
     // ============================================================
     // getAvailableObjects
     // ============================================================

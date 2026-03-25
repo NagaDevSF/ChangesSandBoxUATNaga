@@ -8,6 +8,7 @@ import getObjectFields from '@salesforce/apex/DynamicFileUploadController.getObj
 import validateMappedData from '@salesforce/apex/DynamicFileUploadController.validateMappedData';
 import createMappedRecords from '@salesforce/apex/DynamicFileUploadController.createMappedRecords';
 import resolveScheduleItems from '@salesforce/apex/DynamicFileUploadController.resolveScheduleItems';
+import createUploadLog from '@salesforce/apex/DynamicFileUploadController.createUploadLog';
 
 // ============================================================
 // Constants
@@ -1239,6 +1240,59 @@ export default class DynamicFileUploader extends LightningElement {
         this.creationResults = allResults;
         this.isProcessing = false;
         this.currentStep = 'results';
+
+        // Create audit log
+        this.saveUploadLog();
+    }
+
+    async saveUploadLog() {
+        try {
+            const successCount = this.creationResults.filter((r) => r._resultStatus === 'Success').length;
+            const failureCount = this.creationResults.length - successCount;
+            const totalRows = this.creationResults.length;
+
+            let status = 'Completed';
+            if (failureCount > 0 && successCount > 0) {
+                status = 'Partial';
+            } else if (successCount === 0 && totalRows > 0) {
+                status = 'Failed';
+            }
+
+            // Collect error messages (first 50 to avoid field length limits)
+            const errors = this.creationResults
+                .filter((r) => r._resultStatus !== 'Success' && r._resultMessage)
+                .slice(0, 50)
+                .map((r) => `Row ${r.rowIndex}: ${r._resultMessage}`)
+                .join('\n');
+
+            // Build field mapping snapshot
+            const mappings = this.fieldMappings
+                .filter((m) => m.salesforceField || m.isResolutionColumn)
+                .map((m) => {
+                    if (m.isResolutionColumn) {
+                        return `${m.excelColumn} → ${m.resolutionRole === 'eppsId' ? 'EPPS ID (Resolution)' : 'Fee Date (Resolution)'}`;
+                    }
+                    return `${m.excelColumn} → ${m.salesforceField}`;
+                })
+                .join('\n');
+
+            const logInput = {
+                fileName: this.fileName,
+                targetObject: this.selectedObject,
+                uploadMode: this.selectedMode || 'Final Wires Upload',
+                totalRows: totalRows,
+                successCount: successCount,
+                failureCount: failureCount,
+                status: status,
+                errorDetails: errors || null,
+                fieldMappings: mappings || null
+            };
+
+            await createUploadLog({ logJson: JSON.stringify(logInput) });
+        } catch (error) {
+            // Log failure is non-blocking — don't interrupt the results view
+            console.error('Failed to create upload log:', this.reduceError(error));
+        }
     }
 
     handleCancelProcessing() {
