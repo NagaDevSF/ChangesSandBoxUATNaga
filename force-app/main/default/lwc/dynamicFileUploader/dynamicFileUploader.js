@@ -815,6 +815,17 @@ export default class DynamicFileUploader extends LightningElement {
 
         this.previewData = this.parsedRows.map((row, index) => {
             const record = { rowIndex: index + 1 };
+
+            // Add resolution columns (EPPS ID and Fee Date) as read-only display fields
+            if (this.selectedEppsIdColumn) {
+                record._eppsId = row[this.selectedEppsIdColumn] != null ? String(row[this.selectedEppsIdColumn]) : '';
+            }
+            if (this.selectedFeeDateColumn) {
+                const rawDate = row[this.selectedFeeDateColumn];
+                record._feeDate = rawDate != null ? this.parseExcelDate(rawDate) || String(rawDate) : '';
+            }
+
+            // Add mapped SF fields
             activeMappings.forEach((mapping) => {
                 let value = row[mapping.excelColumn];
 
@@ -853,6 +864,32 @@ export default class DynamicFileUploader extends LightningElement {
                 cellAttributes: { alignment: 'center' }
             }
         ];
+
+        // Add resolution columns (EPPS ID and Fee Date) at the front
+        if (this.selectedEppsIdColumn) {
+            columns.push({
+                label: this.selectedEppsIdColumn + ' (EPPS ID)',
+                fieldName: '_eppsId',
+                type: 'text',
+                editable: false,
+                initialWidth: 150,
+                cellAttributes: {
+                    class: 'slds-text-color_weak'
+                }
+            });
+        }
+        if (this.selectedFeeDateColumn) {
+            columns.push({
+                label: this.selectedFeeDateColumn + ' (Fee Date)',
+                fieldName: '_feeDate',
+                type: 'text',
+                editable: false,
+                initialWidth: 130,
+                cellAttributes: {
+                    class: 'slds-text-color_weak'
+                }
+            });
+        }
 
         activeMappings.forEach((mapping) => {
             const dtType = SF_TYPE_TO_DT_TYPE[mapping.fieldType] || 'text';
