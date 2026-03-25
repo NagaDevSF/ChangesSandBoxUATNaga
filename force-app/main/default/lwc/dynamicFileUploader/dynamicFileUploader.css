@@ -12,6 +12,124 @@
 }
 
 /* ============================================================
+   Home / Mode Selection
+   ============================================================ */
+.home-header {
+    text-align: center;
+    padding-bottom: 0.5rem;
+}
+
+.home-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #16325c;
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+
+.home-subtitle {
+    font-size: 1rem;
+    color: #706e6b;
+    margin-top: 0.25rem;
+}
+
+.mode-cards {
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.mode-card {
+    background: white;
+    border: 2px solid #e5e5e5;
+    border-radius: 16px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.mode-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.mode-card-final:hover {
+    border-color: #0070d2;
+}
+
+.mode-card-collecting:hover {
+    border-color: #f59e0b;
+}
+
+.mode-card-other:hover {
+    border-color: #7c3aed;
+}
+
+.mode-icon-wrapper {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+}
+
+.mode-icon-collecting {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.mode-icon-final {
+    background: linear-gradient(135deg, #0070d2, #1589ee);
+}
+
+.mode-icon-other {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+}
+
+.mode-card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #16325c;
+    margin: 0 0 0.5rem 0;
+}
+
+.mode-card-desc {
+    font-size: 0.85rem;
+    color: #706e6b;
+    line-height: 1.5;
+    margin: 0 0 1rem 0;
+    max-width: 220px;
+}
+
+.mode-card-badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mode-badge-active {
+    background: #e6f7ee;
+    color: #04844b;
+}
+
+.mode-badge-coming-soon {
+    background: #f3f2f2;
+    color: #706e6b;
+}
+
+/* ============================================================
    Step Indicator
    ============================================================ */
 .step-indicator {

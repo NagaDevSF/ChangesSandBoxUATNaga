@@ -54,7 +54,8 @@ export default class DynamicFileUploader extends LightningElement {
     // ============================================================
     // Tracked Properties
     // ============================================================
-    @track currentStep = 'upload';
+    @track currentStep = 'home';
+    @track selectedMode = '';
     @track objectOptions = [];
     @track selectedObject = '';
     @track objectFields = [];
@@ -107,6 +108,14 @@ export default class DynamicFileUploader extends LightningElement {
     // ============================================================
     // Computed Properties — Step Visibility
     // ============================================================
+    get isHomeStep() {
+        return this.currentStep === 'home';
+    }
+
+    get showWizard() {
+        return this.currentStep !== 'home';
+    }
+
     get isUploadStep() {
         return this.currentStep === 'upload';
     }
@@ -384,6 +393,24 @@ export default class DynamicFileUploader extends LightningElement {
         } finally {
             this.isLoading = false;
         }
+    }
+
+    // ============================================================
+    // Event Handlers — Home: Mode Selection
+    // ============================================================
+    handleModeSelect(event) {
+        this.selectedMode = event.currentTarget.dataset.mode;
+        if (this.selectedMode === 'final-wires') {
+            this.currentStep = 'upload';
+        } else {
+            this.showToast('Coming Soon', `The "${this.selectedMode === 'collecting-wires' ? 'Collecting Wires' : 'Other'}" module is under development.`, 'info');
+        }
+    }
+
+    handleBackToHome() {
+        this.resetAllState();
+        this.currentStep = 'home';
+        this.selectedMode = '';
     }
 
     // ============================================================
@@ -990,7 +1017,8 @@ export default class DynamicFileUploader extends LightningElement {
     // ============================================================
     handleUploadAnother() {
         this.resetAllState();
-        this.currentStep = 'upload';
+        this.currentStep = 'home';
+        this.selectedMode = '';
     }
 
     handleDownloadResults() {

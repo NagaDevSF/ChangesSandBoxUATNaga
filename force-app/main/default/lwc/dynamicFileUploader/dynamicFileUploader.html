@@ -2,8 +2,56 @@
     <div class="uploader-container">
 
         <!-- ============================================================ -->
-        <!-- Step Indicator / Progress Path                               -->
+        <!-- Home: Mode Selection                                         -->
         <!-- ============================================================ -->
+        <template lwc:if={isHomeStep}>
+            <div class="home-header slds-p-around_large slds-text-align_center">
+                <h1 class="home-title">Wire Management Hub</h1>
+                <p class="home-subtitle">Select a workflow to get started</p>
+            </div>
+            <div class="mode-cards slds-grid slds-wrap slds-gutters slds-grid_align-center slds-p-horizontal_large slds-p-bottom_large">
+                <!-- Collecting Wires -->
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-12 slds-p-bottom_medium">
+                    <div class="mode-card mode-card-collecting" data-mode="collecting-wires" onclick={handleModeSelect} role="button" tabindex="0">
+                        <div class="mode-icon-wrapper mode-icon-collecting">
+                            <lightning-icon icon-name="utility:inbox" size="large" variant="inverse"></lightning-icon>
+                        </div>
+                        <h2 class="mode-card-title">Collecting Wires</h2>
+                        <p class="mode-card-desc">Track and manage incoming wire collections from clients</p>
+                        <div class="mode-card-badge mode-badge-coming-soon">Coming Soon</div>
+                    </div>
+                </div>
+                <!-- Final Wires Upload -->
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-12 slds-p-bottom_medium">
+                    <div class="mode-card mode-card-final" data-mode="final-wires" onclick={handleModeSelect} role="button" tabindex="0">
+                        <div class="mode-icon-wrapper mode-icon-final">
+                            <lightning-icon icon-name="utility:upload" size="large" variant="inverse"></lightning-icon>
+                        </div>
+                        <h2 class="mode-card-title">Final Wires Upload</h2>
+                        <p class="mode-card-desc">Upload Excel/CSV files, map fields, and create payment fee records</p>
+                        <div class="mode-card-badge mode-badge-active">Ready</div>
+                    </div>
+                </div>
+                <!-- Other -->
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-12 slds-p-bottom_medium">
+                    <div class="mode-card mode-card-other" data-mode="other" onclick={handleModeSelect} role="button" tabindex="0">
+                        <div class="mode-icon-wrapper mode-icon-other">
+                            <lightning-icon icon-name="utility:slider" size="large" variant="inverse"></lightning-icon>
+                        </div>
+                        <h2 class="mode-card-title">Other</h2>
+                        <p class="mode-card-desc">Additional wire processing and management tools</p>
+                        <div class="mode-card-badge mode-badge-coming-soon">Coming Soon</div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- ============================================================ -->
+        <!-- Wizard Steps (only shown after mode selection)               -->
+        <!-- ============================================================ -->
+        <template lwc:if={showWizard}>
+
+        <!-- Step Indicator / Progress Path -->
         <div class="step-indicator slds-p-horizontal_large slds-p-vertical_medium">
             <template for:each={stepIndicator} for:item="step">
                 <div key={step.value} class={step.className}>
@@ -26,9 +74,7 @@
             </template>
         </div>
 
-        <!-- ============================================================ -->
-        <!-- Loading Overlay                                              -->
-        <!-- ============================================================ -->
+        <!-- Loading Overlay -->
         <template lwc:if={isLoading}>
             <div class="loading-overlay">
                 <lightning-spinner alternative-text="Loading" size="large"></lightning-spinner>
@@ -91,8 +137,13 @@
                     </template>
                 </div>
 
-                <!-- Next Button -->
-                <div class="slds-p-top_medium slds-text-align_right">
+                <!-- Navigation -->
+                <div class="slds-grid slds-grid_align-spread slds-p-top_medium">
+                    <lightning-button
+                        label="Back to Home"
+                        onclick={handleBackToHome}
+                        icon-name="utility:home"
+                    ></lightning-button>
                     <lightning-button
                         label="Next: Map Fields"
                         variant="brand"
@@ -408,6 +459,8 @@
                 </div>
             </div>
         </template>
+
+        </template><!-- end showWizard -->
 
     </div>
 </template>
