@@ -559,12 +559,14 @@ export default class DynamicFileUploader extends LightningElement {
             this.loadObjectFields().then(() => {
                 this.initializeFieldMappings();
                 this.handleAutoMap();
+                this.autoDetectResolutionColumns();
                 this.currentStep = 'mapping';
             });
             return;
         }
         this.initializeFieldMappings();
         this.handleAutoMap();
+        this.autoDetectResolutionColumns();
         this.currentStep = 'mapping';
     }
 
@@ -586,7 +588,9 @@ export default class DynamicFileUploader extends LightningElement {
                 salesforceField: '',
                 salesforceLabel: '',
                 fieldType: '',
-                sampleValues: samples
+                sampleValues: samples,
+                isAutoMapped: false,
+                rowClass: 'mapping-row slds-grid slds-p-around_small slds-grid_vertical-align-center'
             };
         });
     }
@@ -635,14 +639,36 @@ export default class DynamicFileUploader extends LightningElement {
                     ...mapping,
                     salesforceField: matchedField.apiName,
                     salesforceLabel: matchedField.label,
-                    fieldType: matchedField.type
+                    fieldType: matchedField.fieldType || matchedField.type,
+                    isAutoMapped: true,
+                    rowClass: 'mapping-row mapping-row-auto slds-grid slds-p-around_small slds-grid_vertical-align-center'
                 };
             }
-            return { ...mapping };
+            return {
+                ...mapping,
+                isAutoMapped: false,
+                rowClass: 'mapping-row slds-grid slds-p-around_small slds-grid_vertical-align-center'
+            };
         });
 
         this.fieldMappings = updatedMappings;
         this.showToast('Auto-Map Complete', `Matched ${matchCount} of ${this.fieldMappings.length} columns.`, 'info');
+    }
+
+    autoDetectResolutionColumns() {
+        const eppsAliases = ['cardholderid', 'cardholder id', 'cardholder_id', 'epps id', 'eppsid', 'epps_id', 'accountholderid', 'accountholder id'];
+        const dateAliases = ['fee date', 'feedate', 'fee_date', 'feedate'];
+
+        for (const header of this.parsedHeaders) {
+            const normalized = header.toLowerCase().trim().replace(/[_\-]/g, ' ');
+
+            if (!this.selectedEppsIdColumn && eppsAliases.includes(normalized)) {
+                this.selectedEppsIdColumn = header;
+            }
+            if (!this.selectedFeeDateColumn && dateAliases.includes(normalized)) {
+                this.selectedFeeDateColumn = header;
+            }
+        }
     }
 
     handleFieldMappingChange(event) {
@@ -651,12 +677,15 @@ export default class DynamicFileUploader extends LightningElement {
 
         this.fieldMappings = this.fieldMappings.map((mapping) => {
             if (mapping.excelColumn === columnName) {
+                const baseClass = 'mapping-row slds-grid slds-p-around_small slds-grid_vertical-align-center';
                 if (!newValue) {
                     return {
                         ...mapping,
                         salesforceField: '',
                         salesforceLabel: '',
-                        fieldType: ''
+                        fieldType: '',
+                        isAutoMapped: false,
+                        rowClass: baseClass
                     };
                 }
                 const sfField = this.objectFields.find((f) => f.apiName === newValue);
@@ -664,7 +693,9 @@ export default class DynamicFileUploader extends LightningElement {
                     ...mapping,
                     salesforceField: newValue,
                     salesforceLabel: sfField ? sfField.label : newValue,
-                    fieldType: sfField ? sfField.type : 'STRING'
+                    fieldType: sfField ? sfField.type : 'STRING',
+                    isAutoMapped: false,
+                    rowClass: baseClass
                 };
             }
             return mapping;

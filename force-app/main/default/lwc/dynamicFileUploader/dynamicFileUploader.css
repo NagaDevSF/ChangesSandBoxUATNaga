@@ -387,6 +387,15 @@
     background: #f7f9fb;
 }
 
+.mapping-row-auto {
+    background: #e6f7ee;
+    border-left: 3px solid #04844b;
+}
+
+.mapping-row-auto:hover {
+    background: #d4f0e0;
+}
+
 .mapping-row:last-child {
     border-bottom: none;
 }

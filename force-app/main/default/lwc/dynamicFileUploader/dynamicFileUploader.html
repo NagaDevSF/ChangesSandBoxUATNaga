@@ -227,7 +227,7 @@
 
                     <!-- Mapping Rows -->
                     <template for:each={fieldMappings} for:item="mapping">
-                        <div key={mapping.excelColumn} class="mapping-row slds-grid slds-p-around_small slds-grid_vertical-align-center" role="row">
+                        <div key={mapping.excelColumn} class={mapping.rowClass} role="row">
                             <div class="slds-col slds-size_4-of-12" role="cell">
                                 <div class="excel-column-badge">
                                     <lightning-icon icon-name="utility:table" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
