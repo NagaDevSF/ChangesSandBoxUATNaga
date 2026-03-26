@@ -2098,7 +2098,8 @@ export default class PaymentPlanEditor extends LightningElement {
     @api
     handleOpenModifyWeeklyPayment() {
         this.modifyModalType = 'EST_CURRENT_PAYMENT';
-        this.modifyModalOriginalValue = this.paymentPlan?.Current_Payment__c || 0;
+        this.modifyModalOriginalValue = this.paymentPlan?.Opportunity__r?.Estimated_Current_Payment__c
+            || this.paymentPlan?.Current_Payment__c || 0;
         this.modifyModalValue = this.modifyModalOriginalValue;
         this.modifyPreviewItems = [];
         this.modifyPreviewSummary = null;
@@ -2109,7 +2110,8 @@ export default class PaymentPlanEditor extends LightningElement {
     @api
     handleOpenModifyEstTotalDebt() {
         this.modifyModalType = 'EST_TOTAL_DEBT';
-        this.modifyModalOriginalValue = this.paymentPlan?.Total_Debt__c || 0;
+        this.modifyModalOriginalValue = this.paymentPlan?.Opportunity__r?.Estimated_Total_Debt__c
+            || this.paymentPlan?.Total_Debt__c || 0;
         this.modifyModalValue = this.modifyModalOriginalValue;
         this.modifyPreviewItems = [];
         this.modifyPreviewSummary = null;

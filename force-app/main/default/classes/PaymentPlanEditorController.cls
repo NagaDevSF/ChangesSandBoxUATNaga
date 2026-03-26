@@ -843,7 +843,9 @@ public with sharing class PaymentPlanEditorController {
                        Cleared_Banking_Fee_Sum__c, Cleared_Savings_Sum__c, Cleared_Escrow_Sum__c,
                        NSF_Draft_Amount_Sum__c, NSF_Setup_Fee_Sum__c, NSF_Program_Fee_Sum__c,
                        NSF_Banking_Fee_Sum__c, NSF_Savings_Sum__c,
-                       CreatedBy.Name, LastModifiedBy.Name
+                       CreatedBy.Name, LastModifiedBy.Name,
+                       Opportunity__r.Estimated_Current_Payment__c,
+                       Opportunity__r.Estimated_Total_Debt__c
                 FROM PaymentPlan__c
                 WHERE Id = :planId
                 LIMIT 1
