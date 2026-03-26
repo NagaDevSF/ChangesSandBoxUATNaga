@@ -2054,6 +2054,10 @@ export default class PaymentPlanEditor extends LightningElement {
 
     get modifyCalculatedWeeklyPayment() {
         if (!this.isEstCurrentPaymentMode || !this.modifyModalValue) return '';
+        // Use Apex preview result when available (authoritative), else estimate
+        if (this.modifyPreviewSummary?.weeklyPayment) {
+            return this.formatCurrency(this.modifyPreviewSummary.weeklyPayment);
+        }
         const weekly = (this.modifyModalValue * (this.modifyTargetPaymentPercent / 100));
         return this.formatCurrency(Math.round(weekly * 100) / 100);
     }
