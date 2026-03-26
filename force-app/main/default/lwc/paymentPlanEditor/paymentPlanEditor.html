@@ -618,11 +618,11 @@
             <footer class="modal-footer">
                 <template lwc:if={isEditMode}>
                     <nav class="footer-left" aria-label="Edit actions">
-                        <button type="button" class="btn btn-blue" onclick={handleRecalculate}>
-                            Recalculate
+                        <button type="button" class="btn btn-blue" onclick={handleOpenModifyWeeklyPayment}>
+                            Modify Current Weekly
                         </button>
-                        <button type="button" class="btn btn-teal" onclick={handleRecalculateRemainingBalance}>
-                            Recalculate Remaining
+                        <button type="button" class="btn btn-teal" onclick={handleOpenModifyEstTotalDebt}>
+                            Modify Est Total Debt
                         </button>
                     </nav>
                     <nav class="footer-right" aria-label="Save actions">
@@ -636,11 +636,11 @@
                 </template>
                 <template lwc:else>
                     <nav class="footer-left" aria-label="Plan actions">
-                        <button type="button" class="btn btn-blue" onclick={handleRecalculate}>
-                            Recalculate
+                        <button type="button" class="btn btn-blue" onclick={handleOpenModifyWeeklyPayment}>
+                            Modify Current Weekly
                         </button>
-                        <button type="button" class="btn btn-teal" onclick={handleRecalculateRemainingBalance}>
-                            Recalculate Remaining
+                        <button type="button" class="btn btn-teal" onclick={handleOpenModifyEstTotalDebt}>
+                            Modify Est Total Debt
                         </button>
                     </nav>
                     <nav class="footer-right" aria-label="Version actions">
