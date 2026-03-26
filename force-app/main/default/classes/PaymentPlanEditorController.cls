@@ -834,6 +834,8 @@ public with sharing class PaymentPlanEditorController {
                        Version_Number__c, Is_Active__c,
                        Banking_Fee__c, Bank2_Fee__c, Setup_Fee__c, Setup_Fee_Payments__c,
                        Current_Payment__c, No_Fee_Program__c, Preferred_Day_of_Week__c,
+                       Target_Payment_Percent__c, Calculation_Mode__c, Payment_Frequency__c,
+                       Total_Savings__c, Total_Banking_Fee__c,
                        Calculation_Timestamp__c, Previous_Version__c, Source__c,
                        Version_Type__c, Version_Notes__c, Schedule_Item_Count__c,
                        Total_Draft_Amount__c, Total_Setup_Fee_Rollup__c, Total_Program_Fee_Rollup__c,
