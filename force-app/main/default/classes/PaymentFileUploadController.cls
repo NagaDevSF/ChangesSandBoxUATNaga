@@ -460,7 +460,7 @@ public with sharing class PaymentFileUploadController {
             SELECT Id, Name, Opportunity__c, Banking_Fee__c
             FROM PaymentPlan__c
             WHERE Opportunity__c IN :oppIds
-              AND Is_Active__c = true
+              AND Status__c = 'Active'
         ];
 
         for (PaymentPlan__c plan : plans) {
