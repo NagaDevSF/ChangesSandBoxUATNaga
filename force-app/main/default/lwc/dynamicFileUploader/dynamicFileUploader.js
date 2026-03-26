@@ -1080,8 +1080,9 @@ export default class DynamicFileUploader extends LightningElement {
             for (let i = 0; i < records.length; i += CHUNK_SIZE) {
                 const chunk = records.slice(i, i + CHUNK_SIZE);
                 const chunkResults = await validateMappedData({
+                    recordsJson: JSON.stringify(chunk),
                     objectApiName: this.selectedObject,
-                    records: JSON.stringify(chunk)
+                    fieldMappingsJson: JSON.stringify(this.fieldMappings)
                 });
                 allResults.push(...chunkResults);
             }
