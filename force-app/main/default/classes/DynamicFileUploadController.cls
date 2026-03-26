@@ -165,7 +165,7 @@ public with sharing class DynamicFileUploadController {
             log.Failure_Count__c   = input.failureCount;
             log.Status__c          = input.status;
             log.Upload_DateTime__c = DateTime.now();
-            log.Uploaded_By__c     = UserInfo.getName();
+            log.Uploaded_By__c     = UserInfo.getUserId();
             log.Error_Details__c   = input.errorDetails;
             log.Field_Mappings__c  = input.fieldMappings;
 

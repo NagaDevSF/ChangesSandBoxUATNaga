@@ -17,7 +17,7 @@ const CHUNK_SIZE = 2000;
 const PREVIEW_PAGE_SIZE = 50;
 const SAMPLE_ROW_COUNT = 3;
 const ACCEPTED_EXTENSIONS = ['.xlsx', '.csv'];
-const MAX_ROW_LIMIT = 10000;
+const MAX_ROW_LIMIT = 2000;
 
 const STEP_CONFIG = [
     { label: 'Upload File', value: 'upload', number: '1' },
