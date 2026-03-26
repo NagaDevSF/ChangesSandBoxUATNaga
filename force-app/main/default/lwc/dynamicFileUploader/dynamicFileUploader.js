@@ -1084,7 +1084,7 @@ export default class DynamicFileUploader extends LightningElement {
                     objectApiName: this.selectedObject,
                     fieldMappingsJson: JSON.stringify(this.fieldMappings)
                 });
-                allResults.push(...chunkResults);
+                allResults.push(...chunkResults.rows);
             }
 
             // Merge validation results into preview data
