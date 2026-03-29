@@ -401,16 +401,20 @@
                                                 value="wire"
                                                 icon-name="utility:routing_offline">
                                             </lightning-menu-item>
-                                            <lightning-menu-item
-                                                label="Void"
-                                                value="void"
-                                                icon-name="utility:ban">
-                                            </lightning-menu-item>
-                                            <lightning-menu-item
-                                                label="Process Immediately"
-                                                value="immediateProcess"
-                                                icon-name="utility:priority">
-                                            </lightning-menu-item>
+                                            <template lwc:if={item.showVoid}>
+                                                <lightning-menu-item
+                                                    label="Void"
+                                                    value="void"
+                                                    icon-name="utility:ban">
+                                                </lightning-menu-item>
+                                            </template>
+                                            <template lwc:if={item.showImmediateProcess}>
+                                                <lightning-menu-item
+                                                    label="Process Immediately"
+                                                    value="immediateProcess"
+                                                    icon-name="utility:priority">
+                                                </lightning-menu-item>
+                                            </template>
                                         </lightning-button-menu>
                                     </template>
                                 </td>
@@ -442,7 +446,7 @@
                                         <!-- Empty cells for #, Draft # -->
                                         <td class="td-center" role="gridcell"></td>
                                         <td class="td-center" role="gridcell">
-                                            <lightning-icon icon-name="utility:routing_offline" size="xx-small" alternative-text="Wire Fee" class="wire-icon"></lightning-icon>
+                                            <lightning-icon icon-name={fee.feeIconName} size="xx-small" alternative-text={fee.feeIconAlt} class="wire-icon"></lightning-icon>
                                         </td>
                                         <!-- Fee Type (under Date column) -->
                                         <td class="td-center" role="gridcell">

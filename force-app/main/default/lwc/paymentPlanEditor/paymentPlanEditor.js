@@ -500,6 +500,11 @@ export default class PaymentPlanEditor extends LightningElement {
             // Determine wire status: green if wires >= draft, orange if wires < draft
             const wireStatusClass = wiresTotal >= draftAmount ? 'wire-row-green' : 'wire-row-orange';
 
+            // Conditional menu item visibility based on status
+            const itemStatus = item.status || '';
+            const showVoid = itemStatus === 'Scheduled' || itemStatus === 'Processing';
+            const showImmediateProcess = itemStatus === 'Scheduled';
+
             return {
                 ...item,
                 wireFees: wireFees.map(fee => ({
@@ -507,10 +512,14 @@ export default class PaymentPlanEditor extends LightningElement {
                     feeTypeFormatted: fee.feeType,
                     amountFormatted: this.formatCurrency(fee.amount || 0),
                     amountEdit: fee.amount != null ? fee.amount.toFixed(2) : '0.00',
-                    wireRowClass: `wire-sub-row ${wireStatusClass}`
+                    wireRowClass: `wire-sub-row ${wireStatusClass}`,
+                    feeIconName: fee.feeType === 'Account Adjustment' ? 'utility:adjust_value' : 'utility:routing_offline',
+                    feeIconAlt: fee.feeType === 'Account Adjustment' ? 'Account Adjustment' : 'Wire Fee'
                 })),
                 hasWireFees: wireFees.length > 0,
-                wireStatusClass: wireStatusClass
+                wireStatusClass: wireStatusClass,
+                showVoid: showVoid,
+                showImmediateProcess: showImmediateProcess
             };
         });
     }
@@ -1660,7 +1669,8 @@ export default class PaymentPlanEditor extends LightningElement {
     get wireFeeTypeOptions() {
         return [
             { label: 'Wire Fee', value: 'Wire Fee' },
-            { label: 'Wire Received Fee', value: 'Wire Received Fee' }
+            { label: 'Wire Received Fee', value: 'Wire Received Fee' },
+            { label: 'Account Adjustment', value: 'Account Adjustment' }
         ];
     }
 
@@ -1712,7 +1722,7 @@ export default class PaymentPlanEditor extends LightningElement {
                 this.handleVoidRequest(scheduleItemId, draftAmount);
                 break;
             case 'immediateProcess':
-                this.handleImmediateProcessingRequest(scheduleItemId);
+                this.handleImmediateProcessingRequest(scheduleItemId, rowNumber, draftAmount);
                 break;
             default:
                 break;
@@ -1745,9 +1755,18 @@ export default class PaymentPlanEditor extends LightningElement {
      * Sends an Immediate Processing request for a Payment Schedule Item.
      * Sets Immediate_Processing_Requested__c = true on the record.
      */
-    async handleImmediateProcessingRequest(scheduleItemId) {
+    async handleImmediateProcessingRequest(scheduleItemId, rowNumber, draftAmount) {
         if (!scheduleItemId) {
             this.showToast('Error', 'Cannot process: Schedule item not saved yet.', 'error');
+            return;
+        }
+        const confirmed = await LightningConfirm.open({
+            message: `Warning: you are requesting immediate processing for Payment Schedule Item #${rowNumber}${draftAmount ? ` with draft amount $${Number(draftAmount).toFixed(2)}` : ''}. Do you want to continue?`,
+            label: 'Immediate Processing Warning',
+            theme: 'warning'
+        });
+
+        if (!confirmed) {
             return;
         }
         try {

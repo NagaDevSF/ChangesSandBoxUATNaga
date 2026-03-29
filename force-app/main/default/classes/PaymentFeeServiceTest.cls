@@ -565,8 +565,10 @@ private class PaymentFeeServiceTest {
         System.assert(PaymentFeeService.SCHEDULE_ITEM_FEE_TYPES.contains('Program Fee'));
         System.assert(PaymentFeeService.SCHEDULE_ITEM_FEE_TYPES.contains('Setup Fee'));
 
-        System.assertEquals(2, PaymentFeeService.WIRE_FEE_TYPES.size());
-        System.assert(PaymentFeeService.WIRE_FEE_TYPES.contains('Wire Fee'));
-        System.assert(PaymentFeeService.WIRE_FEE_TYPES.contains('Wire Received Fee'));
+        System.assertEquals(3, PaymentFeeService.WIRE_FEE_TYPES.size(), 'WIRE_FEE_TYPES should contain 3 types');
+        System.assert(PaymentFeeService.WIRE_FEE_TYPES.contains('Wire Fee'), 'Should contain Wire Fee');
+        System.assert(PaymentFeeService.WIRE_FEE_TYPES.contains('Wire Received Fee'), 'Should contain Wire Received Fee');
+        System.assert(PaymentFeeService.WIRE_FEE_TYPES.contains('Account Adjustment'), 'Should contain Account Adjustment');
+        System.assertEquals('Account Adjustment', PaymentFeeService.FEE_TYPE_ACCOUNT_ADJUSTMENT, 'Account Adjustment constant should match');
     }
 }

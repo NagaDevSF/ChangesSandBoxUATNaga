@@ -28,6 +28,7 @@ public with sharing class PaymentFeeService {
     public static final String FEE_TYPE_SETUP = 'Setup Fee';
     public static final String FEE_TYPE_WIRE = 'Wire Fee';
     public static final String FEE_TYPE_WIRE_RECEIVED = 'Wire Received Fee';
+    public static final String FEE_TYPE_ACCOUNT_ADJUSTMENT = 'Account Adjustment';
 
     // All supported fee types for schedule items (standard fees)
     public static final Set<String> SCHEDULE_ITEM_FEE_TYPES = new Set<String>{
@@ -39,7 +40,8 @@ public with sharing class PaymentFeeService {
     // Wire fee types
     public static final Set<String> WIRE_FEE_TYPES = new Set<String>{
         FEE_TYPE_WIRE,
-        FEE_TYPE_WIRE_RECEIVED
+        FEE_TYPE_WIRE_RECEIVED,
+        FEE_TYPE_ACCOUNT_ADJUSTMENT
     };
 
     /**
@@ -331,7 +333,7 @@ public with sharing class PaymentFeeService {
         }
 
         if (String.isBlank(wireType) || !WIRE_FEE_TYPES.contains(wireType)) {
-            throw new AuraHandledException('Invalid wire fee type. Must be "Wire Fee" or "Wire Received Fee"');
+            throw new AuraHandledException('Invalid fee type. Must be "Wire Fee", "Wire Received Fee", or "Account Adjustment"');
         }
 
         Payment_Fee__c fee = new Payment_Fee__c();
