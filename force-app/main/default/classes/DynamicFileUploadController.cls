@@ -966,9 +966,16 @@ public with sharing class DynamicFileUploadController {
                 }
 
                 if (matchedPsi == null) {
-                    rr.errorMessage = 'No PSI matches fee date ' + String.valueOf(feeDate) + ' for plan: ' + plan.Name;
-                    results.add(rr);
-                    continue;
+                    // No PSI for this fee date — create a new PSI with Status = 'Wire'
+                    System.debug(LOG_INFO + ' resolveScheduleItems — No PSI for date ' + feeDate + ', creating new Wire PSI for plan: ' + plan.Name);
+                    Payment_Schedule_Item__c newPsi = new Payment_Schedule_Item__c(
+                        Payment_Plan__c = plan.Id,
+                        Payment_Date__c = feeDate,
+                        Status__c = 'Wire'
+                    );
+                    insert newPsi;
+                    System.debug(LOG_DML + ' resolveScheduleItems — Created new Wire PSI: ' + newPsi.Id + ' for date: ' + feeDate);
+                    matchedPsi = newPsi;
                 }
 
                 rr.psiId = matchedPsi.Id;

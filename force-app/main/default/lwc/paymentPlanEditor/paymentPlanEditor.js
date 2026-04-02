@@ -514,7 +514,9 @@ export default class PaymentPlanEditor extends LightningElement {
                     amountEdit: fee.amount != null ? fee.amount.toFixed(2) : '0.00',
                     wireRowClass: `wire-sub-row ${wireStatusClass}`,
                     feeIconName: fee.feeType === 'Account Adjustment' ? 'utility:adjust_value' : 'utility:routing_offline',
-                    feeIconAlt: fee.feeType === 'Account Adjustment' ? 'Account Adjustment' : 'Wire Fee'
+                    feeIconAlt: fee.feeType === 'Account Adjustment' ? 'Account Adjustment' : 'Wire Fee',
+                    isAccountAdjustment: fee.feeType === 'Account Adjustment',
+                    isWireFee: fee.feeType !== 'Account Adjustment'
                 })),
                 hasWireFees: wireFees.length > 0,
                 wireStatusClass: wireStatusClass,

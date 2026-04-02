@@ -452,29 +452,57 @@
                                         <td class="td-center" role="gridcell">
                                             <span class="wire-type">{fee.feeTypeFormatted}</span>
                                         </td>
-                                        <!-- Amount (under Draft column) -->
-                                        <td class="td-right td-currency" role="gridcell">
-                                            <template lwc:if={canEdit}>
-                                                <input type="text"
-                                                       inputmode="decimal"
-                                                       value={fee.amountEdit}
-                                                       class="edit-input edit-input-currency"
-                                                       data-fee-id={fee.id}
-                                                       data-schedule-item-id={fee.scheduleItemId}
-                                                       oninput={handleWireFeeAmountFieldChange}
-                                                       onblur={handleWireFeeAmountBlur}
-                                                       aria-label="Wire fee amount">
-                                            </template>
-                                            <template lwc:else>
-                                                <data class="wire-amount">{fee.amountFormatted}</data>
-                                            </template>
-                                        </td>
-                                        <!-- Empty cells for Setup, Program, Banking -->
-                                        <td class="td-center" role="gridcell"></td>
-                                        <td class="td-center" role="gridcell"></td>
-                                        <td class="td-center" role="gridcell"></td>
-                                        <!-- Empty for Savings -->
-                                        <td class="td-center" role="gridcell"></td>
+                                        <!-- Amount: Wire Fees show under Draft, Account Adjustments show under Savings -->
+                                        <template lwc:if={fee.isAccountAdjustment}>
+                                            <!-- Empty Draft column for Account Adjustments -->
+                                            <td class="td-center" role="gridcell"></td>
+                                            <!-- Empty cells for Setup, Program, Banking -->
+                                            <td class="td-center" role="gridcell"></td>
+                                            <td class="td-center" role="gridcell"></td>
+                                            <td class="td-center" role="gridcell"></td>
+                                            <!-- Amount under Savings column -->
+                                            <td class="td-right td-currency" role="gridcell">
+                                                <template lwc:if={canEdit}>
+                                                    <input type="text"
+                                                           inputmode="decimal"
+                                                           value={fee.amountEdit}
+                                                           class="edit-input edit-input-currency"
+                                                           data-fee-id={fee.id}
+                                                           data-schedule-item-id={fee.scheduleItemId}
+                                                           oninput={handleWireFeeAmountFieldChange}
+                                                           onblur={handleWireFeeAmountBlur}
+                                                           aria-label="Account adjustment amount">
+                                                </template>
+                                                <template lwc:else>
+                                                    <data class="wire-amount">{fee.amountFormatted}</data>
+                                                </template>
+                                            </td>
+                                        </template>
+                                        <template lwc:else>
+                                            <!-- Amount under Draft column for Wire Fees -->
+                                            <td class="td-right td-currency" role="gridcell">
+                                                <template lwc:if={canEdit}>
+                                                    <input type="text"
+                                                           inputmode="decimal"
+                                                           value={fee.amountEdit}
+                                                           class="edit-input edit-input-currency"
+                                                           data-fee-id={fee.id}
+                                                           data-schedule-item-id={fee.scheduleItemId}
+                                                           oninput={handleWireFeeAmountFieldChange}
+                                                           onblur={handleWireFeeAmountBlur}
+                                                           aria-label="Wire fee amount">
+                                                </template>
+                                                <template lwc:else>
+                                                    <data class="wire-amount">{fee.amountFormatted}</data>
+                                                </template>
+                                            </td>
+                                            <!-- Empty cells for Setup, Program, Banking -->
+                                            <td class="td-center" role="gridcell"></td>
+                                            <td class="td-center" role="gridcell"></td>
+                                            <td class="td-center" role="gridcell"></td>
+                                            <!-- Empty Savings column for Wire Fees -->
+                                            <td class="td-center" role="gridcell"></td>
+                                        </template>
                                         <!-- Empty for Status column -->
                                         <td class="td-center" role="gridcell"></td>
                                         <!-- Delete button for Wire fee -->
