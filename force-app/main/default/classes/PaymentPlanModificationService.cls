@@ -474,6 +474,8 @@ public with sharing class PaymentPlanModificationService {
             } else if (modificationType == 'EST_TOTAL_DEBT') {
                 oppUpdate.Estimated_Total_Debt__c = newValue;
                 System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Updating Opp Estimated_Total_Debt__c to ' + newValue);
+            } else if (modificationType == 'EST_WEEKLY_PAYMENT') {
+                System.debug(LoggingLevel.DEBUG, LOG_DML + ' | ' + methodName + ' | Updating Opp Est_weekly_payment__c to ' + newValue);
             }
             update oppUpdate;
 
@@ -514,8 +516,8 @@ public with sharing class PaymentPlanModificationService {
         if (planId == null) {
             throw new AuraHandledException(VALIDATION_SYMBOL + 'Plan ID is required.');
         }
-        if (String.isBlank(modType) || (modType != 'EST_CURRENT_PAYMENT' && modType != 'EST_TOTAL_DEBT')) {
-            throw new AuraHandledException(VALIDATION_SYMBOL + 'Invalid modification type. Must be EST_CURRENT_PAYMENT or EST_TOTAL_DEBT.');
+        if (String.isBlank(modType) || (modType != 'EST_CURRENT_PAYMENT' && modType != 'EST_TOTAL_DEBT' && modType != 'EST_WEEKLY_PAYMENT')) {
+            throw new AuraHandledException(VALIDATION_SYMBOL + 'Invalid modification type. Must be EST_CURRENT_PAYMENT, EST_TOTAL_DEBT, or EST_WEEKLY_PAYMENT.');
         }
         if (newValue == null || newValue <= 0) {
             throw new AuraHandledException(VALIDATION_SYMBOL + 'Value must be greater than zero.');
@@ -606,7 +608,17 @@ public with sharing class PaymentPlanModificationService {
             ? currentPlan.Target_Payment_Percent__c
             : (config.targetPaymentPercentage != null ? config.targetPaymentPercentage : 59);
 
-        if (modType == 'EST_TOTAL_DEBT') {
+        if (modType == 'EST_WEEKLY_PAYMENT') {
+            // EST_WEEKLY_PAYMENT: user provides new weekly payment directly, number of payments adjusts
+            weeklyPayment = newValue;
+            estimatedTotalDebt = currentPlan.Total_Debt__c != null && currentPlan.Total_Debt__c > 0
+                ? currentPlan.Total_Debt__c
+                : (opp.Estimated_Total_Debt__c != null ? opp.Estimated_Total_Debt__c : 0);
+            estimatedCurrentPayment = currentPlan.Current_Payment__c != null && currentPlan.Current_Payment__c > 0
+                ? currentPlan.Current_Payment__c
+                : (opp.Estimated_Current_Payment__c != null ? opp.Estimated_Current_Payment__c : 0);
+            System.debug(LoggingLevel.DEBUG, LOG_DEBUG + ' | ' + methodName + ' | EST_WEEKLY_PAYMENT: newWeekly=' + weeklyPayment + ' | debt=' + estimatedTotalDebt + ' | currentPayment=' + estimatedCurrentPayment);
+        } else if (modType == 'EST_TOTAL_DEBT') {
             estimatedTotalDebt = newValue;
             estimatedCurrentPayment = currentPlan.Current_Payment__c;
             // Keep weekly payment from current plan
@@ -780,7 +792,7 @@ public with sharing class PaymentPlanModificationService {
         newPlan.Total_Program_Cost__c = totalProgramCost;
         newPlan.Total_Savings__c = estimatedTotalDebt - totalProgramCost;
 
-        String modLabel = modType == 'EST_CURRENT_PAYMENT' ? 'Estimated Current Payment' : 'Estimated Total Debt';
+        String modLabel = modType == 'EST_CURRENT_PAYMENT' ? 'Estimated Current Payment' : (modType == 'EST_WEEKLY_PAYMENT' ? 'Estimated Weekly Payment' : 'Estimated Total Debt');
         newPlan.Version_Notes__c = modLabel + ' modified to $' + newValue.setScale(2) + ' on ' + DateTime.now().format() +
             '. Payments: ' + numberOfPayments + ', Weekly: $' + weeklyPayment.setScale(2) +
             ' (Settlement ' + settlementPercentage + '%, ProgramFee ' + programFeePercentage + '%).';

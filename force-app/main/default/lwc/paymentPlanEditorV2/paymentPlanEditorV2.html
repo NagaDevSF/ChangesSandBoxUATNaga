@@ -76,9 +76,6 @@
                        <button class={desiredButtonClass} onclick={handleCalculateByDesired}>
                            Desired Payment
                        </button>
-                       <button class={modifyWeeklyButtonClass} onclick={handleCalculateByModifyWeekly}>
-                           Modify Weekly
-                       </button>
                    </div>
                </div>
 
@@ -100,16 +97,6 @@
                                    <span key={label}>{label}%</span>
                                </template>
                            </div>
-                       </div>
-                   </template>
-                   <!-- Modify Weekly Mode: direct weekly payment input -->
-                   <template lwc:if={isModifyWeeklyMode}>
-                       <div class="slider-container">
-                           <lightning-input type="number" formatter="currency" currency-code="USD" step="0.01"
-                               label="Est. Weekly Payment" value={modifyWeeklyAmount}
-                               oninput={handleModifyWeeklyInput}
-                               onchange={handleModifyWeeklyChange}>
-                           </lightning-input>
                        </div>
                    </template>
                    <!-- Desired Mode: show numeric/currency input -->

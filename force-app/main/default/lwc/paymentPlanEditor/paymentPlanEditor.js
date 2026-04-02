@@ -1911,15 +1911,15 @@ export default class PaymentPlanEditor extends LightningElement {
     // ============ MODIFY PLAN MODAL METHODS ============
 
     get modifyModalTitle() {
-        return this.modifyModalType === 'EST_CURRENT_PAYMENT'
-            ? 'Modify Estimated Current Payment'
-            : 'Modify Estimated Total Debt';
+        if (this.modifyModalType === 'EST_CURRENT_PAYMENT') return 'Modify Estimated Current Payment';
+        if (this.modifyModalType === 'EST_WEEKLY_PAYMENT') return 'Modify Estimated Weekly Payment';
+        return 'Modify Estimated Total Debt';
     }
 
     get modifyModalLabel() {
-        return this.modifyModalType === 'EST_CURRENT_PAYMENT'
-            ? 'Estimated Current Payment'
-            : 'Estimated Total Debt';
+        if (this.modifyModalType === 'EST_CURRENT_PAYMENT') return 'Estimated Current Payment';
+        if (this.modifyModalType === 'EST_WEEKLY_PAYMENT') return 'Estimated Weekly Payment';
+        return 'Estimated Total Debt';
     }
 
     get modifyPreviewItemsFormatted() {
@@ -2126,6 +2126,17 @@ export default class PaymentPlanEditor extends LightningElement {
         this._triggerModifyPreview();
     }
 
+    handleOpenModifyEstWeeklyPayment() {
+        this.modifyModalType = 'EST_WEEKLY_PAYMENT';
+        this.modifyModalOriginalValue = this.paymentPlan?.Weekly_Payment__c
+            || this.paymentPlan?.Opportunity__r?.Est_weekly_payment__c || 0;
+        this.modifyModalValue = this.modifyModalOriginalValue;
+        this.modifyPreviewItems = [];
+        this.modifyPreviewSummary = null;
+        this.showModifyModal = true;
+        this._triggerModifyPreview();
+    }
+
     @api
     handleOpenModifyEstTotalDebt() {
         this.modifyModalType = 'EST_TOTAL_DEBT';
@@ -2226,7 +2237,8 @@ export default class PaymentPlanEditor extends LightningElement {
 
                 // Close modal first
                 const typeLabel = this.modifyModalType === 'EST_CURRENT_PAYMENT'
-                    ? 'Estimated Current Payment' : 'Estimated Total Debt';
+                    ? 'Estimated Current Payment'
+                    : (this.modifyModalType === 'EST_WEEKLY_PAYMENT' ? 'Estimated Weekly Payment' : 'Estimated Total Debt');
                 this.handleCloseModifyModal();
 
                 // Refresh plans list and select the new plan
