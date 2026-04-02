@@ -95,6 +95,9 @@ export default class PaymentPlanEditorV2 extends LightningElement {
    };
 
 
+   // Modify Weekly Payment mode
+   modifyWeeklyAmount = 0;
+
    // Payment Schedule
    @track paymentSchedule = [];
    _calcSeq = 0;
@@ -419,6 +422,16 @@ export default class PaymentPlanEditorV2 extends LightningElement {
    }
 
 
+   handleCalculateByModifyWeekly() {
+       this.calculateBy = 'MODIFY_WEEKLY';
+       this._lastEditSource = 'modifyWeekly';
+       // Initialize with current weekly payment if available
+       if (!this.modifyWeeklyAmount || this.modifyWeeklyAmount <= 0) {
+           this.modifyWeeklyAmount = this.calculations?.weeklyPayment || this.targetPaymentAmount || 0;
+       }
+   }
+
+
    handleTargetPaymentInput(event) {
        const percent = this._setTargetPaymentPercent(parseInt(event.target.value, 10));
        event.target.value = percent;
@@ -557,6 +570,100 @@ export default class PaymentPlanEditorV2 extends LightningElement {
            this.recalcTimer = null;
        }
        this.performCalculations();
+   }
+
+
+   handleModifyWeeklyInput(event) {
+       const raw = event.detail?.value ?? event.target.value;
+       const val = Number(raw);
+       if (Number.isNaN(val) || val <= 0) return;
+
+       this.modifyWeeklyAmount = val;
+       this._lastEditSource = 'modifyWeekly';
+       this.debouncedModifyWeeklyRecalc(300);
+   }
+
+
+   handleModifyWeeklyChange(event) {
+       const raw = event.detail?.value ?? event.target.value;
+       const val = Number(raw);
+       if (Number.isNaN(val) || val <= 0) return;
+
+       // Validate minimum: must cover at least the banking fee
+       const bankingFee = this.bankingFee || 35;
+       if (val <= bankingFee) {
+           event.target.setCustomValidity(`Weekly payment must be greater than banking fee (${this.formatCurrency(bankingFee)}).`);
+           event.target.reportValidity();
+           this.showToast('Invalid Payment', `Weekly payment must be greater than the banking fee of ${this.formatCurrency(bankingFee)}.`, 'error', false);
+           return;
+       }
+       event.target.setCustomValidity('');
+       event.target.reportValidity();
+
+       this.modifyWeeklyAmount = val;
+       this._lastEditSource = 'modifyWeekly';
+
+       if (this.modifyWeeklyRecalcTimer) {
+           clearTimeout(this.modifyWeeklyRecalcTimer);
+           this.modifyWeeklyRecalcTimer = null;
+       }
+       this.recalculateFromModifyWeekly(val);
+   }
+
+
+   modifyWeeklyRecalcTimer;
+   debouncedModifyWeeklyRecalc(delay = 300) {
+       if (this.modifyWeeklyRecalcTimer) {
+           clearTimeout(this.modifyWeeklyRecalcTimer);
+       }
+       this.modifyWeeklyRecalcTimer = setTimeout(() => {
+           if (this.modifyWeeklyAmount > 0) {
+               this.recalculateFromModifyWeekly(this.modifyWeeklyAmount);
+           }
+       }, delay);
+   }
+
+
+   async recalculateFromModifyWeekly(weeklyPayment) {
+       // Same formula as calculateWeeklyPaymentFromWeeks but in reverse:
+       // Given weeklyPayment, calculate numberOfWeeks then use Apex to build schedule
+       const totalDebt = this.totalDebt || 0;
+       const settlementPct = this.settlementPercent || 60;
+       const programFeePct = this.noFeeProgram ? 0 : (this.programFeePercent || 35);
+       const bankingFee = this.bankingFee || 35;
+
+       const settlementAmount = totalDebt * (settlementPct / 100);
+       const programFee = totalDebt * (programFeePct / 100);
+
+       let totalProgramCost;
+       if (this.noFeeProgram) {
+           const baselinePct = this.programFeePercent || 35;
+           const baselineFee = totalDebt * (baselinePct / 100);
+           totalProgramCost = settlementAmount + baselineFee;
+       } else {
+           totalProgramCost = settlementAmount + programFee;
+       }
+
+       const netPerWeek = weeklyPayment - bankingFee;
+       if (netPerWeek <= 0) return;
+
+       const numberOfWeeks = Math.ceil(totalProgramCost / netPerWeek);
+
+       // Set the values so Apex calculates with this weekly payment
+       this.targetPaymentAmount = weeklyPayment;
+       this._targetNumberOfWeeks = numberOfWeeks;
+       this._syncPercentFromAmount(weeklyPayment);
+
+       try {
+           await this.performCalculations();
+
+           // Override with our locally computed values
+           if (this.calculations) {
+               this.calculations.programLength = numberOfWeeks;
+           }
+       } catch (e) {
+           console.error('[recalculateFromModifyWeekly] Error:', e?.body?.message || e?.message);
+       }
    }
 
 
@@ -724,6 +831,14 @@ export default class PaymentPlanEditorV2 extends LightningElement {
 
    // Save to Opportunity only (no drafts, no payment plans)
    async handleSave() {
+       // Validate Modify Weekly mode
+       if (this.isModifyWeeklyMode) {
+           const bankingFee = this.bankingFee || 35;
+           if (!this.modifyWeeklyAmount || this.modifyWeeklyAmount <= bankingFee) {
+               this.showToast('Validation Error', `Weekly payment must be greater than banking fee (${this.formatCurrency(bankingFee)}).`, 'error', false);
+               return;
+           }
+       }
        // Validate payment bounds before saving
        if (this.isDesiredMode) {
            // Round to cents for comparison to avoid floating point issues
@@ -947,6 +1062,10 @@ export default class PaymentPlanEditorV2 extends LightningElement {
 
 
    get summaryWeeklyPayment() {
+       // Modify Weekly mode: user's entered value is the weekly payment
+       if (this._lastEditSource === 'modifyWeekly' && this.modifyWeeklyAmount > 0) {
+           return this.modifyWeeklyAmount;
+       }
        // When slider was last used (PERCENT mode), save the same value shown in the display
        // Display shows: first schedule item's (payment - setup fee)
        if (this._lastEditSource === 'slider' && this.paymentSchedule && this.paymentSchedule.length > 0) {
@@ -967,6 +1086,9 @@ export default class PaymentPlanEditorV2 extends LightningElement {
        if (this.isDesiredMode && this.targetPaymentAmount > 0) {
            return this.targetPaymentAmount;
        }
+       if (this.isModifyWeeklyMode && this.modifyWeeklyAmount > 0) {
+           return this.modifyWeeklyAmount;
+       }
        if (this._isEditingWeeks && this.targetPaymentAmount > 0) {
            return this.targetPaymentAmount;
        }
@@ -978,6 +1100,10 @@ export default class PaymentPlanEditorV2 extends LightningElement {
 
 
    get summaryProgramLength() {
+       // In Modify Weekly mode, use locally calculated weeks
+       if (this.isModifyWeeklyMode && this._targetNumberOfWeeks != null) {
+           return this._targetNumberOfWeeks;
+       }
        // In Desired Mode, use manually entered weeks if available
        if (this.isDesiredMode && this._targetNumberOfWeeks != null) {
            return this._targetNumberOfWeeks;
@@ -989,6 +1115,7 @@ export default class PaymentPlanEditorV2 extends LightningElement {
    // Mode helpers
    get isPercentMode() { return this.calculateBy === 'PERCENT'; }
    get isDesiredMode() { return this.calculateBy === 'DESIRED'; }
+   get isModifyWeeklyMode() { return this.calculateBy === 'MODIFY_WEEKLY'; }
 
 
    get percentMin() {
@@ -1055,6 +1182,13 @@ export default class PaymentPlanEditorV2 extends LightningElement {
        let displayAmount = 0;
 
 
+       // In Modify Weekly mode, show the user's entered weekly amount
+       if (this.isModifyWeeklyMode) {
+           displayAmount = this.modifyWeeklyAmount || 0;
+           const amount = this.formatCurrency(displayAmount);
+           const weeks = this._targetNumberOfWeeks || this.calculations?.programLength || 0;
+           return `${amount}/week — ${weeks} weeks`;
+       }
        // In Desired Mode, always show the user's entered value
        if (this.isDesiredMode) {
            displayAmount = this.targetPaymentAmount || 0;
@@ -1136,6 +1270,11 @@ export default class PaymentPlanEditorV2 extends LightningElement {
 
    get desiredButtonClass() {
        return this.calculateBy === 'DESIRED' ? 'toggle-button active' : 'toggle-button';
+   }
+
+
+   get modifyWeeklyButtonClass() {
+       return this.calculateBy === 'MODIFY_WEEKLY' ? 'toggle-button active' : 'toggle-button';
    }
 
 
